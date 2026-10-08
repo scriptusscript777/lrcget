@@ -1,5 +1,9 @@
 # LRCGET Tauri Architecture
 
+Local build 2.2.0+local.3: MP3 embedded export replaces all USLT/SYLT
+language and description variants, preventing stale lyrics from winning player
+selection. Unrelated tags and artwork are retained; audio is not re-encoded.
+
 ## Architecture Overview
 
 **Stack:** Tauri v2 (Rust) + SQLite + Kira audio + LRCLIB API
