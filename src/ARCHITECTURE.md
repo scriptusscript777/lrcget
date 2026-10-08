@@ -4,8 +4,9 @@
 
 Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Session state only; persistence in Rust/SQLite.
 
-Local build 2.2.0+local.1: the lyrics editor defaults to synced LRC export
-selected. Other formats remain unchecked, and publishing still requires confirmation.
+Local build 2.2.0+local.2: the lyrics editor defaults to synced LRC export
+selected and loads the saved embedding preference when experimental embedding
+is enabled. Disabled embedding cannot be submitted, and publishing still requires confirmation.
 
 **Tech Stack**: Vue 3 (`<script setup>`), Vite, Tailwind CSS, Vue Final Modal, Floating Vue, Vue Toastification, TanStack Vue Virtual, CodeMirror, `unplugin-icons` + Iconify Material Design Icons (`@iconify-json/mdi`).
 

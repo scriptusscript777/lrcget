@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, h } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import HeaderActions from './EditLyricsV2HeaderActions.vue'
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
+beforeEach(() => vi.resetAllMocks())
 
 const popup = {
   setup(_props, { slots }) {
@@ -24,5 +25,64 @@ describe('editor export defaults', () => {
     expect(input('embed-into-track')).not.toContain('checked')
     const { invoke } = await import('@tauri-apps/api/core')
     expect(invoke).not.toHaveBeenCalled()
+  })
+
+  it('loads enabled embedding once and preserves checkbox edits when the menu reopens', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    invoke.mockResolvedValue({ try_embed_lyrics: true, export_embedded: true })
+    let state
+    const emit = vi.fn()
+    await renderToString(
+      createSSRApp({
+        setup() {
+          state = HeaderActions.setup(
+            { isDirty: false, isExporting: false },
+            { expose: vi.fn(), emit }
+          )
+          return () => null
+        },
+      })
+    )
+    await state.refreshEmbedConfig()
+    expect(state.embedIntoTrack.value).toBe(true)
+    state.handleExportClick()
+    expect(emit).toHaveBeenCalledWith('export', {
+      plainText: false,
+      syncedLrc: true,
+      embedIntoTrack: true,
+    })
+    state.embedIntoTrack.value = false
+    await state.refreshEmbedConfig()
+    expect(state.embedIntoTrack.value).toBe(false)
+    expect(emit).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not submit embedding when the experimental setting is disabled', async () => {
+    const { invoke } = await import('@tauri-apps/api/core')
+    invoke.mockResolvedValue({ try_embed_lyrics: false, export_embedded: true })
+    let state
+    const emit = vi.fn()
+    await renderToString(
+      createSSRApp({
+        setup() {
+          state = HeaderActions.setup(
+            { isDirty: false, isExporting: false },
+            { expose: vi.fn(), emit }
+          )
+          return () => null
+        },
+      })
+    )
+    await state.refreshEmbedConfig()
+    expect(state.embedIntoTrack.value).toBe(false)
+    state.embedIntoTrack.value = true
+    state.handleExportClick()
+    expect(emit).toHaveBeenCalledWith('export', {
+      plainText: false,
+      syncedLrc: true,
+      embedIntoTrack: false,
+    })
+    state.exportSyncedLrc.value = false
+    expect(state.hasSelectedExportFormat.value).toBe(false)
   })
 })

@@ -128,16 +128,22 @@ const exportPlainText = ref(false)
 const exportSyncedLrc = ref(true)
 const embedIntoTrack = ref(false)
 const tryEmbedLyrics = ref(false)
+let exportPreferencesLoaded = false
 
 const refreshEmbedConfig = async () => {
   const config = await invoke('get_config')
   tryEmbedLyrics.value = config.try_embed_lyrics
+  if (!exportPreferencesLoaded) {
+    embedIntoTrack.value = config.try_embed_lyrics && config.export_embedded
+    exportPreferencesLoaded = true
+  }
 }
 
 onMounted(refreshEmbedConfig)
 
 const hasSelectedExportFormat = computed(
-  () => exportPlainText.value || exportSyncedLrc.value || embedIntoTrack.value
+  () =>
+    exportPlainText.value || exportSyncedLrc.value || (embedIntoTrack.value && tryEmbedLyrics.value)
 )
 
 const handleExportClick = () => {
@@ -148,7 +154,7 @@ const handleExportClick = () => {
   emit('export', {
     plainText: exportPlainText.value,
     syncedLrc: exportSyncedLrc.value,
-    embedIntoTrack: embedIntoTrack.value,
+    embedIntoTrack: embedIntoTrack.value && tryEmbedLyrics.value,
   })
 }
 
