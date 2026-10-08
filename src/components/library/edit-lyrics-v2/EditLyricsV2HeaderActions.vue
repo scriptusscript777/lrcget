@@ -15,7 +15,9 @@
         <template #popper>
           <div class="text-xs font-bold">
             Save lyrics
-            <span class="text-[0.65rem] text-neutral-800 bg-neutral-50 px-1 rounded-full">Ctrl+S</span>
+            <span class="text-[0.65rem] text-neutral-800 bg-neutral-50 px-1 rounded-full"
+              >Ctrl+S</span
+            >
           </div>
         </template>
       </VTooltip>
@@ -122,7 +124,8 @@ import { invoke } from '@tauri-apps/api/core'
 const emit = defineEmits(['save', 'save-and-publish', 'export', 'debug'])
 
 const exportPlainText = ref(false)
-const exportSyncedLrc = ref(false)
+// Editor exports are separate from bulk-download export preferences.
+const exportSyncedLrc = ref(true)
 const embedIntoTrack = ref(false)
 const tryEmbedLyrics = ref(false)
 
