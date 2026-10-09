@@ -68,9 +68,10 @@ import ExportViewer from './library/ExportViewer.vue'
 import Config from './library/Config.vue'
 import About from './About.vue'
 import { useToast } from 'vue-toastification'
-import { useModal } from 'vue-final-modal'
+import { useModal, useVfm } from 'vue-final-modal'
 import { useExporter } from '@/composables/export.js'
 import { useLibraryNavigation } from '@/composables/library-navigation.js'
+import { createLibraryRefreshHandler } from '@/utils/library-refresh.js'
 
 const { request: downloadRequest } = useDownloadOptions()
 
@@ -84,6 +85,7 @@ const props = defineProps({
 const emit = defineEmits(['uninitializeLibrary', 'scanComplete', 'manageDirectories'])
 
 const toast = useToast()
+const vfm = useVfm()
 
 const isLoading = ref(true)
 const isScanning = ref(false)
@@ -94,6 +96,7 @@ const albumListRef = ref(null)
 const artistListRef = ref(null)
 let unlistenScanProgress = null
 let unlistenScanComplete = null
+let disposed = false
 
 const { open: openAboutModal, close: closeAboutModal } = useModal({
   component: About,
@@ -200,6 +203,10 @@ const setupScanListeners = async () => {
   unlistenScanProgress = await listen('scan-progress', event => {
     scanProgress.value = event.payload
   })
+  if (disposed) {
+    await cleanupScanListeners()
+    return false
+  }
 
   // Listen for scan completion
   unlistenScanComplete = await listen('scan-complete', event => {
@@ -208,6 +215,11 @@ const setupScanListeners = async () => {
     isLoading.value = false
     emit('scanComplete')
   })
+  if (disposed) {
+    await cleanupScanListeners()
+    return false
+  }
+  return true
 }
 
 const cleanupScanListeners = async () => {
@@ -221,16 +233,18 @@ const cleanupScanListeners = async () => {
   }
 }
 
-const scanLibrary = async (isRefresh = false) => {
+const scanLibrary = async () => {
+  if (disposed || isScanning.value) return
   isLoading.value = true
   isScanning.value = true
   scanProgress.value = null
   scanResult.value = null
 
   try {
-    await setupScanListeners()
-    // Use hash detection by default for accuracy
-    await invoke('scan_library', { useHashDetection: false })
+    if (!(await setupScanListeners())) return
+    // Quick content hashes distinguish files with identical sizes/timestamps.
+    // This remains incremental: no full wipe or lyrics export.
+    await invoke('scan_library', { useHashDetection: true })
   } catch (error) {
     console.error(error)
     toast.error(`Unknown error happened when scanning the library. Error: ${error}`)
@@ -241,17 +255,29 @@ const scanLibrary = async (isRefresh = false) => {
 }
 
 const refreshLibrary = async () => {
-  await scanLibrary(true)
+  if (vfm.openedModals.length) {
+    toast.info('Close the open dialog before refreshing the library. Your edits are unchanged.')
+    return
+  }
+  await scanLibrary()
 }
 
+const handleRefreshKey = createLibraryRefreshHandler({
+  refresh: refreshLibrary,
+  isBusy: () => isScanning.value,
+  isBlocked: () => vfm.openedModals.length > 0,
+  onBlocked: () => toast.info('Close the open dialog before refreshing the library. Your edits are unchanged.'),
+})
+
 const fullScanLibrary = async () => {
+  if (disposed || isScanning.value) return
   isLoading.value = true
   isScanning.value = true
   scanProgress.value = null
   scanResult.value = null
 
   try {
-    await setupScanListeners()
+    if (!(await setupScanListeners())) return
     // Full scan with hash detection for accuracy
     await invoke('full_scan_library', { useHashDetection: true })
   } catch (error) {
@@ -264,13 +290,10 @@ const fullScanLibrary = async () => {
 }
 
 onMounted(async () => {
-  const init = await invoke('get_init')
-  if (!init || props.shouldScan) {
-    // First time initialization or directories changed - run a full scan
-    await scanLibrary(false)
-  } else {
-    isLoading.value = false
-  }
+  window.addEventListener('keydown', handleRefreshKey, true)
+  window.addEventListener('keyup', handleRefreshKey, true)
+  // Reopening the app must discover changes made while it was closed.
+  await scanLibrary()
 })
 
 // Watch for changes to shouldScan prop
@@ -278,12 +301,15 @@ watch(
   () => props.shouldScan,
   newValue => {
     if (newValue && !isScanning.value) {
-      scanLibrary(false)
+      scanLibrary()
     }
   }
 )
 
 onUnmounted(async () => {
+  disposed = true
+  window.removeEventListener('keydown', handleRefreshKey, true)
+  window.removeEventListener('keyup', handleRefreshKey, true)
   await cleanupScanListeners()
 })
 </script>

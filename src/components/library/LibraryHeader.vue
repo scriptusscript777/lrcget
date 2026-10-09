@@ -205,7 +205,7 @@
             <button v-close-popper class="dropdown-item" @click="$emit('refreshLibrary')">
               <Refresh class="text-neutral-800 dark:text-neutral-300" />
               <span class="text-neutral-800 dark:text-neutral-300 text-sm font-bold"
-                >Refresh library</span
+                >Refresh library (F5)</span
               >
             </button>
             <button v-close-popper class="dropdown-item" @click="$emit('manageDirectories')">

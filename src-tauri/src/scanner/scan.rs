@@ -4,7 +4,7 @@ use crate::lyricsfile::{build_lyricsfile, LyricsfileTrackMetadata};
 use crate::scanner::hasher::compute_quick_hash;
 use crate::scanner::metadata::extract_track_info;
 use crate::scanner::models::{ScanProgress, ScanResult};
-use anyhow::Result;
+use anyhow::{bail, Result};
 use globwalk::glob;
 use rusqlite::Connection;
 use std::time::{Instant, SystemTime};
@@ -41,6 +41,20 @@ pub fn scan_library(
     progress_callback: &dyn Fn(ScanProgress),
     detection_method: DetectionMethod,
 ) -> Result<ScanResult> {
+    // A disconnected share is not an empty library. Validate before marking
+    // anything pending so startup refresh cannot erase its cached tracks.
+    if directories.is_empty() {
+        bail!("No music directories configured; library retained");
+    }
+    for directory in directories {
+        std::fs::read_dir(directory).map_err(|err| {
+            anyhow::anyhow!(
+                "Music directory unavailable: {}: {}; library retained",
+                directory,
+                err
+            )
+        })?;
+    }
     let start_time = Instant::now();
     let is_initial_scan = !db::get_init(conn)?;
 
@@ -52,6 +66,7 @@ pub fn scan_library(
     let mut added = 0;
     let mut moved = 0;
     let mut unchanged = 0;
+    let mut failed = 0;
     let mut batch = Vec::with_capacity(BATCH_SIZE);
 
     // Phase 2: Stream through files with globwalk - discover AND process in single pass
@@ -72,6 +87,7 @@ pub fn scan_library(
                         added += batch_result.added;
                         moved += batch_result.moved;
                         unchanged += batch_result.unchanged;
+                        failed += batch_result.failed;
                         processed_files += batch.len();
 
                         // Emit progress after processing each batch
@@ -81,7 +97,8 @@ pub fn scan_library(
                     }
                 }
                 Err(e) => {
-                    eprintln!("Error reading entry: {}", e);
+                    // Do not prune unvisited tracks after an incomplete walk.
+                    return Err(e.into());
                 }
             }
         }
@@ -93,10 +110,15 @@ pub fn scan_library(
         added += batch_result.added;
         moved += batch_result.moved;
         unchanged += batch_result.unchanged;
+        failed += batch_result.failed;
         processed_files += batch.len();
 
         // Emit final progress
         progress_callback(ScanProgress::processing(processed_files, total_files));
+    }
+
+    if failed > 0 {
+        bail!("{} music file(s) could not be read; missing-track cleanup skipped. Retry after fixing the files", failed);
     }
 
     // Phase 3: Delete tracks that weren't processed (deleted files)
@@ -127,6 +149,7 @@ struct BatchResult {
     added: usize,
     moved: usize,
     unchanged: usize,
+    failed: usize,
 }
 
 fn process_batch(
@@ -143,6 +166,7 @@ fn process_batch(
             Ok(m) => m,
             Err(e) => {
                 eprintln!("Error getting metadata for {:?}: {}", path, e);
+                result.failed += 1;
                 continue;
             }
         };
@@ -162,6 +186,7 @@ fn process_batch(
                     Ok(h) => h,
                     Err(e) => {
                         eprintln!("Error hashing {:?}: {}", path, e);
+                        result.failed += 1;
                         continue;
                     }
                 };
@@ -190,7 +215,8 @@ fn process_batch(
                         match insert_new_track(path, file_size, modified_time, &hash, &tx) {
                             Ok(_) => result.added += 1,
                             Err(e) => {
-                                eprintln!("Error inserting track {:?}: {}", path, e)
+                                eprintln!("Error inserting track {:?}: {}", path, e);
+                                result.failed += 1;
                             }
                         }
                     }
@@ -216,13 +242,15 @@ fn process_batch(
                             Ok(h) => h,
                             Err(e) => {
                                 eprintln!("Error hashing {:?}: {}", path, e);
+                                result.failed += 1;
                                 continue;
                             }
                         };
                         match insert_new_track(path, file_size, modified_time, &hash, &tx) {
                             Ok(_) => result.added += 1,
                             Err(e) => {
-                                eprintln!("Error inserting track {:?}: {}", path, e)
+                                eprintln!("Error inserting track {:?}: {}", path, e);
+                                result.failed += 1;
                             }
                         }
                     }
@@ -318,4 +346,136 @@ fn insert_new_track(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod refresh_tests {
+    use super::*;
+    use include_dir::{include_dir, Dir};
+    use lofty::config::WriteOptions;
+    use lofty::prelude::{Accessor, TagExt, TaggedFileExt};
+    use rusqlite_migration::Migrations;
+
+    fn add_metadata(path: &std::path::Path, title: &str) {
+        let mut file = lofty::read_from_path(path).unwrap();
+        let tag = file.primary_tag_mut().unwrap();
+        tag.set_title(title.into());
+        tag.set_artist("test artist".into());
+        tag.set_album("test album".into());
+        tag.save_to_path(path, WriteOptions::default()).unwrap();
+    }
+
+    fn test_database() -> Connection {
+        static MIGRATIONS: Dir = include_dir!("$CARGO_MANIFEST_DIR/migrations");
+        let mut conn = Connection::open_in_memory().unwrap();
+        Migrations::from_directory(&MIGRATIONS)
+            .unwrap()
+            .to_latest(&mut conn)
+            .unwrap();
+        conn
+    }
+
+    #[test]
+    fn unavailable_or_unconfigured_directories_do_not_modify_library() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE tracks (id INTEGER, scan_status INTEGER);
+                            INSERT INTO tracks VALUES (1, 1);",
+        )
+        .unwrap();
+        assert!(
+            scan_library(&[], &mut conn, &|_| {}, DetectionMethod::Metadata)
+                .unwrap_err()
+                .to_string()
+                .contains("No music directories")
+        );
+        let missing = std::env::temp_dir().join(format!(
+            "lrcget-missing-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        assert!(scan_library(
+            &[missing.to_string_lossy().into_owned()],
+            &mut conn,
+            &|_| {},
+            DetectionMethod::Metadata
+        )
+        .unwrap_err()
+        .to_string()
+        .contains("Music directory unavailable"));
+        let status: i64 = conn
+            .query_row("SELECT scan_status FROM tracks WHERE id=1", [], |row| {
+                row.get(0)
+            })
+            .unwrap();
+        assert_eq!(status, 1);
+    }
+
+    #[test]
+    fn repeated_incremental_scan_discovers_additions_and_removals_without_writing_files() {
+        let directory = std::env::temp_dir().join(format!(
+            "lrcget-refresh-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(SystemTime::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir(&directory).unwrap();
+        let mp3 = directory.join("first.mp3");
+        let lrc = directory.join("first.lrc");
+        let bytes = include_bytes!("../../tests/fixtures/embedding.mp3");
+        std::fs::write(&mp3, bytes).unwrap();
+        add_metadata(&mp3, "first");
+        let original_mp3 = std::fs::read(&mp3).unwrap();
+        std::fs::write(&lrc, "[00:00.00]human lyrics\n").unwrap();
+        let mut conn = test_database();
+        let directories = vec![directory.to_string_lossy().into_owned()];
+        let first = scan_library(&directories, &mut conn, &|_| {}, DetectionMethod::Hash).unwrap();
+        assert_eq!(first.added, 1);
+        assert!(first.is_initial_scan);
+        let second = scan_library(&directories, &mut conn, &|_| {}, DetectionMethod::Hash).unwrap();
+        assert_eq!(second.unchanged, 1);
+        assert!(!second.is_initial_scan);
+        assert_eq!(std::fs::read(&mp3).unwrap(), original_mp3);
+        assert_eq!(
+            std::fs::read_to_string(&lrc).unwrap(),
+            "[00:00.00]human lyrics\n"
+        );
+        std::fs::write(
+            directory.join("second.flac"),
+            include_bytes!("../../tests/fixtures/embedding.flac"),
+        )
+        .unwrap();
+        add_metadata(&directory.join("second.flac"), "second");
+        std::fs::remove_file(&mp3).unwrap();
+        let corrupt = directory.join("broken.mp3");
+        std::fs::write(&corrupt, b"corrupt audio").unwrap();
+        assert!(
+            scan_library(&directories, &mut conn, &|_| {}, DetectionMethod::Hash)
+                .unwrap_err()
+                .to_string()
+                .contains("cleanup skipped")
+        );
+        let retained: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM tracks WHERE file_path=?",
+                [mp3.to_string_lossy().as_ref()],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(retained, 1);
+        std::fs::remove_file(corrupt).unwrap();
+        let third = scan_library(&directories, &mut conn, &|_| {}, DetectionMethod::Hash).unwrap();
+        assert_eq!(third.total_files, 1);
+        assert_eq!(third.deleted, 1);
+        assert_eq!(
+            std::fs::read_to_string(&lrc).unwrap(),
+            "[00:00.00]human lyrics\n"
+        );
+        std::fs::remove_dir_all(&directory).unwrap();
+    }
 }
