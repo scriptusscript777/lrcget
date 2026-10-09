@@ -9,12 +9,12 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 The original LRCGET project and its authors retain their existing credits.
 
 This branch includes local export and library-refresh improvements in
-`2.2.0+local.6`. See [local changes and verification](LOCAL_CHANGES.md) for the
+`2.2.0+local.7`. See [local changes and verification](LOCAL_CHANGES.md) for the
 workflow, safeguards, compatibility limits and upstream contribution status.
 The upstream download links below refer to upstream releases, not this build.
 
-[Rick Lidgett's release and installer](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.6)
-include [feature screenshots and usage instructions](docs/releases/2.2.0-local.6.md).
+[Rick Lidgett's release and installer](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.7)
+include [waveform screenshots and usage instructions](docs/releases/2.2.0-local.7.md).
 
 LRCGET will scan every files in your chosen directory for music files, then and try to download lyrics to a LRC files having the same name and save them to the same directory as your music files.
 

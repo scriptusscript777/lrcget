@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.6`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.7`, based on upstream tag `2.2.0`.
 
 The timing-step dropdown and loop-context inputs use shared light/dark control
 styles and a matching native color scheme so their values/options stay readable.
@@ -25,6 +25,28 @@ styles and a matching native color scheme so their values/options stay readable.
 
 Fine timing controls are editing tools, not automatic proof of singer alignment.
 Phrase looping follows playback updates and is not a sample-accurate audio loop.
+
+## Waveform
+
+The lyrics editor adds a compact waveform with a time ruler, playback cursor,
+zoom/fit controls and horizontal panning when zoomed. Click or use the focused
+waveform's arrow keys to seek. It uses the existing player and follows playback
+speed and phrase looping; it does not change lyric text or timing.
+
+Peak extraction uses the existing Symphonia decoder on a background worker.
+There is no second player, browser audio decoder, external executable or saved
+WAV file. A first preview requires one read/decode pass; later openings reuse
+cached peaks. Zoom, seeking, playback and theme changes do not decode again.
+Cache invalidation uses canonical file path, size and modification time; tag
+changes can also rebuild the preview. Changes that preserve both size and
+modification time are not detected. Up to 128 cached previews are retained in
+the application's cache directory, with at most 24,000 peaks per preview.
+Audio up to four hours is supported. Missing/unsupported audio or unavailable
+cache storage never prevents lyric editing or the normal player controls.
+
+The waveform represents the whole mix, not just the singer. It is a manual
+editing aid, not vocal detection or proof of synchronization. Peak bins may be
+coarser than the editor's 10 ms adjustment step for long recordings.
 
 ## Safe Exports
 
@@ -76,17 +98,26 @@ alignment against the singer.
 
 For this local build:
 
-- 170 frontend tests and 40 Rust tests passed. New tests cover synced history,
+- 205 frontend tests and 45 Rust tests passed. New tests cover synced history,
   configurable steps, looping, in-flight saves and export submission handling.
 - Rust tests cover failed staging, rolling backups, sidecar coexistence,
   symlink refusal and failed embedding preserving the source.
+- Waveform tests cover peak compaction, stereo magnitudes, cache reuse/repair,
+  source changes, stale responses, viewport bounds, keyboard/ARIA controls,
+  loading/error/retry states and canvas cleanup. A separately run generated
+  WAV/MP3/FLAC/Ogg integration test matches existing-player duration, reuses
+  caches and confirms unchanged source bytes.
 - Frontend lint passed with no errors and 78 existing warnings.
 - Frontend build, release Rust check and Debian package build passed.
 - An isolated Linux desktop test verified startup discovery, actual F5 discovery
-  of added audio and a second F5 removing a deleted library entry.
+  of added audio and a second F5 removing a deleted library entry. Opening the
+  native editor also generated and rendered the waveform from fixture audio.
 - Browser interaction tests with a mocked backend verified the editor's timing
   step, undo/redo buttons and shortcuts, and looping commands. Screenshots were
   inspected at 1280x900 and 900x700. This is not an acoustic timing test.
+- Browser waveform checks cover visible canvas pixels, paused/keyboard seeking,
+  zoom/pan/fit, playback-speed cursor updates and one peak-data request across
+  those interactions. The waveform strip also fits a 400px test container.
 - Light/dark browser checks verify readable dropdown options and numeric fields
   at a minimum 4.5:1 computed text contrast, with matching native color schemes.
 

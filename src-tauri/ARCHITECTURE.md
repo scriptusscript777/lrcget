@@ -1,6 +1,6 @@
 # LRCGET Tauri Architecture
 
-Local build 2.2.0+local.6: MP3 embedded export replaces all USLT/SYLT
+Local build 2.2.0+local.7: MP3 embedded export replaces all USLT/SYLT
 language and description variants, preventing stale lyrics from winning player
 selection. Unrelated tags and artwork are retained; audio is not re-encoded.
 Startup and F5 use the normal incremental scan. Unconfigured/unavailable music
@@ -14,6 +14,22 @@ Preparation must succeed before replacing the file; the previous version is
 retained in a rolling `.lrcget.bak` sibling. Temporary files use `.tmp` suffixes
 to avoid being scanned as music. Symlink/non-file targets are refused. Embedded
 audio is modified in a complete staged copy and reparsed before replacement.
+
+`get_audio_waveform(track_id?, file_path?)` resolves a library/file source, then
+runs `waveform::load` on a blocking worker without the DB or player lock.
+Symphonia uses the same default decoder/format options as Kira. Only peak
+magnitudes, duration and seconds-per-bin return to the editor, never PCM audio.
+One extraction mutex serializes cache misses; a waiting duplicate reads the
+completed cache. Peak bins compact in pairs at 24,000 entries, bounding memory
+for audio up to four hours. Every channel contributes its absolute peak, so
+anti-phase stereo is not canceled. Decode errors abort instead of dropping time.
+Atomic best-effort JSON caches live under `app_cache_dir()/waveforms-v1` with
+version, canonical-path key and size/mtime fingerprint. Invalid caches rebuild;
+read-only cache storage is nonfatal. Oldest previews are pruned above 128 files.
+Neither extraction nor cache storage touches music, tags, lyrics or SQLite.
+`seek_track` accepts optional `preserve_paused`; only waveform inspection opts
+in. Existing seek/loop callers keep resume behavior. A newly loaded editor
+source skips a second load while the old stopped player-state event is pending.
 
 ## Architecture Overview
 

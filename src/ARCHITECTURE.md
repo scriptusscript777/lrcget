@@ -4,7 +4,7 @@
 
 Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Session state only; persistence in Rust/SQLite.
 
-Local build 2.2.0+local.6: the lyrics editor defaults to synced LRC export
+Local build 2.2.0+local.7: the lyrics editor defaults to synced LRC export
 selected and loads the saved embedding preference when experimental embedding
 is enabled. Disabled embedding cannot be submitted, and publishing still requires confirmation.
 The library performs an incremental quick-hash scan on every opening. F5 invokes the same
@@ -127,6 +127,7 @@ Shared fields are `export_txt`, `export_lrc`, and `export_embedded`. `auto_expor
 - Synced line nudge shortcuts: `Left`/`Right` adjust selected line start by `-/+100ms`; `Shift+Left`/`Shift+Right` adjust selected line end by `-/+100ms`
 - End timestamp visibility: in synced rows, the end timestamp pill stays visible even without hover when it differs from the next line's start timestamp (helps surface gaps/overlaps), and color-codes direction (`before` = gap, `after` = overlap)
 - Player bar: playback speed control (`0.5x`-`2.0x`)
+- Waveform: `EditLyricsV2Waveform.vue` is a compact canvas strip below the existing transport. `useAudioWaveform` requests backend-owned `get_audio_waveform` data once per source/mount (explicit retry on error), invalidates stale responses, and keeps no shared JS cache. `waveform-viewport.js` owns bounded zoom/pan, time/pixel mapping, and max-peak pixel aggregation. Resize/DPR and theme changes redraw static peaks/ruler; playback only moves a CSS playhead. Zoom anchors at a visible playhead or the window midpoint; a native range pans while paused. Click and isolated slider keyboard controls emit seconds without changing lyric timestamps. `useWaveformPlayback` hides wrong-track/loading progress, loads the editor source before seeking, and awaits `usePlayer.seek(target, { preservePaused })` for toast errors; pause is preserved when the loaded editor source is paused, including its first queued seek, without a pause-after-seek race. Canvas RAF and resize/theme observers are disposed on unmount. Component tests use an in-memory Vue renderer for keyboard/ARIA controls, loading/error/retry states, minute-rollover formatting, and canvas cleanup.
 - Line status: each synced line row shows a tiny word-sync status dot
 - Word timing: multi-separator selection (Ctrl/Cmd+click + Shift+click), merge separators (`Delete`/`Backspace`), hover split preview snapped to grapheme boundaries, double-click split at cursor, and `Z` syncs selected separator then advances (last-word sync advances to next line)
 - Narrow segment hint: when a segment is too narrow to show text, a visible hint is rendered beneath it with the next word text

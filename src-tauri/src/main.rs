@@ -14,6 +14,7 @@ pub mod player;
 pub mod scanner;
 pub mod state;
 pub mod utils;
+pub mod waveform;
 pub mod word_segmentation;
 
 use persistent_entities::{PersistentAlbum, PersistentArtist, PersistentConfig, PersistentTrack, PlayableTrack};
@@ -1240,6 +1241,35 @@ async fn flag_lyrics(
 }
 
 #[tauri::command]
+async fn get_audio_waveform(
+    track_id: Option<i64>,
+    file_path: Option<String>,
+    app_handle: AppHandle,
+) -> Result<waveform::Waveform, String> {
+    let source = if let Some(id) = track_id {
+        app_handle
+            .db(|db| db::get_track_by_id(id, db))
+            .map_err(|error| error.to_string())?
+            .file_path
+    } else {
+        file_path
+            .filter(|path| !path.is_empty())
+            .ok_or_else(|| "Choose an audio track first".to_owned())?
+    };
+    let cache = app_handle
+        .path()
+        .app_cache_dir()
+        .map_err(|error| error.to_string())?;
+    // Audio decoding never runs on the UI thread or under the player/DB lock.
+    tauri::async_runtime::spawn_blocking(move || {
+        waveform::load(std::path::Path::new(&source), &cache)
+    })
+    .await
+    .map_err(|error| error.to_string())?
+    .map_err(|error| format!("{error:#}"))
+}
+
+#[tauri::command]
 async fn play_track(
     track_id: Option<i64>,
     file_path: Option<String>,
@@ -1506,11 +1536,18 @@ fn resume_track(app_state: tauri::State<AppState>) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn seek_track(position: f64, app_state: tauri::State<AppState>) -> Result<(), String> {
+fn seek_track(
+    position: f64,
+    preserve_paused: Option<bool>,
+    app_state: tauri::State<AppState>,
+) -> Result<(), String> {
+    if !position.is_finite() || position < 0.0 {
+        return Err("Seek position must be a finite nonnegative time".to_owned());
+    }
     let mut player_guard = app_state.player.lock().map_err(|e| e.to_string())?;
 
     if let Some(ref mut player) = *player_guard {
-        player.seek(position);
+        player.seek_with_options(position, preserve_paused.unwrap_or(false));
     }
 
     Ok(())
@@ -1641,6 +1678,7 @@ async fn main() {
             get_track_ids_with_lyrics,
             flag_lyrics,
             play_track,
+            get_audio_waveform,
             pause_track,
             resume_track,
             seek_track,

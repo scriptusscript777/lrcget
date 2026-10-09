@@ -107,15 +107,24 @@ impl Player {
     }
 
     pub fn seek(&mut self, position: f64) {
+        self.seek_with_options(position, false);
+    }
+
+    pub fn seek_with_options(&mut self, position: f64, preserve_paused: bool) {
         if let Some(ref mut sound_handle) = self.sound_handle {
-            match sound_handle.state() {
-                PlaybackState::Playing => sound_handle.seek_to(position),
-                _ => {
-                    sound_handle.seek_to(position);
-                    sound_handle.resume(Tween::default());
-                }
+            let should_resume = Self::resume_after_seek(sound_handle.state(), preserve_paused);
+            sound_handle.seek_to(position);
+            if should_resume {
+                sound_handle.resume(Tween::default());
             }
         }
+    }
+
+    fn resume_after_seek(state: PlaybackState, preserve_paused: bool) -> bool {
+        // Waveform inspection can seek silently; existing seek/loop callers keep
+        // their original resume behavior. Do not resume then pause (audible blip).
+        !matches!(state, PlaybackState::Playing)
+            && !(preserve_paused && matches!(state, PlaybackState::Paused | PlaybackState::Pausing))
     }
 
     pub fn stop(&mut self) {
@@ -168,6 +177,17 @@ impl Player {
 #[cfg(test)]
 mod tests {
     use super::Player;
+    use kira::sound::PlaybackState;
+
+    #[test]
+    fn waveform_seek_preserves_pause_without_changing_normal_seek() {
+        assert!(!Player::resume_after_seek(PlaybackState::Paused, true));
+        assert!(!Player::resume_after_seek(PlaybackState::Pausing, true));
+        assert!(Player::resume_after_seek(PlaybackState::Paused, false));
+        assert!(!Player::resume_after_seek(PlaybackState::Playing, false));
+        assert!(!Player::resume_after_seek(PlaybackState::Playing, true));
+        assert!(Player::resume_after_seek(PlaybackState::Stopped, true));
+    }
     use kira::Decibels;
 
     #[test]

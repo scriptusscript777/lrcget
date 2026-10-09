@@ -70,16 +70,18 @@ export function usePlayer() {
     return invoke('resume_track')
   }
 
-  const seek = position => {
+  const seek = async (position, { preservePaused = false, sourceReady = false } = {}) => {
     if (!playingTrack.value) {
       return
     }
 
-    if (status.value === 'stopped') {
-      invoke('play_track', { trackId: playingTrack.value.id })
+    if (status.value === 'stopped' && !sourceReady) {
+      // File-based editor sources have no library ID. Await playback creation
+      // before seeking so a stopped player cannot lose the seek command.
+      await playTrack(playingTrack.value)
     }
 
-    invoke('seek_track', { position })
+    return invoke('seek_track', { position, preservePaused })
   }
 
   const stop = () => {

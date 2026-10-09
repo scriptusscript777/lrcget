@@ -71,6 +71,11 @@
           @seek="seek"
           @set-playback-speed="setPlaybackSpeed"
         />
+        <EditLyricsV2Waveform
+          :audio-source="audioSource"
+          :progress="waveformProgress"
+          @seek="handleWaveformSeek"
+        />
       </div>
 
       <!-- Instrumental State -->
@@ -157,6 +162,7 @@ import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import EditLyricsV2DebugModal from '@/components/library/edit-lyrics-v2/EditLyricsV2DebugModal.vue'
 import EditLyricsV2HeaderActions from '@/components/library/edit-lyrics-v2/EditLyricsV2HeaderActions.vue'
 import EditLyricsV2PlayerBar from '@/components/library/edit-lyrics-v2/EditLyricsV2PlayerBar.vue'
+import EditLyricsV2Waveform from '@/components/library/edit-lyrics-v2/EditLyricsV2Waveform.vue'
 import PlainLyricsCodeEditor from '@/components/library/edit-lyrics-v2/PlainLyricsCodeEditor.vue'
 import SyncedLyricsEditor from '@/components/library/edit-lyrics-v2/SyncedLyricsEditor.vue'
 import KeyboardShortcutsModal from '@/components/library/edit-lyrics-v2/KeyboardShortcutsModal.vue'
@@ -173,6 +179,7 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { readText } from '@tauri-apps/plugin-clipboard-manager'
 import { invoke } from '@tauri-apps/api/core'
 import { parseLrcLines } from '@/utils/lyricsfile.js'
+import { useWaveformPlayback } from '@/composables/edit-lyrics-v2/useWaveformPlayback.js'
 
 const props = defineProps({
   // Audio source for playback (library track or file-based track)
@@ -219,6 +226,16 @@ const toast = useToast()
 const audioSourceRef = toRef(props, 'audioSource')
 const lyricsfileRef = toRef(props, 'lyricsfile')
 const trackIdRef = toRef(props, 'trackId')
+
+const { waveformProgress, initializeAudio, seekWaveform: handleWaveformSeek } = useWaveformPlayback({
+  audioSource: audioSourceRef,
+  playingTrack,
+  status,
+  progress,
+  playTrack,
+  seek,
+  toast,
+})
 
 const progressMs = computed(() => Math.max(0, Math.round(progress.value * 1000)))
 
@@ -546,15 +563,7 @@ onMounted(() => {
   initializeLyrics()
 
   // Handle playback - ensure correct audio source is loaded
-  const isPlayingCorrectTrack =
-    audioSourceRef.value?.type === 'library'
-      ? playingTrack.value?.id === audioSourceRef.value?.id
-      : playingTrack.value?.file_path === audioSourceRef.value?.file_path
-
-  if (!playingTrack.value || !isPlayingCorrectTrack) {
-    playTrack(audioSourceRef.value)
-    pause()
-  }
+  void initializeAudio()
 
   bindHotkeys()
   bindSyncedHotkeys()
