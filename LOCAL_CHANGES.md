@@ -4,7 +4,22 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.13`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.14`, based on upstream tag `2.2.0`.
+
+## Word Editing and Lyric Following (.14)
+
+Rick Lidgett added optional playback-driven lyric selection in the expanded
+word lane. Follow Lyrics starts enabled; manual selection pins a line and the
+toggle resumes following. Loops, marker previews, word drags, inline edits and
+multi-selection block automatic selection. Seeking backward selects the correct
+occurrence; blank cues and lyric gaps never select a future line.
+
+Edit word, F2 and right-click open a compact spelling form. Enter applies and
+Escape cancels. A correction preserves whitespace and all word timestamps and
+is one undoable synced edit. Stale source/timing snapshots, empty words and
+multi-word replacements are rejected; explicit split/merge remain separate.
+Plain and Synced retain independent working text, and source TXT is untouched.
+327 frontend tests and browser checks cover editing/following in both themes.
 
 ## Loop Safety Review (.13)
 

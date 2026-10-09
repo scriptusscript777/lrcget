@@ -4,7 +4,16 @@
     class="word-segment absolute flex items-center justify-center py-1 text-sm select-none h-full overflow-visible"
     :class="segmentClass"
     :style="segmentStyle"
-    :title="`${word.text} (${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)})`"
+    :title="`${word.text} (${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)}) - F2 or right-click to edit word`"
+    tabindex="0"
+    role="button"
+    :aria-label="`Word ${wordIndex + 1}: ${word.text.trim()}. Edit with F2`"
+    :aria-pressed="selected"
+    @focus="emit('select-word', wordIndex)"
+    @click.stop="emit('select-word', wordIndex)"
+    @contextmenu.prevent.stop="requestWordEdit"
+    @keydown.f2.prevent.stop="requestWordEdit"
+    @keydown.enter.prevent.stop="requestWordEdit"
     @mouseenter="handleSegmentHover"
     @mousemove="handleSegmentHover"
     @mouseleave="handleSegmentLeave"
@@ -39,9 +48,11 @@
 import { computed, ref } from 'vue'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
-const emit = defineEmits(['split-at'])
+const emit = defineEmits(['split-at', 'select-word', 'edit-word'])
 
 const props = defineProps({
+  selected: Boolean,
+  editing: Boolean,
   word: {
     type: Object,
     required: true,
@@ -265,6 +276,7 @@ const segmentStyle = computed(() => {
 })
 
 const handleSegmentDoubleClick = event => {
+  if (props.editing) return
   const splitPreview = getSplitPreview(event.clientX)
   if (!splitPreview) {
     return
@@ -278,7 +290,12 @@ const handleSegmentDoubleClick = event => {
 }
 
 const handleSegmentHover = event => {
-  hoverPreview.value = getSplitPreview(event.clientX)
+  hoverPreview.value = props.editing ? null : getSplitPreview(event.clientX)
+}
+
+const requestWordEdit = () => {
+  emit('select-word', props.wordIndex)
+  emit('edit-word', props.wordIndex)
 }
 
 const handleSegmentLeave = () => {
@@ -291,5 +308,12 @@ const handleSegmentLeave = () => {
 .word-segment {
   user-select: none;
   touch-action: none;
+}
+
+.word-segment[aria-pressed='true'],
+.word-segment:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: -2px;
+  z-index: 10;
 }
 </style>

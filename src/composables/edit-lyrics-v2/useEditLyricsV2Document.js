@@ -27,11 +27,12 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   const timingStepMs = ref(100)
   const timingStep = () =>
     [10, 25, 50, 100].includes(Number(timingStepMs.value)) ? Number(timingStepMs.value) : 100
-  const documentSnapshot = () => JSON.stringify({
-    plain: plainLyrics.value,
-    synced: syncedLines.value,
-    instrumental: isInstrumental.value,
-  })
+  const documentSnapshot = () =>
+    JSON.stringify({
+      plain: plainLyrics.value,
+      synced: syncedLines.value,
+      instrumental: isInstrumental.value,
+    })
   let savedSnapshot = ''
   const history = useLyricHistory(
     () => ({ lines: syncedLines.value, instrumental: isInstrumental.value }),
@@ -262,16 +263,23 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   }
 
   const shiftWordBoundariesByOffset = (words, offsetMs) => {
-    if (!Array.isArray(words) || words.length === 0 || !Number.isFinite(offsetMs) || offsetMs === 0) {
+    if (
+      !Array.isArray(words) ||
+      words.length === 0 ||
+      !Number.isFinite(offsetMs) ||
+      offsetMs === 0
+    ) {
       return words
     }
 
     return words.map(word => ({
       ...word,
       ...(Number.isFinite(word?.start_ms)
-        ? { start_ms: Math.max(0, Math.round(word.start_ms + offsetMs)) } : {}),
+        ? { start_ms: Math.max(0, Math.round(word.start_ms + offsetMs)) }
+        : {}),
       ...(Number.isFinite(word?.end_ms)
-        ? { end_ms: Math.max(0, Math.round(word.end_ms + offsetMs)) } : {}),
+        ? { end_ms: Math.max(0, Math.round(word.end_ms + offsetMs)) }
+        : {}),
     }))
   }
 
@@ -418,6 +426,63 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
       text: newText,
       words: [],
     }))
+  }
+
+  const updateWordText = ({ lineIndex, line: original, wordIndex, text, words }) => {
+    const line = syncedLines.value[lineIndex]
+    if (
+      !Number.isInteger(lineIndex) ||
+      !line ||
+      line !== original ||
+      !Number.isInteger(wordIndex) ||
+      !Array.isArray(words) ||
+      wordIndex < 0 ||
+      wordIndex >= words.length ||
+      typeof text !== 'string'
+    )
+      return false
+    const replacement = text.trim()
+    if (
+      !replacement ||
+      /\s/.test(replacement) ||
+      words.some(word => !word || typeof word.text !== 'string') ||
+      words.map(word => word.text).join('') !== line.text
+    )
+      return false
+    // Reject stale saved timing snapshots; generated word timings are allowed only for this exact line.
+    if (
+      Array.isArray(line.words) &&
+      line.words.length &&
+      line.words.every(word => word && Number.isFinite(word.start_ms)) &&
+      line.words.map(word => word.text).join('') === line.text &&
+      (line.words.length !== words.length ||
+        line.words.some(
+          (word, index) =>
+            word.text !== words[index].text ||
+            word.start_ms !== words[index].start_ms ||
+            word.end_ms !== words[index].end_ms
+        ))
+    )
+      return false
+    const oldText = words[wordIndex].text
+    const nextText =
+      (oldText.match(/^\s*/)?.[0] || '') + replacement + (oldText.match(/\s*$/)?.[0] || '')
+    if (nextText === oldText) return true
+    const nextWords = words.map((word, index) => ({
+      ...word,
+      ...(index === wordIndex ? { text: nextText } : {}),
+    }))
+    const end = line.end_ms
+    const durationMs = Number.isFinite(audioSource?.value?.duration)
+      ? audioSource.value.duration * 1000
+      : end
+    if (!waveformMarkerBounds({ ...line, words: nextWords }, end, durationMs)) return false
+    withUpdatedLine(lineIndex, current => ({
+      ...current,
+      text: nextWords.map(word => word.text).join(''),
+      words: nextWords,
+    }))
+    return true
   }
 
   const setInstrumental = value => {
@@ -567,6 +632,7 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     saveLyrics,
     ensureSelectedSyncedLine,
     updateLineText,
+    updateWordText,
     eraseWordTimings,
     setInstrumental,
   }

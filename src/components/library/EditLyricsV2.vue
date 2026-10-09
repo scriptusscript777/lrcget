@@ -92,6 +92,7 @@
           :timing-step-ms="timingStepMs"
           @update-markers="updateWaveformMarkers"
           @preview-markers="markerPreview = $event"
+          @marker-editing-change="markerEditing = $event"
           @seek="handleWaveformSeek"
         />
       </div>
@@ -140,6 +141,7 @@
         :can-redo="canRedo"
         :loop-enabled="loopEnabled"
         :can-loop="canLoop"
+        :marker-editing="markerEditing"
         @word-timing-expanded-change="wordTimingExpanded = $event"
         @undo="undo"
         @redo="redo"
@@ -167,6 +169,7 @@
         @update:words="updateLineWords"
         @word-timing-edited="handleWordTimingEdited"
         @update-line-text="handleUpdateLineText"
+        @edit-word-text="handleEditWordText"
         @mark-as-instrumental="setInstrumental(true)"
       />
 
@@ -306,6 +309,7 @@ const {
   saveLyrics,
   ensureSelectedSyncedLine,
   updateLineText,
+  updateWordText,
   setInstrumental,
 } = useEditLyricsV2Document({
   audioSource: audioSourceRef,
@@ -334,6 +338,7 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
 })
 
 const markerPreview = ref(null)
+const markerEditing = ref(false)
 const { playLine, playLineAtOffset, resumeOrPlay, loopEnabled, loopLeadSeconds, loopTailSeconds, canLoop, toggleLoop } = useEditLyricsV2Playback({
   audioSource: audioSourceRef,
   syncedLines,
@@ -387,6 +392,9 @@ const updateLineWords = ({ lineIndex, words, lineStartMs }) => {
 
 const handleUpdateLineText = (lineIndex, newText) => {
   updateLineText(lineIndex, newText)
+}
+const handleEditWordText = payload => {
+  if (!updateWordText(payload)) toast.error('Word edit not applied: the lyric or timing changed. Reopen the word editor.')
 }
 
 const handleUpdateSelectedLineIndices = payload => {

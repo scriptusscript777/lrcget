@@ -44,6 +44,14 @@
         </div>
 
         <div class="flex flex-wrap items-center gap-2">
+          <button
+            v-if="!wordTextEdit"
+            type="button"
+            class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
+            title="Edit selected word (F2 or right-click a word box)"
+            :disabled="!words[selectedWordIndex] || !!dragState || !!dragStartPos"
+            @click="startWordTextEdit(selectedWordIndex)"
+          ><Pencil class="w-3.5 h-3.5" /><span>Edit word</span></button>
           <label class="inline-flex items-center gap-1" title="Word timing zoom">
             <Magnify class="h-3.5 w-3.5" />
             <input
@@ -68,6 +76,7 @@
           <button
             class="button button-primary text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="syncWordTitle"
+            :disabled="!!wordTextEdit"
             @click="handleSyncWord"
           >
             <Equal class="w-3.5 h-3.5" />
@@ -76,6 +85,7 @@
           <button
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             title="Reset word timings to default state"
+            :disabled="!!wordTextEdit"
             @click="handleResetWords"
           >
             <Close class="w-3.5 h-3.5" />
@@ -83,6 +93,26 @@
           </button>
         </div>
       </div>
+
+      <form
+        v-if="wordTextEdit"
+        class="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-xs"
+        @submit.prevent="applyWordTextEdit"
+        @keydown.esc.prevent.stop="cancelWordTextEdit"
+      >
+        <label for="word-text-edit-input" class="shrink-0">Edit word</label>
+        <input
+          id="word-text-edit-input"
+          ref="wordTextInput"
+          v-model="wordText"
+          class="input min-w-0 w-48 max-w-full rounded px-2 py-1 text-sm"
+          type="text"
+          autocomplete="off"
+          :aria-invalid="!canApplyWordText"
+        />
+        <button type="submit" class="button rounded bg-hoa-1500 p-1.5 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400 disabled:opacity-40" title="Apply word edit (Enter)" aria-label="Apply word edit" :disabled="!canApplyWordText"><Check class="h-4 w-4" /></button>
+        <button type="button" class="button button-normal rounded p-1.5" title="Cancel word edit (Escape)" aria-label="Cancel word edit" @click="cancelWordTextEdit"><Close class="h-4 w-4" /></button>
+      </form>
 
       <!-- Timeline with word segments -->
       <div
@@ -121,7 +151,11 @@
             :line-end-ms="laneEndMs"
             :timeline-width="timelineWidth"
             :progress-ms="progressMs"
+            :selected="selectedWordIndex === index"
+            :editing="!!wordTextEdit"
             @split-at="handleSegmentSplitAt"
+            @select-word="selectedWordIndex = $event"
+            @edit-word="startWordTextEdit"
           />
 
           <button
@@ -173,12 +207,14 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
+import { computed, onMounted, onUnmounted, ref, shallowRef, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import Equal from '~icons/mdi/equal'
 import Play from '~icons/mdi/play'
 import Close from '~icons/mdi/close'
 import Magnify from '~icons/mdi/magnify-plus-outline'
+import Pencil from '~icons/mdi/pencil-outline'
+import Check from '~icons/mdi/check'
 import { scrollToTimelineTime } from '@/utils/word-timing-viewport.js'
 import SyncedWordTimingSegment from '@/components/library/edit-lyrics-v2/SyncedWordTimingSegment.vue'
 import { useEditLyricsV2WordBoundaryDrag } from '@/composables/edit-lyrics-v2/useEditLyricsV2WordBoundaryDrag.js'
@@ -215,7 +251,7 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:words', 'word-timing-edited', 'play-line', 'select-next-line'])
+const emit = defineEmits(['update:words', 'word-timing-edited', 'play-line', 'select-next-line', 'editing-change', 'word-text-editing-start', 'edit-word-text'])
 
 const timelineElement = ref(null)
 const scrollElement = ref(null)
@@ -228,6 +264,11 @@ const laneStartMs = ref(0)
 const laneEndMs = ref(0)
 const segmentedTokenTexts = ref(null)
 const segmentationRequestId = ref(0)
+const selectedWordIndex = ref(0)
+const wordTextEdit = shallowRef(null)
+const wordText = ref('')
+const wordTextInput = ref(null)
+const canApplyWordText = computed(() => wordText.value.length > 0 && !/\s/u.test(wordText.value))
 
 const playLineTitle = withShortcutTitle(
   'Play line from beginning',
@@ -345,6 +386,66 @@ const {
   onWordTimingEdited: payload => emit('word-timing-edited', payload),
 })
 
+watch(
+  () => Boolean(dragState.value || dragStartPos.value || wordTextEdit.value),
+  editing => emit('editing-change', editing),
+  { flush: 'sync' }
+)
+
+const cancelWordTextEdit = () => {
+  wordTextEdit.value = null
+  wordText.value = ''
+}
+
+const startWordTextEdit = async index => {
+  if (!isWordSyncAvailable.value || dragState.value || dragStartPos.value || !Number.isInteger(index) || !words.value[index]) return
+  selectedWordIndex.value = index
+  wordTextEdit.value = {
+    line: props.selectedLine,
+    lineIndex: props.selectedLineIndex,
+    lineText: props.selectedLine.text,
+    wordIndex: index,
+    words: words.value,
+    snapshot: words.value.map(word => ({ ...word })),
+  }
+  wordText.value = words.value[index].text.trim()
+  emit('word-text-editing-start')
+  await nextTick()
+  if (!wordTextEdit.value) return
+  wordTextInput.value?.focus()
+  wordTextInput.value?.select()
+}
+
+const applyWordTextEdit = () => {
+  const edit = wordTextEdit.value
+  if (!edit || !canApplyWordText.value) return
+  // Recheck the source at submission as well as watching it during the edit.
+  if (edit.line !== props.selectedLine || edit.lineIndex !== props.selectedLineIndex ||
+      edit.lineText !== props.selectedLine?.text || edit.words !== words.value ||
+      edit.snapshot.length !== words.value.length || edit.snapshot.some((word, index) =>
+        word.text !== words.value[index].text || word.start_ms !== words.value[index].start_ms ||
+        word.end_ms !== words.value[index].end_ms
+      )) {
+    cancelWordTextEdit()
+    return
+  }
+  const text = wordText.value
+  cancelWordTextEdit()
+  emit('edit-word-text', {
+    lineIndex: edit.lineIndex,
+    line: edit.line,
+    wordIndex: edit.wordIndex,
+    text,
+    words: edit.words,
+  })
+}
+
+watch(
+  [() => props.selectedLine, () => props.selectedLineIndex, () => props.allLines, words],
+  () => cancelWordTextEdit(),
+  { deep: true, flush: 'sync' }
+)
+
 const playheadPercent = computed(() => {
   if (!isWordSyncAvailable.value) return 0
 
@@ -419,6 +520,7 @@ const getWordEndMs = index => {
 }
 
 const handleBoundaryPointerDown = (rightWordIndex, event) => {
+  if (wordTextEdit.value) return
   const rect = timelineElement.value?.getBoundingClientRect()
   if (!rect?.width) return
   const initialTime = words.value[rightWordIndex]?.start_ms
@@ -448,6 +550,7 @@ const getBoundaryLineClass = index => {
 }
 
 const handleSyncWord = () => {
+  if (wordTextEdit.value) return
   const selectedBoundaryBeforeSync = selectedBoundaryIndex.value
   const synced = syncSelectedBoundary(props.progressMs)
 
@@ -461,6 +564,7 @@ const handleSyncWord = () => {
 }
 
 const handleSyncWordNoAdvance = () => {
+  if (wordTextEdit.value) return
   syncSelectedBoundary(props.progressMs, { advance: false })
 }
 
@@ -492,11 +596,13 @@ const getWordEndMsFromList = (wordsList, index) => {
 }
 
 const handleDeleteSelectedBoundaries = () => {
+  if (wordTextEdit.value) return
   if (!isWordSyncAvailable.value) return
   deleteSelectedBoundaries()
 }
 
 const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
+  if (wordTextEdit.value) return
   if (!isWordSyncAvailable.value) {
     return
   }
@@ -615,6 +721,7 @@ watch(
     cancelBoundaryInteraction()
     // Only reset boundary index when actually changing to a different line
     if (newIndex !== oldIndex) {
+      selectedWordIndex.value = 0
       manualInspection.value = false
       if (scrollElement.value) scrollElement.value.scrollLeft = 0
       resetBoundarySelection()
@@ -634,6 +741,7 @@ watch(
 )
 
 const handleResetWords = async () => {
+  if (wordTextEdit.value) return
   if (!isWordSyncAvailable.value) return
 
   // Clear the words object entirely - this removes persisted word timings.
@@ -742,6 +850,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  emit('editing-change', false)
   disposed = true
   segmentationRequestId.value++
   timelineObserver?.disconnect()

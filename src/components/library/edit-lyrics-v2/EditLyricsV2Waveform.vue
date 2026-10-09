@@ -209,7 +209,7 @@ const props = defineProps({
   nextLineStartMs: { type: Number, default: null },
   timingStepMs: { type: Number, default: 100 },
 })
-const emit = defineEmits(['seek', 'update-markers', 'preview-markers'])
+const emit = defineEmits(['seek', 'update-markers', 'preview-markers', 'marker-editing-change'])
 const isEditorShortcut = event =>
   globalShortcutBindings.some(binding => binding.matches(event)) ||
   event.ctrlKey ||
@@ -245,6 +245,9 @@ const toggleFollow = () => {
 }
 const drag = ref(null)
 const draft = ref(null)
+watch([drag, draft], () => emit('marker-editing-change', !!drag.value || !!draft.value), {
+  flush: 'sync',
+})
 const markerEnd = computed(
   () => props.selectedLine?.end_ms ?? props.nextLineStartMs ?? waveform.value?.duration * 1000
 )

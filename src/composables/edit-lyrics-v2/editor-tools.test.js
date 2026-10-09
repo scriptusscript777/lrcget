@@ -37,6 +37,105 @@ const document = () => {
 }
 
 describe('synced editing history and timing steps', () => {
+  it('corrects word text atomically without shifting timestamps, punctuation spacing or neighboring lines', () => {
+    const { state, scope } = document()
+    state.updateSyncedLines([
+      {
+        ...line(),
+        words: [
+          { text: 'test  ', start_ms: 1000, end_ms: 1400 },
+          { text: 'phrase', start_ms: 1400, end_ms: 2000 },
+        ],
+        text: 'test  phrase',
+      },
+      { ...line(), start_ms: 3000, end_ms: 4000 },
+    ])
+    const original = state.syncedLines.value[0]
+    const neighbor = state.syncedLines.value[1]
+    expect(
+      state.updateWordText({
+        lineIndex: 0,
+        line: original,
+        wordIndex: 0,
+        text: 'best',
+        words: original.words,
+      })
+    ).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({
+      text: 'best  phrase',
+      start_ms: 1000,
+      end_ms: 2000,
+      words: [
+        { text: 'best  ', start_ms: 1000, end_ms: 1400 },
+        { text: 'phrase', start_ms: 1400, end_ms: 2000 },
+      ],
+    })
+    expect(state.syncedLines.value[1]).toBe(neighbor)
+    state.undo()
+    expect(state.syncedLines.value[0]).toEqual(original)
+    state.redo()
+    expect(state.syncedLines.value[0].text).toBe('best  phrase')
+    scope.stop()
+  })
+
+  it('rejects stale, blank, multiword and mistimed word edits without changing the document', () => {
+    const { state, scope } = document()
+    state.updateSyncedLines([
+      {
+        ...line(),
+        words: [
+          { text: 'test ', start_ms: 1000 },
+          { text: 'phrase', start_ms: 1400 },
+        ],
+      },
+    ])
+    const original = state.syncedLines.value[0]
+    const payload = {
+      lineIndex: 0,
+      line: original,
+      wordIndex: 0,
+      words: original.words,
+      text: 'best',
+    }
+    const before = state.syncedLines.value
+    for (const change of [
+      { line: {} },
+      { text: '' },
+      { text: 'two words' },
+      { wordIndex: 9 },
+      {
+        words: [
+          { text: 'test ', start_ms: 1500 },
+          { text: 'phrase', start_ms: 1400 },
+        ],
+      },
+    ])
+      expect(state.updateWordText({ ...payload, ...change })).toBe(false)
+    expect(state.syncedLines.value).toBe(before)
+    scope.stop()
+  })
+
+  it('allows editing generated word boxes and does not overwrite separate plain lyrics', () => {
+    const { state, scope } = document()
+    state.updatePlainLyrics('reference text')
+    state.updateSyncedLines([{ ...line(), words: [] }])
+    const original = state.syncedLines.value[0]
+    expect(
+      state.updateWordText({
+        lineIndex: 0,
+        line: original,
+        wordIndex: 1,
+        text: 'word',
+        words: [
+          { text: 'test ', start_ms: 1000, end_ms: 1400 },
+          { text: 'phrase', start_ms: 1400, end_ms: 2000 },
+        ],
+      })
+    ).toBe(true)
+    expect(state.syncedLines.value[0].text).toBe('test word')
+    expect(state.plainLyrics.value).toBe('reference text')
+    scope.stop()
+  })
   it('retains native word timing tooltips and active highlighting without a hint bubble', async () => {
     const html = await renderToString(
       createSSRApp(SyncedWordTimingSegment, {
@@ -50,7 +149,7 @@ describe('synced editing history and timing steps', () => {
         progressMs: 1500,
       })
     )
-    expect(html).toContain('title="phrase (00:01.000 - 00:02.000)"')
+    expect(html).toContain('title="phrase (00:01.000 - 00:02.000) - F2 or right-click to edit word"')
     expect(html).toContain('font-bold')
     expect(html).toContain('bg-hoa-1500 dark:bg-hoa-1500')
     expect(html).not.toContain('bg-neutral-200')

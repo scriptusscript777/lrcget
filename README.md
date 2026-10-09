@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.13** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.14** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.13/LRCGET_2.2.0%2Blocal.13_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.13)
-| [Loop safety review](docs/releases/2.2.0-local.13.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.14/LRCGET_2.2.0%2Blocal.14_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.14)
+| [Word editing and lyric following](docs/releases/2.2.0-local.14.md)
 | [Editing guide](docs/editing-guide.md)
 | [Full workflow and feature how-to](docs/editing-guide.md#quick-workflow)
 | [Detailed changes](LOCAL_CHANGES.md)
@@ -36,6 +36,10 @@ official upstream release.
   untimed words become rows you can synchronize manually to the recording.
 - Optional word-timing view, collapsed initially, with 1-8x linear zoom,
   playback scrolling and readable highlighting in light/dark themes.
+- **Follow Lyrics** advances the word boxes during playback; selecting a line
+  pins it for editing. Marker previews and loops keep the selected line fixed.
+- Correct a selected word using **Edit word**, F2 or right-click. Enter applies,
+  Escape cancels, and Undo restores it; spelling changes preserve timestamps.
 - Cleaner word editing without the pink selection bubble; canceled drags do
   not commit timing edits, and keyboard shortcuts respect the active tool.
 - Synced LRC export selected by default, optional embedded lyrics, and safer
@@ -47,8 +51,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.13_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.13_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.14_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.14_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -62,6 +66,10 @@ The main phrase editor stays uncluttered; **Word timing** opens the optional
 individual-word tools. Pending marker edits show **Apply Markers** and **Cancel**;
 the lyric-row timestamps stay unchanged until you apply the pair.
 
+![Follow Lyrics advances the word boxes during playback](docs/screenshots/follow-lyrics-light.png)
+
+![Correct one word without changing its timestamps](docs/screenshots/edit-word-light.png)
+
 ![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-light.png)
 
 ![Latest build: double-click waveform zoom and marker preview](docs/screenshots/point-zoom-light.png)
@@ -70,6 +78,10 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 <details>
 <summary>Dark theme and expanded word-timing tools</summary>
+
+![Dark theme: Follow Lyrics](docs/screenshots/follow-lyrics-dark.png)
+
+![Dark theme: direct word correction](docs/screenshots/edit-word-dark.png)
 
 ![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-dark.png)
 
@@ -93,7 +105,7 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 299 frontend and 45 Rust tests passed, plus
+or lyric display in every player. 327 frontend and 45 Rust tests passed, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project

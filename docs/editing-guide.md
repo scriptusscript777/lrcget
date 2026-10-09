@@ -163,12 +163,30 @@ zoom and horizontal scrolling are separate from waveform zoom.
 
 ## Individual Words
 
+**Follow Lyrics** is enabled initially when you open **Word timing**. During
+normal playback the boxes advance to the current lyric, including backward
+seeks. Selecting a row pins it; click **Follow Lyrics** to resume. Loops,
+marker previews, word drags and text edits hold the selected line in place.
+This changes the editing selection, not the recording or saved timestamps.
+
 Expand **Word timing** and select a line. Use **Play** to listen, **Sync word**
 to place the selected separator at the current playback position, and the
 divider handles to refine word boundaries. The word lane has its own zoom and
 scrolling; changing it does not zoom the waveform. **Reset** resets that line's
 word timing, so use it only when you intend to rebuild those boundaries.
 Collapse the word lane when you only need line-level timing.
+
+To correct spelling, select a word box and click **Edit word**, press F2 or
+right-click it. Edit the labeled field, then press Enter or the check button.
+Escape or the cancel button discards the draft. This replaces one word while
+preserving whitespace and timestamps; use explicit split/merge for structural
+changes. Undo/Redo includes word corrections. Double-click still splits a word.
+Plain and Synced are separate working versions: a synced correction does not
+overwrite your Plain text or imported source file. Save and Export are explicit.
+
+![Light theme: following the current lyric](screenshots/follow-lyrics-light.png)
+
+![Dark theme: correcting one word](screenshots/edit-word-dark.png)
 
 ![Expanded word timing and independent lane zoom](screenshots/word-timing-zoom.png)
 

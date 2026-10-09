@@ -17,19 +17,30 @@
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
       </label>
     </div>
-    <button
-      class="button button-normal mt-2 inline-flex w-fit items-center gap-1 rounded px-2 py-1 text-xs"
-      :aria-expanded="wordTimingExpanded"
-      aria-controls="word-timing-panel"
-      @click="wordTimingExpanded = !wordTimingExpanded"
-    ><ChevronDown v-if="wordTimingExpanded" /><ChevronRight v-else />Word timing</button>
+    <div class="mt-2 flex shrink-0 flex-wrap items-center gap-2">
+      <button
+        class="button button-normal inline-flex w-fit items-center gap-1 rounded px-2 py-1 text-xs"
+        :aria-expanded="wordTimingExpanded"
+        aria-controls="word-timing-panel"
+        @click="wordTimingExpanded = !wordTimingExpanded"
+      ><ChevronDown v-if="wordTimingExpanded" /><ChevronRight v-else />Word timing</button>
+      <button
+        v-if="wordTimingExpanded"
+        type="button"
+        class="button inline-flex items-center gap-1 rounded px-2 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
+        :class="followLyrics ? 'bg-hoa-1500 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400' : 'button-normal'"
+        :aria-pressed="followLyrics"
+        :title="followLyrics ? 'Follow playback; hold the selected lyric during editing or loops' : 'Resume following the current lyric without seeking'"
+        @click="followLyrics = !followLyrics"
+      ><Crosshairs class="h-3.5 w-3.5" />Follow Lyrics</button>
+    </div>
     <SyncedWordTimingLane
       v-if="wordTimingExpanded"
       id="word-timing-panel"
       class="relative z-20 shrink-0 mt-2"
       :selected-line="selectedLine"
       :has-selected-line="hasSelectedLine"
-      :progress-ms="Number.isFinite(waveformProgress) ? waveformProgress * 1000 : -1"
+      :progress-ms="playbackTimeMs"
       :playing="waveformPlaying"
       :all-lines="modelValue"
       :selected-line-index="selectedLineIndex"
@@ -37,7 +48,10 @@
       @word-timing-edited="handleWordTimingEdited"
       @play-line="handlePlayLine"
       @play-line-at-offset="handlePlayLineAtOffset"
-      @select-next-line="selectLine"
+      @select-next-line="selectLine(selectedLineIndex + 1)"
+      @editing-change="wordEditing = $event"
+      @word-text-editing-start="followLyrics = false"
+      @edit-word-text="emit('edit-word-text', $event)"
     />
 
     <div
@@ -161,12 +175,14 @@ import Redo from '~icons/mdi/redo'
 import Repeat from '~icons/mdi/repeat'
 import ChevronDown from '~icons/mdi/chevron-down'
 import ChevronRight from '~icons/mdi/chevron-right'
+import Crosshairs from '~icons/mdi/crosshairs'
 import SyncedInsertButton from '@/components/library/edit-lyrics-v2/SyncedInsertButton.vue'
 import SyncedLyricsEmptyState from '@/components/library/edit-lyrics-v2/SyncedLyricsEmptyState.vue'
 import SyncedLyricsLineRow from '@/components/library/edit-lyrics-v2/SyncedLyricsLineRow.vue'
 import SyncedWordTimingLane from '@/components/library/edit-lyrics-v2/SyncedWordTimingLane.vue'
 import { useEditLyricsV2SyncedInlineEditing } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInlineEditing.js'
 import { useEditLyricsV2SyncedInsertHover } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInsertHover.js'
+import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
 const props = defineProps({
@@ -176,6 +192,7 @@ const props = defineProps({
   canRedo: Boolean,
   timingStepMs: { type: Number, default: 100 },
   loopEnabled: Boolean,
+  markerEditing: Boolean,
   canLoop: Boolean,
   loopLeadSeconds: { type: Number, default: 1 },
   loopTailSeconds: { type: Number, default: 0.5 },
@@ -231,12 +248,16 @@ const emit = defineEmits([
   'editing-state-change',
   'update:words',
   'word-timing-edited',
+  'edit-word-text',
   'update-line-text',
   'mark-as-instrumental',
 ])
 
 const hoveredLineIndex = ref(null)
 const wordTimingExpanded = ref(false)
+const followLyrics = ref(true)
+const wordEditing = ref(false)
+const playbackTimeMs = computed(() => Number.isFinite(props.waveformProgress) ? props.waveformProgress * 1000 : -1)
 watch(wordTimingExpanded, expanded => emit('word-timing-expanded-change', expanded), { flush: 'sync' })
 const linesListElement = ref(null)
 const modelValue = toRef(props, 'modelValue')
@@ -253,6 +274,7 @@ const hasMultiSelection = computed(() => props.selectedLineIndices.length >= 2)
 const isLineRowSelected = index => selectedIndexSet.value.has(index)
 
 const startDragSelection = (index, event) => {
+  followLyrics.value = false
   if (event.ctrlKey || event.metaKey) {
     // Ctrl/Cmd+click toggles individual line
     emit('update:selected-line-indices', index)
@@ -350,8 +372,21 @@ const {
 } = useEditLyricsV2SyncedInlineEditing({
   modelValue,
   emit,
-  selectLine: index => emit('update:selected-line-index', index),
+  selectLine: index => selectLine(index),
   updateLineText: handleUpdateLineText,
+})
+
+useLyricsFollow({
+  lines: modelValue,
+  timeMs: playbackTimeMs,
+  playing: toRef(props, 'waveformPlaying'),
+  enabled: followLyrics,
+  blocked: computed(() =>
+    !wordTimingExpanded.value || props.loopEnabled || props.markerEditing ||
+    editingLineIndex.value !== null || isDragging.value || hasMultiSelection.value || wordEditing.value
+  ),
+  selectedIndex: toRef(props, 'selectedLineIndex'),
+  onSelect: index => emit('update:selected-line-index', index),
 })
 
 const {
@@ -397,6 +432,7 @@ const rowClass = index => {
 }
 
 const selectLine = index => {
+  followLyrics.value = false
   if (didJustDrag.value) {
     didJustDrag.value = false
     return
