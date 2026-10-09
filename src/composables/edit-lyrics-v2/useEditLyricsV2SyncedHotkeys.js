@@ -1,6 +1,8 @@
 import { syncedEditorShortcutBindings } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
 
 export function useEditLyricsV2SyncedHotkeys({
+  undo,
+  redo,
   activeTab,
   isSyncedLineEditing,
   selectedLineExists,
@@ -120,6 +122,15 @@ export function useEditLyricsV2SyncedHotkeys({
   }
 
   const handleSyncedEditorKeyboardShortcuts = event => {
+    if (activeTab.value === 'synced' && !isSyncedLineEditing.value && !isKeyboardTargetEditable(event) && !event.altKey && (event.ctrlKey || event.metaKey)) {
+      const key = event.key.toLowerCase()
+      if (key === 'z' || (key === 'y' && !event.shiftKey)) {
+        event.preventDefault()
+        if (key === 'y' || event.shiftKey) redo?.()
+        else undo?.()
+        return
+      }
+    }
     if (
       activeTab.value !== 'synced' ||
       isSyncedLineEditing.value ||

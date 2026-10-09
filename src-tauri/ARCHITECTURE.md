@@ -1,6 +1,6 @@
 # LRCGET Tauri Architecture
 
-Local build 2.2.0+local.4: MP3 embedded export replaces all USLT/SYLT
+Local build 2.2.0+local.5: MP3 embedded export replaces all USLT/SYLT
 language and description variants, preventing stale lyrics from winning player
 selection. Unrelated tags and artwork are retained; audio is not re-encoded.
 Startup and F5 use the normal incremental scan. Unconfigured/unavailable music
@@ -8,6 +8,12 @@ directories are rejected before marking tracks pending; traversal errors abort
 before pruning missing tracks. File metadata/hash/import failures also prevent
 missing-track cleanup until a complete successful scan. Refresh never writes
 sidecars or audio tags.
+TXT/LRC exports coexist. A shared writer lock serializes destination changes;
+`tempfile` stages sidecar/audio replacements on the destination filesystem.
+Preparation must succeed before replacing the file; the previous version is
+retained in a rolling `.lrcget.bak` sibling. Temporary files use `.tmp` suffixes
+to avoid being scanned as music. Symlink/non-file targets are refused. Embedded
+audio is modified in a complete staged copy and reparsed before replacement.
 
 ## Architecture Overview
 

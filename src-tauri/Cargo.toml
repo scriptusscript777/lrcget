@@ -1,6 +1,6 @@
 [package]
 name = "lrcget"
-version = "2.2.0+local.4"
+version = "2.2.0+local.5"
 description = "Utility for mass-downloading LRC synced lyrics for your offline music library."
 authors = ["tranxuanthang"]
 license = "MIT"
@@ -15,6 +15,7 @@ tauri-build = { version = "2.5.6", features = [] }
 
 [dependencies]
 serde_json = "1.0"
+tempfile = "3"
 serde = { version = "1.0", features = ["derive"] }
 serde_yaml = "0.9"
 tauri = { version = "2.10.1", features = [ "protocol-asset", "devtools"] }

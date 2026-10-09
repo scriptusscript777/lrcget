@@ -31,7 +31,7 @@ export function usePlayer() {
     // Determine if this is a database track or a file-based track
     if (track.id !== undefined && track.id !== null) {
       // Database track - use track_id
-      invoke('play_track', {
+      return invoke('play_track', {
         trackId: track.id,
         filePath: null,
         title: track.title,
@@ -42,7 +42,7 @@ export function usePlayer() {
       })
     } else if (track.file_path) {
       // File-based track (from file picker) - use file_path with metadata
-      invoke('play_track', {
+      return invoke('play_track', {
         trackId: null,
         filePath: track.file_path,
         title: track.title,
@@ -67,7 +67,7 @@ export function usePlayer() {
       return
     }
 
-    invoke('resume_track')
+    return invoke('resume_track')
   }
 
   const seek = position => {

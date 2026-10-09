@@ -5,7 +5,7 @@
         <button
           class="button text-sm px-5 h-8 w-24 rounded-l-full rounded-r-none border-r inline-flex items-center justify-center gap-1.5"
           :class="{ 'button-primary': isDirty, 'button-disabled': !isDirty }"
-          :disabled="!isDirty"
+          :disabled="!isDirty || isExporting"
           @click="emit('save')"
         >
           <ContentSave class="text-base" />

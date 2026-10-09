@@ -303,22 +303,22 @@ export const syncedEditorShortcutBindings = [
   createShortcutBinding({
     id: 'rewindLine',
     defaultKeys: ['←'],
-    description: 'Rewind 100 ms & play',
+    description: 'Rewind by selected timing step & play',
   }),
   createShortcutBinding({
     id: 'forwardLine',
     defaultKeys: ['→'],
-    description: 'Forward 100 ms & play',
+    description: 'Forward by selected timing step & play',
   }),
   createShortcutBinding({
     id: 'rewindLineEnd',
     defaultKeys: ['Shift', '←'],
-    description: 'Rewind line end by 100 ms',
+    description: 'Rewind line end by selected timing step',
   }),
   createShortcutBinding({
     id: 'forwardLineEnd',
     defaultKeys: ['Shift', '→'],
-    description: 'Forward line end by 100 ms',
+    description: 'Forward line end by selected timing step',
   }),
   createShortcutBinding({
     id: 'replaySelectedLine',

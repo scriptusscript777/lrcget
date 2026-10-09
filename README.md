@@ -5,7 +5,7 @@ Utility for mass-downloading LRC synced lyrics for your offline music library.
 ## Rick Lidgett's Local Build
 
 This branch includes local export and library-refresh improvements in
-`2.2.0+local.4`. See [local changes and verification](LOCAL_CHANGES.md) for the
+`2.2.0+local.5`. See [local changes and verification](LOCAL_CHANGES.md) for the
 workflow, safeguards, compatibility limits and upstream contribution status.
 The upstream download links below refer to upstream releases, not this build.
 

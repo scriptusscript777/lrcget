@@ -1,5 +1,6 @@
 import { invoke } from '@tauri-apps/api/core'
 import { computed, ref, watch } from 'vue'
+import { useLyricHistory } from './useLyricHistory.js'
 import {
   createSyncedLinesFromPlain,
   normalizeSyncedLine,
@@ -17,10 +18,30 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   const syncedLines = ref([])
   const lyricsfileDocument = ref(null)
   const isDirty = ref(false)
+  const isSaving = ref(false)
   const selectedSyncedLineIndex = ref(-1)
   const selectedSyncedLineIndices = ref([])
   const isSyncedLineEditing = ref(false)
   const isInstrumental = ref(false)
+  const timingStepMs = ref(100)
+  const timingStep = () =>
+    [10, 25, 50, 100].includes(Number(timingStepMs.value)) ? Number(timingStepMs.value) : 100
+  const documentSnapshot = () => JSON.stringify({
+    plain: plainLyrics.value,
+    synced: syncedLines.value,
+    instrumental: isInstrumental.value,
+  })
+  let savedSnapshot = ''
+  const history = useLyricHistory(
+    () => ({ lines: syncedLines.value, instrumental: isInstrumental.value }),
+    state => {
+      syncedLines.value = state.lines
+      isInstrumental.value = state.instrumental
+      clearSyncedLineSelection()
+      ensureSelectedSyncedLine()
+      isDirty.value = documentSnapshot() !== savedSnapshot
+    }
+  )
 
   const clearSyncedLineSelection = () => {
     selectedSyncedLineIndices.value = []
@@ -92,6 +113,7 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   }
 
   const initializeLyrics = () => {
+    history.clear()
     // Get lyrics content from lyricsfile prop, or empty string if none
     const lyricsfileContent = lyricsfile.value?.content ?? ''
 
@@ -109,6 +131,8 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     isDirty.value = false
     isSyncedLineEditing.value = false
     ensureSelectedSyncedLine()
+    savedSnapshot = documentSnapshot()
+    history.reset()
   }
 
   const updatePlainLyrics = lyrics => {
@@ -188,18 +212,18 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
       const currentStartMs = line?.start_ms
       const baseStartMs = Number.isFinite(currentStartMs) ? currentStartMs : 0
       const newStartMs = Math.max(0, Math.round(baseStartMs + offsetMs))
-      return { ...line, start_ms: newStartMs }
+      return moveLineTo(line, newStartMs)
     })
     syncedLines.value = nextLines
     isDirty.value = true
   }
 
   const bulkRewindLines = indices => {
-    bulkShiftLineTimestamps(indices, -100)
+    bulkShiftLineTimestamps(indices, -timingStep())
   }
 
   const bulkForwardLines = indices => {
-    bulkShiftLineTimestamps(indices, 100)
+    bulkShiftLineTimestamps(indices, timingStep())
   }
 
   const importSyncedLinesFromPlain = () => {
@@ -243,8 +267,21 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
 
     return words.map(word => ({
       ...word,
-      start_ms: Math.max(0, Math.round((word?.start_ms ?? 0) + offsetMs)),
+      ...(Number.isFinite(word?.start_ms)
+        ? { start_ms: Math.max(0, Math.round(word.start_ms + offsetMs)) } : {}),
+      ...(Number.isFinite(word?.end_ms)
+        ? { end_ms: Math.max(0, Math.round(word.end_ms + offsetMs)) } : {}),
     }))
+  }
+
+  const moveLineTo = (line, startMs) => {
+    const offset = startMs - (Number.isFinite(line.start_ms) ? line.start_ms : 0)
+    return {
+      ...line,
+      start_ms: startMs,
+      ...(Number.isFinite(line.end_ms) ? { end_ms: Math.max(0, line.end_ms + offset) } : {}),
+      words: shiftWordBoundariesByOffset(line.words, offset),
+    }
   }
 
   const syncLineToCurrentProgress = lineIndex => {
@@ -290,18 +327,15 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     const baseStartMs = Number.isFinite(currentStartMs) ? currentStartMs : 0
     const newStartMs = Math.max(0, Math.round(baseStartMs + offsetMs))
 
-    withUpdatedLine(lineIndex, line => ({
-      ...line,
-      start_ms: newStartMs,
-    }))
+    withUpdatedLine(lineIndex, line => moveLineTo(line, newStartMs))
   }
 
   const rewindLineBy100 = lineIndex => {
-    shiftLineTimestampBy(lineIndex, -100)
+    shiftLineTimestampBy(lineIndex, -timingStep())
   }
 
   const forwardLineBy100 = lineIndex => {
-    shiftLineTimestampBy(lineIndex, 100)
+    shiftLineTimestampBy(lineIndex, timingStep())
   }
 
   const syncEndToCurrentProgress = lineIndex => {
@@ -333,11 +367,11 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   }
 
   const rewindEndBy100 = lineIndex => {
-    shiftEndTimestampBy(lineIndex, -100)
+    shiftEndTimestampBy(lineIndex, -timingStep())
   }
 
   const forwardEndBy100 = lineIndex => {
-    shiftEndTimestampBy(lineIndex, 100)
+    shiftEndTimestampBy(lineIndex, timingStep())
   }
 
   const updateLineText = (lineIndex, newText) => {
@@ -363,12 +397,15 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   }
 
   const saveLyrics = async () => {
+    if (isSaving.value) return false
     if (!isDirty.value) {
       return true
     }
 
+    isSaving.value = true
     try {
       const serializedContent = serializedLyricsfile.value
+      const savingSnapshot = documentSnapshot()
 
       // Determine if this is a library track or a standalone lyricsfile
       // trackId is passed separately from audioSource to handle temporary associations
@@ -396,17 +433,17 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
         })
       }
 
-      const parsed = parseLyricsfile(serializedContent)
-      // Preserve independent synced lines structure after save
-      // Don't re-sync to plain lyrics to maintain separate structures
-      syncedLines.value = parsed.syncedLines.map(line => normalizeSyncedLine(line))
-      lyricsfileDocument.value = parsed.document
-      isDirty.value = false
+      // A save must not replace edits made while the backend was writing.
+      lyricsfileDocument.value = parseLyricsfile(serializedContent).document
+      savedSnapshot = savingSnapshot
+      isDirty.value = documentSnapshot() !== savedSnapshot
       return true
     } catch (error) {
       console.error(error)
       toast.error(error)
       return false
+    } finally {
+      isSaving.value = false
     }
   }
 
@@ -460,10 +497,16 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
   )
 
   return {
+    timingStepMs,
+    undo: history.undo,
+    redo: history.redo,
+    canUndo: history.canUndo,
+    canRedo: history.canRedo,
     plainLyrics,
     syncedLines,
     lyricsfileDocument,
     isDirty,
+    isSaving,
     selectedSyncedLineIndex,
     selectedSyncedLineIndices,
     isSyncedLineEditing,

@@ -5,6 +5,7 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
   const isExporting = ref(false)
 
   const exportLyrics = async ({ plainText, syncedLrc, embedIntoTrack }) => {
+    if (isExporting.value) return false
     const formats = []
 
     if (plainText) {
@@ -24,21 +25,17 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
       return false
     }
 
-    const didSave = await saveLyrics()
-    if (!didSave) {
-      return false
-    }
-
     isExporting.value = true
-
+    const content = serializedLyricsfile.value
     try {
+      if (!await saveLyrics()) return false
       // Only library tracks can use embedIntoTrack
       const isLibraryTrack = audioSource.value?.type === 'library'
 
       const results = await invoke('export_lyrics', {
         trackId: isLibraryTrack ? audioSource.value.id : null,
         formats,
-        lyricsfile: serializedLyricsfile.value,
+        lyricsfile: content,
       })
 
       const succeeded = results.filter(result => result.status.type === 'success')
@@ -54,8 +51,8 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
       }
 
       if (succeeded.length > 0) {
-        toast.warning(`Export completed with partial failures.`)
-        return true
+        toast.warning(`Export partially completed: ${failed.map(result => `${result.format}: ${result.status.message || result.status.type}`).join('; ')}`)
+        return false
       }
 
       toast.error(failed.map(result => result.status.message || 'Unknown error').join('; '))

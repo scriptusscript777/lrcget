@@ -12,9 +12,10 @@ use lofty::id3::v2::{
 use lofty::mpeg::MpegFile;
 use lofty::TextEncoding;
 use serde::Serialize;
-use std::fs::{remove_file, write};
+use std::fs;
 use std::io::Seek;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use thiserror::Error;
 
 /// Errors that can occur during export operations
@@ -64,6 +65,72 @@ pub struct ExportResult {
     pub format: ExportFormat,
     pub path: Option<PathBuf>,
     pub status: ExportStatus,
+}
+
+static EXPORT_WRITE_LOCK: Mutex<()> = Mutex::new(());
+
+// Stage on the same filesystem, preserve the previous destination, then replace.
+fn safe_replace(path: &Path, prepare: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
+    let _guard = EXPORT_WRITE_LOCK
+        .lock()
+        .map_err(|_| anyhow::anyhow!("Export lock unavailable"))?;
+    let existing = match fs::symlink_metadata(path) {
+        Ok(metadata) => {
+            anyhow::ensure!(
+                metadata.is_file(),
+                "Export destination must be a regular file"
+            );
+            anyhow::ensure!(
+                !metadata.permissions().readonly(),
+                "Export destination is read-only"
+            );
+            Some(metadata)
+        }
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => None,
+        Err(error) => return Err(error.into()),
+    };
+    let parent = path
+        .parent()
+        .filter(|p| !p.as_os_str().is_empty())
+        .unwrap_or(Path::new("."));
+    let mut builder = tempfile::Builder::new();
+    builder.prefix(".lrcget-").suffix(".tmp");
+    #[cfg(unix)]
+    if existing.is_none() {
+        use std::os::unix::fs::PermissionsExt;
+        // Match normal sidecar creation, including the process umask.
+        builder.permissions(fs::Permissions::from_mode(0o666));
+    }
+    let staged = builder.tempfile_in(parent)?;
+    prepare(staged.path())?;
+    // Do not overwrite an external edit made while preparing a large audio copy.
+    let current = fs::symlink_metadata(path);
+    match (&existing, &current) {
+        (Some(before), Ok(after)) => anyhow::ensure!(
+            after.is_file()
+                && before.len() == after.len()
+                && before.modified()? == after.modified()?,
+            "Export destination changed while preparing; retry after reviewing the file"
+        ),
+        (None, Err(error)) if error.kind() == std::io::ErrorKind::NotFound => {}
+        _ => anyhow::bail!("Export destination changed while preparing"),
+    }
+    if let Some(metadata) = existing {
+        fs::set_permissions(staged.path(), metadata.permissions())?;
+        let mut backup_name = path.as_os_str().to_os_string();
+        backup_name.push(".lrcget.bak");
+        let backup = tempfile::Builder::new()
+            .prefix(".lrcget-backup-")
+            .tempfile_in(parent)?;
+        fs::copy(path, backup.path())?;
+        backup.as_file().sync_all()?;
+        backup
+            .persist(PathBuf::from(backup_name))
+            .map_err(|error| error.error)?;
+    }
+    staged.as_file().sync_all()?;
+    staged.persist(path).map_err(|error| error.error)?;
+    Ok(())
 }
 
 /// Build the file path for a lyrics sidecar file
@@ -133,13 +200,15 @@ fn export_txt(
 
     let txt_path = build_sidecar_path(&track.file_path, "txt")?;
 
-    // Remove conflicting .lrc file if it exists
-    let lrc_path = build_sidecar_path(&track.file_path, "lrc").ok();
-    if let Some(ref lrc_path) = lrc_path {
-        let _ = remove_file(lrc_path);
-    }
-
-    write(&txt_path, content).map_err(|e| ExportError::WriteError(e.to_string()))?;
+    safe_replace(&txt_path, |staged| {
+        fs::write(staged, &content)?;
+        anyhow::ensure!(
+            fs::read(staged)? == content.as_bytes(),
+            "TXT verification failed"
+        );
+        Ok(())
+    })
+    .map_err(|e| ExportError::WriteError(e.to_string()))?;
 
     Ok(ExportResult {
         format: ExportFormat::Txt,
@@ -167,13 +236,15 @@ fn export_lrc(
 
     let lrc_path = build_sidecar_path(&track.file_path, "lrc")?;
 
-    // Remove conflicting .txt file if it exists
-    let txt_path = build_sidecar_path(&track.file_path, "txt").ok();
-    if let Some(ref txt_path) = txt_path {
-        let _ = remove_file(txt_path);
-    }
-
-    write(&lrc_path, content).map_err(|e| ExportError::WriteError(e.to_string()))?;
+    safe_replace(&lrc_path, |staged| {
+        fs::write(staged, &content)?;
+        anyhow::ensure!(
+            fs::read(staged)? == content.as_bytes(),
+            "LRC verification failed"
+        );
+        Ok(())
+    })
+    .map_err(|e| ExportError::WriteError(e.to_string()))?;
 
     Ok(ExportResult {
         format: ExportFormat::Lrc,
@@ -258,14 +329,22 @@ pub fn export_track_with_embed_gate(
 pub fn embed_lyrics(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) -> Result<()> {
     let path_lower = track_path.to_lowercase();
 
-    if path_lower.ends_with(".mp3") {
-        embed_lyrics_mp3(track_path, plain_lyrics, synced_lyrics)
-    } else if path_lower.ends_with(".flac") {
-        embed_lyrics_flac(track_path, plain_lyrics, synced_lyrics)
-    } else {
-        // Not an error - just not supported for this format
-        Ok(())
+    if !path_lower.ends_with(".mp3") && !path_lower.ends_with(".flac") {
+        return Ok(());
     }
+    safe_replace(Path::new(track_path), |staged| {
+        fs::copy(track_path, staged)?;
+        let staged_path = staged.to_str().context("Invalid staged path")?;
+        if path_lower.ends_with(".mp3") {
+            embed_lyrics_mp3(staged_path, plain_lyrics, synced_lyrics)?;
+        } else {
+            embed_lyrics_flac(staged_path, plain_lyrics, synced_lyrics)?;
+        }
+        lofty::probe::Probe::open(staged)?
+            .guess_file_type()?
+            .read()?;
+        Ok(())
+    })
 }
 
 /// Embed lyrics into FLAC file using Vorbis comments
@@ -600,6 +679,140 @@ mod tests {
 
         let lrc_path = build_sidecar_path(track_path, "lrc").unwrap();
         assert_eq!(lrc_path.to_str().unwrap(), "/music/artist/album/song.lrc");
+    }
+
+    #[test]
+    fn safe_replacement_preserves_previous_and_cleans_failed_staging() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("song.lrc");
+        fs::write(&path, "original").unwrap();
+        let result = safe_replace(&path, |staged| {
+            fs::write(staged, "incomplete")?;
+            anyhow::bail!("simulated preparation failure")
+        });
+        assert!(result.is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), "original");
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+        safe_replace(&path, |staged| {
+            fs::write(staged, "updated")?;
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(fs::read_to_string(&path).unwrap(), "updated");
+        assert_eq!(
+            fs::read_to_string(directory.path().join("song.lrc.lrcget.bak")).unwrap(),
+            "original"
+        );
+        safe_replace(&path, |staged| {
+            fs::write(staged, "latest")?;
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(
+            fs::read_to_string(directory.path().join("song.lrc.lrcget.bak")).unwrap(),
+            "updated"
+        );
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 2);
+    }
+
+    #[test]
+    fn txt_and_lrc_exports_coexist() {
+        let directory = tempfile::tempdir().unwrap();
+        let track = PersistentTrack {
+            id: 1,
+            file_path: directory
+                .path()
+                .join("song.mp3")
+                .to_str()
+                .unwrap()
+                .to_string(),
+            file_name: "song.mp3".into(),
+            title: "song".into(),
+            album_name: "album".into(),
+            album_artist_name: None,
+            album_id: 1,
+            artist_name: "artist".into(),
+            artist_id: 1,
+            image_path: None,
+            track_number: None,
+            txt_lyrics: None,
+            lrc_lyrics: None,
+            lyricsfile: None,
+            lyricsfile_id: None,
+            duration: 10.0,
+            instrumental: false,
+        };
+        let parsed = ParsedLyricsfile {
+            plain_lyrics: Some("reference words".into()),
+            synced_lyrics: Some("[00:01.00]reference words".into()),
+            is_instrumental: false,
+        };
+        export_txt(&track, &parsed).unwrap();
+        export_lrc(&track, &parsed).unwrap();
+        assert_eq!(
+            fs::read_to_string(directory.path().join("song.txt")).unwrap(),
+            "reference words"
+        );
+        export_txt(&track, &parsed).unwrap();
+        assert_eq!(
+            fs::read_to_string(directory.path().join("song.lrc")).unwrap(),
+            "[00:01.00]reference words"
+        );
+    }
+
+    #[test]
+    fn failed_embedding_leaves_source_untouched() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("broken.mp3");
+        fs::write(&path, "not audio").unwrap();
+        assert!(embed_lyrics(path.to_str().unwrap(), "lyrics", "[00:01.00]lyrics").is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), "not audio");
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+    }
+
+    #[test]
+    fn concurrent_external_edit_is_not_overwritten() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("song.lrc");
+        fs::write(&path, "original").unwrap();
+        assert!(safe_replace(&path, |staged| {
+            fs::write(staged, "candidate")?;
+            fs::write(&path, "external correction")?;
+            Ok(())
+        })
+        .is_err());
+        assert_eq!(fs::read_to_string(&path).unwrap(), "external correction");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn new_sidecar_permissions_match_normal_creation() {
+        use std::os::unix::fs::PermissionsExt;
+        let directory = tempfile::tempdir().unwrap();
+        let reference = directory.path().join("normal.txt");
+        let destination = directory.path().join("safe.txt");
+        fs::write(&reference, "normal").unwrap();
+        safe_replace(&destination, |staged| {
+            fs::write(staged, "safe")?;
+            Ok(())
+        })
+        .unwrap();
+        assert_eq!(
+            fs::metadata(reference).unwrap().permissions().mode() & 0o777,
+            fs::metadata(destination).unwrap().permissions().mode() & 0o777
+        );
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn refuses_symlink_export_destinations() {
+        let directory = tempfile::tempdir().unwrap();
+        let original = directory.path().join("original.lrc");
+        let link = directory.path().join("link.lrc");
+        fs::write(&original, "original").unwrap();
+        std::os::unix::fs::symlink(&original, &link).unwrap();
+        assert!(safe_replace(&link, |_| Ok(())).is_err());
+        assert_eq!(fs::read_to_string(original).unwrap(), "original");
     }
 
     #[test]

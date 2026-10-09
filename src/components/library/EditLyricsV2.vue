@@ -10,7 +10,7 @@
     <template #titleLeft>
       <EditLyricsV2HeaderActions
         :is-dirty="isDirty"
-        :is-exporting="isExporting"
+        :is-exporting="isExporting || isSaving"
         @save="saveLyrics"
         @save-and-publish="saveAndPublish"
         @export="exportLyrics"
@@ -103,11 +103,21 @@
 
       <SyncedLyricsEditor
         v-else
+        v-model:timing-step-ms="timingStepMs"
+        v-model:loop-lead-seconds="loopLeadSeconds"
+        v-model:loop-tail-seconds="loopTailSeconds"
         :model-value="syncedLines"
         :can-import-from-plain="hasPlainLyrics"
         :selected-line-index="selectedSyncedLineIndex"
         :selected-line-indices="selectedSyncedLineIndices"
         :progress-ms="progressMs"
+        :can-undo="canUndo"
+        :can-redo="canRedo"
+        :loop-enabled="loopEnabled"
+        :can-loop="canLoop"
+        @undo="undo"
+        @redo="redo"
+        @toggle-loop="toggleLoop"
         @update:model-value="updateSyncedLines"
         @update:selected-line-index="selectSyncedLine"
         @update:selected-line-indices="handleUpdateSelectedLineIndices"
@@ -214,10 +224,16 @@ const progressMs = computed(() => Math.max(0, Math.round(progress.value * 1000))
 
 const activeTab = ref('plain')
 const {
+  undo,
+  redo,
+  canUndo,
+  canRedo,
+  timingStepMs,
   plainLyrics,
   syncedLines,
   lyricsfileDocument,
   isDirty,
+  isSaving,
   selectedSyncedLineIndex,
   selectedSyncedLineIndices,
   isSyncedLineEditing,
@@ -275,7 +291,7 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
   toast,
 })
 
-const { playLine, playLineAtOffset, resumeOrPlay } = useEditLyricsV2Playback({
+const { playLine, playLineAtOffset, resumeOrPlay, loopEnabled, loopLeadSeconds, loopTailSeconds, canLoop, toggleLoop } = useEditLyricsV2Playback({
   audioSource: audioSourceRef,
   syncedLines,
   progress,
@@ -284,6 +300,8 @@ const { playLine, playLineAtOffset, resumeOrPlay } = useEditLyricsV2Playback({
   playTrack,
   resume,
   seek,
+  duration,
+  selectedLineIndex: selectedSyncedLineIndex,
 })
 
 const handlePlayLineAtOffset = ({ lineIndex, offsetMs }) => {
@@ -416,6 +434,7 @@ const handleWordTimingEdited = async ({ startMs }) => {
 
 watch(activeTab, value => {
   if (value !== 'synced') {
+    loopEnabled.value = false
     isSyncedLineEditing.value = false
     return
   }
@@ -424,6 +443,8 @@ watch(activeTab, value => {
 })
 
 const { bindSyncedHotkeys, unbindSyncedHotkeys } = useEditLyricsV2SyncedHotkeys({
+  undo,
+  redo,
   activeTab,
   isSyncedLineEditing,
   selectedLineExists,

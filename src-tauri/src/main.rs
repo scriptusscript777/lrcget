@@ -1868,9 +1868,8 @@ mod auto_export_tests {
 
     #[test]
     fn download_export_messages_keep_success_skips_and_errors_in_writer_order() {
-        let directory =
-            std::env::temp_dir().join(format!("lrcget-auto-export-{}", std::process::id()));
-        std::fs::create_dir_all(&directory).unwrap();
+        let temporary = tempfile::tempdir().unwrap();
+        let directory = temporary.path();
         let track = test_track(&directory.join("song.flac"));
         let content = lyricsfile::build_lyricsfile(
             &lyricsfile::LyricsfileTrackMetadata::new("Song", "Album", "Artist", 100.0),
@@ -1886,7 +1885,7 @@ mod auto_export_tests {
             result,
             "Synced lyrics downloaded; TXT export completed; LRC export completed"
         );
-        assert!(!directory.join("song.txt").exists());
+        assert!(directory.join("song.txt").exists());
         assert!(std::fs::read_to_string(directory.join("song.lrc"))
             .unwrap()
             .contains("hello"));
@@ -1900,13 +1899,15 @@ mod auto_export_tests {
         let result = download_export_message("Plain lyrics downloaded", &track, &plain, &formats, || true);
         assert_eq!(result, "Plain lyrics downloaded; TXT export completed; LRC export skipped: no synced lyrics available");
         assert!(directory.join("song.txt").exists());
+        assert!(directory.join("song.lrc").exists());
         // A directory at the LRC target deterministically fails writing, even when tests run as root.
+        std::fs::remove_file(directory.join("song.lrc")).unwrap();
         std::fs::create_dir(directory.join("song.lrc")).unwrap();
         let result =
             download_export_message("Synced lyrics downloaded", &track, &content, &formats, || true);
         assert!(result
             .starts_with("Synced lyrics downloaded; TXT export completed; LRC export failed:"));
-        assert!(!directory.join("song.txt").exists()); // Existing destructive semantics are retained.
+        assert!(directory.join("song.txt").exists()); // A failed LRC export cannot remove TXT.
         let result = download_export_message("Lyrics downloaded", &track, "[invalid", &formats, || true);
         assert!(result.starts_with("Lyrics downloaded; export failed:"));
         std::fs::remove_dir_all(directory).unwrap();

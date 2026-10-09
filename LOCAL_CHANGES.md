@@ -2,7 +2,39 @@
 
 Contributed by **Rick Lidgett** (@scriptusscript777).
 
-Local version: `2.2.0+local.4`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.5`, based on upstream tag `2.2.0`.
+
+## Editing Tools
+
+- The Synced tab has undo/redo buttons and Ctrl/Cmd+Z, Ctrl/Cmd+Shift+Z
+  shortcuts. Ctrl/Cmd+Y also redoes. Inline text fields retain their native undo.
+- Up to 100 synchronized-document changes are kept for the current editor
+  session. Undo includes text, deletion, blank cues, line and word timing.
+  History is not crash recovery and does not survive closing the editor.
+- Select a timing step of 10, 25, 50 or 100 ms. Line nudges move the line and its
+  word/end timestamps together; end-only controls remain independent.
+- Select a timed phrase and enable the repeat button to loop it. Lead-in and
+  tail context are adjustable from 0 to 5 seconds. Changing the selected line
+  or switching to Plain turns looping off. Pausing pauses playback.
+- A save no longer discards edits made while the backend is writing.
+
+Fine timing controls are editing tools, not automatic proof of singer alignment.
+Phrase looping follows playback updates and is not a sample-accurate audio loop.
+
+## Safe Exports
+
+TXT and LRC exports now coexist; neither deletes the other format. Sidecars and
+embedded-audio exports are staged in the destination directory, checked, then
+replaced using an atomic rename. Existing destinations get one rolling backup
+named `<filename>.lrcget.bak` containing the previous version. Failed staging
+does not replace the original. Symlink/non-file and read-only destinations are
+rejected. A size/modification-time change detected during staging aborts export
+instead of replacing an external edit; this is not a cross-application file lock.
+
+Embedded export stages a complete audio copy and retains a complete previous
+audio backup. Allow space for both additional copies. Backups are local only;
+they are not uploaded or automatically deleted. Restore a backup with the app
+closed, keeping another copy of the current file first.
 
 ## Library Refresh
 
@@ -39,13 +71,19 @@ alignment against the singer.
 
 For this local build:
 
-- 156 frontend tests and 34 Rust tests passed.
+- 169 frontend tests and 40 Rust tests passed. New tests cover synced history,
+  configurable steps, looping, in-flight saves and export submission handling.
+- Rust tests cover failed staging, rolling backups, sidecar coexistence,
+  symlink refusal and failed embedding preserving the source.
 - Frontend lint passed with no errors and 78 existing warnings.
 - Frontend build, release Rust check and Debian package build passed.
 - An isolated Linux desktop test verified startup discovery, actual F5 discovery
   of added audio and a second F5 removing a deleted library entry.
+- Browser interaction tests with a mocked backend verified the editor's timing
+  step, undo/redo buttons and shortcuts, and looping commands. Screenshots were
+  inspected at 1280x900 and 900x700. This is not an acoustic timing test.
 
-The desktop test used temporary fixtures, not user music or lyric files.
+The startup/F5 desktop test used temporary fixtures, not user music or lyric files.
 Windows and macOS binaries were not built or tested for these local changes.
 
 ## Build and Install
@@ -67,5 +105,5 @@ The Debian package upgrades the same application, not a second copy.
 
 [Pull request #420](https://github.com/tranxuanthang/lrcget/pull/420) proposes
 the editor/export and stale embedded-lyrics fixes. It does **not** include this
-branch's new F5/startup refresh changes or local version metadata. Submission
+branch's F5/startup refresh, safe export, editor tools or local version metadata. Submission
 does not mean the upstream project has merged or released these changes.

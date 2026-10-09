@@ -1,5 +1,21 @@
 <template>
   <div class="grow overflow-hidden flex flex-col relative">
+    <div class="shrink-0 flex flex-wrap items-center gap-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
+      <button class="button button-normal p-1.5 rounded disabled:opacity-40" title="Undo synced edit (Ctrl+Z)" :disabled="!canUndo || editingLineIndex !== null" @click="emit('undo')"><Undo /></button>
+      <button class="button button-normal p-1.5 rounded disabled:opacity-40" title="Redo synced edit (Ctrl+Shift+Z)" :disabled="!canRedo || editingLineIndex !== null" @click="emit('redo')"><Redo /></button>
+      <label class="text-xs inline-flex items-center gap-2">Timing step
+        <select aria-label="Timing step" class="bg-transparent border border-neutral-300 dark:border-neutral-600 rounded px-1 py-1" :value="timingStepMs" @change="emit('update:timing-step-ms', Number($event.target.value))">
+          <option v-for="step in [10, 25, 50, 100]" :key="step" :value="step">{{ step }} ms</option>
+        </select>
+      </label>
+      <button class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop" :aria-pressed="loopEnabled" title="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
+      <label class="text-xs inline-flex items-center gap-1">Lead-in
+        <input class="w-14 bg-transparent border border-neutral-300 dark:border-neutral-600 rounded px-1 py-1" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
+      </label>
+      <label class="text-xs inline-flex items-center gap-1">Tail
+        <input class="w-14 bg-transparent border border-neutral-300 dark:border-neutral-600 rounded px-1 py-1" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
+      </label>
+    </div>
     <SyncedWordTimingLane
       class="relative z-20 shrink-0 mt-2"
       :selected-line="selectedLine"
@@ -45,6 +61,7 @@
             :end-timestamp-text="formatTimestampMs(line.end_ms)"
             :set-line-input-ref="setLineInputRef"
             :progress-ms="progressMs"
+            :timing-step-ms="timingStepMs"
             @mouseenter="hoveredLineIndex = index"
             @mouseleave="hoveredLineIndex = null"
             @select="selectLine"
@@ -90,14 +107,14 @@
       <div class="w-px h-4 bg-neutral-200 dark:bg-neutral-700" />
       <button
         class="button button-normal p-1 rounded-full text-xs h-6 w-6"
-        title="Rewind selected lines by 100ms"
+        :title="`Rewind selected lines by ${timingStepMs}ms`"
         @click="handleBulkRewind"
       >
         <Rewind />
       </button>
       <button
         class="button button-normal p-1 rounded-full text-xs h-6 w-6"
-        title="Forward selected lines by 100ms"
+        :title="`Forward selected lines by ${timingStepMs}ms`"
         @click="handleBulkForward"
       >
         <Forward />
@@ -129,6 +146,9 @@ import { computed, nextTick, onMounted, onUnmounted, ref, toRef, watch } from 'v
 import Rewind from '~icons/mdi/rewind'
 import Forward from '~icons/mdi/fast-forward'
 import Trash from '~icons/mdi/trash-can'
+import Undo from '~icons/mdi/undo'
+import Redo from '~icons/mdi/redo'
+import Repeat from '~icons/mdi/repeat'
 import SyncedInsertButton from '@/components/library/edit-lyrics-v2/SyncedInsertButton.vue'
 import SyncedLyricsEmptyState from '@/components/library/edit-lyrics-v2/SyncedLyricsEmptyState.vue'
 import SyncedLyricsLineRow from '@/components/library/edit-lyrics-v2/SyncedLyricsLineRow.vue'
@@ -138,6 +158,13 @@ import { useEditLyricsV2SyncedInsertHover } from '@/composables/edit-lyrics-v2/u
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
 const props = defineProps({
+  canUndo: Boolean,
+  canRedo: Boolean,
+  timingStepMs: { type: Number, default: 100 },
+  loopEnabled: Boolean,
+  canLoop: Boolean,
+  loopLeadSeconds: { type: Number, default: 1 },
+  loopTailSeconds: { type: Number, default: 0.5 },
   modelValue: {
     type: Array,
     required: true,
@@ -161,6 +188,12 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
+  'undo',
+  'redo',
+  'update:timing-step-ms',
+  'toggle-loop',
+  'update:loop-lead-seconds',
+  'update:loop-tail-seconds',
   'update:modelValue',
   'update:selected-line-index',
   'update:selected-line-indices',

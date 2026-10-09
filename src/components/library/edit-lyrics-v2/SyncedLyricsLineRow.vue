@@ -167,6 +167,7 @@ import {
 } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
 
 const props = defineProps({
+  timingStepMs: { type: Number, default: 100 },
   index: {
     type: Number,
     required: true,
@@ -273,13 +274,13 @@ const syncLineTitle = withShortcutTitle(
   'syncLineToPlayback'
 )
 
-const rewindLineTitle = withShortcutTitle('Rewind line by 100ms', syncedEditorShortcutBindings, 'rewindLine')
+const rewindLineTitle = computed(() => withShortcutTitle(`Rewind line by ${props.timingStepMs}ms`, syncedEditorShortcutBindings, 'rewindLine'))
 
-const forwardLineTitle = withShortcutTitle(
-  'Forward line by 100ms',
+const forwardLineTitle = computed(() => withShortcutTitle(
+  `Forward line by ${props.timingStepMs}ms`,
   syncedEditorShortcutBindings,
   'forwardLine'
-)
+))
 
 const syncEndTitle = withShortcutTitle(
   'Sync end timestamp to current playback',
@@ -287,17 +288,17 @@ const syncEndTitle = withShortcutTitle(
   'syncLineEndToPlayback'
 )
 
-const rewindEndTitle = withShortcutTitle(
-  'Rewind end timestamp by 100ms',
+const rewindEndTitle = computed(() => withShortcutTitle(
+  `Rewind end timestamp by ${props.timingStepMs}ms`,
   syncedEditorShortcutBindings,
   'rewindLineEnd'
-)
+))
 
-const forwardEndTitle = withShortcutTitle(
-  'Forward end timestamp by 100ms',
+const forwardEndTitle = computed(() => withShortcutTitle(
+  `Forward end timestamp by ${props.timingStepMs}ms`,
   syncedEditorShortcutBindings,
   'forwardLineEnd'
-)
+))
 
 const hasEndTimestampDiffDirection = computed(() => {
   return props.endTimestampDiffDirection === 'before' || props.endTimestampDiffDirection === 'after'
