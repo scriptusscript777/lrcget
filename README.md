@@ -2,29 +2,84 @@
 
 Utility for mass-downloading LRC synced lyrics for your offline music library.
 
-## Rick Lidgett's Local Build
+## Rick Lidgett's Enhanced Build
 
 Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-This branch includes local export and library-refresh improvements in
-`2.2.0+local.8`. See [local changes and verification](LOCAL_CHANGES.md) for the
-workflow, safeguards, compatibility limits and upstream contribution status.
-The upstream download links below refer to upstream releases, not this build.
+**Version 2.2.0+local.8** adds waveform and lyric-editing tools, safer exports,
+and startup/F5 library refresh. This is an independent fork release, not an
+official upstream release.
 
-[Rick Lidgett's release and installer](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.8)
-include [waveform screenshots and usage instructions](docs/releases/2.2.0-local.8.md).
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.8/LRCGET_2.2.0%2Blocal.8_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.8)
+| [Editing guide](docs/releases/2.2.0-local.8.md)
+| [Detailed changes](LOCAL_CHANGES.md)
+
+### What's Included
+
+- Zoomable waveform with playback following, paused panning and click-to-seek.
+- Selected phrase start/end handles, session undo/redo, 10/25/50/100 ms timing
+  steps and phrase looping.
+- Optional word-timing view, collapsed initially, with 1-8x linear zoom,
+  playback scrolling and readable highlighting in light/dark themes.
+- Cleaner word editing without the pink selection bubble; canceled drags do
+  not commit timing edits, and keyboard shortcuts respect the active tool.
+- Synced LRC export selected by default, optional embedded lyrics, and safer
+  sidecar/audio exports with rolling backups. Saving and publishing are explicit.
+- Incremental library scanning on opening and F5 refresh without reloading.
+
+### Install This Build
+
+Download the installer and checksum from the release, close LRCGET, then run:
+
+```bash
+sha256sum -c LRCGET_2.2.0+local.8_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.8_amd64.deb
+```
+
+The unsigned Debian package upgrades the existing app, not a second copy.
+Only Linux amd64 is built/tested for this fork release; Windows/macOS installers
+below belong to upstream and do not include these enhancements.
+No additional WAV conversion, Whisper or Demucs installation is needed.
+
+### Current Interface
+
+The main phrase editor stays uncluttered; **Word timing** opens the optional
+individual-word tools.
+
+![Light theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-light.png)
+
+<details>
+<summary>Dark theme and expanded word-timing tools</summary>
+
+![Dark theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-dark.png)
+
+![Light theme: expanded word timing and phrase markers](docs/screenshots/editor-follow-light.png)
+
+![Dark theme: expanded word timing and phrase markers](docs/screenshots/editor-follow-dark.png)
+
+![Zoomed word-timing view](docs/screenshots/word-timing-zoom.png)
+
+</details>
+
+Screenshots use temporary fixture lyrics and mocked waveform data, not personal
+music. These tools aid manual editing; they do not guarantee singer alignment
+or lyric display in every player. 235 frontend and 45 Rust tests passed, plus
+browser and isolated native Linux checks; existing lint/compiler warnings remain.
+
+## Original Project
 
 LRCGET will scan every files in your chosen directory for music files, then and try to download lyrics to a LRC files having the same name and save them to the same directory as your music files.
 
 LRCGET is the official client of [LRCLIB](https://lrclib.net) service.
 
-## Download
+## Upstream Downloads
 
-🎉 Latest version: v2.1.0
-
-Visit the [release page](https://github.com/tranxuanthang/lrcget/releases) to download.
+The historical links below are upstream v2.1.0 downloads, not Rick Lidgett's
+enhanced build. Visit the [upstream release page](https://github.com/tranxuanthang/lrcget/releases)
+for upstream versions and other platforms.
 
 ### Windows
 
@@ -50,12 +105,14 @@ Mac x64 (Intel): [LRCGET_2.1.0_x64.dmg](https://github.com/tranxuanthang/lrcget/
 
 Mac Apple Silicon: [LRCGET_2.1.0_aarch64.dmg](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_aarch64.dmg)
 
-## Screenshots
+## Historical Upstream Screenshots
 
-![01.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/01.png)
+These images show an older upstream interface, not this fork's current editor.
 
 <details>
-<summary>Click to expand more screenshots</summary>
+<summary>View original upstream screenshots</summary>
+
+![01.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/01.png)
 
 ![02.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/02.png)
 
