@@ -67,10 +67,12 @@ export function useEditLyricsV2Playback({
       : playingTrack.value.file_path === audioSource.value.file_path
   }
 
-  const playLineAtOffset = async (lineIndex, offsetMs = 0) => {
+  const playLineAtOffset = async (lineIndex, offsetMs = 0, { continuePlayback = false } = {}) => {
     const source = audioSource.value
     const line = syncedLines.value[lineIndex]
     if (!source || !line || !Number.isFinite(offsetMs) || disposed) return
+    // Explicit Play continues through the recording; edit auditions preserve Loop.
+    if (continuePlayback) stopLoop()
     const operation = ++playOperation
     const sourceKey = waveformSourceKey(source)
     const lineStartMs = line.start_ms
@@ -99,7 +101,7 @@ export function useEditLyricsV2Playback({
   }
 
   const playLine = async lineIndex => {
-    return playLineAtOffset(lineIndex, 0)
+    return playLineAtOffset(lineIndex, 0, { continuePlayback: true })
   }
 
   const resumeOrPlay = async () => {

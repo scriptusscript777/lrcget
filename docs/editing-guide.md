@@ -121,6 +121,13 @@ marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 
+Sentence **Play** buttons remain visible without hovering. Click one to select
+its markers and play forward from that sentence. Explicit Play turns Loop off
+and resumes Follow Lyrics; markers then follow each timed sentence in Word
+Timing. Use the separate Loop button when you want marker-range repetition.
+Timing-edit auditions retain Loop. An untimed sentence's Play button is disabled
+until you assign its start; a start at `00:00.000` is valid.
+
 On entering **Synced**, markers show the selected sentence's saved start/end.
 If nothing is selected, the first timed lyric is selected, skipping opening
 blank cues and untimed rows. Selecting another lyric updates the marker pair;

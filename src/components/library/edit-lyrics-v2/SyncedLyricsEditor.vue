@@ -462,13 +462,22 @@ const emitLineAction = (eventName, index, selectBefore = true) => {
   emit(eventName, index)
 }
 
-const handlePlayLine = index => {
-  emitLineAction('play-line', index, false)
+const navigatePlayback = async (index, event, payload) => {
+  const line = props.modelValue[index]
+  if (!line) return
+  // Play is navigation, not editing: select its markers and resume lyric following.
+  followLyrics.value = false
+  emit('update:selected-line-index', index)
+  emit(event, payload)
+  // Selection arrives through parent props; its manual-selection watcher must settle first.
+  await nextTick()
+  if (props.selectedLineIndex === index && props.modelValue[index] === line)
+    followLyrics.value = true
 }
 
-const handlePlayLineAtOffset = payload => {
-  emit('play-line-at-offset', payload)
-}
+const handlePlayLine = index => navigatePlayback(index, 'play-line', index)
+const handlePlayLineAtOffset = payload =>
+  navigatePlayback(payload?.lineIndex, 'play-line-at-offset', payload)
 
 const handleSyncLine = index => {
   emitLineAction('sync-line', index)

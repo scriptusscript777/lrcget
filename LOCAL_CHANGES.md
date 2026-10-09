@@ -4,7 +4,18 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.15`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.16`, based on upstream tag `2.2.0`.
+
+## Continuous Sentence Playback (.16)
+
+Rick Lidgett made sentence Play buttons visible without hover, including valid
+zero-time lyrics. Untimed rows retain a disabled Play button until a start is
+assigned. Explicit Play selects the clicked sentence, turns off marker looping,
+and restores Follow Lyrics after parent selection updates settle. Playback
+continues forward and markers follow playing sentences without editing timing.
+Timing-edit auditions preserve the chosen Loop behavior; rejected nudges do not
+replay. Browser tests cover loop cancellation, continuous playback, marker
+selection/following and both themes; unit tests cover zero/untimed button states.
 
 ## Initial Sentence Markers (.15)
 

@@ -68,6 +68,7 @@
           <button
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="playLineTitle"
+            :disabled="!isWordSyncAvailable || !!wordTextEdit"
             @click="handlePlayLine"
           >
             <Play class="w-3.5 h-3.5" />
@@ -271,7 +272,7 @@ const wordTextInput = ref(null)
 const canApplyWordText = computed(() => wordText.value.length > 0 && !/\s/u.test(wordText.value))
 
 const playLineTitle = withShortcutTitle(
-  'Play line from beginning',
+  'Play line and continue; stop looping and follow lyrics',
   syncedEditorShortcutBindings,
   'replaySelectedLine'
 )

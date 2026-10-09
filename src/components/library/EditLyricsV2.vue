@@ -380,17 +380,15 @@ const {
 })
 
 const handlePlayLineAtOffset = ({ lineIndex, offsetMs }) => {
-  return playLineAtOffset(lineIndex, offsetMs)
+  return playLineAtOffset(lineIndex, offsetMs, { continuePlayback: true })
 }
 
 const rewindLineBy100 = lineIndex => {
-  rewindLineTimestampBy100(lineIndex)
-  void playLine(lineIndex)
+  if (rewindLineTimestampBy100(lineIndex) !== false) void playLineAtOffset(lineIndex)
 }
 
 const forwardLineBy100 = lineIndex => {
-  forwardLineTimestampBy100(lineIndex)
-  void playLine(lineIndex)
+  if (forwardLineTimestampBy100(lineIndex) !== false) void playLineAtOffset(lineIndex)
 }
 
 const handleUpdateLineText = (lineIndex, newText) => {

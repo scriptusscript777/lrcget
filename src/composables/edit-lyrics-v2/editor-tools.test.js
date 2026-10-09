@@ -505,6 +505,32 @@ const player = () => {
 }
 
 describe('phrase loop', () => {
+  it('explicit sentence Play stops a marker loop and continues beyond its end', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    expect(state.loopEnabled.value).toBe(true)
+    controls.seek.mockClear()
+    await state.playLine(1)
+    expect(state.loopEnabled.value).toBe(false)
+    expect(controls.seek).toHaveBeenCalledExactlyOnceWith(4)
+    controls.status.value = 'playing'
+    controls.progress.value = 6
+    await nextTick()
+    expect(controls.seek).toHaveBeenCalledTimes(1)
+    scope.stop()
+  })
+
+  it('edit auditions retain looping, but explicit offset playback stops it', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    await state.playLineAtOffset(0, 100)
+    expect(state.loopEnabled.value).toBe(true)
+    await state.playLineAtOffset(1, 100, { continuePlayback: true })
+    expect(state.loopEnabled.value).toBe(false)
+    expect(controls.seek).toHaveBeenLastCalledWith(4.1)
+    scope.stop()
+  })
+
   it.each(['source', 'dispose', 'timing'])(
     'cancels a pending phrase replay when %s changes',
     async change => {
