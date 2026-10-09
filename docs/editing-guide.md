@@ -1,7 +1,32 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.11`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.12`.
 Original project authors and license remain credited.
+
+## Quick Workflow
+
+1. Open your music library and select the recording you want to edit.
+2. Open its lyrics editor. Import TXT/LRC or use the online lyrics search.
+3. Use **Synced** to listen, set line starts/ends and refine markers.
+4. Preview each change, use **Apply Markers**, then **Save**.
+5. Open the arrow beside Save and choose **Synced lyrics (.lrc)**, then
+   **Save and export**. Choose embedding separately if you want it.
+
+Do not select **Save and Publish** unless you want to upload lyrics to LRCLIB.
+
+## Library, Search and Refresh
+
+Add your music directory through the library controls, then let the scan finish.
+Search LRCLIB for the selected recording, checking artist, title and duration
+before choosing a result. A different recording/version may have different timing.
+Bulk lyric downloading and manual editing are separate workflows: review a
+downloaded timeline against your recording before relying on its timing.
+
+Opening LRCGET scans the initialized library incrementally. Close editing dialogs,
+then press **F5** or use **Refresh library (F5)** to scan after adding/removing files.
+An active scan cannot be started again. Refresh does not publish/export lyrics,
+and it does not automatically overwrite database-owned lyrics with external edits.
+To load an LRC you edited in another application, explicitly import that file.
 
 ## Start With Lyrics and a Recording
 
@@ -42,6 +67,54 @@ does not run Whisper/Demucs or automatically align plain text to singing.
 These are default shortcuts; customized bindings appear in the keyboard menu.
 Use the synced editor rather than typing in a text field when invoking shortcuts.
 
+## Edit Lines and Text
+
+Use **Plain** for wording without timestamps and **Synced** for timed rows.
+Select a synced row, then double-click its text to edit its phrase or adjust its start/end. The plus buttons
+insert before, between or after rows; delete deliberately removes the selected row.
+The selection toolbar can shift or delete multiple selected rows.
+Use Undo/Redo to recover a synced edit while the editor session remains open.
+Unsaved edits require confirmation when closing.
+
+Importing a file replaces the editor's plain and synced working content only
+after you confirm. It is not a merge of two lyric versions. Keep your original
+TXT when importing a separate LRC; neither source is rewritten by import.
+Exporting TXT or LRC can replace an existing destination of that same type.
+
+| Default Key | Synced Editor Action |
+| --- | --- |
+| Up / Down | Select previous / next line |
+| Space | Set selected line start at playback position |
+| Shift+Space | Set selected line end at playback position |
+| N | Set end and advance to next line |
+| Enter | Set start, set previous line end and advance |
+| Shift+Enter | Set start and advance without changing previous end |
+| Left / Right | Shift line by the chosen timing step and replay |
+| Shift+Left / Shift+Right | Adjust line end by the chosen timing step |
+| P / Shift+P | Replay selected / previous line |
+| Backspace | Delete selected line |
+| Ctrl+Z / Ctrl+Shift+Z | Undo / redo synced edits |
+| Ctrl+S | Save the editor document |
+
+Marker focus uses Left/Right to nudge that marker instead of shifting a lyric
+row. Text input and active tools have their own keyboard behavior. Open the
+keyboard icon to see current bindings, configure replacements or reset them;
+resolve any highlighted duplicate shortcuts.
+
+## Playback and Phrase Loops
+
+Use the bottom player to play/pause, seek and adjust playback speed. Slower
+playback can help locate consonants or long held notes; saved timestamps remain
+positions in the original recording, not the slowed playback clock.
+
+Select a timed line and enable **Loop selected phrase**. **Lead-in** and **Tail**
+add listening context around that phrase without changing its lyric timestamps.
+Both context values default to zero: the loop is exactly between the two markers.
+Released/nudged marker previews are used immediately for auditioning; dragging
+does not continuously reseek the player. Apply confirms them; Cancel returns the
+loop to the saved document boundaries. Changing selected lines turns looping off.
+Turn looping off when you want to continue through the whole song.
+
 ## Zoom and Precision
 
 Double-click a point on the waveform to magnify it. Repeat to go deeper, then
@@ -80,6 +153,21 @@ Save/export uses the confirmed lyric document: apply your markers first.
 Expand **Word timing** only when individual-word timing is needed. Its 1-8x
 zoom and horizontal scrolling are separate from waveform zoom.
 
+![Light theme: double-click point zoom with pending marker preview](screenshots/point-zoom-light.png)
+
+![Dark theme: double-click point zoom with pending marker preview](screenshots/point-zoom-dark.png)
+
+## Individual Words
+
+Expand **Word timing** and select a line. Use **Play** to listen, **Sync word**
+to place the selected separator at the current playback position, and the
+divider handles to refine word boundaries. The word lane has its own zoom and
+scrolling; changing it does not zoom the waveform. **Reset** resets that line's
+word timing, so use it only when you intend to rebuild those boundaries.
+Collapse the word lane when you only need line-level timing.
+
+![Expanded word timing and independent lane zoom](screenshots/word-timing-zoom.png)
+
 ## Save, Export and Publish
 
 Save retains the editor's changes. Use **Export** with **Synced lyrics (.lrc)**
@@ -89,6 +177,53 @@ Embedding/exporting writes the track or sidecar; waveform navigation does not.
 
 **Publish** sends lyrics to LRCLIB, with confirmation. Local saving/exporting
 does not itself publish your lyrics. Player support for lyric display varies.
+
+| Action | Result |
+| --- | --- |
+| Save | Retains edits in LRCGET's lyric document; does not itself export sidecars |
+| Save and export: TXT | Writes plain lyrics beside the track |
+| Save and export: LRC | Writes timed lyrics beside the track; selected initially |
+| Save and export: Embed | Writes lyrics into supported audio metadata |
+| Save and Publish | Uploads lyrics to the configured LRCLIB instance after confirmation |
+
+TXT and LRC export coexist; exporting one does not delete the other. A chosen
+format can replace its existing destination, so leave TXT unchecked to avoid
+rewriting that TXT. Confirm waveform marker previews before saving/exporting.
+
+![Light theme: LRC, TXT and embedding choices](screenshots/export-options-light.png)
+
+![Dark theme: LRC, TXT and embedding choices](screenshots/export-options-dark.png)
+
+If **Embed into track** is disabled, enable experimental lyric embedding in
+settings and check that the recording is supported. MP3 embedding uses ID3v2.4
+UTF-8 USLT/SYLT, with milliseconds for synchronized words. Audio is not
+re-encoded. Some car stereos, Windows players and Jellyfin clients cannot
+display these lyrics; retaining the `.lrc` sidecar is still useful.
+
+## Backups and Recovery
+
+Exports stage their output before replacing a destination. The previous version
+is retained as one rolling `<filename>.lrcget.bak` backup, not a full history.
+Embedded export needs disk space for a staged audio copy and previous audio copy.
+Close LRCGET before restoring a backup and preserve the current file separately.
+Read-only, symlink/non-file destinations and detected external edits can block
+an export. Resolve the error and retry rather than assuming every target saved.
+
+## Themes, Diagnostics and Limits
+
+Select light or dark appearance in settings; waveform and timing controls follow
+the theme. The bug icon opens the YAML document view for diagnostics. This view
+is not an acoustic timing validator.
+
+No separate WAV conversion is required. A waveform is decoded once and cached;
+zoom, playback and theme changes reuse it. Changed files can rebuild the cache.
+An unavailable waveform should not prevent text editing or normal playback.
+
+For missing words, correct the trusted text manually. For a wrong recording,
+choose the right audio before timing. For lyrics that do not appear in a player,
+check that you exported LRC/embedded lyrics rather than only pressing Save,
+and that the player supports the format. This app does not automatically detect
+lead vocals, guarantee exact lip sync or run Whisper/Demucs.
 
 ## Current Views
 

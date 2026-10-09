@@ -8,14 +8,15 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.11** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.12** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.11/LRCGET_2.2.0%2Blocal.11_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.11)
-| [Point zoom update](docs/releases/2.2.0-local.11.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.12/LRCGET_2.2.0%2Blocal.12_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.12)
+| [Marker loop update](docs/releases/2.2.0-local.12.md)
 | [Editing guide](docs/editing-guide.md)
+| [Full workflow and feature how-to](docs/editing-guide.md#quick-workflow)
 | [Detailed changes](LOCAL_CHANGES.md)
 
 ### What's Included
@@ -30,6 +31,7 @@ official upstream release.
   steps and phrase looping.
 - Marker preview with explicit Apply Markers / Cancel; confirmed boundaries
   form one undoable edit and stay fixed through playback and zoom.
+- Phrase loops audition pending marker previews with zero lead-in/tail by default.
 - Direct plain TXT, line-timed TXT and LRC import, with replacement confirmation;
   untimed words become rows you can synchronize manually to the recording.
 - Optional word-timing view, collapsed initially, with 1-8x linear zoom,
@@ -45,8 +47,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.11_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.11_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.12_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.12_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -62,12 +64,18 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 ![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-light.png)
 
+![Latest build: double-click waveform zoom and marker preview](docs/screenshots/point-zoom-light.png)
+
 ![Light theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-light.png)
 
 <details>
 <summary>Dark theme and expanded word-timing tools</summary>
 
 ![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-dark.png)
+
+![Latest build: double-click waveform zoom in dark theme](docs/screenshots/point-zoom-dark.png)
+
+![Latest export menu: LRC, TXT and embedding](docs/screenshots/export-options-dark.png)
 
 ![Dark theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-dark.png)
 
@@ -85,7 +93,7 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 295 frontend and 45 Rust tests passed, plus
+or lyric display in every player. 296 frontend and 45 Rust tests passed, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project

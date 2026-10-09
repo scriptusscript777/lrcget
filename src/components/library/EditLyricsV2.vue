@@ -91,6 +91,7 @@
           :next-line-start-ms="syncedLines[selectedSyncedLineIndex + 1]?.start_ms"
           :timing-step-ms="timingStepMs"
           @update-markers="updateWaveformMarkers"
+          @preview-markers="markerPreview = $event"
           @seek="handleWaveformSeek"
         />
       </div>
@@ -332,6 +333,7 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
   toast,
 })
 
+const markerPreview = ref(null)
 const { playLine, playLineAtOffset, resumeOrPlay, loopEnabled, loopLeadSeconds, loopTailSeconds, canLoop, toggleLoop } = useEditLyricsV2Playback({
   audioSource: audioSourceRef,
   syncedLines,
@@ -343,6 +345,7 @@ const { playLine, playLineAtOffset, resumeOrPlay, loopEnabled, loopLeadSeconds, 
   seek,
   duration,
   selectedLineIndex: selectedSyncedLineIndex,
+  markerPreview,
 })
 
 const handlePlayLineAtOffset = ({ lineIndex, offsetMs }) => {

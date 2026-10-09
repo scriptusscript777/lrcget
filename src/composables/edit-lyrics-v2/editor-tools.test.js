@@ -236,6 +236,7 @@ const player = () => {
     progress: ref(0),
     duration: ref(10),
     selectedLineIndex: ref(0),
+    markerPreview: ref(null),
     playingTrack: ref({ id: 1 }),
     status: ref('paused'),
     playTrack: vi.fn(),
@@ -248,6 +249,8 @@ const player = () => {
 describe('phrase loop', () => {
   it('plays with context and seeks only once until the player acknowledges the seek', async () => {
     const { state, controls, scope } = player()
+    state.loopLeadSeconds.value = 1
+    state.loopTailSeconds.value = 0.5
     await state.toggleLoop()
     expect(controls.seek).toHaveBeenLastCalledWith(0)
     controls.status.value = 'playing'
@@ -280,6 +283,38 @@ describe('phrase loop', () => {
     controls.status.value = 'playing'
     await nextTick()
     expect(state.loopEnabled.value).toBe(false)
+    scope.stop()
+  })
+
+  it('loops exactly over a pending marker pair, restores committed bounds on Cancel, and ignores stale previews', async () => {
+    const { state, controls, scope } = player()
+    expect(state.loopLeadSeconds.value).toBe(0)
+    expect(state.loopTailSeconds.value).toBe(0)
+    controls.markerPreview.value = {
+      line: controls.syncedLines.value[0],
+      lineIndex: 0,
+      startMs: 1200,
+      endMs: 1800,
+    }
+    await state.toggleLoop()
+    expect(controls.seek).toHaveBeenLastCalledWith(1.2)
+    controls.status.value = 'playing'
+    controls.progress.value = 1.5
+    await nextTick()
+    controls.progress.value = 1.8
+    await nextTick()
+    expect(controls.seek).toHaveBeenLastCalledWith(1.2)
+    controls.markerPreview.value = null
+    controls.progress.value = 2
+    await nextTick()
+    expect(controls.seek).toHaveBeenLastCalledWith(1)
+    controls.markerPreview.value = { line: {}, lineIndex: 0, startMs: 8000, endMs: 9000 }
+    controls.progress.value = 1.1
+    await nextTick()
+    controls.progress.value = 2
+    await nextTick()
+    expect(controls.seek).toHaveBeenLastCalledWith(1)
+    expect(controls.syncedLines.value[0]).toEqual(line())
     scope.stop()
   })
 })

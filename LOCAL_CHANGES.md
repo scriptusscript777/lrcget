@@ -4,9 +4,22 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.11`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.12`, based on upstream tag `2.2.0`.
+
+## Marker Preview Loops (.12)
+
+Phrase loops use released/nudged marker previews before Apply; Cancel restores
+committed bounds and stale previews cannot affect other lines. Lead-in/tail
+default to zero for exact marker loops, with optional context still available.
+Playback outside the current loop seeks back inside it. Editing developer:
+Rick Lidgett. The feature how-to and light/dark screenshots are updated.
 
 ## Point Zoom (.11)
+
+The current editing guide includes library refresh, source import, plain/synced
+mode transitions, line and word editing, configurable shortcuts, loops,
+point zoom, marker confirmation, saving/export/publishing, backups and
+diagnostics. Point-zoom and export screenshots were refreshed in both themes.
 
 Double-click the waveform to halve the visible time span around that point;
 repeat for finer inspection, bounded by the existing minimum span. Single-click

@@ -209,7 +209,7 @@ const props = defineProps({
   nextLineStartMs: { type: Number, default: null },
   timingStepMs: { type: Number, default: 100 },
 })
-const emit = defineEmits(['seek', 'update-markers'])
+const emit = defineEmits(['seek', 'update-markers', 'preview-markers'])
 const isEditorShortcut = event =>
   globalShortcutBindings.some(binding => binding.matches(event)) ||
   event.ctrlKey ||
@@ -287,6 +287,23 @@ const boundsForTimes = times => {
   return waveformMarkerBounds(line, times.endMs, waveform.value.duration * 1000)
 }
 const markerBounds = computed(() => boundsForTimes(previewTimes.value))
+// Publish released/nudged previews for auditioning without modifying saved lyrics.
+watch(
+  draft,
+  times => {
+    emit(
+      'preview-markers',
+      times && boundsForTimes(times)
+        ? {
+            ...times,
+            line: props.selectedLine,
+            lineIndex: props.selectedLineIndex,
+          }
+        : null
+    )
+  },
+  { flush: 'sync' }
+)
 const markers = computed(() => {
   if (!markerBounds.value) return []
   return ['start', 'end']

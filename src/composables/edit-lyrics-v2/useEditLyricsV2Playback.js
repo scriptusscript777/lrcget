@@ -11,10 +11,11 @@ export function useEditLyricsV2Playback({
   seek,
   duration,
   selectedLineIndex,
+  markerPreview,
 }) {
   const loopEnabled = ref(false)
-  const loopLeadSeconds = ref(1)
-  const loopTailSeconds = ref(0.5)
+  const loopLeadSeconds = ref(0)
+  const loopTailSeconds = ref(0)
   let awaitingLoopSeek = false
   const boundedContext = value =>
     Number.isFinite(Number(value)) ? Math.min(5, Math.max(0, Number(value))) : 0
@@ -22,11 +23,17 @@ export function useEditLyricsV2Playback({
     const index = selectedLineIndex?.value
     const line = syncedLines.value[index]
     if (!Number.isFinite(line?.start_ms)) return null
-    const endMs = Number.isFinite(line.end_ms)
-      ? line.end_ms
-      : syncedLines.value[index + 1]?.start_ms
-    if (!Number.isFinite(endMs) || endMs <= line.start_ms) return null
-    const start = Math.max(0, line.start_ms / 1000 - boundedContext(loopLeadSeconds.value))
+    const preview = markerPreview?.value
+    const usePreview = preview?.line === line && preview?.lineIndex === index
+    const startMs = usePreview ? preview.startMs : line.start_ms
+    const endMs = usePreview
+      ? preview.endMs
+      : Number.isFinite(line.end_ms)
+        ? line.end_ms
+        : syncedLines.value[index + 1]?.start_ms
+    if (!Number.isFinite(startMs) || startMs < 0 || !Number.isFinite(endMs) || endMs <= startMs)
+      return null
+    const start = Math.max(0, startMs / 1000 - boundedContext(loopLeadSeconds.value))
     const end = Math.min(
       duration?.value || Infinity,
       endMs / 1000 + boundedContext(loopTailSeconds.value)
@@ -85,14 +92,19 @@ export function useEditLyricsV2Playback({
     loopEnabled.value = true
     awaitingLoopSeek = false
     try {
-      await playLineAtOffset(selectedLineIndex.value, -boundedContext(loopLeadSeconds.value) * 1000)
+      if (!isPlayingCorrectTrack()) await playTrack(audioSource.value)
+      else if (status.value === 'paused') await resume()
+      if (loopEnabled.value && loopRange.value) seek(loopRange.value.start)
     } catch (error) {
       loopEnabled.value = false
       throw error
     }
   }
 
-  watch([progress, status], () => {
+  watch(loopRange, () => {
+    awaitingLoopSeek = false
+  })
+  watch([progress, status, loopRange], () => {
     if (!loopEnabled.value) return
     if (!isPlayingCorrectTrack() || !loopRange.value) {
       loopEnabled.value = false
@@ -101,7 +113,7 @@ export function useEditLyricsV2Playback({
     if (status.value !== 'playing' && status.value !== 'stopped') return
     const { start, end } = loopRange.value
     if (progress.value >= start && progress.value < end) awaitingLoopSeek = false
-    if (progress.value >= end && !awaitingLoopSeek) {
+    if ((progress.value >= end || progress.value < start) && !awaitingLoopSeek) {
       awaitingLoopSeek = true
       seek(start)
     }
