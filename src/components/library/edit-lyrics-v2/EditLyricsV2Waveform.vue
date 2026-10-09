@@ -56,7 +56,7 @@
         </button>
       </div>
     </div>
-    <div ref="plot" class="relative h-[110px] min-w-0">
+    <div ref="plot" class="relative h-[110px] min-w-0" @wheel="panAtWheel">
       <canvas
         ref="canvas"
         class="pointer-events-none absolute inset-0 h-full w-full"
@@ -339,19 +339,66 @@ const formatTime = seconds => {
 }
 
 const fit = () => {
+  if (drag.value) return
   viewport.value = normalizeViewport(waveform.value?.duration)
 }
 const zoom = factor => {
+  if (!waveform.value || drag.value) return
+  let anchor = props.progress
+  if (markerBounds.value) {
+    const start = props.selectedLine.start_ms / 1000
+    const end = markerEnd.value / 1000
+    const visible = time =>
+      Number.isFinite(time) &&
+      time >= viewport.value.start &&
+      time <= viewport.value.start + viewport.value.span
+    // Editing focus wins over an unrelated playhead; manual navigation must not be paged away.
+    if (!visible(anchor) || anchor < start || anchor > end) {
+      if (visible(start)) anchor = start
+      else if (visible(end)) anchor = end
+      else if (start < viewport.value.start && end > viewport.value.start + viewport.value.span)
+        anchor = viewport.value.start + viewport.value.span / 2
+      else anchor = start
+    }
+    follow.value = false
+    // Bring an off-screen selected boundary into view before magnifying it.
+    if (anchor < viewport.value.start || anchor > viewport.value.start + viewport.value.span)
+      viewport.value = normalizeViewport(
+        waveform.value.duration,
+        anchor - viewport.value.span / 2,
+        viewport.value.span
+      )
+  }
   viewport.value = zoomViewport(
     waveform.value.duration,
     viewport.value,
     factor,
-    props.progress,
+    anchor,
     minimumSpan.value
   )
 }
 const pan = start => {
+  if (!waveform.value || drag.value) return
+  follow.value = false
   viewport.value = normalizeViewport(waveform.value.duration, start, viewport.value.span)
+}
+const panAtWheel = event => {
+  if (
+    !waveform.value ||
+    drag.value ||
+    viewport.value.span >= waveform.value.duration ||
+    event.ctrlKey ||
+    event.metaKey ||
+    event.altKey
+  )
+    return
+  const bounds = plot.value.getBoundingClientRect()
+  const delta = event.deltaX || event.deltaY
+  if (!bounds.width || !Number.isFinite(delta) || !delta) return
+  // Wheel events use pixels, lines or pages; map all three onto the visible time window.
+  const scale = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? bounds.width : 1
+  event.preventDefault()
+  pan(viewport.value.start + ((delta * scale) / bounds.width) * viewport.value.span)
 }
 const seekAtPointer = event => {
   const bounds = event.currentTarget.getBoundingClientRect()

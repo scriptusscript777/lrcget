@@ -4,7 +4,18 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.8`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.9`, based on upstream tag `2.2.0`.
+
+## Zoom Navigation Fix (.9)
+
+Manual waveform panning, including wheel/trackpad scrolling over the waveform,
+turns off playback following so the view does not snap away from the edit.
+The existing follow toggle resumes automatic paging. Zooming with a selected
+phrase prioritizes a visible marker unless a visible playhead is inside that phrase;
+it also turns off following. Wheel scrolling is bounded to the full recording,
+supports pixel/line/page units and leaves browser-modified wheel gestures alone.
+Navigation is ignored during a marker drag to preserve its frozen geometry.
+No lyric timestamps, audio files or export preferences change when navigating.
 
 The timing-step dropdown and loop-context inputs use shared light/dark control
 styles and a matching native color scheme so their values/options stay readable.

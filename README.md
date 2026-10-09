@@ -8,18 +8,21 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.8** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.9** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.8/LRCGET_2.2.0%2Blocal.8_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.8)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.9/LRCGET_2.2.0%2Blocal.9_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.9)
+| [Zoom navigation update](docs/releases/2.2.0-local.9.md)
 | [Editing guide](docs/releases/2.2.0-local.8.md)
 | [Detailed changes](LOCAL_CHANGES.md)
 
 ### What's Included
 
 - Zoomable waveform with playback following, paused panning and click-to-seek.
+- Wheel/trackpad panning at any playback state, without follow snapping back;
+  zoom preserves the visible phrase marker for precise editing.
 - Selected phrase start/end handles, session undo/redo, 10/25/50/100 ms timing
   steps and phrase looping.
 - Optional word-timing view, collapsed initially, with 1-8x linear zoom,
@@ -35,8 +38,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.8_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.8_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.9_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.9_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -66,7 +69,7 @@ individual-word tools.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 235 frontend and 45 Rust tests passed, plus
+or lyric display in every player. 241 frontend and 45 Rust tests passed, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project

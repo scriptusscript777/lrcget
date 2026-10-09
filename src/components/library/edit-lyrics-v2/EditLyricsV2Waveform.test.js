@@ -219,7 +219,7 @@ describe('waveform controls and states', () => {
     state.props.progress = 3
     await nextTick()
     expect(state.byId('waveform-pan').props.value).toBe(60)
-    state.byLabel('Follow waveform playback').props.onClick()
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
     state.props.playing = true
     state.props.progress = 4
     await nextTick()
@@ -398,6 +398,152 @@ describe('waveform controls and states', () => {
     await nextTick()
     expect(state.byId('waveform-pan')).toBeUndefined()
     expect(invoke).toHaveBeenCalledTimes(1)
+  })
+
+  it('zooms around the selected marker instead of an unrelated playing cursor', async () => {
+    const state = await mount({
+      progress: 100,
+      playing: true,
+      selectedLine: { start_ms: 20000, end_ms: 24000 },
+      selectedLineIndex: 0,
+    })
+    for (let index = 0; index < 4; index++) {
+      state.byLabel('Zoom in waveform').props.onClick()
+      await nextTick()
+      expect(state.byId('waveform-marker-start')).toBeDefined()
+    }
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
+    const before = state.byId('waveform-pan').props.value
+    state.props.progress = 101
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(before)
+    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.seek).not.toHaveBeenCalled()
+  })
+
+  it('holds manual panning during playback until following is explicitly re-enabled', async () => {
+    const state = await mount({ playing: true })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: '60' } })
+    await nextTick()
+    state.props.progress = 31
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(60)
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
+    state.byLabel('Follow waveform playback').props.onClick()
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(0)
+  })
+
+  it('keeps the visible end marker reachable when magnifying after manual scrolling', async () => {
+    const state = await mount({
+      progress: 0,
+      selectedLine: { start_ms: 20000, end_ms: 90000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: '60' } })
+    await nextTick()
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(75)
+    expect(state.byId('waveform-marker-end')).toBeDefined()
+    expect(state.byId('waveform-marker-start')).toBeUndefined()
+  })
+
+  it('ignores zoom, fit, pan and wheel during marker dragging', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    const before = state.byId('waveform-pan').props.value
+    const marker = state.byId('waveform-marker-start')
+    marker.setPointerCapture = vi.fn()
+    marker.hasPointerCapture = () => false
+    const event = {
+      button: 0,
+      pointerId: 1,
+      clientX: 30,
+      currentTarget: marker,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    }
+    marker.props.onPointerdown(event)
+    await nextTick()
+    state.byLabel('Zoom in waveform').props.onClick()
+    state.byLabel('Fit entire waveform').props.onClick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    state
+      .all()
+      .find(element => element.props.onWheel)
+      .props.onWheel({ deltaY: 100 })
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(before)
+    expect(state.byId('waveform-pan').props.max).toBe(60)
+    marker.props.onPointercancel(event)
+    expect(state.updateMarker).not.toHaveBeenCalled()
+  })
+
+  it('uses the magnified time scale for fine marker movement without a grab jump', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+    })
+    for (let index = 0; index < 4; index++) {
+      state.byLabel('Zoom in waveform').props.onClick()
+      await nextTick()
+    }
+    expect(state.updateMarker).not.toHaveBeenCalled()
+    const marker = state.byId('waveform-marker-start')
+    marker.setPointerCapture = vi.fn()
+    marker.hasPointerCapture = () => false
+    const event = {
+      button: 0,
+      pointerId: 1,
+      clientX: 30,
+      currentTarget: marker,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    }
+    marker.props.onPointerdown(event)
+    marker.props.onPointerup({ ...event, clientX: 31 })
+    expect(state.updateMarker).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({
+        boundary: 'start',
+        timeMs: 1019,
+      })
+    )
+    expect(state.props.selectedLine).toEqual({ start_ms: 1000, end_ms: 3000 })
+  })
+
+  it('scrolls the zoomed waveform with wheel/trackpad input without changing markers', async () => {
+    const state = await mount({
+      progress: 0,
+      selectedLine: { start_ms: 90000, end_ms: 100000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    const plot = state.all().find(element => element.props.onWheel)
+    const event = { deltaX: -400, deltaY: 0, deltaMode: 0, preventDefault: vi.fn() }
+    plot.props.onWheel(event)
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(0)
+    expect(state.byId('waveform-marker-start')).toBeUndefined()
+    plot.props.onWheel({ ...event, deltaX: 0, deltaY: 1, deltaMode: 2 })
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(60)
+    expect(state.byId('waveform-marker-start')).toBeDefined()
+    expect(state.byId('waveform-marker-end')).toBeDefined()
+    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.seek).not.toHaveBeenCalled()
+    const ignored = { ...event, ctrlKey: true, preventDefault: vi.fn() }
+    plot.props.onWheel(ignored)
+    expect(ignored.preventDefault).not.toHaveBeenCalled()
   })
 
   it('announces loading/error, disables unavailable controls, and recovers with Retry', async () => {
