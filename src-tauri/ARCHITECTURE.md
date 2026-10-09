@@ -1,6 +1,6 @@
 # LRCGET Tauri Architecture
 
-Local build 2.2.0+local.5: MP3 embedded export replaces all USLT/SYLT
+Local build 2.2.0+local.6: MP3 embedded export replaces all USLT/SYLT
 language and description variants, preventing stale lyrics from winning player
 selection. Unrelated tags and artwork are retained; audio is not re-encoded.
 Startup and F5 use the normal incremental scan. Unconfigured/unavailable music

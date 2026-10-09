@@ -4,16 +4,17 @@
       <button class="button button-normal p-1.5 rounded disabled:opacity-40" title="Undo synced edit (Ctrl+Z)" :disabled="!canUndo || editingLineIndex !== null" @click="emit('undo')"><Undo /></button>
       <button class="button button-normal p-1.5 rounded disabled:opacity-40" title="Redo synced edit (Ctrl+Shift+Z)" :disabled="!canRedo || editingLineIndex !== null" @click="emit('redo')"><Redo /></button>
       <label class="text-xs inline-flex items-center gap-2">Timing step
-        <select aria-label="Timing step" class="bg-transparent border border-neutral-300 dark:border-neutral-600 rounded px-1 py-1" :value="timingStepMs" @change="emit('update:timing-step-ms', Number($event.target.value))">
+        <!-- Shared styling also colors native dropdown options in dark mode. -->
+        <select aria-label="Timing step" class="select select-xs [color-scheme:light] dark:[color-scheme:dark]" :value="timingStepMs" @change="emit('update:timing-step-ms', Number($event.target.value))">
           <option v-for="step in [10, 25, 50, 100]" :key="step" :value="step">{{ step }} ms</option>
         </select>
       </label>
       <button class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop" :aria-pressed="loopEnabled" title="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
       <label class="text-xs inline-flex items-center gap-1">Lead-in
-        <input class="w-14 bg-transparent border border-neutral-300 dark:border-neutral-600 rounded px-1 py-1" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
+        <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
       </label>
       <label class="text-xs inline-flex items-center gap-1">Tail
-        <input class="w-14 bg-transparent border border-neutral-300 dark:border-neutral-600 rounded px-1 py-1" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
+        <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
       </label>
     </div>
     <SyncedWordTimingLane

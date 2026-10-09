@@ -4,7 +4,7 @@
 
 Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Session state only; persistence in Rust/SQLite.
 
-Local build 2.2.0+local.5: the lyrics editor defaults to synced LRC export
+Local build 2.2.0+local.6: the lyrics editor defaults to synced LRC export
 selected and loads the saved embedding preference when experimental embedding
 is enabled. Disabled embedding cannot be submitted, and publishing still requires confirmation.
 The library performs an incremental quick-hash scan on every opening. F5 invokes the same
@@ -17,6 +17,8 @@ shift word/end timing by the same actual displacement. Phrase-loop controls
 use the selected line's boundaries and playback updates with seek deduplication.
 Changing the selection or leaving the Synced tab disables looping. Native undo
 in editable fields is not intercepted. Save completion preserves in-flight edits.
+Timing-step and loop-context fields reuse shared `.select`/`.input` theme styles
+with explicit light/dark native color schemes for readable controls and options.
 
 **Tech Stack**: Vue 3 (`<script setup>`), Vite, Tailwind CSS, Vue Final Modal, Floating Vue, Vue Toastification, TanStack Vue Virtual, CodeMirror, `unplugin-icons` + Iconify Material Design Icons (`@iconify-json/mdi`).
 

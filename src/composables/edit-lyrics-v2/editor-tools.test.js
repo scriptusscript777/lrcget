@@ -36,6 +36,18 @@ const document = () => {
 }
 
 describe('synced editing history and timing steps', () => {
+  it('uses themed shared controls for timing steps and loop context', async () => {
+    const html = await renderToString(createSSRApp(SyncedLyricsEditor, { modelValue: [], timingStepMs: 25 }))
+    const select = html.match(/<select[^>]*aria-label="Timing step"[^>]*>/)[0]
+    expect(select).toContain('select select-xs')
+    expect(select).toContain('dark:[color-scheme:dark]')
+    const inputs = html.match(/<input[^>]*type="number"[^>]*>/g)
+    expect(inputs).toHaveLength(2)
+    for (const input of inputs) {
+      expect(input).toContain('class="input ')
+      expect(input).toContain('dark:[color-scheme:dark]')
+    }
+  })
   it('renders available undo and redo buttons enabled outside inline editing', async () => {
     const html = await renderToString(
       createSSRApp(SyncedLyricsEditor, { modelValue: [], canUndo: true, canRedo: true })

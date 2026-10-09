@@ -2,7 +2,10 @@
 
 Contributed by **Rick Lidgett** (@scriptusscript777).
 
-Local version: `2.2.0+local.5`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.6`, based on upstream tag `2.2.0`.
+
+The timing-step dropdown and loop-context inputs use shared light/dark control
+styles and a matching native color scheme so their values/options stay readable.
 
 ## Editing Tools
 
@@ -71,7 +74,7 @@ alignment against the singer.
 
 For this local build:
 
-- 169 frontend tests and 40 Rust tests passed. New tests cover synced history,
+- 170 frontend tests and 40 Rust tests passed. New tests cover synced history,
   configurable steps, looping, in-flight saves and export submission handling.
 - Rust tests cover failed staging, rolling backups, sidecar coexistence,
   symlink refusal and failed embedding preserving the source.
@@ -82,6 +85,8 @@ For this local build:
 - Browser interaction tests with a mocked backend verified the editor's timing
   step, undo/redo buttons and shortcuts, and looping commands. Screenshots were
   inspected at 1280x900 and 900x700. This is not an acoustic timing test.
+- Light/dark browser checks verify readable dropdown options and numeric fields
+  at a minimum 4.5:1 computed text contrast, with matching native color schemes.
 
 The startup/F5 desktop test used temporary fixtures, not user music or lyric files.
 Windows and macOS binaries were not built or tested for these local changes.
