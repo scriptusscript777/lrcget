@@ -121,7 +121,9 @@ marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 
-Hover or focus editing controls to see their help bubbles. The waveform shows
+Hover an editing control to see its standard description. The browser controls
+the delay. Editing help creates no popup panels or overlays to block clicks.
+The waveform shows
 the playhead position as `mm:ss.mmm`; the player reports updates every 40 ms,
 so three decimal places do not imply 1 ms playback accuracy.
 Each marker uses a single vertical guide. The start handle is at the top and

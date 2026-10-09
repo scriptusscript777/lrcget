@@ -1,26 +1,18 @@
 <template>
   <div class="flex-none flex gap-2 items-center">
     <div class="flex-none flex">
-      <VTooltip theme="lrcget-tooltip">
+      <div>
         <button
           class="button text-sm px-5 h-8 w-24 rounded-l-full rounded-r-none border-r inline-flex items-center justify-center gap-1.5"
           :class="{ 'button-primary': isDirty, 'button-disabled': !isDirty }"
           :disabled="!isDirty || isExporting"
+          title="Save lyrics (Ctrl+S)"
           @click="emit('save')"
         >
           <ContentSave class="text-base" />
           Save
         </button>
-
-        <template #popper>
-          <div class="text-xs font-bold">
-            Save lyrics
-            <span class="text-[0.65rem] text-neutral-800 bg-neutral-50 px-1 rounded-full"
-              >Ctrl+S</span
-            >
-          </div>
-        </template>
-      </VTooltip>
+      </div>
 
       <VDropdown theme="lrcget-dropdown" placement="bottom-start" @show="refreshEmbedConfig">
         <button
@@ -98,18 +90,14 @@
       </VDropdown>
     </div>
 
-    <VTooltip theme="lrcget-tooltip">
-      <button
-        class="button text-sm px-3 py-1.5 h-8 rounded-full button-normal inline-flex items-center justify-center"
-        @click="emit('debug')"
-      >
-        <Bug class="text-base" />
-      </button>
-
-      <template #popper>
-        <div class="text-xs font-bold">View YAML debug</div>
-      </template>
-    </VTooltip>
+    <button
+      class="button text-sm px-3 py-1.5 h-8 rounded-full button-normal inline-flex items-center justify-center"
+      title="View YAML debug"
+      aria-label="View YAML debug"
+      @click="emit('debug')"
+    >
+      <Bug class="text-base" />
+    </button>
   </div>
 </template>
 

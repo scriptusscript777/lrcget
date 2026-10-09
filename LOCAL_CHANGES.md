@@ -4,7 +4,16 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.17`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.18`, based on upstream tag `2.2.0`.
+
+## Native Hover Descriptions (.18)
+
+Rick Lidgett corrected editor help popovers that could remain open after a
+click focused a control. Editing descriptions now use native title text,
+including Save and Debug, with no popup DOM, focus triggers or overlay layer.
+The browser controls the hover delay; a fixed two-second delay is not promised.
+Interactive menus are unchanged. Browser regressions cover both themes,
+updated descriptions and subsequent editing clicks.
 
 ## Marker Visibility and Editing Help (.17)
 

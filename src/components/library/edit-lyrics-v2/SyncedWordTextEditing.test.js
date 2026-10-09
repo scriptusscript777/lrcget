@@ -8,8 +8,11 @@ import Lane from './SyncedWordTimingLane.vue'
 import Segment from './SyncedWordTimingSegment.vue'
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn().mockResolvedValue([]) }))
-// Popovers need browser DOM; interaction tests exercise real hover/focus help.
-vi.mock('floating-vue', () => ({ vTooltip: {} }))
+// The in-memory renderer has no DOM; browser checks cover native descriptions.
+vi.mock('@/utils/editor-tooltip.js', () => ({
+  vTooltip: {},
+  editorTooltip: content => ({ content }),
+}))
 const apps = []
 beforeEach(() => {
   vi.stubGlobal('window', { addEventListener: vi.fn(), removeEventListener: vi.fn() })

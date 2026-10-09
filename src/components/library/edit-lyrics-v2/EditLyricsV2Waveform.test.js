@@ -23,8 +23,11 @@ const { code } = compile(descriptor.template.content, {
 const component = { ...EditLyricsV2Waveform, render: new Function('Vue', code)(Vue) }
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
-// The in-memory renderer has no DOM; real hover/focus popovers are covered in Playwright.
-vi.mock('floating-vue', () => ({ vTooltip: {} }))
+// The in-memory renderer has no DOM; browser checks cover native descriptions.
+vi.mock('@/utils/editor-tooltip.js', () => ({
+  vTooltip: {},
+  editorTooltip: content => ({ content }),
+}))
 const data = { duration: 120, secondsPerPeak: 1, peaks: Array(120).fill(0.5) }
 const apps = []
 const frames = new Map()

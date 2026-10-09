@@ -1,11 +1,8 @@
-export { vTooltip } from 'floating-vue'
+// Use native hover descriptions, not focusable/interactive popup panels.
+// The browser controls the delay; this directive never creates overlay elements.
+const describeControl = (element, { value }) => {
+  element.setAttribute('title', value?.content ?? '')
+}
 
-// Keep editing help consistent with the application's existing themed popovers.
-export const editorTooltip = content => ({
-  content,
-  html: false,
-  theme: 'lrcget-tooltip',
-  popperClass: 'editor-help',
-  triggers: ['hover', 'focus'],
-  delay: { show: 350, hide: 0 },
-})
+export const vTooltip = { mounted: describeControl, updated: describeControl }
+export const editorTooltip = content => ({ content })
