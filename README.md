@@ -2,6 +2,13 @@
 
 Utility for mass-downloading LRC synced lyrics for your offline music library.
 
+## Rick Lidgett's Local Build
+
+This branch includes local export and library-refresh improvements in
+`2.2.0+local.4`. See [local changes and verification](LOCAL_CHANGES.md) for the
+workflow, safeguards, compatibility limits and upstream contribution status.
+The upstream download links below refer to upstream releases, not this build.
+
 LRCGET will scan every files in your chosen directory for music files, then and try to download lyrics to a LRC files having the same name and save them to the same directory as your music files.
 
 LRCGET is the official client of [LRCLIB](https://lrclib.net) service.
