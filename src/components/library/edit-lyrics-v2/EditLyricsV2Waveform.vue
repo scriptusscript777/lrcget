@@ -90,12 +90,14 @@
         role="slider"
         tabindex="0"
         aria-label="Seek in waveform"
+        title="Click to seek; double-click to zoom at this point"
         aria-valuemin="0"
         :aria-valuemax="waveform.duration"
         :aria-valuenow="cursorTime"
         :aria-valuetext="formatTime(cursorTime)"
         data-testid="waveform-seek"
         @click="seekAtPointer"
+        @dblclick.stop.prevent="zoomAtPointer"
         @keydown="seekAtKey"
       >
         <span
@@ -472,12 +474,34 @@ const panAtWheel = event => {
   event.preventDefault()
   pan(viewport.value.start + ((delta * scale) / bounds.width) * viewport.value.span)
 }
-const seekAtPointer = event => {
+const pointerTime = event => {
+  if (!waveform.value || drag.value || !Number.isFinite(event.clientX)) return null
   const bounds = event.currentTarget.getBoundingClientRect()
-  emit(
-    'seek',
-    pixelToTime(event.clientX - bounds.left, viewport.value, bounds.width, waveform.value.duration)
+  if (!bounds.width) return null
+  return pixelToTime(
+    event.clientX - bounds.left,
+    viewport.value,
+    bounds.width,
+    waveform.value.duration
   )
+}
+const zoomAtPointer = event => {
+  const anchor = pointerTime(event)
+  if (anchor === null) return
+  // Hold the inspected region during playback, just like manual panning.
+  if (follow.value) resumeFollowOnPlay = true
+  follow.value = false
+  viewport.value = zoomViewport(
+    waveform.value.duration,
+    viewport.value,
+    0.5,
+    anchor,
+    minimumSpan.value
+  )
+}
+const seekAtPointer = event => {
+  const time = pointerTime(event)
+  if (time !== null) emit('seek', time)
 }
 const seekAtKey = event => {
   if (isEditorShortcut(event)) return

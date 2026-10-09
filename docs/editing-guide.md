@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.10`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.11`.
 Original project authors and license remain credited.
 
 ## Start With Lyrics and a Recording
@@ -43,6 +43,12 @@ These are default shortcuts; customized bindings appear in the keyboard menu.
 Use the synced editor rather than typing in a text field when invoking shortcuts.
 
 ## Zoom and Precision
+
+Double-click a point on the waveform to magnify it. Repeat to go deeper, then
+drag or nudge the selected lyric's start/end markers and use Apply Markers.
+A single click still seeks. Double-click inspection temporarily holds the view
+instead of following playback; pause/play or the Follow button resumes following.
+The minus and Fit controls zoom back out. Marker timestamps never move with zoom.
 
 Magnification keeps a visible selected phrase marker in view, rather than
 anchoring to an unrelated playhead. Zoom preserves the playback-follow setting;

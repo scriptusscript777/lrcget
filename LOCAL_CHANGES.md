@@ -4,7 +4,16 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.10`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.11`, based on upstream tag `2.2.0`.
+
+## Point Zoom (.11)
+
+Double-click the waveform to halve the visible time span around that point;
+repeat for finer inspection, bounded by the existing minimum span. Single-click
+seeking remains available. Inspection holds the view like manual panning,
+without modifying markers or pending previews. Pause/play resumes following
+unless the user explicitly disabled it. Existing Preview/Apply marker editing,
+zoom-out and Fit controls remain unchanged. Editing developer: Rick Lidgett.
 
 ## Playback Follow Correction (.10)
 

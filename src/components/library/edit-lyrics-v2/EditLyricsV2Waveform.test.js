@@ -576,6 +576,35 @@ describe('waveform controls and states', () => {
     expect(invoke).toHaveBeenCalledTimes(1)
   })
 
+  it('repeatedly double-clicks into a point without moving selected markers or seeking', async () => {
+    const state = await mount({
+      progress: 100,
+      playing: true,
+      selectedLine: { start_ms: 20000, end_ms: 24000 },
+      selectedLineIndex: 0,
+    })
+    for (const span of [60, 30, 15]) {
+      const slider = state.byId('waveform-seek')
+      slider.props.onDblclick({
+        clientX: 220,
+        currentTarget: slider,
+        stopPropagation: vi.fn(),
+        preventDefault: vi.fn(),
+      })
+      await nextTick()
+      expect(state.byId('waveform-pan').props.max).toBe(120 - span)
+      expect(state.byId('waveform-pan').props.value).toBe(60 - span / 2)
+    }
+    const before = state.byId('waveform-pan').props.value
+    state.props.progress = 110
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(before)
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
+    expect(state.props.selectedLine).toEqual({ start_ms: 20000, end_ms: 24000 })
+    expect(state.seek).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
+
   it('zooms around the selected marker while paused without disabling follow', async () => {
     const state = await mount({
       progress: 100,
@@ -718,6 +747,13 @@ describe('waveform controls and states', () => {
     }
     marker.props.onPointerdown(event)
     await nextTick()
+    const slider = state.byId('waveform-seek')
+    slider.props.onDblclick({
+      clientX: 220,
+      currentTarget: slider,
+      stopPropagation: vi.fn(),
+      preventDefault: vi.fn(),
+    })
     state.byLabel('Zoom in waveform').props.onClick()
     state.byLabel('Fit entire waveform').props.onClick()
     state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
