@@ -1,6 +1,7 @@
 <template>
   <div
     ref="segmentElement"
+    v-tooltip="editorTooltip(`${word.text}: ${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)}. F2 or right-click edits spelling; double-click splits the word.`)"
     class="word-segment absolute flex items-center justify-center py-1 text-sm select-none h-full overflow-visible"
     :class="segmentClass"
     :style="segmentStyle"
@@ -45,6 +46,7 @@
 </template>
 
 <script setup>
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import { computed, ref } from 'vue'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 

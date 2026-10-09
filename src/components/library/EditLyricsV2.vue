@@ -86,6 +86,7 @@
           :audio-source="audioSource"
           :progress="waveformProgress"
           :playing="waveformPlaying"
+          :loop-range="loopEnabled ? loopRange : null"
           :selected-line="
             activeTab === 'synced' && !isInstrumental ? syncedLines[selectedSyncedLineIndex] : null
           "
@@ -360,6 +361,7 @@ const {
   playLineAtOffset,
   resumeOrPlay,
   loopEnabled,
+  loopRange,
   loopLeadSeconds,
   loopTailSeconds,
   canLoop,

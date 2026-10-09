@@ -121,6 +121,16 @@ marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 
+Hover or focus editing controls to see their help bubbles. The waveform shows
+the playhead position as `mm:ss.mmm`; the player reports updates every 40 ms,
+so three decimal places do not imply 1 ms playback accuracy.
+Each marker uses a single vertical guide. The start handle is at the top and
+the end handle at the bottom, making close boundaries separately selectable.
+Resyncing a start outside the zoomed view reveals it without changing zoom.
+Only an active Loop bounds the displayed playhead while a repeat seek finishes.
+Optional Lead-in/Tail extend the loop range; set both to zero for exact markers.
+Normal Play continues beyond the end marker.
+
 Sentence **Play** buttons remain visible without hovering. Click one to select
 its markers and play forward from that sentence. Explicit Play turns Loop off
 and resumes Follow Lyrics; markers then follow each timed sentence in Word

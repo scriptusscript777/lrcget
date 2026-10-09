@@ -2,6 +2,9 @@
   <div class="flex gap-4 items-center px-4 py-2">
     <button
       v-if="status !== 'playing'"
+      v-tooltip="editorTooltip('Play or resume this recording; Loop repeats the marker range when enabled')"
+      title="Play or resume this recording"
+      aria-label="Play or resume this recording"
       class="button button-normal p-2 rounded-full text-xl"
       @click.prevent="emit('play-toggle')"
     >
@@ -9,6 +12,9 @@
     </button>
     <button
       v-else
+      v-tooltip="editorTooltip('Pause playback without changing your markers or timestamps')"
+      title="Pause playback"
+      aria-label="Pause playback"
       class="button button-normal p-2 rounded-full text-xl"
       @click.prevent="emit('pause')"
     >
@@ -30,6 +36,7 @@
 </template>
 
 <script setup>
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import Play from '~icons/mdi/play'
 import Pause from '~icons/mdi/pause'
 import Seek from '@/components/now-playing/Seek.vue'

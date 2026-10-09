@@ -23,6 +23,8 @@ const { code } = compile(descriptor.template.content, {
 const component = { ...EditLyricsV2Waveform, render: new Function('Vue', code)(Vue) }
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
+// The in-memory renderer has no DOM; real hover/focus popovers are covered in Playwright.
+vi.mock('floating-vue', () => ({ vTooltip: {} }))
 const data = { duration: 120, secondsPerPeak: 1, peaks: Array(120).fill(0.5) }
 const apps = []
 const frames = new Map()
@@ -142,6 +144,54 @@ async function mount(initial = {}) {
 }
 
 describe('waveform controls and states', () => {
+  it('keeps close markers separately reachable with one guide each', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 1100 },
+      selectedLineIndex: 0,
+    })
+    const start = state.byId('waveform-marker-start')
+    const end = state.byId('waveform-marker-end')
+    expect(start.props.style.top).toBe('0')
+    expect(end.props.style.top).toBe('45px')
+    for (const marker of [start, end]) {
+      expect(marker.props.class).not.toContain('border-x')
+      expect(state.all(marker).filter(node => node.props.class?.includes('border-l'))).toHaveLength(
+        1
+      )
+    }
+  })
+
+  it('shows milliseconds and holds the cursor at loop boundaries only while looping', async () => {
+    const state = await mount({ progress: 1.234, loopRange: { start: 1, end: 3 } })
+    expect(state.text(state.byId('waveform-playback-time'))).toBe('00:01.234')
+    state.props.progress = 3.125
+    await nextTick()
+    expect(state.text(state.byId('waveform-playback-time'))).toBe('00:03.000')
+    state.props.progress = 0.5
+    await nextTick()
+    expect(state.text(state.byId('waveform-playback-time'))).toBe('00:01.000')
+    state.props.loopRange = null
+    state.props.progress = 4.123
+    await nextTick()
+    expect(state.text(state.byId('waveform-playback-time'))).toBe('00:04.123')
+  })
+
+  it('reveals a selected or resynced start without losing magnification', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    await nextTick()
+    expect(state.byId('waveform-marker-start')).toBeUndefined()
+    state.props.selectedLine.start_ms = 1200
+    await nextTick()
+    expect(state.byId('waveform-marker-start')).toBeDefined()
+    expect(state.byId('waveform-pan').props.max).toBe(60)
+  })
+
   it('shows no confirmed markers for untimed text and labels a provisional end', async () => {
     const state = await mount({
       selectedLine: { text: 'untimed lyric', start_ms: null, end_ms: null },

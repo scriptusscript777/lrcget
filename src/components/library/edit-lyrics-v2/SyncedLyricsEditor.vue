@@ -1,24 +1,25 @@
 <template>
   <div class="grow overflow-hidden flex flex-col relative">
     <div class="shrink-0 flex flex-wrap items-center gap-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
-      <button class="button button-normal p-1.5 rounded disabled:opacity-40" title="Undo synced edit (Ctrl+Z)" :disabled="!canUndo || editingLineIndex !== null" @click="emit('undo')"><Undo /></button>
-      <button class="button button-normal p-1.5 rounded disabled:opacity-40" title="Redo synced edit (Ctrl+Shift+Z)" :disabled="!canRedo || editingLineIndex !== null" @click="emit('redo')"><Redo /></button>
+      <button v-tooltip="editorTooltip('Undo the last synced edit (Ctrl+Z)')" class="button button-normal p-1.5 rounded disabled:opacity-40" title="Undo synced edit (Ctrl+Z)" aria-label="Undo synced edit (Ctrl+Z)" :disabled="!canUndo || editingLineIndex !== null" @click="emit('undo')"><Undo /></button>
+      <button v-tooltip="editorTooltip('Restore the last undone synced edit (Ctrl+Shift+Z)')" class="button button-normal p-1.5 rounded disabled:opacity-40" title="Redo synced edit (Ctrl+Shift+Z)" aria-label="Redo synced edit (Ctrl+Shift+Z)" :disabled="!canRedo || editingLineIndex !== null" @click="emit('redo')"><Redo /></button>
       <label class="text-xs inline-flex items-center gap-2">Timing step
         <!-- Shared styling also colors native dropdown options in dark mode. -->
-        <select aria-label="Timing step" class="select select-xs [color-scheme:light] dark:[color-scheme:dark]" :value="timingStepMs" @change="emit('update:timing-step-ms', Number($event.target.value))">
+        <select v-tooltip="editorTooltip('Choose how far each timing nudge moves; selecting a step does not change timestamps')" aria-label="Timing step" class="select select-xs [color-scheme:light] dark:[color-scheme:dark]" :value="timingStepMs" @change="emit('update:timing-step-ms', Number($event.target.value))">
           <option v-for="step in [10, 25, 50, 100]" :key="step" :value="step">{{ step }} ms</option>
         </select>
       </label>
-      <button class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop" :aria-pressed="loopEnabled" title="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
-      <label class="text-xs inline-flex items-center gap-1">Lead-in
+      <button v-tooltip="editorTooltip('Repeat between the selected start/end markers; optional lead-in and tail add listening context')" class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop" :aria-pressed="loopEnabled" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
+      <label v-tooltip="editorTooltip('Extra listening time before the loop start, in seconds; use zero for exact marker bounds')" class="text-xs inline-flex items-center gap-1">Lead-in
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
       </label>
-      <label class="text-xs inline-flex items-center gap-1">Tail
+      <label v-tooltip="editorTooltip('Extra listening time after the loop end, in seconds; use zero for exact marker bounds')" class="text-xs inline-flex items-center gap-1">Tail
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
       </label>
     </div>
     <div class="mt-2 flex shrink-0 flex-wrap items-center gap-2">
       <button
+        v-tooltip="editorTooltip('Show or hide word timing and karaoke editing controls')"
         class="button button-normal inline-flex w-fit items-center gap-1 rounded px-2 py-1 text-xs"
         :aria-expanded="wordTimingExpanded"
         aria-controls="word-timing-panel"
@@ -26,6 +27,7 @@
       ><ChevronDown v-if="wordTimingExpanded" /><ChevronRight v-else />Word timing</button>
       <button
         v-if="wordTimingExpanded"
+        v-tooltip="editorTooltip('Follow the playing sentence and its markers; editing and Loop hold the selected target')"
         type="button"
         class="button inline-flex items-center gap-1 rounded px-2 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
         :class="followLyrics ? 'bg-hoa-1500 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400' : 'button-normal'"
@@ -166,6 +168,7 @@
 </template>
 
 <script setup>
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import { computed, nextTick, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 import Rewind from '~icons/mdi/rewind'
 import Forward from '~icons/mdi/fast-forward'

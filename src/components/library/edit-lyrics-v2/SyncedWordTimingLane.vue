@@ -46,6 +46,7 @@
         <div class="flex flex-wrap items-center gap-2">
           <button
             v-if="!wordTextEdit"
+            v-tooltip="editorTooltip('Edit the selected word without changing its timestamps (F2 or right-click)')"
             type="button"
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
             title="Edit selected word (F2 or right-click a word box)"
@@ -53,9 +54,11 @@
             @click="startWordTextEdit(selectedWordIndex)"
           ><Pencil class="w-3.5 h-3.5" /><span>Edit word</span></button>
           <label class="inline-flex items-center gap-1" title="Word timing zoom">
+            <span class="sr-only">Word timing zoom</span>
             <Magnify class="h-3.5 w-3.5" />
             <input
               v-model.number="timelineZoom"
+              v-tooltip="editorTooltip('Magnify the word timeline for precise boundary editing')"
               type="range"
               min="1"
               max="8"
@@ -66,6 +69,7 @@
             />
           </label>
           <button
+            v-tooltip="editorTooltip(playLineTitle)"
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="playLineTitle"
             :disabled="!isWordSyncAvailable || !!wordTextEdit"
@@ -75,6 +79,7 @@
             <span>Play</span>
           </button>
           <button
+            v-tooltip="editorTooltip(syncWordTitle)"
             class="button button-primary text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="syncWordTitle"
             :disabled="!!wordTextEdit"
@@ -84,6 +89,7 @@
             <span>Sync word</span>
           </button>
           <button
+            v-tooltip="editorTooltip('Reset word timing to evenly spaced editable boundaries; keep lyric text')"
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             title="Reset word timings to default state"
             :disabled="!!wordTextEdit"
@@ -208,6 +214,7 @@
 </template>
 
 <script setup>
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import Equal from '~icons/mdi/equal'

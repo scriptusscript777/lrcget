@@ -1,6 +1,7 @@
 <template>
   <div class="relative h-0">
     <button
+      v-tooltip="editorTooltip(title)"
       class="button-normal absolute left-1/2 -translate-x-1/2 -translate-y-1/2 p-0.5 rounded-full text-xs"
       :title="title"
       :style="{ opacity }"
@@ -13,6 +14,7 @@
 </template>
 
 <script setup>
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import Plus from '~icons/mdi/plus'
 defineProps({
   title: {

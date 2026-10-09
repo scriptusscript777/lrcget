@@ -4,7 +4,19 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.16`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.17`, based on upstream tag `2.2.0`.
+
+## Marker Visibility and Editing Help (.17)
+
+Rick Lidgett replaced wide double marker borders with single vertical guides.
+Start and end use separate upper/lower hit areas, so close timestamps cannot
+hide or intercept the other handle. Resyncing an off-screen start reveals it
+without discarding zoom. Editing controls use the existing FloatingVue help
+system with compact, wrapping hover/focus popovers and plain-text content.
+The waveform displays the playhead position to milliseconds. During an active
+loop only, the displayed cursor stays within its range while the player's
+40ms state updates and asynchronous seek catch up. Normal Play still continues.
+This readout precision is not a claim of millisecond audio-device accuracy.
 
 ## Continuous Sentence Playback (.16)
 

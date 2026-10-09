@@ -15,6 +15,17 @@
             : 'Waveform'
         }}
       </span>
+      <output
+        v-tooltip="editorTooltip('Playhead position: minutes, seconds and milliseconds')"
+        class="min-w-[9ch] font-mono tabular-nums text-neutral-900 dark:text-neutral-100"
+        aria-label="Playback position"
+        data-testid="waveform-playback-time"
+        >{{
+          formatMarkerTime(
+            Number.isFinite(displayProgress) ? Math.round(displayProgress * 1000) : null
+          )
+        }}</output
+      >
       <div class="flex min-w-0 flex-wrap items-center gap-1">
         <template v-if="hasDraft">
           <span class="tabular-nums" data-testid="waveform-marker-preview">
@@ -22,6 +33,9 @@
             {{ formatMarkerTime(previewTimes.endMs) }}
           </span>
           <button
+            v-tooltip="
+              editorTooltip('Confirm the previewed start/end markers as one undoable timing edit')
+            "
             class="button h-7 rounded bg-hoa-1500 px-2 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400"
             :disabled="!!drag"
             data-testid="waveform-apply-markers"
@@ -30,6 +44,7 @@
             Apply Markers
           </button>
           <button
+            v-tooltip="editorTooltip('Discard the marker preview and keep saved timestamps')"
             class="button button-normal h-7 rounded px-2"
             :disabled="!!drag"
             data-testid="waveform-cancel-markers"
@@ -39,6 +54,7 @@
           </button>
         </template>
         <button
+          v-tooltip="editorTooltip('Follow the moving playhead; manual scrolling pauses following')"
           class="button button-normal h-7 w-7 rounded"
           aria-label="Follow waveform playback"
           title="Follow waveform playback"
@@ -50,6 +66,7 @@
           <Follow />
         </button>
         <button
+          v-tooltip="editorTooltip('Zoom out to see more of the recording')"
           class="button button-normal h-7 w-7 rounded"
           aria-label="Zoom out waveform"
           title="Zoom out waveform"
@@ -59,6 +76,9 @@
           <MagnifyMinus />
         </button>
         <button
+          v-tooltip="
+            editorTooltip('Zoom in around the selected phrase or playhead for precise editing')
+          "
           class="button button-normal h-7 w-7 rounded"
           aria-label="Zoom in waveform"
           title="Zoom in waveform"
@@ -68,6 +88,7 @@
           <MagnifyPlus />
         </button>
         <button
+          v-tooltip="editorTooltip('Show the entire recording without changing timestamps')"
           class="button button-normal h-7 w-7 rounded"
           aria-label="Fit entire waveform"
           title="Fit entire waveform"
@@ -110,11 +131,12 @@
       <button
         v-for="marker in markers"
         :key="marker.boundary"
-        class="absolute top-0 z-10 h-[90px] w-4 -translate-x-1/2 touch-none border-x border-neutral-700 bg-neutral-100/80 text-neutral-900 hover:border-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 dark:border-neutral-300 dark:bg-neutral-800/80 dark:text-white dark:hover:border-white dark:focus-visible:outline-neutral-100"
-        :style="{ left: `${marker.percent}%` }"
+        v-tooltip="editorTooltip(markerTitle(marker))"
+        class="absolute z-10 h-[45px] w-4 -translate-x-1/2 touch-none text-neutral-900 focus-visible:outline focus-visible:outline-2 focus-visible:outline-neutral-900 dark:text-white dark:focus-visible:outline-neutral-100"
+        :style="{ left: `${marker.percent}%`, top: marker.boundary === 'start' ? '0' : '45px' }"
         role="slider"
         :aria-label="`Selected lyric ${marker.boundary}`"
-        :title="`${marker.boundary === 'start' ? 'Start (shifts words; end stays fixed)' : Number.isFinite(selectedLine?.end_ms) ? 'End' : 'Inferred end (next lyric or recording end; set end to confirm)'}: ${formatMarkerTime(marker.time)}`"
+        :title="markerTitle(marker)"
         :aria-valuemin="marker.min"
         :aria-valuemax="marker.max"
         :aria-valuenow="marker.time"
@@ -128,8 +150,14 @@
         @lostpointercapture="cancelMarkerDrag"
         @keydown="markerKey(marker, $event)"
       >
+        <!-- Split hit areas keep close start/end handles independently reachable. -->
         <span
-          class="absolute top-0 left-0 h-4 w-full rounded-sm bg-neutral-800 text-center text-[10px] font-bold text-white dark:bg-neutral-200 dark:text-neutral-900"
+          class="pointer-events-none absolute left-1/2 h-[90px] border-l border-neutral-700 dark:border-neutral-300"
+          :style="{ top: marker.boundary === 'start' ? '0' : '-45px' }"
+        />
+        <span
+          class="absolute left-0 h-4 w-full rounded-sm bg-neutral-800 text-center text-[10px] font-bold text-white dark:bg-neutral-200 dark:text-neutral-900"
+          :class="marker.boundary === 'start' ? 'top-0' : 'bottom-0'"
           >{{ marker.boundary === 'start' ? '[' : ']' }}</span
         >
         <span
@@ -177,6 +205,7 @@
 
 <script setup>
 import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import MagnifyMinus from '~icons/mdi/magnify-minus-outline'
 import MagnifyPlus from '~icons/mdi/magnify-plus-outline'
 import Fit from '~icons/mdi/fit-to-screen-outline'
@@ -204,6 +233,7 @@ const props = defineProps({
   audioSource: { type: Object, required: true },
   progress: { type: Number, default: null },
   playing: { type: Boolean, default: false },
+  loopRange: { type: Object, default: null },
   selectedLine: { type: Object, default: null },
   selectedLineIndex: { type: Number, default: -1 },
   nextLineStartMs: { type: Number, default: null },
@@ -251,6 +281,15 @@ watch([drag, draft], () => emit('marker-editing-change', !!drag.value || !!draft
 const markerEnd = computed(
   () => props.selectedLine?.end_ms ?? props.nextLineStartMs ?? waveform.value?.duration * 1000
 )
+const markerTitle = marker => {
+  const label =
+    marker.boundary === 'start'
+      ? 'Start (shifts words; end stays fixed)'
+      : Number.isFinite(props.selectedLine?.end_ms)
+        ? 'End (start stays fixed)'
+        : 'Inferred end (next lyric or recording end; set end to confirm)'
+  return `${label}: ${formatMarkerTime(marker.time)}. Drag or nudge to preview; Apply Markers confirms.`
+}
 const previewTimes = computed(() => {
   const times = draft.value || {
     startMs: props.selectedLine?.start_ms,
@@ -412,12 +451,24 @@ const markerKey = (marker, event) => {
 const minimumSpan = computed(() =>
   Math.min(waveform.value?.duration || 1, Math.max(1, (waveform.value?.secondsPerPeak || 0) * 2))
 )
-const cursorTime = computed(() => clampTime(props.progress, waveform.value?.duration))
+const displayProgress = computed(() => {
+  const range = props.loopRange
+  if (
+    !Number.isFinite(props.progress) ||
+    !Number.isFinite(range?.start) ||
+    !Number.isFinite(range?.end) ||
+    range.end <= range.start
+  )
+    return props.progress
+  // The player reports on a 40ms interval; hold at the boundary while its loop seek arrives.
+  return Math.max(range.start, Math.min(range.end, props.progress))
+})
+const cursorTime = computed(() => clampTime(displayProgress.value, waveform.value?.duration))
 const playheadVisible = computed(
   () =>
-    Number.isFinite(props.progress) &&
-    props.progress >= viewport.value.start &&
-    props.progress <= viewport.value.start + viewport.value.span
+    Number.isFinite(displayProgress.value) &&
+    displayProgress.value >= viewport.value.start &&
+    displayProgress.value <= viewport.value.start + viewport.value.span
 )
 const playheadPercent = computed(() =>
   Math.max(0, Math.min(100, timeToPixel(cursorTime.value, viewport.value, 100)))
@@ -601,6 +652,16 @@ watch(
   { flush: 'pre' }
 )
 watch(() => props.selectedLine, discardMarkers, { deep: true, flush: 'pre' })
+watch([() => props.selectedLineIndex, () => props.selectedLine?.start_ms], () => {
+  if (!waveform.value || drag.value || draft.value || !markerBounds.value) return
+  const start = props.selectedLine.start_ms / 1000
+  if (start < viewport.value.start || start > viewport.value.start + viewport.value.span)
+    viewport.value = normalizeViewport(
+      waveform.value.duration,
+      start - viewport.value.span * 0.15,
+      viewport.value.span
+    )
+})
 watch(
   () => props.playing,
   (playing, previous) => {
@@ -611,9 +672,9 @@ watch(
     }
   }
 )
-watch([() => props.progress, () => props.playing, follow, drag], () => {
+watch([displayProgress, () => props.playing, follow, drag], () => {
   if (follow.value && props.playing && !drag.value && waveform.value)
-    viewport.value = followViewport(waveform.value.duration, viewport.value, props.progress)
+    viewport.value = followViewport(waveform.value.duration, viewport.value, displayProgress.value)
 })
 // Progress only moves the CSS playhead; static peaks/ruler redraw on viewport or theme changes.
 watch([waveform, viewport, width], scheduleDraw)

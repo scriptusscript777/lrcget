@@ -10,6 +10,7 @@
   >
     <div class="flex items-center gap-1 w-[3.5rem]">
       <button
+        v-tooltip="editorTooltip('Play from this sentence and continue forward; stop looping and follow lyrics')"
         class="button p-1 rounded-full text-sm h-6 w-6"
         :class="Number.isFinite(line.start_ms) && line.start_ms >= 0 ? 'button-normal' : 'button-disabled'"
         :disabled="!Number.isFinite(line.start_ms) || line.start_ms < 0"
@@ -21,8 +22,10 @@
       </button>
       <button
         v-show="isLineControlsVisible"
+        v-tooltip="editorTooltip(syncLineTitle)"
         class="button button-primary p-1 rounded-full text-sm h-6 w-6"
         :title="syncLineTitle"
+        :aria-label="syncLineTitle"
         @click.stop="emit('sync-line', index)"
       >
         <Equal />
@@ -32,8 +35,10 @@
     <div class="relative flex-none">
       <button
         v-show="isLineControlsVisible && line.start_ms"
+        v-tooltip="editorTooltip(rewindLineTitle)"
         class="button p-0.5 rounded-full text-xs h-5 w-5 bg-hoa-100 dark:bg-hoa-1500 text-hoa-800/70 dark:text-hoa-200/70 absolute -left-1.5 top-1/2 -translate-y-1/2 z-10"
         :title="rewindLineTitle"
+        :aria-label="rewindLineTitle"
         @click.stop="emit('rewind-line', index)"
       >
         <Rewind />
@@ -46,8 +51,10 @@
       </div>
       <button
         v-show="isLineControlsVisible && line.start_ms"
+        v-tooltip="editorTooltip(forwardLineTitle)"
         class="button p-0.5 rounded-full text-xs h-5 w-5 bg-hoa-100 dark:bg-hoa-1500 text-hoa-800/70 dark:text-hoa-200/70 absolute -right-1.5 top-1/2 -translate-y-1/2 z-10"
         :title="forwardLineTitle"
+        :aria-label="forwardLineTitle"
         @click.stop="emit('forward-line', index)"
       >
         <Forward />
@@ -104,8 +111,10 @@
       <div class="relative flex items-center">
         <button
           v-show="isLineControlsVisible && line.end_ms"
+          v-tooltip="editorTooltip(rewindEndTitle)"
           class="button p-0.5 rounded-full text-xs h-5 w-5 bg-neutral-200 dark:bg-neutral-700 text-neutral-600/70 dark:text-neutral-300/70 absolute -left-1.5 top-1/2 -translate-y-1/2 z-10"
           :title="rewindEndTitle"
+          :aria-label="rewindEndTitle"
           @click.stop="emit('rewind-end', index)"
         >
           <Rewind />
@@ -120,8 +129,10 @@
         </div>
         <button
           v-show="isLineControlsVisible && line.end_ms"
+          v-tooltip="editorTooltip(forwardEndTitle)"
           class="button p-0.5 rounded-full text-xs h-5 w-5 bg-neutral-200 dark:bg-neutral-700 text-neutral-600/70 dark:text-neutral-300/70 absolute -right-1.5 top-1/2 -translate-y-1/2 z-10"
           :title="forwardEndTitle"
+          :aria-label="forwardEndTitle"
           @click.stop="emit('forward-end', index)"
         >
           <Forward />
@@ -131,8 +142,10 @@
       <div class="h-6 w-6 mr-4 shrink-0">
         <button
           v-show="isLineControlsVisible"
+          v-tooltip="editorTooltip(syncEndTitle)"
           class="button bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-300 hover:dark:bg-neutral-600 p-1 rounded-full text-sm h-6 w-6"
           :title="syncEndTitle"
+          :aria-label="syncEndTitle"
           @click.stop="emit('sync-end', index)"
         >
           <Equal />
@@ -143,8 +156,10 @@
     <div class="flex items-center gap-1 w-[3.5rem] justify-end">
       <button
         v-show="isLineControlsVisible"
+        v-tooltip="editorTooltip('Delete this lyric line; Undo restores it')"
         class="button p-1 rounded-full text-sm h-6 w-6 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-700 hover:dark:bg-neutral-600 text-red-500 dark:text-red-400"
         title="Delete line"
+        aria-label="Delete line"
         @click.stop="emit('delete-line', index)"
       >
         <Trash />
@@ -155,6 +170,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
+import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import Play from '~icons/mdi/play'
 import Equal from '~icons/mdi/equal'
 import Rewind from '~icons/mdi/rewind'

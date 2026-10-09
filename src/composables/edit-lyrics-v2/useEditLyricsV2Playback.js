@@ -173,6 +173,7 @@ export function useEditLyricsV2Playback({
 
   return {
     loopEnabled,
+    loopRange,
     loopLeadSeconds,
     loopTailSeconds,
     canLoop: computed(() => !!loopRange.value),
