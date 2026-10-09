@@ -4,6 +4,10 @@ Utility for mass-downloading LRC synced lyrics for your offline music library.
 
 ## Rick Lidgett's Local Build
 
+Editing enhancements and local maintenance by **Rick Lidgett**
+([@scriptusscript777](https://github.com/scriptusscript777)).
+The original LRCGET project and its authors retain their existing credits.
+
 This branch includes local export and library-refresh improvements in
 `2.2.0+local.6`. See [local changes and verification](LOCAL_CHANGES.md) for the
 workflow, safeguards, compatibility limits and upstream contribution status.

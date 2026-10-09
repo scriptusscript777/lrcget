@@ -1,6 +1,8 @@
 # Local Changes
 
-Contributed by **Rick Lidgett** (@scriptusscript777).
+Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
+These modifications build on the original LRCGET project; upstream credits
+and the existing license remain unchanged.
 
 Local version: `2.2.0+local.6`, based on upstream tag `2.2.0`.
 
