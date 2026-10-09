@@ -120,9 +120,9 @@ async function mount(initial = {}) {
   const root = node('root')
   const props = reactive({ audioSource: { type: 'library', id: 1 }, progress: 30, ...initial })
   const seek = vi.fn()
-  const updateMarker = vi.fn()
+  const updateMarkers = vi.fn()
   const app = renderer.createApp({
-    render: () => h(component, { ...props, onSeek: seek, onUpdateMarker: updateMarker }),
+    render: () => h(component, { ...props, onSeek: seek, onUpdateMarkers: updateMarkers }),
   })
   app.provide(ssrContextKey, { modules: new Set() })
   app.mount(root)
@@ -138,10 +138,165 @@ async function mount(initial = {}) {
     frames.clear()
     pending.forEach(callback => callback())
   }
-  return { app, props, seek, updateMarker, all, byId, byLabel, text, draw, context }
+  return { app, props, seek, updateMarkers, all, byId, byLabel, text, draw, context }
 }
 
 describe('waveform controls and states', () => {
+  const key = (state, boundary, value, shiftKey = false) =>
+    state.byId(`waveform-marker-${boundary}`).props.onKeydown({
+      key: value,
+      shiftKey,
+      preventDefault: vi.fn(),
+    })
+  const escape = state =>
+    state.byId('editor-waveform').props.onKeydown({
+      key: 'Escape',
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    })
+
+  it('validates translated words and applies both draft markers in one event', async () => {
+    const line = {
+      start_ms: 1000,
+      end_ms: 3000,
+      words: [{ start_ms: 1200, end_ms: 2500 }],
+    }
+    const state = await mount({ selectedLine: line, selectedLineIndex: 4 })
+    expect(state.byId('waveform-apply-markers')).toBeUndefined()
+    key(state, 'start', 'End')
+    await nextTick()
+    // The translated word end equals the unchanged draft lyric end.
+    expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(1500)
+    expect(state.byId('waveform-marker-end').props['aria-valuemin']).toBe(3000)
+    key(state, 'end', 'ArrowRight')
+    await nextTick()
+    key(state, 'start', 'ArrowLeft')
+    await nextTick()
+    expect(state.byId('waveform-marker-end').props['aria-valuenow']).toBe(3100)
+    expect(state.props.selectedLine).toEqual(line)
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+    expect(state.byId('waveform-apply-markers').props.class).toContain('bg-hoa-1500')
+    expect(state.byId('waveform-apply-markers').props.class).toContain('text-white')
+    expect(state.byId('waveform-apply-markers').props.class).toContain('dark:hover:bg-hoa-1400')
+    state.byId('waveform-apply-markers').props.onClick()
+    expect(state.updateMarkers).toHaveBeenCalledExactlyOnceWith({
+      lineIndex: 4,
+      line: state.props.selectedLine,
+      startMs: 1400,
+      endMs: 3100,
+      durationMs: 120000,
+    })
+    expect(state.updateMarkers.mock.calls[0][0].line).toBe(state.props.selectedLine)
+    expect(state.seek).not.toHaveBeenCalled()
+  })
+
+  it.each(['button', 'escape', 'return-to-original'])(
+    'discards the draft with %s without touching media or document',
+    async mode => {
+      const state = await mount({
+        selectedLine: { start_ms: 1000, end_ms: 3000 },
+        selectedLineIndex: 0,
+      })
+      key(state, 'start', 'ArrowRight')
+      await nextTick()
+      if (mode === 'button') state.byId('waveform-cancel-markers').props.onClick()
+      else if (mode === 'escape') escape(state)
+      else key(state, 'start', 'ArrowLeft')
+      await nextTick()
+      expect(state.byId('waveform-apply-markers')).toBeUndefined()
+      expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(1000)
+      expect(state.updateMarkers).not.toHaveBeenCalled()
+      expect(state.seek).not.toHaveBeenCalled()
+    }
+  )
+
+  it.each(['pointercancel', 'lostpointercapture', 'escape'])(
+    'restores the prior draft after drag %s and disables confirmation during drag',
+    async mode => {
+      const state = await mount({
+        selectedLine: { start_ms: 1000, end_ms: 3000 },
+        selectedLineIndex: 0,
+      })
+      key(state, 'start', 'ArrowRight')
+      await nextTick()
+      const marker = state.byId('waveform-marker-start')
+      marker.setPointerCapture = vi.fn()
+      marker.hasPointerCapture = () => true
+      marker.releasePointerCapture = vi.fn()
+      const event = {
+        button: 0,
+        pointerId: 1,
+        currentTarget: marker,
+        clientX: 30,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      }
+      marker.props.onPointerdown(event)
+      marker.props.onPointermove({ ...event, clientX: 31 })
+      await nextTick()
+      expect(state.byId('waveform-apply-markers').props.disabled).toBe(true)
+      expect(state.byId('waveform-cancel-markers').props.disabled).toBe(true)
+      state.byId('waveform-apply-markers').props.onClick()
+      state.byId('waveform-cancel-markers').props.onClick()
+      if (mode === 'escape') escape(state)
+      else
+        marker.props[mode === 'pointercancel' ? 'onPointercancel' : 'onLostpointercapture'](event)
+      await nextTick()
+      expect(marker.props['aria-valuenow']).toBe(1100)
+      expect(marker.releasePointerCapture).toHaveBeenCalledWith(1)
+      expect(state.byId('waveform-apply-markers').props.disabled).toBe(false)
+      expect(state.updateMarkers).not.toHaveBeenCalled()
+      escape(state)
+      await nextTick()
+      expect(marker.props['aria-valuenow']).toBe(1000)
+    }
+  )
+
+  it.each(['selection', 'line', 'source', 'next-start', 'document', 'words', 'unmount'])(
+    'discards obsolete staged markers after %s changes',
+    async mode => {
+      const state = await mount({
+        selectedLine: { start_ms: 1000, end_ms: 3000, words: [] },
+        selectedLineIndex: 0,
+      })
+      key(state, 'start', 'ArrowRight')
+      await nextTick()
+      const apply = state.byId('waveform-apply-markers').props.onClick
+      if (mode === 'selection') state.props.selectedLineIndex = 1
+      else if (mode === 'line') state.props.selectedLine = { start_ms: 1000, end_ms: 3000 }
+      else if (mode === 'source') state.props.audioSource = { type: 'library', id: 2 }
+      else if (mode === 'next-start') state.props.nextLineStartMs = 4000
+      else if (mode === 'document') state.props.selectedLine.end_ms = 3200
+      else if (mode === 'words') state.props.selectedLine.words.push({ start_ms: 1200 })
+      else {
+        state.app.unmount()
+        apps.pop()
+      }
+      await nextTick()
+      apply()
+      expect(state.byId('waveform-apply-markers')).toBeUndefined()
+      expect(state.updateMarkers).not.toHaveBeenCalled()
+    }
+  )
+
+  it('retains an implicit end in the draft and rejects malformed word bounds', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000 },
+      selectedLineIndex: 0,
+      nextLineStartMs: 3000,
+    })
+    key(state, 'start', 'ArrowRight')
+    await nextTick()
+    state.byId('waveform-apply-markers').props.onClick()
+    expect(state.updateMarkers).toHaveBeenCalledExactlyOnceWith(
+      expect.objectContaining({ startMs: 1100, endMs: 3000 })
+    )
+    state.props.selectedLine.words = [{ start_ms: 500 }]
+    await nextTick()
+    expect(state.byId('waveform-marker-start')).toBeUndefined()
+    expect(state.byId('waveform-apply-markers')).toBeUndefined()
+  })
+
   it('lets editor/history shortcuts bubble, including configured global keys, without seeking or editing', async () => {
     const state = await mount({
       selectedLine: { start_ms: 1000, end_ms: 3000 },
@@ -187,14 +342,16 @@ describe('waveform controls and states', () => {
     expect(configured.preventDefault).not.toHaveBeenCalled()
     expect(configured.stopPropagation).not.toHaveBeenCalled()
     expect(state.seek).not.toHaveBeenCalled()
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     const tab = { key: 'Tab', stopPropagation: vi.fn() }
     root.props.onKeydown(tab)
     expect(tab.stopPropagation).not.toHaveBeenCalled()
     const arrow = { key: 'ArrowRight', preventDefault: vi.fn(), stopPropagation: vi.fn() }
     state.byId('waveform-marker-start').props.onKeydown(arrow)
     root.props.onKeydown(arrow)
-    expect(state.updateMarker).toHaveBeenCalledOnce()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+    await nextTick()
+    expect(state.byId('waveform-apply-markers')).toBeDefined()
     expect(arrow.stopPropagation).toHaveBeenCalledOnce()
   })
   it('pages on playing progress, loops backward, and allows paused pan and disabled follow', async () => {
@@ -223,10 +380,10 @@ describe('waveform controls and states', () => {
     state.props.playing = true
     state.props.progress = 4
     await nextTick()
-    expect(state.byId('waveform-pan').props.value).toBe(60)
+    expect(state.byId('waveform-pan').props.value).toBe(0)
   })
 
-  it('previews marker movement locally and emits one completed drag without seeking', async () => {
+  it('stages drag and keyboard movement until Apply without seeking', async () => {
     const state = await mount({
       selectedLine: { start_ms: 1000, end_ms: 3000, words: [] },
       selectedLineIndex: 0,
@@ -246,16 +403,26 @@ describe('waveform controls and states', () => {
     marker.props.onPointerdown(event)
     marker.props.onPointermove({ ...event, clientX: 26 })
     await nextTick()
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     expect(state.props.selectedLine.start_ms).toBe(1000)
     marker.props.onPointerup({ ...event, clientX: 26 })
-    expect(state.updateMarker).toHaveBeenCalledOnce()
-    expect(state.updateMarker.mock.calls[0][0]).toMatchObject({ boundary: 'start', timeMs: 1600 })
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     expect(state.seek).not.toHaveBeenCalled()
     await nextTick()
     marker.props.onKeydown({ key: 'ArrowRight', preventDefault: vi.fn() })
-    expect(state.updateMarker).toHaveBeenLastCalledWith(expect.objectContaining({ timeMs: 1025 }))
-    expect(marker.props['aria-valuetext']).toContain('01.000')
+    await nextTick()
+    expect(marker.props['aria-valuetext']).toContain('01.625')
+    state.byId('waveform-apply-markers').props.onClick()
+    expect(state.updateMarkers).toHaveBeenCalledExactlyOnceWith({
+      lineIndex: 0,
+      line: state.props.selectedLine,
+      startMs: 1625,
+      endMs: 3000,
+      durationMs: 120000,
+    })
+    await nextTick()
+    expect(state.byId('waveform-apply-markers')).toBeUndefined()
+    expect(marker.props['aria-valuenow']).toBe(1000)
   })
 
   it('does not commit an off-center click or cancel for another pointer', async () => {
@@ -276,13 +443,17 @@ describe('waveform controls and states', () => {
     }
     marker.props.onPointerdown(event)
     marker.props.onPointerup(event)
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     marker.props.onPointerdown(event)
     marker.props.onPointercancel({ pointerId: 2 })
     marker.props.onPointermove({ ...event, clientX: 31 })
     marker.props.onPointerup({ ...event, clientX: 31 })
-    expect(state.updateMarker).toHaveBeenCalledOnce()
-    expect(state.updateMarker).toHaveBeenLastCalledWith(expect.objectContaining({ timeMs: 1600 }))
+    await nextTick()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+    expect(marker.props['aria-valuenow']).toBe(1600)
+    state.byId('waveform-apply-markers').props.onClick()
+    expect(state.updateMarkers).toHaveBeenCalledOnce()
+    expect(state.updateMarkers).toHaveBeenLastCalledWith(expect.objectContaining({ startMs: 1600 }))
   })
 
   it.each(['pointercancel', 'lostpointercapture', 'escape', 'selection', 'source', 'unmount'])(
@@ -305,7 +476,12 @@ describe('waveform controls and states', () => {
       }
       marker.props.onPointerdown(event)
       marker.props.onPointermove({ ...event, clientX: 26 })
-      if (mode === 'escape') marker.props.onKeydown({ key: 'Escape', preventDefault: vi.fn() })
+      if (mode === 'escape')
+        state.byId('editor-waveform').props.onKeydown({
+          key: 'Escape',
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        })
       else if (mode === 'selection') state.props.selectedLineIndex = 1
       else if (mode === 'source') state.props.audioSource = { type: 'library', id: 2 }
       else if (mode === 'unmount') {
@@ -315,7 +491,7 @@ describe('waveform controls and states', () => {
         marker.props[mode === 'pointercancel' ? 'onPointercancel' : 'onLostpointercapture'](event)
       await nextTick()
       marker.props.onPointerup({ ...event, clientX: 26 })
-      expect(state.updateMarker).not.toHaveBeenCalled()
+      expect(state.updateMarkers).not.toHaveBeenCalled()
     }
   )
   it.each([
@@ -400,10 +576,10 @@ describe('waveform controls and states', () => {
     expect(invoke).toHaveBeenCalledTimes(1)
   })
 
-  it('zooms around the selected marker instead of an unrelated playing cursor', async () => {
+  it('zooms around the selected marker while paused without disabling follow', async () => {
     const state = await mount({
       progress: 100,
-      playing: true,
+      playing: false,
       selectedLine: { start_ms: 20000, end_ms: 24000 },
       selectedLineIndex: 0,
     })
@@ -412,12 +588,12 @@ describe('waveform controls and states', () => {
       await nextTick()
       expect(state.byId('waveform-marker-start')).toBeDefined()
     }
-    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(true)
     const before = state.byId('waveform-pan').props.value
     state.props.progress = 101
     await nextTick()
     expect(state.byId('waveform-pan').props.value).toBe(before)
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     expect(state.seek).not.toHaveBeenCalled()
   })
 
@@ -434,6 +610,74 @@ describe('waveform controls and states', () => {
     state.byLabel('Follow waveform playback').props.onClick()
     await nextTick()
     expect(state.byId('waveform-pan').props.value).toBe(0)
+  })
+
+  it('keeps following the playhead after zooming with a selected phrase', async () => {
+    const state = await mount({
+      progress: 20,
+      playing: true,
+      selectedLine: { start_ms: 20000, end_ms: 24000 },
+      selectedLineIndex: 0,
+    })
+    for (let index = 0; index < 4; index++) {
+      state.byLabel('Zoom in waveform').props.onClick()
+      await nextTick()
+    }
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(true)
+    for (const progress of [29, 45, 2, 119, 120]) {
+      state.props.progress = progress
+      await nextTick()
+      expect(state.byId('waveform-playhead')).toBeDefined()
+    }
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
+
+  it('preserves draft marker timestamps through playback, panning and zoom', async () => {
+    const state = await mount({
+      progress: 20,
+      playing: true,
+      selectedLine: { start_ms: 20000, end_ms: 24000 },
+      selectedLineIndex: 0,
+    })
+    state
+      .byId('waveform-marker-start')
+      .props.onKeydown({ key: 'ArrowRight', preventDefault: vi.fn() })
+    await nextTick()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+    for (let index = 0; index < 4; index++) {
+      state.byLabel('Zoom in waveform').props.onClick()
+      await nextTick()
+    }
+    state.props.progress = 90
+    await nextTick()
+    expect(state.byId('waveform-playhead')).toBeDefined()
+    state.byId('waveform-pan').props.onInput({ target: { value: 18 } })
+    await nextTick()
+    expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(20100)
+    expect(state.byId('waveform-marker-end').props['aria-valuenow']).toBe(24000)
+    state.props.progress = 91
+    await nextTick()
+    expect(state.props.selectedLine).toEqual({ start_ms: 20000, end_ms: 24000 })
+    expect(state.text(state.byId('waveform-marker-preview'))).toContain('20.100')
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+    expect(state.seek).not.toHaveBeenCalled()
+  })
+
+  it('preserves an explicitly disabled follow choice across zoom and playback restarts', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 20000, end_ms: 24000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Follow waveform playback').props.onClick()
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    await nextTick()
+    state.props.playing = true
+    state.props.progress = 3
+    await nextTick()
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
+    expect(state.byId('waveform-pan').props.value).toBe(60)
   })
 
   it('keeps the visible end marker reachable when magnifying after manual scrolling', async () => {
@@ -485,7 +729,7 @@ describe('waveform controls and states', () => {
     expect(state.byId('waveform-pan').props.value).toBe(before)
     expect(state.byId('waveform-pan').props.max).toBe(60)
     marker.props.onPointercancel(event)
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
   })
 
   it('uses the magnified time scale for fine marker movement without a grab jump', async () => {
@@ -497,7 +741,7 @@ describe('waveform controls and states', () => {
       state.byLabel('Zoom in waveform').props.onClick()
       await nextTick()
     }
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     const marker = state.byId('waveform-marker-start')
     marker.setPointerCapture = vi.fn()
     marker.hasPointerCapture = () => false
@@ -511,10 +755,13 @@ describe('waveform controls and states', () => {
     }
     marker.props.onPointerdown(event)
     marker.props.onPointerup({ ...event, clientX: 31 })
-    expect(state.updateMarker).toHaveBeenCalledExactlyOnceWith(
+    await nextTick()
+    expect(marker.props['aria-valuenow']).toBe(1019)
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+    state.byId('waveform-apply-markers').props.onClick()
+    expect(state.updateMarkers).toHaveBeenCalledExactlyOnceWith(
       expect.objectContaining({
-        boundary: 'start',
-        timeMs: 1019,
+        startMs: 1019,
       })
     )
     expect(state.props.selectedLine).toEqual({ start_ms: 1000, end_ms: 3000 })
@@ -539,7 +786,7 @@ describe('waveform controls and states', () => {
     expect(state.byId('waveform-pan').props.value).toBe(60)
     expect(state.byId('waveform-marker-start')).toBeDefined()
     expect(state.byId('waveform-marker-end')).toBeDefined()
-    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
     expect(state.seek).not.toHaveBeenCalled()
     const ignored = { ...event, ctrlKey: true, preventDefault: vi.fn() }
     plot.props.onWheel(ignored)
@@ -584,6 +831,7 @@ describe('waveform controls and states', () => {
     const state = await mount({ audioSource: { type: 'file' }, progress: null })
     expect(state.text()).toContain('No audio available')
     expect(state.byId('waveform-seek')).toBeUndefined()
+    expect(state.byId('waveform-apply-markers')).toBeUndefined()
     expect(invoke).not.toHaveBeenCalled()
   })
 

@@ -21,7 +21,7 @@
           class="button button-normal px-2 py-1 text-xs rounded-full"
           @click="emit('import-lrc-file')"
         >
-          Import LRC file
+          Import lyrics file
         </button>
         <button
           class="button button-normal px-2 py-1 text-xs rounded-full"

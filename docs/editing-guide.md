@@ -1,27 +1,40 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.9`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.10`.
 Original project authors and license remain credited.
 
 ## Start With Lyrics and a Recording
 
-- **Plain text file:** open your `.txt` file, copy its contents, open the song's
-  lyric editor and paste into **Plain**, one sung phrase per line. There is not
-  currently a direct plain-text-file import button.
+- **Plain text file:** click the header **Import lyrics file** icon and choose
+  a `.txt` file, one sung phrase per line. It creates untimed synced rows for
+  you to time against the recording; it does not invent timestamps.
 - **Online lyrics:** use LRCGET's built-in LRCLIB search. A synced result already
   has timestamps; a plain result needs manual timing.
 - **Genius or another website:** copy the lyrics into **Plain**. Arbitrary website
   URLs are not imported or scraped by LRCGET.
-- **Existing LRC:** use **Import LRC file** in the empty Synced editor, or
-  **Paste LRC** for timestamped lyrics copied to your clipboard.
+- **Existing LRC or timestamped TXT:** use the same **Import lyrics file**
+  action. Line timestamps are detected automatically, including `[mm:ss.xx]`
+  and millisecond precision. Existing times become editable synced rows.
+  **Paste LRC content** remains available in the empty Synced editor.
+
+Import asks before replacing existing words/timings. Cancel leaves them intact.
+Import does not rewrite your source TXT or LRC file. Save/export is a separate action.
+Empty, malformed and mixed timed/untimed files are rejected without discarding
+words. This import supports line-level LRC; enhanced inline word tags and nonzero
+offset headers need to be converted to explicit line timestamps first.
+
+![Light theme: confirmation before replacing lyrics](screenshots/lyrics-import-light.png)
+
+![Dark theme: confirmation before replacing lyrics](screenshots/lyrics-import-dark.png)
 
 You need the corresponding audio recording to listen and set timings. LRCGET
 does not run Whisper/Demucs or automatically align plain text to singing.
 
 ## Create a Timeline
 
-1. Paste your words into **Plain**.
-2. Open **Synced** and select **Import from plain lyrics** when it is empty.
+1. Import a plain text file using the header icon, or paste your words into **Plain**.
+2. File import opens untimed **Synced** rows. For pasted plain text, open **Synced**
+   and select **Import from plain lyrics** when it is empty.
 3. Play the recording, select a line and press **Space** when its singing starts.
 4. Press **Shift+Space** when that line finishes. Select the next line and repeat.
 5. Replay and refine with phrase looping, waveform markers and timing steps.
@@ -32,20 +45,31 @@ Use the synced editor rather than typing in a text field when invoking shortcuts
 ## Zoom and Precision
 
 Magnification keeps a visible selected phrase marker in view, rather than
-anchoring to an unrelated playhead. Zooming with a selected phrase disables
-playback following. At high magnification, a phrase can span more than one
+anchoring to an unrelated playhead. Zoom preserves the playback-follow setting;
+when following is enabled, the view advances with the moving playhead.
+At high magnification, a phrase can span more than one
 window; scroll to reach its other marker.
 
 Use a horizontal trackpad gesture, mouse wheel over the waveform or the bottom
 pan control. Manual panning disables follow, so playing audio does not pull
-your view away. The crosshair follow button turns automatic paging back on.
+your view away. Pause and play again to resume following after manual inspection,
+or use the crosshair follow button. If you explicitly turn that button off,
+it stays off until you turn it on. Marker timestamps stay fixed through zoom,
+scrolling and playback, including after an edit; only deliberate timing edits
+move them.
 
 Drag the start/end markers, or focus a marker and use Left/Right with the
 selected 10/25/50/100 ms timing step. Shift multiplies a marker nudge by ten.
-Start-marker edits shift that line's word timings while holding its end fixed.
-End-marker edits cannot truncate its timed words. Completed drags create one
-undoable edit; Escape/cancellation discards a preview. Zoom and scrolling do
-not change timestamps or save files.
+Dragging or nudging a marker stages a preview. Click **Apply Markers** when
+both boundaries are ready; they become one undoable document edit. **Cancel**
+discards the pending pair. Escape during a drag discards that drag; outside a
+drag it discards the pending preview. Switching phrases or closing the editor
+also discards unconfirmed previews.
+
+Start-marker changes shift that line's word timings while holding its preview
+end fixed. End-marker changes cannot truncate timed words. Playback, zoom and
+scrolling leave both preview and committed recording timestamps unchanged.
+Save/export uses the confirmed lyric document: apply your markers first.
 
 Expand **Word timing** only when individual-word timing is needed. Its 1-8x
 zoom and horizontal scrolling are separate from waveform zoom.
@@ -61,6 +85,13 @@ Embedding/exporting writes the track or sidecar; waveform navigation does not.
 does not itself publish your lyrics. Player support for lyric display varies.
 
 ## Current Views
+
+![Light theme: previewed markers awaiting confirmation](screenshots/marker-preview-light.png)
+
+![Dark theme: previewed markers awaiting confirmation](screenshots/marker-preview-dark.png)
+
+The preview timestamps above the waveform differ from the unchanged lyric-row
+timestamps. Apply Markers confirms both; Cancel restores the original pair.
 
 ![Light theme: zoomed phrase end and manual pan](screenshots/waveform-navigation-light.png)
 

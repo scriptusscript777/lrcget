@@ -6,7 +6,7 @@
     @keydown="isolateWaveformKey"
   >
     <div
-      class="flex min-w-0 items-center justify-between gap-2 text-xs text-neutral-600 dark:text-neutral-400"
+      class="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs text-neutral-600 dark:text-neutral-400"
     >
       <span class="min-w-0 truncate tabular-nums" data-testid="waveform-window">
         {{
@@ -15,7 +15,29 @@
             : 'Waveform'
         }}
       </span>
-      <div class="flex shrink-0 items-center gap-1">
+      <div class="flex min-w-0 flex-wrap items-center gap-1">
+        <template v-if="hasDraft">
+          <span class="tabular-nums" data-testid="waveform-marker-preview">
+            {{ formatMarkerTime(previewTimes.startMs) }} -
+            {{ formatMarkerTime(previewTimes.endMs) }}
+          </span>
+          <button
+            class="button h-7 rounded bg-hoa-1500 px-2 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400"
+            :disabled="!!drag"
+            data-testid="waveform-apply-markers"
+            @click="applyMarkers"
+          >
+            Apply Markers
+          </button>
+          <button
+            class="button button-normal h-7 rounded px-2"
+            :disabled="!!drag"
+            data-testid="waveform-cancel-markers"
+            @click="cancelDraft"
+          >
+            Cancel
+          </button>
+        </template>
         <button
           class="button button-normal h-7 w-7 rounded"
           aria-label="Follow waveform playback"
@@ -23,7 +45,7 @@
           :aria-pressed="follow"
           :disabled="!waveform"
           :class="follow ? 'ring-1 ring-inset ring-neutral-400 dark:ring-neutral-500' : ''"
-          @click="follow = !follow"
+          @click="toggleFollow"
         >
           <Follow />
         </button>
@@ -185,7 +207,7 @@ const props = defineProps({
   nextLineStartMs: { type: Number, default: null },
   timingStepMs: { type: Number, default: 100 },
 })
-const emit = defineEmits(['seek', 'update-marker'])
+const emit = defineEmits(['seek', 'update-markers'])
 const isEditorShortcut = event =>
   globalShortcutBindings.some(binding => binding.matches(event)) ||
   event.ctrlKey ||
@@ -194,6 +216,11 @@ const isEditorShortcut = event =>
 const isolateWaveformKey = event => {
   // Registry overrides and modified shortcuts belong to the editor, not the sliders.
   if (isEditorShortcut(event)) return
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    if (drag.value) cancelMarkerDrag()
+    else cancelDraft()
+  }
   if (
     event.defaultPrevented ||
     ['ArrowLeft', 'ArrowRight', 'Home', 'End', 'Escape'].includes(event.key) ||
@@ -209,25 +236,60 @@ const canvas = ref(null)
 const plot = ref(null)
 const width = ref(0)
 const follow = ref(true)
+let resumeFollowOnPlay = false
+const toggleFollow = () => {
+  resumeFollowOnPlay = false
+  follow.value = !follow.value
+}
 const drag = ref(null)
+const draft = ref(null)
 const markerEnd = computed(
   () => props.selectedLine?.end_ms ?? props.nextLineStartMs ?? waveform.value?.duration * 1000
 )
-const markerBounds = computed(() =>
-  waveform.value
-    ? waveformMarkerBounds(props.selectedLine, markerEnd.value, waveform.value.duration * 1000)
-    : null
+const previewTimes = computed(() => {
+  const times = draft.value || {
+    startMs: props.selectedLine?.start_ms,
+    endMs: markerEnd.value,
+  }
+  return drag.value
+    ? { ...times, [drag.value.boundary === 'start' ? 'startMs' : 'endMs']: drag.value.timeMs }
+    : times
+})
+const hasDraft = computed(
+  () =>
+    !!waveform.value &&
+    !!props.selectedLine &&
+    (previewTimes.value.startMs !== props.selectedLine?.start_ms ||
+      previewTimes.value.endMs !== markerEnd.value)
 )
+const boundsForTimes = times => {
+  if (!waveform.value || !props.selectedLine) return null
+  const offset = times.startMs - props.selectedLine.start_ms
+  // Validate translated words against the fixed draft end without touching the document.
+  const line = {
+    ...props.selectedLine,
+    start_ms: times.startMs,
+    end_ms: times.endMs,
+    words: Array.isArray(props.selectedLine.words)
+      ? props.selectedLine.words.map(word =>
+          word
+            ? {
+                ...word,
+                ...(Number.isFinite(word.start_ms) ? { start_ms: word.start_ms + offset } : {}),
+                ...(Number.isFinite(word.end_ms) ? { end_ms: word.end_ms + offset } : {}),
+              }
+            : word
+        )
+      : props.selectedLine.words,
+  }
+  return waveformMarkerBounds(line, times.endMs, waveform.value.duration * 1000)
+}
+const markerBounds = computed(() => boundsForTimes(previewTimes.value))
 const markers = computed(() => {
   if (!markerBounds.value) return []
   return ['start', 'end']
     .map(boundary => {
-      const time =
-        drag.value?.boundary === boundary
-          ? drag.value.timeMs
-          : boundary === 'start'
-            ? props.selectedLine.start_ms
-            : markerEnd.value
+      const time = previewTimes.value[boundary === 'start' ? 'startMs' : 'endMs']
       return {
         boundary,
         time,
@@ -249,14 +311,29 @@ const cancelMarkerDrag = event => {
   if (captureTarget?.hasPointerCapture?.(pointerId)) captureTarget.releasePointerCapture(pointerId)
   captureTarget = null
 }
-const commitMarker = (boundary, timeMs) =>
-  emit('update-marker', {
+const stageMarker = (boundary, timeMs) => {
+  const times = { ...previewTimes.value, [boundary === 'start' ? 'startMs' : 'endMs']: timeMs }
+  if (boundsForTimes(times)) draft.value = times
+}
+const cancelDraft = () => {
+  if (drag.value) return
+  draft.value = null
+}
+const discardMarkers = () => {
+  cancelMarkerDrag()
+  draft.value = null
+}
+const applyMarkers = () => {
+  if (drag.value || !hasDraft.value || !boundsForTimes(previewTimes.value)) return
+  const times = { ...previewTimes.value }
+  draft.value = null
+  emit('update-markers', {
     lineIndex: props.selectedLineIndex,
     line: props.selectedLine,
-    boundary,
-    timeMs,
+    ...times,
     durationMs: waveform.value.duration * 1000,
   })
+}
 const startMarkerDrag = (marker, event) => {
   if (event.button !== 0 || drag.value) return
   event.preventDefault()
@@ -294,15 +371,10 @@ const finishMarkerDrag = event => {
   moveMarkerDrag(event)
   const current = drag.value
   cancelMarkerDrag()
-  if (current.timeMs !== current.initial) commitMarker(current.boundary, current.timeMs)
+  if (current.timeMs !== current.initial) stageMarker(current.boundary, current.timeMs)
 }
 const markerKey = (marker, event) => {
   if (isEditorShortcut(event)) return
-  if (event.key === 'Escape') {
-    event.preventDefault()
-    cancelMarkerDrag()
-    return
-  }
   if (drag.value) return
   const step = props.timingStepMs * (event.shiftKey ? 10 : 1)
   const targets = {
@@ -313,7 +385,7 @@ const markerKey = (marker, event) => {
   }
   if (!(event.key in targets)) return
   event.preventDefault()
-  commitMarker(marker.boundary, Math.max(marker.min, Math.min(marker.max, targets[event.key])))
+  stageMarker(marker.boundary, Math.max(marker.min, Math.min(marker.max, targets[event.key])))
 }
 const minimumSpan = computed(() =>
   Math.min(waveform.value?.duration || 1, Math.max(1, (waveform.value?.secondsPerPeak || 0) * 2))
@@ -346,8 +418,8 @@ const zoom = factor => {
   if (!waveform.value || drag.value) return
   let anchor = props.progress
   if (markerBounds.value) {
-    const start = props.selectedLine.start_ms / 1000
-    const end = markerEnd.value / 1000
+    const start = previewTimes.value.startMs / 1000
+    const end = previewTimes.value.endMs / 1000
     const visible = time =>
       Number.isFinite(time) &&
       time >= viewport.value.start &&
@@ -360,7 +432,6 @@ const zoom = factor => {
         anchor = viewport.value.start + viewport.value.span / 2
       else anchor = start
     }
-    follow.value = false
     // Bring an off-screen selected boundary into view before magnifying it.
     if (anchor < viewport.value.start || anchor > viewport.value.start + viewport.value.span)
       viewport.value = normalizeViewport(
@@ -379,6 +450,7 @@ const zoom = factor => {
 }
 const pan = start => {
   if (!waveform.value || drag.value) return
+  if (follow.value) resumeFollowOnPlay = true
   follow.value = false
   viewport.value = normalizeViewport(waveform.value.duration, start, viewport.value.span)
 }
@@ -466,7 +538,7 @@ const scheduleDraw = () => {
 watch(
   waveform,
   () => {
-    cancelMarkerDrag()
+    discardMarkers()
     fit()
   },
   { flush: 'sync' }
@@ -478,10 +550,20 @@ watch(
     () => props.selectedLineIndex,
     () => props.nextLineStartMs,
   ],
-  cancelMarkerDrag,
+  discardMarkers,
   { flush: 'sync' }
 )
-watch(() => props.selectedLine, cancelMarkerDrag, { deep: true, flush: 'sync' })
+watch(() => props.selectedLine, discardMarkers, { deep: true, flush: 'sync' })
+watch(
+  () => props.playing,
+  (playing, previous) => {
+    // Manual inspection yields when playback restarts; an explicit Follow-off choice does not.
+    if (playing && !previous && resumeFollowOnPlay) {
+      resumeFollowOnPlay = false
+      follow.value = true
+    }
+  }
+)
 watch([() => props.progress, () => props.playing, follow, drag], () => {
   if (follow.value && props.playing && !drag.value && waveform.value)
     viewport.value = followViewport(waveform.value.duration, viewport.value, props.progress)
@@ -501,7 +583,7 @@ onMounted(() => {
   scheduleDraw()
 })
 onUnmounted(() => {
-  cancelMarkerDrag()
+  discardMarkers()
   disposed = true
   cancelAnimationFrame(frame)
   resizeObserver?.disconnect()

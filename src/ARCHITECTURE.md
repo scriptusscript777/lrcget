@@ -4,7 +4,7 @@
 
 Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Session state only; persistence in Rust/SQLite.
 
-Local build 2.2.0+local.9: the lyrics editor defaults to synced LRC export
+Local build 2.2.0+local.10: the lyrics editor defaults to synced LRC export
 selected and loads the saved embedding preference when experimental embedding
 is enabled. Disabled embedding cannot be submitted, and publishing still requires confirmation.
 The library performs an incremental quick-hash scan on every opening. F5 invokes the same
@@ -120,6 +120,17 @@ Shared fields are `export_txt`, `export_lrc`, and `export_embedded`. `auto_expor
 
 `EditLyricsV2.vue` combines CodeMirror plain editing and synced editing with a word timing lane.
 
+The header Import lyrics file action reads TXT/LRC using the existing backend
+`read_text_file` command. `lyrics-import.js` classifies plain versus line-timed
+text with `lrc-kit`, preserves repeated timestamps/blank clear cues and rejects
+malformed/mixed rows, enhanced word tags and nonzero offsets instead of dropping
+data. Plain TXT becomes untimed synced rows for manual synchronization; timed
+TXT/LRC retains its imported positions. Replacement requires confirmation.
+An import-session/source/document snapshot invalidates delayed responses after
+edits, track changes or closing; concurrent reads are blocked. Import does not
+write/export/publish files. Confirmation text/actions use readable light/dark
+colors and apply-marker confirmation remains a separate local-draft action.
+
 - Props/context: `audioSource` (playback source), `lyricsfile` (editing target), `trackId` (save behavior)
 - Instrumental mode: toggle via `PlainLyricsEmptyState.vue` / `SyncedLyricsEmptyState.vue`
 - Publish/export: handled by `useEditLyricsV2Publish.js` and `useEditLyricsV2Export.js`
@@ -132,8 +143,9 @@ Shared fields are `export_txt`, `export_lrc`, and `export_embedded`. `auto_expor
 - Word timing: multi-separator selection (Ctrl/Cmd+click + Shift+click), merge separators (`Delete`/`Backspace`), hover split preview snapped to grapheme boundaries, double-click split at cursor, and `Z` syncs selected separator then advances (last-word sync advances to next line)
 - Word timing disclosure defaults collapsed; only expanded lanes mount and bind word hotkeys. Expanded word bindings take precedence over conflicting phrase actions, while history/save retain priority. A native zoom range uniformly enlarges the whole horizontal timeline from 1x to 8x (default 2x), preserving linear drag mapping and limiting layout size even for 1ms words. Selected boundaries scroll into view; guarded matching playback follows only when not manually inspecting or pending/actively dragging. Paused matching cursors/highlights remain visible with no automatic scrolling; wrong-source progress is hidden. Pointer identity is enforced; cancellation, blur, synchronous document/word changes, collapse, and unmount discard drag previews and remove listeners. Pointer-down freezes geometry and grab offset before threshold. Segmentation generations invalidate stale selection/unmount responses and prevent requests after disposal. Disclosure, zoom, and scrolling never persist timings or write files.
 - Waveform follow: enabled by default with a compact toggle; pages forward/backward only for the matching active playing source, including loops. Paused panning stays manual. Progress within a page (including the final duration) retains viewport identity and does not redraw peaks.
-- Waveform navigation: manual range/wheel/trackpad panning disables follow until explicitly re-enabled, so playback cannot undo inspection. Zoom prioritizes a visible playhead inside the selected phrase, then a visible start/end marker, then the visible phrase interior; an entirely off-screen selection is brought back around its start. Selection zoom disables follow. Wheel deltas support pixel/line/page units, preserve modified browser gestures and use the plot width for linear mapping. Zoom/pan/fit are ignored during marker drags; navigation never emits document edits or seeks.
-- Waveform lyric markers: selected synced line start/end are pointer-captured sliders with Arrow/Home/End controls using the timing step (Shift multiplies by ten). Preview is local, with millisecond timestamps; release commits once through the document API/history. Escape, pointer cancellation, lost capture, source/selection/document changes, and unmount discard the preview. Start changes shift word timestamps while keeping the lyric end fixed; end changes cannot truncate words. Bounds allow word ends exactly equal to the lyric end. Neighbors and overlaps are untouched, and an implicit end uses the next start or audio duration until explicitly edited.
+- Waveform navigation: manual range/wheel/trackpad panning temporarily disables follow, so playback cannot undo inspection. A pending manual-inspection flag restores follow on pause/play, but explicit toggle choices clear that flag and remain respected. Zoom preserves the follow setting and prioritizes a visible playhead inside the selected phrase, then a visible start/end marker, then the visible phrase interior; an entirely off-screen selection is brought back around its start. Wheel deltas support pixel/line/page units, preserve modified browser gestures and use the plot width for linear mapping. Zoom/pan/fit are ignored during marker drags; navigation never emits document edits or seeks. Committed marker times remain in the document regardless of viewport/playhead movement.
+- Waveform lyric markers: selected synced line start/end are pointer-captured sliders with Arrow/Home/End controls using the timing step (Shift multiplies by ten). Preview is local, with millisecond timestamps; release stages a draft and only Apply Markers commits through the document API/history. Pointer cancellation/lost capture discard only the active drag; Cancel/Escape outside a drag, source/selection/document changes and unmount discard the pending pair. Start changes shift word timestamps while keeping the lyric end fixed; end changes cannot truncate words. Bounds allow word ends exactly equal to the lyric end. Neighbors and overlaps are untouched, and an implicit end uses the next start or audio duration until explicitly edited.
+- Marker confirmation (.10): drag release/keyboard nudges stage a component-local start/end draft. Apply Markers emits `update-markers` with both milliseconds, original line identity/index and duration; `updateWaveformMarkers` rejects stale or invalid pairs, shifts word timings once and records one history snapshot. Cancel discards the pair; a canceled drag restores the pre-drag draft. Source/selection/document changes and unmount discard unconfirmed drafts. Save/export never sees a pending draft. Bounds validate the virtual shifted-word line and the proposed end; navigation/follow cannot mutate draft timestamps.
 - Narrow word segments retain native title tooltips, active highlighting, split previews, and divider drag timestamps; no hint bubble is rendered beneath selected dividers. Active words use a mutually exclusive dark accent/white text pair in both themes. Waveform controls preserve editor history and registry-configured global shortcuts while isolating local navigation/timing keys. The desktop window already enforces a 1024px minimum width; the waveform strip itself supports narrower embedded widths.
 - Boundary sync: can cascade adjacent boundaries so sync is not blocked by intervening separators, while staying within line bounds
 - Reset behavior: clears persisted word timings and reloads default (non-persisted) segmentation

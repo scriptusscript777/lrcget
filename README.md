@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.9** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.10** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.9/LRCGET_2.2.0%2Blocal.9_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.9)
-| [Zoom navigation update](docs/releases/2.2.0-local.9.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.10/LRCGET_2.2.0%2Blocal.10_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.10)
+| [Playback follow update](docs/releases/2.2.0-local.10.md)
 | [Editing guide](docs/editing-guide.md)
 | [Detailed changes](LOCAL_CHANGES.md)
 
@@ -23,8 +23,14 @@ official upstream release.
 - Zoomable waveform with playback following, paused panning and click-to-seek.
 - Wheel/trackpad panning at any playback state, without follow snapping back;
   zoom preserves the visible phrase marker for precise editing.
+- Zoom keeps playback follow enabled; pause/play resumes following after manual
+  inspection. Placed marker timestamps stay fixed during playback and navigation.
 - Selected phrase start/end handles, session undo/redo, 10/25/50/100 ms timing
   steps and phrase looping.
+- Marker preview with explicit Apply Markers / Cancel; confirmed boundaries
+  form one undoable edit and stay fixed through playback and zoom.
+- Direct plain TXT, line-timed TXT and LRC import, with replacement confirmation;
+  untimed words become rows you can synchronize manually to the recording.
 - Optional word-timing view, collapsed initially, with 1-8x linear zoom,
   playback scrolling and readable highlighting in light/dark themes.
 - Cleaner word editing without the pink selection bubble; canceled drags do
@@ -38,8 +44,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.9_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.9_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.10_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.10_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -50,12 +56,17 @@ No additional WAV conversion, Whisper or Demucs installation is needed.
 ### Current Interface
 
 The main phrase editor stays uncluttered; **Word timing** opens the optional
-individual-word tools.
+individual-word tools. Pending marker edits show **Apply Markers** and **Cancel**;
+the lyric-row timestamps stay unchanged until you apply the pair.
+
+![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-light.png)
 
 ![Light theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-light.png)
 
 <details>
 <summary>Dark theme and expanded word-timing tools</summary>
+
+![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-dark.png)
 
 ![Dark theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-dark.png)
 
@@ -73,7 +84,7 @@ individual-word tools.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 241 frontend and 45 Rust tests passed, plus
+or lyric display in every player. 294 frontend and 45 Rust tests passed, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project

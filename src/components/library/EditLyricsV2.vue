@@ -19,6 +19,15 @@
     </template>
 
     <template #titleRight>
+      <button
+        class="button button-normal h-8 w-8 shrink-0 rounded-full p-1.5 text-sm mr-2"
+        title="Import lyrics file"
+        aria-label="Import lyrics file"
+        :disabled="isSaving || isExporting || isImporting"
+        @click="handleImportLrcFile"
+      >
+        <FileImport class="text-base" />
+      </button>
       <div class="inline-flex gap-0.5">
         <button
           class="button text-sm h-8 w-24 rounded-l-full rounded-r-none"
@@ -81,7 +90,7 @@
           :selected-line-index="selectedSyncedLineIndex"
           :next-line-start-ms="syncedLines[selectedSyncedLineIndex + 1]?.start_ms"
           :timing-step-ms="timingStepMs"
-          @update-marker="updateWaveformMarker"
+          @update-markers="updateWaveformMarkers"
           @seek="handleWaveformSeek"
         />
       </div>
@@ -178,6 +187,7 @@ import PlainLyricsCodeEditor from '@/components/library/edit-lyrics-v2/PlainLyri
 import SyncedLyricsEditor from '@/components/library/edit-lyrics-v2/SyncedLyricsEditor.vue'
 import KeyboardShortcutsModal from '@/components/library/edit-lyrics-v2/KeyboardShortcutsModal.vue'
 import Keyboard from '~icons/mdi/keyboard'
+import FileImport from '~icons/mdi/file-import-outline'
 import { useEditLyricsV2Document } from '@/composables/edit-lyrics-v2/useEditLyricsV2Document.js'
 import { useEditLyricsV2Hotkeys } from '@/composables/edit-lyrics-v2/useEditLyricsV2Hotkeys.js'
 import { useEditLyricsV2Publish } from '@/composables/edit-lyrics-v2/useEditLyricsV2Publish.js'
@@ -190,6 +200,7 @@ import { open } from '@tauri-apps/plugin-dialog'
 import { readText } from '@tauri-apps/plugin-clipboard-manager'
 import { invoke } from '@tauri-apps/api/core'
 import { parseLrcLines } from '@/utils/lyricsfile.js'
+import { parseImportedLyrics } from '@/utils/lyrics-import.js'
 import { useWaveformPlayback } from '@/composables/edit-lyrics-v2/useWaveformPlayback.js'
 
 const props = defineProps({
@@ -273,7 +284,7 @@ const {
   initializeLyrics,
   updatePlainLyrics,
   updateSyncedLines,
-  updateWaveformMarker,
+  updateWaveformMarkers,
   selectSyncedLine,
   selectSyncedLineRange,
   toggleSyncedLineSelection,
@@ -389,34 +400,106 @@ const handleUpdateSelectedLineIndices = payload => {
   }
 }
 
+const isImporting = ref(false)
+let importSession = 0
+let importRequest = 0
+let importDisposed = false
+let pendingImport = null
+const importContext = () => ({
+  session: importSession,
+  source: props.audioSource,
+  lyricsfile: props.lyricsfile,
+  trackId: props.trackId,
+  document: serializedLyricsfile.value,
+})
+const isCurrentImport = context =>
+  !importDisposed &&
+  context.session === importSession &&
+  context.source === props.audioSource &&
+  context.lyricsfile === props.lyricsfile &&
+  context.trackId === props.trackId &&
+  context.document === serializedLyricsfile.value &&
+  !isSaving.value &&
+  !isExporting.value
+const applyImportedLyrics = ({ parsed, context }) => {
+  if (!isCurrentImport(context)) return
+  if (parsed.kind === 'synced') updateSyncedLines(parsed.lines)
+  updatePlainLyrics(parsed.plain)
+  if (parsed.kind === 'plain') importSyncedLinesFromPlain()
+  setInstrumental(false)
+  activeTab.value = 'synced'
+  toast.success(
+    parsed.kind === 'synced'
+      ? `Imported ${parsed.lines.length} synced lines`
+      : 'Imported plain lyrics'
+  )
+}
+const finishImportConfirmation = confirmed => {
+  const request = pendingImport
+  pendingImport = null
+  isImporting.value = false
+  closeImportConfirmModal()
+  if (confirmed && request) applyImportedLyrics(request)
+}
+const { open: openImportConfirmModal, close: closeImportConfirmModal } = useModal({
+  component: ConfirmModal,
+  attrs: {
+    title: 'Replace lyrics?',
+    message: 'Importing this file will replace the current plain lyrics and synced timings. Continue?',
+    confirmText: 'Import lyrics',
+    cancelText: 'Cancel',
+    clickToClose: false,
+    escToClose: false,
+    onConfirm: () => finishImportConfirmation(true),
+    onCancel: () => finishImportConfirmation(false),
+  },
+})
+const invalidateImport = () => {
+  importSession++
+  if (pendingImport) finishImportConfirmation(false)
+}
+watch([audioSourceRef, lyricsfileRef, trackIdRef, serializedLyricsfile], invalidateImport, {
+  deep: true,
+  flush: 'sync',
+})
+
 const handleImportLrcFile = async () => {
+  if (isImporting.value || isSaving.value || isExporting.value || importDisposed) return
+  isImporting.value = true
+  const requestId = ++importRequest
+  const context = importContext()
   try {
     const filePath = await open({
       multiple: false,
       directory: false,
-      filters: [
-        { name: 'LRC Files', extensions: ['lrc'] },
-        { name: 'All Files', extensions: ['*'] },
-      ],
+      filters: [{ name: 'Lyrics files', extensions: ['txt', 'lrc'] }],
     })
 
-    if (!filePath) {
+    if (!filePath || !isCurrentImport(context)) {
       return
     }
 
     const content = await invoke('read_text_file', { filePath })
-    const parsedLines = parseLrcLines(content)
-
-    if (parsedLines.length === 0) {
-      toast.error('No valid synced lines found in the selected file')
+    if (!isCurrentImport(context)) return
+    const parsed = parseImportedLyrics(content, filePath)
+    if (!parsed.plain.trim() && !parsed.lines.length) {
+      toast.error('The selected lyrics file is empty')
       return
     }
-
-    updateSyncedLines(parsedLines)
-    toast.success(`Imported ${parsedLines.length} synced lines`)
+    const request = { parsed, context }
+    const replacesContent =
+      plainLyrics.value.trim().length > 0 || syncedLines.value.length > 0 || isInstrumental.value
+    if (replacesContent) {
+      pendingImport = request
+      await openImportConfirmModal()
+    } else applyImportedLyrics(request)
   } catch (error) {
-    console.error(error)
-    toast.error(error?.toString?.() || 'Failed to import LRC file')
+    if (isCurrentImport(context)) {
+      pendingImport = null
+      toast.error(error?.toString?.() || 'Failed to import lyrics file')
+    }
+  } finally {
+    if (requestId === importRequest && !pendingImport) isImporting.value = false
   }
 }
 
@@ -547,6 +630,7 @@ const { open: openConfirmModal, close: closeConfirmModal } = useModal({
 })
 
 const handleClose = () => {
+  invalidateImport()
   if (isDirty.value) {
     openConfirmModal()
   } else {
@@ -584,6 +668,8 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  importDisposed = true
+  invalidateImport()
   unbindSyncedHotkeys()
   unbindHotkeys()
   enableHotkey()

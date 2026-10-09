@@ -1,6 +1,6 @@
 <template>
   <BaseModal :title="title" content-class="w-full max-w-sm" :close-button="false">
-    <p class="text-neutral-800 dark:text-neutral-600">{{ message }}</p>
+    <p class="text-neutral-800 dark:text-neutral-300">{{ message }}</p>
 
     <template #footer>
       <div class="w-full flex justify-end gap-2">
@@ -8,7 +8,7 @@
           {{ cancelText }}
         </button>
         <button
-          class="button button-primary px-4 h-8 rounded-full text-sm"
+          class="button px-4 h-8 rounded-full text-sm bg-hoa-1500 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400"
           @click="emit('confirm')"
         >
           {{ confirmText }}

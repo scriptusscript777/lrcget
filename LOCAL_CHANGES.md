@@ -4,7 +4,38 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.9`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.10`, based on upstream tag `2.2.0`.
+
+## Playback Follow Correction (.10)
+
+Zooming a selected phrase no longer disables playback following. The moving
+playhead stays visible as playback crosses zoomed window boundaries. Manual
+pan/wheel inspection still suspends follow to avoid snap-back; pause/play
+resumes it. An explicit follow-toggle-off choice stays off across pause/play.
+Zoom, scrolling and playback never modify marker timestamps. Committed marker
+edits remain fixed in the lyric document even while they scroll out of view.
+Drag mapping stays frozen until release/cancel, then following can resume.
+
+## Marker Preview and Confirmation (.10)
+
+Dragging or nudging waveform markers now stages a local preview, rather than
+immediately editing the lyric document. Apply Markers confirms both timestamps
+together as one undoable edit; Cancel discards the preview. Switching the
+selected phrase, changing its document/source or closing the editor discards
+unconfirmed marker previews. Marker previews remain at fixed recording times
+through playback, scrolling and zoom. Save/export still operates on confirmed
+document timings; a marker preview must be applied before it can be saved.
+Start changes translate word timings once; ends cannot truncate timed words.
+
+## File Import (.10)
+
+Import lyrics file accepts plain TXT and line-timed TXT/LRC using the existing
+LRC parser library. Plain text produces untimed rows for manual synchronization.
+Timed text preserves timestamps, repeated occurrences and blank clear cues;
+rows are ordered chronologically. Existing words/timings require replacement
+confirmation. Empty/malformed files and unsupported enhanced word tags/nonzero
+offset headers are rejected rather than silently dropping words or ignoring times.
+File import reads into the editor only; saving/exporting remains explicit.
 
 ## Zoom Navigation Fix (.9)
 
@@ -12,7 +43,7 @@ Manual waveform panning, including wheel/trackpad scrolling over the waveform,
 turns off playback following so the view does not snap away from the edit.
 The existing follow toggle resumes automatic paging. Zooming with a selected
 phrase prioritizes a visible marker unless a visible playhead is inside that phrase;
-it also turns off following. Wheel scrolling is bounded to the full recording,
+in .9 it also turned off following (corrected in .10). Wheel scrolling is bounded to the full recording,
 supports pixel/line/page units and leaves browser-modified wheel gestures alone.
 Navigation is ignored during a marker drag to preserve its frozen geometry.
 No lyric timestamps, audio files or export preferences change when navigating.

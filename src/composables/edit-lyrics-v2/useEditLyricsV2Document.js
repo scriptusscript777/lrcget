@@ -285,27 +285,32 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     }
   }
 
-  const updateWaveformMarker = ({ lineIndex, line: original, boundary, timeMs, durationMs }) => {
+  const updateWaveformMarkers = ({ lineIndex, line: original, startMs, endMs, durationMs }) => {
     const line = syncedLines.value[lineIndex]
     if (
-      !Number.isInteger(lineIndex) || !line || line !== original ||
-      !['start', 'end'].includes(boundary) || !Number.isFinite(timeMs) ||
-      !Number.isFinite(durationMs) || durationMs <= 0
-    ) return
-    const endMs = line.end_ms ?? syncedLines.value[lineIndex + 1]?.start_ms ?? durationMs
-    const bounds = waveformMarkerBounds(line, endMs, durationMs)?.[boundary]
-    if (!bounds) return
-    const next = Math.max(bounds.min, Math.min(bounds.max, Math.round(timeMs)))
-    if (next === (boundary === 'start' ? line.start_ms : endMs)) return
-    withUpdatedLine(lineIndex, current =>
-      boundary === 'start'
-        ? {
-            ...current,
-            start_ms: next,
-            words: shiftWordBoundariesByOffset(current.words, next - current.start_ms),
-          }
-        : { ...current, end_ms: next }
+      !Number.isInteger(lineIndex) ||
+      !line ||
+      line !== original ||
+      !Number.isFinite(startMs) ||
+      !Number.isFinite(endMs) ||
+      !Number.isFinite(durationMs) ||
+      durationMs <= 0
     )
+      return
+    const oldEnd = line.end_ms ?? syncedLines.value[lineIndex + 1]?.start_ms ?? durationMs
+    if (!waveformMarkerBounds(line, oldEnd, durationMs)) return
+    const start = Math.round(startMs)
+    const end = Math.round(endMs)
+    if (start === line.start_ms && end === oldEnd) return
+    const next = {
+      ...line,
+      start_ms: start,
+      end_ms: end,
+      words: shiftWordBoundariesByOffset(line.words, start - line.start_ms),
+    }
+    // Validate the pair together and record one undo step; never partially apply a draft.
+    if (!waveformMarkerBounds(next, end, durationMs)) return
+    withUpdatedLine(lineIndex, () => next)
   }
 
   const syncLineToCurrentProgress = lineIndex => {
@@ -522,7 +527,7 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
 
   return {
     timingStepMs,
-    updateWaveformMarker,
+    updateWaveformMarkers,
     undo: history.undo,
     redo: history.redo,
     canUndo: history.canUndo,
