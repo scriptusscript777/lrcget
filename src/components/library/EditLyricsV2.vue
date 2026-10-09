@@ -346,6 +346,7 @@ const { playLine, playLineAtOffset, resumeOrPlay, loopEnabled, loopLeadSeconds, 
   duration,
   selectedLineIndex: selectedSyncedLineIndex,
   markerPreview,
+  onError: error => toast.error(`Loop playback failed: ${error?.message || error}`),
 })
 
 const handlePlayLineAtOffset = ({ lineIndex, offsetMs }) => {

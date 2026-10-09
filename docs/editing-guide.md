@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.12`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.13`.
 Original project authors and license remain credited.
 
 ## Quick Workflow
@@ -114,6 +114,10 @@ Released/nudged marker previews are used immediately for auditioning; dragging
 does not continuously reseek the player. Apply confirms them; Cancel returns the
 loop to the saved document boundaries. Changing selected lines turns looping off.
 Turn looping off when you want to continue through the whole song.
+Changing recordings or closing the editor cancels a pending loop start. A player
+failure stops looping and displays an error rather than repeatedly seeking.
+The word lane and lyric rows show committed timings until Apply: auditioning a
+marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 

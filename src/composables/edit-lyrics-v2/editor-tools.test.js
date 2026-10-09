@@ -237,6 +237,7 @@ const player = () => {
     duration: ref(10),
     selectedLineIndex: ref(0),
     markerPreview: ref(null),
+    onError: vi.fn(),
     playingTrack: ref({ id: 1 }),
     status: ref('paused'),
     playTrack: vi.fn(),
@@ -247,6 +248,55 @@ const player = () => {
 }
 
 describe('phrase loop', () => {
+  it('does not seek after a pending resume is canceled or the recording changes', async () => {
+    for (const changeSource of [false, true]) {
+      const { state, controls, scope } = player()
+      let finish
+      controls.resume.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            finish = resolve
+          })
+      )
+      const starting = state.toggleLoop()
+      if (changeSource) controls.audioSource.value = { type: 'library', id: 2 }
+      else await state.toggleLoop()
+      finish()
+      await starting
+      expect(state.loopEnabled.value).toBe(false)
+      expect(controls.seek).not.toHaveBeenCalled()
+      scope.stop()
+    }
+  })
+
+  it('reports failed loop seeks once and stops without an unhandled rejection', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    controls.seek.mockRejectedValue(new Error('Audio unavailable'))
+    controls.status.value = 'playing'
+    controls.progress.value = 2
+    await nextTick()
+    await Promise.resolve()
+    expect(state.loopEnabled.value).toBe(false)
+    expect(controls.onError).toHaveBeenCalledOnce()
+    controls.progress.value = 3
+    await nextTick()
+    expect(controls.seek).toHaveBeenCalledTimes(2)
+    scope.stop()
+  })
+
+  it('stops looping when disposed or another track takes over even while paused', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    controls.playingTrack.value = { id: 2 }
+    await nextTick()
+    expect(state.loopEnabled.value).toBe(false)
+    controls.playingTrack.value = { id: 1 }
+    await state.toggleLoop()
+    scope.stop()
+    expect(state.loopEnabled.value).toBe(false)
+  })
+
   it('plays with context and seeks only once until the player acknowledges the seek', async () => {
     const { state, controls, scope } = player()
     state.loopLeadSeconds.value = 1

@@ -4,7 +4,16 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.12`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.13`, based on upstream tag `2.2.0`.
+
+## Loop Safety Review (.13)
+
+Pending loop initialization is canceled on source/selection changes, explicit
+loop-off and editor disposal. A stale asynchronous resume/play cannot seek a
+new recording. Repeat-seek errors stop looping and report the player error;
+initialization suppresses duplicate repeat seeks. Tests cover canceled awaits,
+paused track replacement, seek rejection and disposal. Rick Lidgett maintains
+the review fixes; lyric words and committed word timing remain unchanged until Apply.
 
 ## Marker Preview Loops (.12)
 

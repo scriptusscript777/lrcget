@@ -1,4 +1,4 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
 
 export function useEditLyricsV2Playback({
   audioSource,
@@ -12,11 +12,25 @@ export function useEditLyricsV2Playback({
   duration,
   selectedLineIndex,
   markerPreview,
+  onError = () => {},
 }) {
   const loopEnabled = ref(false)
   const loopLeadSeconds = ref(0)
   const loopTailSeconds = ref(0)
   let awaitingLoopSeek = false
+  let initializingLoop = false
+  let loopOperation = 0
+  const stopLoop = () => {
+    loopOperation++
+    loopEnabled.value = false
+    awaitingLoopSeek = false
+    initializingLoop = false
+  }
+  const failLoop = (error, operation) => {
+    if (operation !== loopOperation) return
+    stopLoop()
+    onError(error)
+  }
   const boundedContext = value =>
     Number.isFinite(Number(value)) ? Math.min(5, Math.max(0, Number(value))) : 0
   const loopRange = computed(() => {
@@ -85,29 +99,34 @@ export function useEditLyricsV2Playback({
 
   const toggleLoop = async () => {
     if (loopEnabled.value) {
-      loopEnabled.value = false
+      stopLoop()
       return
     }
-    if (!loopRange.value) return
+    if (!audioSource.value || !loopRange.value) return
+    const operation = ++loopOperation
     loopEnabled.value = true
+    initializingLoop = true
     awaitingLoopSeek = false
     try {
       if (!isPlayingCorrectTrack()) await playTrack(audioSource.value)
       else if (status.value === 'paused') await resume()
-      if (loopEnabled.value && loopRange.value) seek(loopRange.value.start)
+      // A canceled/changed editor must not seek a different recording after an await.
+      if (operation !== loopOperation || !loopEnabled.value || !isPlayingCorrectTrack()) return
+      if (loopRange.value) await seek(loopRange.value.start)
     } catch (error) {
-      loopEnabled.value = false
-      throw error
+      failLoop(error, operation)
+    } finally {
+      if (operation === loopOperation) initializingLoop = false
     }
   }
 
   watch(loopRange, () => {
     awaitingLoopSeek = false
   })
-  watch([progress, status, loopRange], () => {
-    if (!loopEnabled.value) return
+  watch([progress, status, loopRange, playingTrack], () => {
+    if (!loopEnabled.value || initializingLoop) return
     if (!isPlayingCorrectTrack() || !loopRange.value) {
-      loopEnabled.value = false
+      stopLoop()
       return
     }
     if (status.value !== 'playing' && status.value !== 'stopped') return
@@ -115,16 +134,21 @@ export function useEditLyricsV2Playback({
     if (progress.value >= start && progress.value < end) awaitingLoopSeek = false
     if ((progress.value >= end || progress.value < start) && !awaitingLoopSeek) {
       awaitingLoopSeek = true
-      seek(start)
+      const operation = loopOperation
+      // Both synchronous and asynchronous player failures stop the loop instead of retrying forever.
+      try {
+        Promise.resolve(seek(start)).catch(error => failLoop(error, operation))
+      } catch (error) {
+        failLoop(error, operation)
+      }
     }
   })
 
   if (selectedLineIndex) {
-    watch(selectedLineIndex, () => {
-      loopEnabled.value = false
-      awaitingLoopSeek = false
-    })
+    watch(selectedLineIndex, stopLoop, { flush: 'sync' })
   }
+  watch(audioSource, stopLoop, { deep: true, flush: 'sync' })
+  onScopeDispose(stopLoop)
 
   return {
     loopEnabled,

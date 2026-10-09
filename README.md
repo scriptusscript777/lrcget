@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.12** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.13** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.12/LRCGET_2.2.0%2Blocal.12_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.12)
-| [Marker loop update](docs/releases/2.2.0-local.12.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.13/LRCGET_2.2.0%2Blocal.13_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.13)
+| [Loop safety review](docs/releases/2.2.0-local.13.md)
 | [Editing guide](docs/editing-guide.md)
 | [Full workflow and feature how-to](docs/editing-guide.md#quick-workflow)
 | [Detailed changes](LOCAL_CHANGES.md)
@@ -47,8 +47,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.12_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.12_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.13_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.13_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -93,7 +93,7 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 296 frontend and 45 Rust tests passed, plus
+or lyric display in every player. 299 frontend and 45 Rust tests passed, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project
