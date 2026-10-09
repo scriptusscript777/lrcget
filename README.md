@@ -15,7 +15,7 @@ official upstream release.
 [Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.9/LRCGET_2.2.0%2Blocal.9_amd64.deb)
 | [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.9)
 | [Zoom navigation update](docs/releases/2.2.0-local.9.md)
-| [Editing guide](docs/releases/2.2.0-local.8.md)
+| [Editing guide](docs/editing-guide.md)
 | [Detailed changes](LOCAL_CHANGES.md)
 
 ### What's Included
@@ -64,6 +64,10 @@ individual-word tools.
 ![Dark theme: expanded word timing and phrase markers](docs/screenshots/editor-follow-dark.png)
 
 ![Zoomed word-timing view](docs/screenshots/word-timing-zoom.png)
+
+![Light theme: zoomed phrase end with manual scrolling](docs/screenshots/waveform-navigation-light.png)
+
+![Dark theme: zoomed phrase end with manual scrolling](docs/screenshots/waveform-navigation-dark.png)
 
 </details>
 
