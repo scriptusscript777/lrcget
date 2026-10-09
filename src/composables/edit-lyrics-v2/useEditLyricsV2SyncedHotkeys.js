@@ -1,6 +1,7 @@
-import { syncedEditorShortcutBindings } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
+import { syncedEditorShortcutBindings, wordTimingShortcutBindings } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
 
 export function useEditLyricsV2SyncedHotkeys({
+  wordTimingExpanded,
   undo,
   redo,
   activeTab,
@@ -140,6 +141,8 @@ export function useEditLyricsV2SyncedHotkeys({
       return
     }
 
+    // Expanded word shortcuts take precedence over colliding phrase actions (notably Delete).
+    if (wordTimingExpanded?.value && wordTimingShortcutBindings.some(binding => binding.matches(event))) return
     for (const binding of syncedEditorShortcutBindings) {
       if (!binding.matches(event)) {
         continue

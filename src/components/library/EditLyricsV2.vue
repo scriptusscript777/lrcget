@@ -74,6 +74,14 @@
         <EditLyricsV2Waveform
           :audio-source="audioSource"
           :progress="waveformProgress"
+          :playing="waveformPlaying"
+          :selected-line="
+            activeTab === 'synced' && !isInstrumental ? syncedLines[selectedSyncedLineIndex] : null
+          "
+          :selected-line-index="selectedSyncedLineIndex"
+          :next-line-start-ms="syncedLines[selectedSyncedLineIndex + 1]?.start_ms"
+          :timing-step-ms="timingStepMs"
+          @update-marker="updateWaveformMarker"
           @seek="handleWaveformSeek"
         />
       </div>
@@ -116,10 +124,13 @@
         :selected-line-index="selectedSyncedLineIndex"
         :selected-line-indices="selectedSyncedLineIndices"
         :progress-ms="progressMs"
+        :waveform-playing="waveformPlaying"
+        :waveform-progress="waveformProgress"
         :can-undo="canUndo"
         :can-redo="canRedo"
         :loop-enabled="loopEnabled"
         :can-loop="canLoop"
+        @word-timing-expanded-change="wordTimingExpanded = $event"
         @undo="undo"
         @redo="redo"
         @toggle-loop="toggleLoop"
@@ -227,7 +238,7 @@ const audioSourceRef = toRef(props, 'audioSource')
 const lyricsfileRef = toRef(props, 'lyricsfile')
 const trackIdRef = toRef(props, 'trackId')
 
-const { waveformProgress, initializeAudio, seekWaveform: handleWaveformSeek } = useWaveformPlayback({
+const { waveformProgress, waveformPlaying, initializeAudio, seekWaveform: handleWaveformSeek } = useWaveformPlayback({
   audioSource: audioSourceRef,
   playingTrack,
   status,
@@ -240,6 +251,7 @@ const { waveformProgress, initializeAudio, seekWaveform: handleWaveformSeek } = 
 const progressMs = computed(() => Math.max(0, Math.round(progress.value * 1000)))
 
 const activeTab = ref('plain')
+const wordTimingExpanded = ref(false)
 const {
   undo,
   redo,
@@ -261,6 +273,7 @@ const {
   initializeLyrics,
   updatePlainLyrics,
   updateSyncedLines,
+  updateWaveformMarker,
   selectSyncedLine,
   selectSyncedLineRange,
   toggleSyncedLineSelection,
@@ -460,6 +473,7 @@ watch(activeTab, value => {
 })
 
 const { bindSyncedHotkeys, unbindSyncedHotkeys } = useEditLyricsV2SyncedHotkeys({
+  wordTimingExpanded,
   undo,
   redo,
   activeTab,

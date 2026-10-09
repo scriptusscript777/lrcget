@@ -1,6 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { computed, ref, watch } from 'vue'
 import { useLyricHistory } from './useLyricHistory.js'
+import { waveformMarkerBounds } from '@/utils/waveform-markers.js'
 import {
   createSyncedLinesFromPlain,
   normalizeSyncedLine,
@@ -284,6 +285,29 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     }
   }
 
+  const updateWaveformMarker = ({ lineIndex, line: original, boundary, timeMs, durationMs }) => {
+    const line = syncedLines.value[lineIndex]
+    if (
+      !Number.isInteger(lineIndex) || !line || line !== original ||
+      !['start', 'end'].includes(boundary) || !Number.isFinite(timeMs) ||
+      !Number.isFinite(durationMs) || durationMs <= 0
+    ) return
+    const endMs = line.end_ms ?? syncedLines.value[lineIndex + 1]?.start_ms ?? durationMs
+    const bounds = waveformMarkerBounds(line, endMs, durationMs)?.[boundary]
+    if (!bounds) return
+    const next = Math.max(bounds.min, Math.min(bounds.max, Math.round(timeMs)))
+    if (next === (boundary === 'start' ? line.start_ms : endMs)) return
+    withUpdatedLine(lineIndex, current =>
+      boundary === 'start'
+        ? {
+            ...current,
+            start_ms: next,
+            words: shiftWordBoundariesByOffset(current.words, next - current.start_ms),
+          }
+        : { ...current, end_ms: next }
+    )
+  }
+
   const syncLineToCurrentProgress = lineIndex => {
     if (!Number.isInteger(lineIndex) || lineIndex < 0 || lineIndex >= syncedLines.value.length) {
       return
@@ -498,6 +522,7 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
 
   return {
     timingStepMs,
+    updateWaveformMarker,
     undo: history.undo,
     redo: history.redo,
     canUndo: history.canUndo,

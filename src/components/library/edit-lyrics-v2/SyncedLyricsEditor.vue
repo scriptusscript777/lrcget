@@ -17,11 +17,20 @@
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
       </label>
     </div>
+    <button
+      class="button button-normal mt-2 inline-flex w-fit items-center gap-1 rounded px-2 py-1 text-xs"
+      :aria-expanded="wordTimingExpanded"
+      aria-controls="word-timing-panel"
+      @click="wordTimingExpanded = !wordTimingExpanded"
+    ><ChevronDown v-if="wordTimingExpanded" /><ChevronRight v-else />Word timing</button>
     <SyncedWordTimingLane
+      v-if="wordTimingExpanded"
+      id="word-timing-panel"
       class="relative z-20 shrink-0 mt-2"
       :selected-line="selectedLine"
       :has-selected-line="hasSelectedLine"
-      :progress-ms="progressMs"
+      :progress-ms="Number.isFinite(waveformProgress) ? waveformProgress * 1000 : -1"
+      :playing="waveformPlaying"
       :all-lines="modelValue"
       :selected-line-index="selectedLineIndex"
       @update:words="handleWordsUpdate"
@@ -150,6 +159,8 @@ import Trash from '~icons/mdi/trash-can'
 import Undo from '~icons/mdi/undo'
 import Redo from '~icons/mdi/redo'
 import Repeat from '~icons/mdi/repeat'
+import ChevronDown from '~icons/mdi/chevron-down'
+import ChevronRight from '~icons/mdi/chevron-right'
 import SyncedInsertButton from '@/components/library/edit-lyrics-v2/SyncedInsertButton.vue'
 import SyncedLyricsEmptyState from '@/components/library/edit-lyrics-v2/SyncedLyricsEmptyState.vue'
 import SyncedLyricsLineRow from '@/components/library/edit-lyrics-v2/SyncedLyricsLineRow.vue'
@@ -159,6 +170,8 @@ import { useEditLyricsV2SyncedInsertHover } from '@/composables/edit-lyrics-v2/u
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
 const props = defineProps({
+  waveformPlaying: Boolean,
+  waveformProgress: { type: Number, default: null },
   canUndo: Boolean,
   canRedo: Boolean,
   timingStepMs: { type: Number, default: 100 },
@@ -189,6 +202,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
+  'word-timing-expanded-change',
   'undo',
   'redo',
   'update:timing-step-ms',
@@ -222,6 +236,8 @@ const emit = defineEmits([
 ])
 
 const hoveredLineIndex = ref(null)
+const wordTimingExpanded = ref(false)
+watch(wordTimingExpanded, expanded => emit('word-timing-expanded-change', expanded), { flush: 'sync' })
 const linesListElement = ref(null)
 const modelValue = toRef(props, 'modelValue')
 
@@ -303,6 +319,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  emit('word-timing-expanded-change', false)
   document.removeEventListener('mouseup', handleDocumentMouseUp)
 })
 

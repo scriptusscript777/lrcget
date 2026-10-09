@@ -1,7 +1,7 @@
 <template>
   <div
     ref="segmentElement"
-    class="word-segment absolute flex items-center justify-center px-1 py-1 text-sm select-none h-full overflow-visible"
+    class="word-segment absolute flex items-center justify-center py-1 text-sm select-none h-full overflow-visible"
     :class="segmentClass"
     :style="segmentStyle"
     :title="`${word.text} (${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)})`"
@@ -32,14 +32,6 @@
       </div>
     </div>
 
-    <div
-      v-if="showNextWordHint"
-      class="absolute left-1/2 top-full z-40 mt-1 -translate-x-1/2 px-2 py-0.5 rounded-md border border-hoa-1100/40 bg-hoa-1100 text-xs font-medium leading-4 text-white shadow-sm whitespace-nowrap pointer-events-none"
-      :style="{ left: 0 }"
-      :title="`Next word: ${nextWordHintText}`"
-    >
-      {{ nextWordHintText }}
-    </div>
   </div>
 </template>
 
@@ -82,114 +74,12 @@ const props = defineProps({
     type: Number,
     default: 0,
   },
-  nextWordText: {
-    type: String,
-    default: '',
-  },
-  nextWordStartMs: {
-    type: Number,
-    default: null,
-  },
-  nextWordEndMs: {
-    type: Number,
-    default: null,
-  },
-  selectedBoundaryIndex: {
-    type: Number,
-    default: -1,
-  },
-  selectedBoundaryIndices: {
-    type: Array,
-    default: () => [],
-  },
 })
 
 const segmentElement = ref(null)
 const previewContainerElement = ref(null)
 const textElement = ref(null)
 const hoverPreview = ref(null)
-
-const nextWordHintText = computed(() => (props.nextWordText || '').trim())
-
-const nextSegmentWidthPx = computed(() => {
-  if (!Number.isFinite(props.timelineWidth) || props.timelineWidth <= 0) {
-    return 0
-  }
-
-  if (
-    !Number.isFinite(props.lineStartMs) ||
-    !Number.isFinite(props.lineEndMs) ||
-    props.lineEndMs <= props.lineStartMs
-  ) {
-    return 0
-  }
-
-  if (!Number.isFinite(props.nextWordStartMs) || !Number.isFinite(props.nextWordEndMs)) {
-    return 0
-  }
-
-  const lineDuration = props.lineEndMs - props.lineStartMs
-  const nextDuration = Math.max(0, props.nextWordEndMs - props.nextWordStartMs)
-  return (nextDuration / lineDuration) * props.timelineWidth
-})
-
-const currentSegmentWidthPx = computed(() => {
-  if (!Number.isFinite(props.timelineWidth) || props.timelineWidth <= 0) {
-    return 0
-  }
-
-  if (
-    !Number.isFinite(props.lineStartMs) ||
-    !Number.isFinite(props.lineEndMs) ||
-    props.lineEndMs <= props.lineStartMs
-  ) {
-    return 0
-  }
-
-  if (!Number.isFinite(props.startMs) || !Number.isFinite(props.endMs)) {
-    return 0
-  }
-
-  const lineDuration = props.lineEndMs - props.lineStartMs
-  const currentDuration = Math.max(0, props.endMs - props.startMs)
-  return (currentDuration / lineDuration) * props.timelineWidth
-})
-
-const doesNextWordOverflow = computed(() => {
-  if (!nextWordHintText.value || nextSegmentWidthPx.value <= 0) {
-    return false
-  }
-
-  const font = textElement.value ? getComputedStyle(textElement.value).font : '14px sans-serif'
-  const textWidth = measureTextWidth(nextWordHintText.value, font)
-
-  // Segment uses horizontal padding (px-1), so reserve a small visual margin.
-  const availableWidth = Math.max(0, nextSegmentWidthPx.value - 8)
-  return textWidth > availableWidth + 1
-})
-
-const isSelectedDividerForNextSegment = computed(() => {
-  if (!Number.isFinite(props.nextWordStartMs)) {
-    return false
-  }
-
-  const nextBoundaryIndex = props.wordIndex
-
-  if (props.selectedBoundaryIndex === nextBoundaryIndex) {
-    return true
-  }
-
-  return Array.isArray(props.selectedBoundaryIndices)
-    ? props.selectedBoundaryIndices.includes(nextBoundaryIndex)
-    : false
-})
-
-const showNextWordHint = computed(() => {
-  return (
-    isSelectedDividerForNextSegment.value &&
-    nextWordHintText.value.length > 0
-  )
-})
 
 const splitTextByGrapheme = text => {
   if (!text || typeof text !== 'string') {
@@ -335,7 +225,16 @@ const isPlaying = computed(() => {
 })
 
 const segmentClass = computed(() => {
-  const baseClasses = [
+  if (isPlaying.value) {
+    return [
+      'bg-hoa-1500 dark:bg-hoa-1500',
+      'text-white dark:text-white',
+      'font-bold',
+      'border-r border-hoa-1500 dark:border-hoa-1500',
+    ]
+  }
+
+  return [
     'bg-neutral-200 dark:bg-neutral-700',
     'text-neutral-800 dark:text-neutral-300',
     'border-r',
@@ -343,20 +242,6 @@ const segmentClass = computed(() => {
     'dark:border-neutral-600',
   ]
 
-  if (isPlaying.value) {
-    baseClasses.push(
-      'bg-hoa-1100',
-      'dark:bg-hoa-1100',
-      'text-white',
-      'dark:text-white',
-      'font-bold',
-      'border-r',
-      'border-hoa-1100',
-      'dark:border-hoa-1100'
-    )
-  }
-
-  return baseClasses
 })
 
 const segmentStyle = computed(() => {
@@ -368,10 +253,13 @@ const segmentStyle = computed(() => {
   const leftPercent = ((props.startMs - props.lineStartMs) / duration) * 100
   const wordDuration = Math.max(0, props.endMs - props.startMs)
   const widthPercent = (wordDuration / duration) * 100
+  const padding = (wordDuration / duration) * props.timelineWidth < 24 ? '0' : '4px'
 
   return {
     left: `${leftPercent}%`,
     width: `${widthPercent}%`,
+    paddingLeft: padding,
+    paddingRight: padding,
     transition: 'none',
   }
 })

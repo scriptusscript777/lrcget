@@ -2,8 +2,6 @@ import { wordTimingShortcutBindings } from '@/composables/edit-lyrics-v2/shortcu
 
 export function useEditLyricsV2WordTimingHotkeys({
   isWordSyncAvailable,
-  selectedBoundaryIndex,
-  words,
   syncSelectedBoundaryAtProgress,
   syncSelectedBoundaryAtProgressNoAdvance,
   selectPreviousBoundary,
@@ -12,12 +10,12 @@ export function useEditLyricsV2WordTimingHotkeys({
   deleteSelectedBoundaries,
 }) {
   const handleWordTimingKeyDown = event => {
-    if (!isWordSyncAvailable.value) {
+    if (!isWordSyncAvailable.value || event.defaultPrevented) {
       return
     }
 
     const target = event.target
-    if (target?.tagName === 'INPUT' || target?.tagName === 'TEXTAREA') {
+    if (target?.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target?.tagName)) {
       return
     }
 

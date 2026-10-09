@@ -6,6 +6,10 @@ import { readFileSync } from 'node:fs'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { invoke } from '@tauri-apps/api/core'
 import EditLyricsV2Waveform from './EditLyricsV2Waveform.vue'
+import {
+  resetAllShortcutOverrides,
+  setShortcutOverride,
+} from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
 
 // Vitest loads SFCs in SSR mode. Compile the same template for the in-memory client renderer.
 const { descriptor } = parse(
@@ -61,6 +65,7 @@ beforeEach(() => {
   vi.stubGlobal('getComputedStyle', () => ({ fontFamily: 'sans-serif' }))
 })
 afterEach(() => {
+  resetAllShortcutOverrides()
   apps.splice(0).forEach(app => app.unmount())
   vi.unstubAllGlobals()
 })
@@ -115,8 +120,9 @@ async function mount(initial = {}) {
   const root = node('root')
   const props = reactive({ audioSource: { type: 'library', id: 1 }, progress: 30, ...initial })
   const seek = vi.fn()
+  const updateMarker = vi.fn()
   const app = renderer.createApp({
-    render: () => h(component, { ...props, onSeek: seek }),
+    render: () => h(component, { ...props, onSeek: seek, onUpdateMarker: updateMarker }),
   })
   app.provide(ssrContextKey, { modules: new Set() })
   app.mount(root)
@@ -132,10 +138,186 @@ async function mount(initial = {}) {
     frames.clear()
     pending.forEach(callback => callback())
   }
-  return { app, props, seek, all, byId, byLabel, text, draw, context }
+  return { app, props, seek, updateMarker, all, byId, byLabel, text, draw, context }
 }
 
 describe('waveform controls and states', () => {
+  it('lets editor/history shortcuts bubble, including configured global keys, without seeking or editing', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+    })
+    const root = state.byId('editor-waveform')
+    for (const modifiers of [{ ctrlKey: true }, { metaKey: true }]) {
+      for (const [key, shiftKey] of [
+        ['z', false],
+        ['z', true],
+        ['y', false],
+        ['s', false],
+        ['/', false],
+        ['ArrowRight', false],
+      ]) {
+        const event = {
+          key,
+          shiftKey,
+          ...modifiers,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        }
+        state.byId('waveform-marker-start').props.onKeydown(event)
+        state.byId('waveform-seek').props.onKeydown(event)
+        root.props.onKeydown(event)
+        expect(event.preventDefault).not.toHaveBeenCalled()
+        expect(event.stopPropagation).not.toHaveBeenCalled()
+      }
+    }
+    setShortcutOverride('saveLyrics', ['Shift', '→'])
+    const configured = {
+      key: 'ArrowRight',
+      shiftKey: true,
+      ctrlKey: false,
+      metaKey: false,
+      altKey: false,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    }
+    state.byId('waveform-marker-start').props.onKeydown(configured)
+    state.byId('waveform-seek').props.onKeydown(configured)
+    root.props.onKeydown(configured)
+    expect(configured.preventDefault).not.toHaveBeenCalled()
+    expect(configured.stopPropagation).not.toHaveBeenCalled()
+    expect(state.seek).not.toHaveBeenCalled()
+    expect(state.updateMarker).not.toHaveBeenCalled()
+    const tab = { key: 'Tab', stopPropagation: vi.fn() }
+    root.props.onKeydown(tab)
+    expect(tab.stopPropagation).not.toHaveBeenCalled()
+    const arrow = { key: 'ArrowRight', preventDefault: vi.fn(), stopPropagation: vi.fn() }
+    state.byId('waveform-marker-start').props.onKeydown(arrow)
+    root.props.onKeydown(arrow)
+    expect(state.updateMarker).toHaveBeenCalledOnce()
+    expect(arrow.stopPropagation).toHaveBeenCalledOnce()
+  })
+  it('pages on playing progress, loops backward, and allows paused pan and disabled follow', async () => {
+    const state = await mount({ playing: true })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.draw()
+    requestAnimationFrame.mockClear()
+    state.props.progress = 40
+    await nextTick()
+    expect(requestAnimationFrame).not.toHaveBeenCalled()
+    state.props.progress = 80
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(60)
+    expect(state.byId('waveform-playhead')).toBeDefined()
+    state.props.progress = 2
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(0)
+    state.props.playing = false
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    state.props.progress = 3
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(60)
+    state.byLabel('Follow waveform playback').props.onClick()
+    state.props.playing = true
+    state.props.progress = 4
+    await nextTick()
+    expect(state.byId('waveform-pan').props.value).toBe(60)
+  })
+
+  it('previews marker movement locally and emits one completed drag without seeking', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000, words: [] },
+      selectedLineIndex: 0,
+      timingStepMs: 25,
+    })
+    const marker = state.byId('waveform-marker-start')
+    marker.setPointerCapture = vi.fn()
+    marker.hasPointerCapture = () => false
+    const event = {
+      button: 0,
+      pointerId: 1,
+      currentTarget: marker,
+      clientX: 24,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    }
+    marker.props.onPointerdown(event)
+    marker.props.onPointermove({ ...event, clientX: 26 })
+    await nextTick()
+    expect(state.updateMarker).not.toHaveBeenCalled()
+    expect(state.props.selectedLine.start_ms).toBe(1000)
+    marker.props.onPointerup({ ...event, clientX: 26 })
+    expect(state.updateMarker).toHaveBeenCalledOnce()
+    expect(state.updateMarker.mock.calls[0][0]).toMatchObject({ boundary: 'start', timeMs: 1600 })
+    expect(state.seek).not.toHaveBeenCalled()
+    await nextTick()
+    marker.props.onKeydown({ key: 'ArrowRight', preventDefault: vi.fn() })
+    expect(state.updateMarker).toHaveBeenLastCalledWith(expect.objectContaining({ timeMs: 1025 }))
+    expect(marker.props['aria-valuetext']).toContain('01.000')
+  })
+
+  it('does not commit an off-center click or cancel for another pointer', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+    })
+    const marker = state.byId('waveform-marker-start')
+    marker.setPointerCapture = vi.fn()
+    marker.hasPointerCapture = () => false
+    const event = {
+      button: 0,
+      pointerId: 1,
+      currentTarget: marker,
+      clientX: 29,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    }
+    marker.props.onPointerdown(event)
+    marker.props.onPointerup(event)
+    expect(state.updateMarker).not.toHaveBeenCalled()
+    marker.props.onPointerdown(event)
+    marker.props.onPointercancel({ pointerId: 2 })
+    marker.props.onPointermove({ ...event, clientX: 31 })
+    marker.props.onPointerup({ ...event, clientX: 31 })
+    expect(state.updateMarker).toHaveBeenCalledOnce()
+    expect(state.updateMarker).toHaveBeenLastCalledWith(expect.objectContaining({ timeMs: 1600 }))
+  })
+
+  it.each(['pointercancel', 'lostpointercapture', 'escape', 'selection', 'source', 'unmount'])(
+    'discards marker previews after %s',
+    async mode => {
+      const state = await mount({
+        selectedLine: { start_ms: 1000, end_ms: 3000 },
+        selectedLineIndex: 0,
+      })
+      const marker = state.byId('waveform-marker-start')
+      marker.setPointerCapture = vi.fn()
+      marker.hasPointerCapture = () => false
+      const event = {
+        button: 0,
+        pointerId: 1,
+        currentTarget: marker,
+        clientX: 24,
+        preventDefault: vi.fn(),
+        stopPropagation: vi.fn(),
+      }
+      marker.props.onPointerdown(event)
+      marker.props.onPointermove({ ...event, clientX: 26 })
+      if (mode === 'escape') marker.props.onKeydown({ key: 'Escape', preventDefault: vi.fn() })
+      else if (mode === 'selection') state.props.selectedLineIndex = 1
+      else if (mode === 'source') state.props.audioSource = { type: 'library', id: 2 }
+      else if (mode === 'unmount') {
+        state.app.unmount()
+        apps.pop()
+      } else
+        marker.props[mode === 'pointercancel' ? 'onPointercancel' : 'onLostpointercapture'](event)
+      await nextTick()
+      marker.props.onPointerup({ ...event, clientX: 26 })
+      expect(state.updateMarker).not.toHaveBeenCalled()
+    }
+  )
   it.each([
     [59.94, '0:59.9'],
     [59.96, '1:00.0'],

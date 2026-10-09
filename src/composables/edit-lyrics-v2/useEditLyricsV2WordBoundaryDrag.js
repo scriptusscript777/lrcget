@@ -85,10 +85,10 @@ export function useEditLyricsV2WordBoundaryDrag({
   const stopBoundaryDrag = () => {
     document.removeEventListener('pointermove', handlePointerMove)
     document.removeEventListener('pointerup', handlePointerUp)
-    document.removeEventListener('pointercancel', handlePointerUp)
+    document.removeEventListener('pointercancel', handlePointerCancel)
     document.removeEventListener('pointermove', handlePotentialDragStart)
     document.removeEventListener('pointerup', handlePotentialDragEnd)
-    document.removeEventListener('pointercancel', handlePotentialDragEnd)
+    document.removeEventListener('pointercancel', handlePointerCancel)
   }
 
   const updateDragPosition = (clientX, clientXToTime) => {
@@ -162,11 +162,13 @@ export function useEditLyricsV2WordBoundaryDrag({
   }
 
   const handlePointerMove = event => {
+    if (event.pointerId !== dragStartPos.value?.pointerId) return
     isDraggingBoundary.value = true
     updateDragPosition(event.clientX, dragStartPos.value.clientXToTime)
   }
 
-  const handlePointerUp = () => {
+  const handlePointerUp = event => {
+    if (event.pointerId !== dragStartPos.value?.pointerId) return
     if (dragState.value) {
       commitBoundary({
         rightWordIndex: dragState.value.rightWordIndex,
@@ -185,7 +187,7 @@ export function useEditLyricsV2WordBoundaryDrag({
   }
 
   const handlePotentialDragStart = event => {
-    if (!dragStartPos.value) {
+    if (!dragStartPos.value || event.pointerId !== dragStartPos.value.pointerId) {
       return
     }
 
@@ -206,26 +208,29 @@ export function useEditLyricsV2WordBoundaryDrag({
     const clientXToTime = dragStartPos.value.clientXToTime
     dragStartPos.value = {
       clientXToTime,
+      pointerId: event.pointerId,
     }
 
     document.removeEventListener('pointermove', handlePotentialDragStart)
     document.removeEventListener('pointerup', handlePotentialDragEnd)
-    document.removeEventListener('pointercancel', handlePotentialDragEnd)
+    document.removeEventListener('pointercancel', handlePointerCancel)
     document.addEventListener('pointermove', handlePointerMove)
     document.addEventListener('pointerup', handlePointerUp)
-    document.addEventListener('pointercancel', handlePointerUp)
+    document.addEventListener('pointercancel', handlePointerCancel)
 
     updateDragPosition(event.clientX, clientXToTime)
   }
 
-  const handlePotentialDragEnd = () => {
+  const handlePotentialDragEnd = event => {
+    if (event.pointerId !== dragStartPos.value?.pointerId) return
     dragStartPos.value = null
     document.removeEventListener('pointermove', handlePotentialDragStart)
     document.removeEventListener('pointerup', handlePotentialDragEnd)
-    document.removeEventListener('pointercancel', handlePotentialDragEnd)
+    document.removeEventListener('pointercancel', handlePointerCancel)
   }
 
   const startBoundaryDrag = (rightWordIndex, event, clientXToTime) => {
+    if (event.button !== 0 || dragStartPos.value || dragState.value) return
     event.preventDefault()
     event.stopPropagation()
 
@@ -236,6 +241,7 @@ export function useEditLyricsV2WordBoundaryDrag({
     isDraggingBoundary.value = false
     dragStartPos.value = {
       x: event.clientX,
+      pointerId: event.pointerId,
       y: event.clientY,
       rightWordIndex,
       initialStartMs: words.value[rightWordIndex].start_ms,
@@ -244,7 +250,7 @@ export function useEditLyricsV2WordBoundaryDrag({
 
     document.addEventListener('pointermove', handlePotentialDragStart)
     document.addEventListener('pointerup', handlePotentialDragEnd)
-    document.addEventListener('pointercancel', handlePotentialDragEnd)
+    document.addEventListener('pointercancel', handlePointerCancel)
   }
 
   const selectBoundary = (index, event) => {
@@ -416,9 +422,13 @@ export function useEditLyricsV2WordBoundaryDrag({
     isDraggingBoundary.value = false
     stopBoundaryDrag()
   }
+  const handlePointerCancel = event => {
+    if (event.pointerId === dragStartPos.value?.pointerId) cancelBoundaryInteraction()
+  }
 
   return {
     dragState,
+    dragStartPos,
     displayedWords,
     boundaryIndexes,
     selectedBoundaryIndex,

@@ -32,6 +32,18 @@ export function timeToPixel(time, viewport, width) {
   return ((time - viewport.start) / viewport.span) * width
 }
 
+export function followViewport(duration, viewport, progress) {
+  if (!Number.isFinite(progress) || !viewport.span || viewport.span >= duration) return viewport
+  if (progress >= viewport.start && progress < viewport.start + viewport.span) return viewport
+  // Page in either direction, including loop resets, without redrawing inside a page.
+  const next = normalizeViewport(
+    duration,
+    Math.floor(clampTime(progress, duration) / viewport.span) * viewport.span,
+    viewport.span
+  )
+  return next.start === viewport.start && next.span === viewport.span ? viewport : next
+}
+
 export function pixelToTime(pixel, viewport, width, duration) {
   if (!positive(width) || !positive(viewport.span)) return clampTime(viewport.start, duration)
   const x = clampTime(pixel, width)

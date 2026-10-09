@@ -1,6 +1,6 @@
 <template>
   <div
-    class="relative z-20 flex flex-col px-2 py-2 rounded-lg overflow-visible h-[5rem] transition-[min-height] duration-200 ease-out"
+    class="relative z-20 flex min-w-0 flex-col px-2 py-2 rounded-lg overflow-visible"
     :class="hasSelectedLine ? 'bg-neutral-100 dark:bg-neutral-800' : 'bg-white dark:bg-neutral-950'"
   >
     <!-- Empty state - no line selected -->
@@ -32,16 +32,31 @@
     <!-- Word timing timeline -->
     <template v-else-if="isWordSyncAvailable">
       <!-- Header with line info -->
-      <div class="flex items-center justify-between mb-2 shrink-0">
-        <div class="flex items-center gap-3 text-xs text-neutral-600 dark:text-neutral-400">
-          <span class="font-mono bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded">
+      <div class="flex min-w-0 flex-wrap items-center justify-between gap-2 shrink-0">
+        <div class="flex min-w-0 items-center gap-3 text-xs text-neutral-600 dark:text-neutral-400">
+          <span
+            class="shrink-0 font-mono bg-neutral-200 dark:bg-neutral-700 text-neutral-800 dark:text-neutral-200 px-2 py-0.5 rounded"
+          >
             {{ formatTimestampMs(selectedLine.start_ms) }} -
             {{ formatTimestampMs(actualLineEndMs) }}
           </span>
-          <span class="truncate max-w-xs">{{ selectedLine.text || '(empty)' }}</span>
+          <span class="truncate max-w-[12rem]">{{ selectedLine.text || '(empty)' }}</span>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="inline-flex items-center gap-1" title="Word timing zoom">
+            <Magnify class="h-3.5 w-3.5" />
+            <input
+              v-model.number="timelineZoom"
+              type="range"
+              min="1"
+              max="8"
+              step="1"
+              aria-label="Word timing zoom"
+              class="w-20 accent-hoa-1500"
+              :disabled="!!dragState || !!dragStartPos"
+            />
+          </label>
           <button
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="playLineTitle"
@@ -71,13 +86,21 @@
 
       <!-- Timeline with word segments -->
       <div
-        ref="timelineElement"
-        class="relative flex-1 bg-white dark:bg-neutral-900 rounded border border-neutral-300 dark:border-neutral-600 transition-opacity duration-200"
-        :class="{ 'opacity-50': !hasActualWords }"
-        @click="handleTimelineClick"
+        ref="scrollElement"
+        class="h-[76px] min-w-0 overflow-x-auto overflow-y-hidden pt-6 pb-2"
+        data-testid="word-timing-scroll"
+        @wheel="inspectTimeline"
+        @pointerdown="inspectTimeline"
       >
-        <!-- Timeline grid lines (every 500ms) -->
-        <!-- <div class="absolute inset-0 pointer-events-none">
+        <div
+          ref="timelineElement"
+          class="relative h-8 bg-white dark:bg-neutral-900 rounded border border-neutral-300 dark:border-neutral-600"
+          :style="{ width: `${timelineZoom * 100}%` }"
+          data-testid="word-timing-timeline"
+          @click="handleTimelineClick"
+        >
+          <!-- Timeline grid lines (every 500ms) -->
+          <!-- <div class="absolute inset-0 pointer-events-none">
           <template v-for="n in gridLinesCount" :key="n">
             <div
               class="absolute top-0 bottom-0 w-px bg-neutral-200 dark:bg-hoa-1100 opacity-50"
@@ -86,68 +109,63 @@
           </template>
         </div> -->
 
-        <!-- Word segments -->
-        <SyncedWordTimingSegment
-          v-for="(word, index) in displayedWords"
-          :key="index"
-          :word="word"
-          :word-index="index"
-          :next-word-text="displayedWords[index]?.text || ''"
-          :next-word-start-ms="displayedWords[index]?.start_ms ?? null"
-          :next-word-end-ms="
-            index + 1 < displayedWords.length ? getWordEndMs(index + 1) : null
-          "
-          :start-ms="word.start_ms"
-          :end-ms="getWordEndMs(index)"
-          :line-start-ms="laneStartMs"
-          :line-end-ms="laneEndMs"
-          :timeline-width="timelineWidth"
-          :progress-ms="progressMs"
-          :selected-boundary-index="selectedBoundaryIndex"
-          :selected-boundary-indices="selectedBoundaryIndices"
-          @split-at="handleSegmentSplitAt"
-        />
-
-        <button
-          v-for="index in boundaryIndexes"
-          :key="`boundary-${index}`"
-          type="button"
-          class="group absolute top-0 bottom-0 z-30 -ml-2 w-4 cursor-ew-resize bg-transparent"
-          :style="{ left: `${timeToPercent(displayedWords[index].start_ms)}%` }"
-          :title="`Adjust start of ${displayedWords[index].text}`"
-          @pointerdown="handleBoundaryPointerDown(index, $event)"
-          @click="selectBoundary(index, $event)"
-        >
-          <span
-            class="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 transition-all duration-150 ease-linear bg-neutral-300/70 dark:bg-hoa-1000/70 group-hover:bg-neutral-600 dark:group-hover:bg-neutral-300 group-hover:w-[3px] group-hover:ring-1 group-hover:ring-neutral-500/25"
-            :class="getBoundaryLineClass(index)"
+          <!-- Word segments -->
+          <SyncedWordTimingSegment
+            v-for="(word, index) in displayedWords"
+            :key="index"
+            :word="word"
+            :word-index="index"
+            :start-ms="word.start_ms"
+            :end-ms="getWordEndMs(index)"
+            :line-start-ms="laneStartMs"
+            :line-end-ms="laneEndMs"
+            :timeline-width="timelineWidth"
+            :progress-ms="progressMs"
+            @split-at="handleSegmentSplitAt"
           />
-        </button>
 
-        <div
-          v-if="dragState"
-          class="absolute inset-y-0 z-20 pointer-events-none"
-          :style="{ left: `${timeToPercent(dragState.currentStartMs)}%` }"
-        >
-          <div
-            class="absolute top-0 bottom-0 w-[3px] -translate-x-1/2 bg-neutral-600 dark:bg-neutral-300 ring-1 ring-neutral-500/25"
-          />
-          <div
-            class="absolute top-[-0.375rem] left-0 -translate-x-1/2 -translate-y-full px-[0.4rem] py-0.5 rounded-full text-xs leading-4 whitespace-nowrap text-neutral-800 bg-neutral-200 dark:text-white dark:bg-hoa-1100"
+          <button
+            v-for="index in boundaryIndexes"
+            :key="`boundary-${index}`"
+            type="button"
+            class="group absolute top-0 bottom-0 z-30 -ml-2 w-4 cursor-ew-resize bg-transparent"
+            :style="{ left: `${timeToPercent(displayedWords[index].start_ms)}%` }"
+            :title="`Adjust start of ${displayedWords[index].text}`"
+            @pointerdown="handleBoundaryPointerDown(index, $event)"
+            @click="selectBoundary(index, $event)"
           >
-            {{ formatTimestampMs(dragState.currentStartMs) }}
-          </div>
-        </div>
+            <span
+              class="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 transition-all duration-150 ease-linear bg-neutral-300/70 dark:bg-hoa-1000/70 group-hover:bg-neutral-600 dark:group-hover:bg-neutral-300 group-hover:w-[3px] group-hover:ring-1 group-hover:ring-neutral-500/25"
+              :class="getBoundaryLineClass(index)"
+            />
+          </button>
 
-        <!-- Current playhead indicator -->
-        <div
-          v-if="progressMs >= lineStartMs && progressMs <= laneEndMs"
-          class="absolute -top-1 bottom-0 w-px bg-neutral-400 dark:bg-neutral-400 z-20 pointer-events-none"
-          :style="{ left: `${playheadPercent}%` }"
-        >
           <div
-            class="absolute -top-1 -left-[3px] w-0 h-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-neutral-400 dark:border-t-neutral-400"
-          />
+            v-if="dragState"
+            class="absolute inset-y-0 z-20 pointer-events-none"
+            :style="{ left: `${timeToPercent(dragState.currentStartMs)}%` }"
+          >
+            <div
+              class="absolute top-0 bottom-0 w-[3px] -translate-x-1/2 bg-neutral-600 dark:bg-neutral-300 ring-1 ring-neutral-500/25"
+            />
+            <div
+              class="absolute top-[-0.375rem] left-0 -translate-x-1/2 -translate-y-full px-[0.4rem] py-0.5 rounded-full text-xs leading-4 whitespace-nowrap text-neutral-800 bg-neutral-200 dark:text-white dark:bg-hoa-1100"
+            >
+              {{ formatTimestampMs(dragState.currentStartMs) }}
+            </div>
+          </div>
+
+          <!-- Current playhead indicator -->
+          <div
+            v-if="progressMs >= lineStartMs && progressMs <= laneEndMs"
+            class="absolute -top-1 bottom-0 w-px bg-neutral-400 dark:bg-neutral-400 z-20 pointer-events-none"
+            :style="{ left: `${playheadPercent}%` }"
+            data-testid="word-timing-playhead"
+          >
+            <div
+              class="absolute -top-1 -left-[3px] w-0 h-0 border-l-[4px] border-r-[4px] border-t-[6px] border-l-transparent border-r-transparent border-t-neutral-400 dark:border-t-neutral-400"
+            />
+          </div>
         </div>
       </div>
     </template>
@@ -160,6 +178,8 @@ import { invoke } from '@tauri-apps/api/core'
 import Equal from '~icons/mdi/equal'
 import Play from '~icons/mdi/play'
 import Close from '~icons/mdi/close'
+import Magnify from '~icons/mdi/magnify-plus-outline'
+import { scrollToTimelineTime } from '@/utils/word-timing-viewport.js'
 import SyncedWordTimingSegment from '@/components/library/edit-lyrics-v2/SyncedWordTimingSegment.vue'
 import { useEditLyricsV2WordBoundaryDrag } from '@/composables/edit-lyrics-v2/useEditLyricsV2WordBoundaryDrag.js'
 import { useEditLyricsV2WordTimingHotkeys } from '@/composables/edit-lyrics-v2/useEditLyricsV2WordTimingHotkeys.js'
@@ -172,6 +192,7 @@ import { formatTimestampMs } from '@/utils/lyricsfile.js'
 import { ensureLineWords, distributeWordTimings, hasValidWords } from '@/utils/word-tokenizer.js'
 
 const props = defineProps({
+  playing: { type: Boolean, default: false },
   selectedLine: {
     type: Object,
     default: null,
@@ -197,6 +218,11 @@ const props = defineProps({
 const emit = defineEmits(['update:words', 'word-timing-edited', 'play-line', 'select-next-line'])
 
 const timelineElement = ref(null)
+const scrollElement = ref(null)
+const timelineZoom = ref(2)
+const manualInspection = ref(false)
+let timelineObserver
+let disposed = false
 const timelineWidth = ref(0)
 const laneStartMs = ref(0)
 const laneEndMs = ref(0)
@@ -295,10 +321,10 @@ const words = computed(() => {
 
 const {
   dragState,
+  dragStartPos,
   displayedWords,
   boundaryIndexes,
   selectedBoundaryIndex,
-  selectedBoundaryIndices,
   startBoundaryDrag,
   selectBoundary,
   isBoundarySelected,
@@ -335,6 +361,44 @@ const updateTimelineWidth = () => {
   }
 }
 
+const inspectTimeline = event => {
+  if (event?.type === 'wheel' && (dragState.value || dragStartPos.value)) event.preventDefault()
+  manualInspection.value = true
+}
+const revealTime = timeMs => {
+  const element = scrollElement.value
+  if (!element || dragState.value || dragStartPos.value) return
+  element.scrollLeft = scrollToTimelineTime({
+    timeMs,
+    startMs: laneStartMs.value,
+    endMs: laneEndMs.value,
+    width: timelineWidth.value,
+    visibleWidth: element.clientWidth,
+    scrollLeft: element.scrollLeft,
+  })
+}
+
+// Only matching live playback follows. Manual inspection stays put until playback resumes
+// or a boundary is deliberately selected; never change the mapping during a drag.
+watch([() => props.progressMs, () => props.playing], () => {
+  if (props.playing && !manualInspection.value) revealTime(props.progressMs)
+})
+watch(
+  () => props.playing,
+  () => {
+    manualInspection.value = false
+  }
+)
+watch(selectedBoundaryIndex, async index => {
+  await nextTick()
+  revealTime(displayedWords.value[index]?.start_ms)
+})
+watch(timelineZoom, async () => {
+  await nextTick()
+  updateTimelineWidth()
+  revealTime(displayedWords.value[selectedBoundaryIndex.value]?.start_ms)
+})
+
 const timeToPercent = timeMs => {
   if (!isWordSyncAvailable.value) return 0
 
@@ -343,26 +407,6 @@ const timeToPercent = timeMs => {
 
   const elapsed = timeMs - laneStartMs.value
   return Math.max(0, Math.min(100, (elapsed / duration) * 100))
-}
-
-const clientXToTime = clientX => {
-  if (!timelineElement.value || !isWordSyncAvailable.value) {
-    return laneStartMs.value
-  }
-
-  if (laneEndMs.value <= laneStartMs.value) {
-    return laneStartMs.value
-  }
-
-  const rect = timelineElement.value.getBoundingClientRect()
-  const width = rect.width
-  if (width <= 0) {
-    return laneStartMs.value
-  }
-
-  const clampedX = Math.max(0, Math.min(width, clientX - rect.left))
-  const duration = laneEndMs.value - laneStartMs.value
-  return Math.round(laneStartMs.value + (clampedX / width) * duration)
 }
 
 const getWordEndMs = index => {
@@ -375,7 +419,15 @@ const getWordEndMs = index => {
 }
 
 const handleBoundaryPointerDown = (rightWordIndex, event) => {
-  startBoundaryDrag(rightWordIndex, event, clientXToTime)
+  const rect = timelineElement.value?.getBoundingClientRect()
+  if (!rect?.width) return
+  const initialTime = words.value[rightWordIndex]?.start_ms
+  const initialX = event.clientX
+  const duration = laneEndMs.value - laneStartMs.value
+  // Freeze geometry and retain the grab offset before the drag threshold is crossed.
+  startBoundaryDrag(rightWordIndex, event, clientX =>
+    Math.round(initialTime + ((clientX - initialX) / rect.width) * duration)
+  )
 }
 
 const getBoundaryLineClass = index => {
@@ -459,7 +511,10 @@ const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
     return
   }
 
-  const fallbackSplitIndex = Math.max(1, Math.min(graphemes.length - 1, Math.floor(graphemes.length / 2)))
+  const fallbackSplitIndex = Math.max(
+    1,
+    Math.min(graphemes.length - 1, Math.floor(graphemes.length / 2))
+  )
   const normalizedSplitIndex = Number.isInteger(splitIndex)
     ? Math.max(1, Math.min(graphemes.length - 1, splitIndex))
     : fallbackSplitIndex
@@ -467,14 +522,19 @@ const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
   const leftText = graphemes.slice(0, normalizedSplitIndex).join('')
   const rightText = graphemes.slice(normalizedSplitIndex).join('')
 
-  const wordStartMs = Number.isFinite(currentWord?.start_ms) ? currentWord.start_ms : laneStartMs.value
+  const wordStartMs = Number.isFinite(currentWord?.start_ms)
+    ? currentWord.start_ms
+    : laneStartMs.value
   const wordEndMs = getWordEndMsFromList(displayedWords.value, wordIndex)
   const normalizedSplitRatio = Number.isFinite(splitRatio)
     ? Math.max(0, Math.min(1, splitRatio))
     : normalizedSplitIndex / graphemes.length
   const splitTimeMs = Math.max(
     wordStartMs + 1,
-    Math.min(wordEndMs - 1, Math.round(wordStartMs + (wordEndMs - wordStartMs) * normalizedSplitRatio))
+    Math.min(
+      wordEndMs - 1,
+      Math.round(wordStartMs + (wordEndMs - wordStartMs) * normalizedSplitRatio)
+    )
   )
 
   const updatedWords = [
@@ -494,6 +554,8 @@ const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
 }
 
 const loadDefaultSegmentation = async ({ force = false } = {}) => {
+  if (disposed) return
+  const requestId = ++segmentationRequestId.value
   if (!isWordSyncAvailable.value) {
     segmentedTokenTexts.value = null
     return
@@ -509,8 +571,6 @@ const loadDefaultSegmentation = async ({ force = false } = {}) => {
     segmentedTokenTexts.value = []
     return
   }
-
-  const requestId = ++segmentationRequestId.value
 
   try {
     const tokens = await invoke('segment_words', { text: lineText })
@@ -555,6 +615,8 @@ watch(
     cancelBoundaryInteraction()
     // Only reset boundary index when actually changing to a different line
     if (newIndex !== oldIndex) {
+      manualInspection.value = false
+      if (scrollElement.value) scrollElement.value.scrollLeft = 0
       resetBoundarySelection()
       syncLaneWindowToSelection()
     } else if (!props.hasSelectedLine) {
@@ -654,21 +716,48 @@ watch(
 watch(
   () => props.allLines,
   () => {
-    if (dragState.value) {
+    if (dragState.value || dragStartPos.value) {
       cancelBoundaryInteraction()
     }
   },
-  { deep: true }
+  { deep: true, flush: 'sync' }
+)
+
+watch(
+  words,
+  () => {
+    if (dragState.value || dragStartPos.value) cancelBoundaryInteraction()
+  },
+  { flush: 'sync' }
 )
 
 onMounted(() => {
+  timelineObserver = new ResizeObserver(updateTimelineWidth)
+  if (timelineElement.value) timelineObserver.observe(timelineElement.value)
+  updateTimelineWidth()
+  revealTime(displayedWords.value[selectedBoundaryIndex.value]?.start_ms)
   window.addEventListener('resize', updateTimelineWidth)
+  window.addEventListener('blur', cancelBoundaryInteraction)
   bindWordTimingHotkeys()
 })
 
 onUnmounted(() => {
+  disposed = true
+  segmentationRequestId.value++
+  timelineObserver?.disconnect()
   cancelBoundaryInteraction()
   window.removeEventListener('resize', updateTimelineWidth)
+  window.removeEventListener('blur', cancelBoundaryInteraction)
   unbindWordTimingHotkeys()
 })
+
+watch(
+  timelineElement,
+  element => {
+    timelineObserver?.disconnect()
+    if (element) timelineObserver?.observe(element)
+    updateTimelineWidth()
+  },
+  { flush: 'post' }
+)
 </script>

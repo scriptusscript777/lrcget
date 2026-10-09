@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.7`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.8`, based on upstream tag `2.2.0`.
 
 The timing-step dropdown and loop-context inputs use shared light/dark control
 styles and a matching native color scheme so their values/options stay readable.
@@ -31,7 +31,22 @@ Phrase looping follows playback updates and is not a sample-accurate audio loop.
 The lyrics editor adds a compact waveform with a time ruler, playback cursor,
 zoom/fit controls and horizontal panning when zoomed. Click or use the focused
 waveform's arrow keys to seek. It uses the existing player and follows playback
-speed and phrase looping; it does not change lyric text or timing.
+speed and phrase looping. With playback following enabled, the zoomed window
+pages forward/backward to keep the cursor visible; manual panning is available
+while paused or with following disabled. Progress within a page only updates
+the cursor, not the cached peak data.
+
+Selected synced phrases have draggable start/end markers. A completed drag is
+one undoable document change; canceled drags do not edit the document. Marker
+controls also use the selected timing step with the arrow keys. Seeking alone
+does not edit lyrics, and saving/exporting remains explicit.
+The selected-word pink bubble is removed; native word tooltips and the existing
+word-divider editing controls remain.
+Word timing is an optional collapsible view so normal phrase editing stays
+uncluttered. Its active-word styling supports both light and dark themes.
+Its bounded zoom widens the complete timeline (preserving linear time mapping)
+for selecting short words. Playback can scroll the active region into view;
+paused inspection and divider drags are not interrupted by following.
 
 Peak extraction uses the existing Symphonia decoder on a background worker.
 There is no second player, browser audio decoder, external executable or saved
@@ -98,7 +113,7 @@ alignment against the singer.
 
 For this local build:
 
-- 205 frontend tests and 45 Rust tests passed. New tests cover synced history,
+- 235 frontend tests and 45 Rust tests passed. New tests cover synced history,
   configurable steps, looping, in-flight saves and export submission handling.
 - Rust tests cover failed staging, rolling backups, sidecar coexistence,
   symlink refusal and failed embedding preserving the source.
@@ -107,7 +122,7 @@ For this local build:
   loading/error/retry states and canvas cleanup. A separately run generated
   WAV/MP3/FLAC/Ogg integration test matches existing-player duration, reuses
   caches and confirms unchanged source bytes.
-- Frontend lint passed with no errors and 78 existing warnings.
+- Frontend lint passed with no errors and 74 existing warnings.
 - Frontend build, release Rust check and Debian package build passed.
 - An isolated Linux desktop test verified startup discovery, actual F5 discovery
   of added audio and a second F5 removing a deleted library entry. Opening the
@@ -118,6 +133,11 @@ For this local build:
 - Browser waveform checks cover visible canvas pixels, paused/keyboard seeking,
   zoom/pan/fit, playback-speed cursor updates and one peak-data request across
   those interactions. The waveform strip also fits a 400px test container.
+- Playback-follow and optional word-view checks cover zoomed forward/backward
+  paging, source isolation, paused cursors, disclosure, linear word-lane zoom,
+  active-region scrolling, cancellation, pointer identity and keyboard undo.
+  Active-word contrast and standalone word-lane layout were checked in both
+  themes; the full editor was checked at its supported 1024px minimum width.
 - Light/dark browser checks verify readable dropdown options and numeric fields
   at a minimum 4.5:1 computed text contrast, with matching native color schemes.
 

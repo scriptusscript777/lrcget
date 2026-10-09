@@ -26,6 +26,21 @@ const setup = (track = { id: 1 }, initialStatus = 'paused') => {
 }
 
 describe('waveform playback isolation', () => {
+  it('follows only an active playing matching source', async () => {
+    const state = setup()
+    expect(state.waveformPlaying.value).toBe(false)
+    state.status.value = 'playing'
+    expect(state.waveformPlaying.value).toBe(true)
+    state.playingTrack.value = { id: 2 }
+    expect(state.waveformPlaying.value).toBe(false)
+    state.playingTrack.value = { id: 1 }
+    expect(state.waveformPlaying.value).toBe(false)
+    state.progress.value = 2
+    expect(state.waveformPlaying.value).toBe(true)
+    state.status.value = 'paused'
+    expect(state.waveformPlaying.value).toBe(false)
+    state.scope.stop()
+  })
   it('seeks a paused matching source without resuming or reloading', async () => {
     const state = setup()
     await state.seekWaveform(12)

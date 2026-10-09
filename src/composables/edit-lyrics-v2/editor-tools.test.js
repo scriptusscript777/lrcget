@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { createSSRApp, effectScope, nextTick, ref } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import SyncedLyricsEditor from '@/components/library/edit-lyrics-v2/SyncedLyricsEditor.vue'
+import SyncedWordTimingSegment from '@/components/library/edit-lyrics-v2/SyncedWordTimingSegment.vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useEditLyricsV2Document } from './useEditLyricsV2Document.js'
 import { useEditLyricsV2Playback } from './useEditLyricsV2Playback.js'
@@ -36,9 +37,48 @@ const document = () => {
 }
 
 describe('synced editing history and timing steps', () => {
+  it('retains native word timing tooltips and active highlighting without a hint bubble', async () => {
+    const html = await renderToString(createSSRApp(SyncedWordTimingSegment, {
+      word: { text: 'phrase' }, wordIndex: 1, startMs: 1000, endMs: 2000,
+      lineStartMs: 1000, lineEndMs: 2000, timelineWidth: 20, progressMs: 1500,
+    }))
+    expect(html).toContain('title="phrase (00:01.000 - 00:02.000)"')
+    expect(html).toContain('font-bold')
+    expect(html).toContain('bg-hoa-1500 dark:bg-hoa-1500')
+    expect(html).not.toContain('bg-neutral-200')
+    expect(html).not.toContain('Next word:')
+    expect(html).not.toContain('top-full')
+  })
+  it('commits marker edits once, holds the end, shifts words, and never changes neighbors', () => {
+    const { state, scope } = document()
+    const original = { ...line(), words: [{ text: 'test', start_ms: 1000, end_ms: 2000 }] }
+    state.updateSyncedLines([original, { ...line(), start_ms: 1500 }])
+    const commit = (boundary, timeMs, selected = state.syncedLines.value[0]) =>
+      state.updateWaveformMarker({ lineIndex: 0, line: selected, boundary, timeMs, durationMs: 10000 })
+    commit('start', 1000)
+    expect(state.syncedLines.value[0]).toEqual(original)
+    commit('end', 2000)
+    expect(state.syncedLines.value[0]).toEqual(original)
+    commit('start', 500)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 500, end_ms: 2000,
+      words: [{ text: 'test', start_ms: 500, end_ms: 1500 }] })
+    expect(state.syncedLines.value[1].start_ms).toBe(1500)
+    state.undo()
+    expect(state.syncedLines.value[0]).toEqual(original)
+    state.redo()
+    commit('end', 0)
+    expect(state.syncedLines.value[0].end_ms).toBe(1500)
+    const before = state.syncedLines.value
+    commit('start', NaN)
+    commit('start', 600, original)
+    expect(state.syncedLines.value).toBe(before)
+    scope.stop()
+  })
   it('uses themed shared controls for timing steps and loop context', async () => {
     const html = await renderToString(createSSRApp(SyncedLyricsEditor, { modelValue: [], timingStepMs: 25 }))
     const select = html.match(/<select[^>]*aria-label="Timing step"[^>]*>/)[0]
+    expect(html).toContain('aria-expanded="false"')
+    expect(html).not.toContain('id="word-timing-panel"')
     expect(select).toContain('select select-xs')
     expect(select).toContain('dark:[color-scheme:dark]')
     const inputs = html.match(/<input[^>]*type="number"[^>]*>/g)

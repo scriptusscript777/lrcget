@@ -132,5 +132,8 @@ export function useWaveformPlayback({
       .catch(reportError)
     return seekQueue
   }
-  return { waveformProgress, initializeAudio, seekWaveform }
+  const waveformPlaying = computed(
+    () => Number.isFinite(waveformProgress.value) && status.value === 'playing'
+  )
+  return { waveformProgress, waveformPlaying, initializeAudio, seekWaveform }
 }
