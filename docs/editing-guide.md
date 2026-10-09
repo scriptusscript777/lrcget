@@ -121,6 +121,31 @@ marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 
+On entering **Synced**, markers show the selected sentence's saved start/end.
+If nothing is selected, the first timed lyric is selected, skipping opening
+blank cues and untimed rows. Selecting another lyric updates the marker pair;
+switching between Plain and Synced preserves your selection. Untimed rows
+remain unmarked until you assign timing. Selection alone never edits timestamps.
+
+For untimed text, select a sentence and use sentence start sync at its beginning,
+then end sync when it finishes. After setting only the start, the end marker is
+provisional: its tooltip says **Inferred end** (the next timed lyric or recording
+end). End sync or Apply Markers confirms your chosen end. Importing or entering
+Synced does not invent timestamps or overwrite your original text file.
+
+- Sentence start sync sets the start marker to playback and keeps the end fixed.
+- Sentence shift arrows move the entire sentence, its words and both markers.
+- End sync/arrows change only the sentence end and its end marker.
+- Sync word changes the selected word boundary. If the first word moves, the
+  sentence start follows it; editing a later word preserves an unchanged start.
+- Timing step chooses the nudge amount; choosing a step does not move anything.
+- Follow Lyrics moves marker selection during playback, not saved timestamps.
+  Manual selection, marker previews, word/text editing and loops hold the target.
+
+Invalid boundaries are rejected with a message, and unavailable playback cannot
+sync timestamps from another recording. Sync/nudge edits support Undo/Redo;
+waveform drags still require Apply Markers to commit their preview.
+
 Double-click a point on the waveform to magnify it. Repeat to go deeper, then
 drag or nudge the selected lyric's start/end markers and use Apply Markers.
 A single click still seeks. Double-click inspection temporarily holds the view

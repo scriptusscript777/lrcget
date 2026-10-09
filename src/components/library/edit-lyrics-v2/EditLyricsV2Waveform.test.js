@@ -142,6 +142,26 @@ async function mount(initial = {}) {
 }
 
 describe('waveform controls and states', () => {
+  it('shows no confirmed markers for untimed text and labels a provisional end', async () => {
+    const state = await mount({
+      selectedLine: { text: 'untimed lyric', start_ms: null, end_ms: null },
+      selectedLineIndex: 0,
+    })
+    expect(state.byId('waveform-marker-start')).toBeUndefined()
+    expect(state.byId('waveform-marker-end')).toBeUndefined()
+    state.props.selectedLine.start_ms = 1000
+    await nextTick()
+    expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(1000)
+    expect(state.byId('waveform-marker-end').props.title).toContain('Inferred end')
+    expect(state.props.selectedLine.end_ms).toBeNull()
+    state.props.selectedLine.end_ms = 3000
+    await nextTick()
+    expect(state.byId('waveform-marker-end').props['aria-valuenow']).toBe(3000)
+    expect(state.byId('waveform-marker-end').props.title).not.toContain('Inferred')
+    expect(state.props.selectedLine.text).toBe('untimed lyric')
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
+
   const key = (state, boundary, value, shiftKey = false) =>
     state.byId(`waveform-marker-${boundary}`).props.onKeydown({
       key: value,

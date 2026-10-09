@@ -38,14 +38,17 @@ export function useWaveformPlayback({
     () => {
       cursor.value = null
     },
-    { flush: 'sync' }
+    // Batch cursor invalidation with player events, before the modal slot renders.
+    // Synchronous writes here can invalidate its computed dependencies mid-notification.
+    { flush: 'pre' }
   )
   watch(
     [progress, status],
     () => {
       if (matches.value && !loading.value) cursor.value = progress.value
     },
-    { flush: 'sync' }
+    // Update after identity changes settle, before rendering the editor's modal slot.
+    { flush: 'pre' }
   )
   onScopeDispose(() => {
     disposed = true

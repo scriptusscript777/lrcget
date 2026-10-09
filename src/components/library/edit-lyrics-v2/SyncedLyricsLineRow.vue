@@ -269,33 +269,33 @@ const editingTextProxy = computed({
 })
 
 const syncLineTitle = withShortcutTitle(
-  'Sync line to current playback',
+  'Sync sentence start and start marker to current playback; keep end fixed',
   syncedEditorShortcutBindings,
   'syncLineToPlayback'
 )
 
-const rewindLineTitle = computed(() => withShortcutTitle(`Rewind line by ${props.timingStepMs}ms`, syncedEditorShortcutBindings, 'rewindLine'))
+const rewindLineTitle = computed(() => withShortcutTitle(`Shift sentence and both markers earlier by ${props.timingStepMs}ms`, syncedEditorShortcutBindings, 'rewindLine'))
 
 const forwardLineTitle = computed(() => withShortcutTitle(
-  `Forward line by ${props.timingStepMs}ms`,
+  `Shift sentence and both markers later by ${props.timingStepMs}ms`,
   syncedEditorShortcutBindings,
   'forwardLine'
 ))
 
 const syncEndTitle = withShortcutTitle(
-  'Sync end timestamp to current playback',
+  'Sync sentence end and end marker to current playback; keep start fixed',
   syncedEditorShortcutBindings,
   'syncLineEndToPlayback'
 )
 
 const rewindEndTitle = computed(() => withShortcutTitle(
-  `Rewind end timestamp by ${props.timingStepMs}ms`,
+  `Move sentence end and end marker earlier by ${props.timingStepMs}ms`,
   syncedEditorShortcutBindings,
   'rewindLineEnd'
 ))
 
 const forwardEndTitle = computed(() => withShortcutTitle(
-  `Forward end timestamp by ${props.timingStepMs}ms`,
+  `Move sentence end and end marker later by ${props.timingStepMs}ms`,
   syncedEditorShortcutBindings,
   'forwardLineEnd'
 ))

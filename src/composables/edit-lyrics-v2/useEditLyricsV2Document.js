@@ -14,7 +14,14 @@ const createEmptySyncedLine = () => ({
   words: [],
 })
 
-export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, progress, toast }) {
+export function useEditLyricsV2Document({
+  audioSource,
+  lyricsfile,
+  trackId,
+  progress,
+  playbackDuration,
+  toast,
+}) {
   const plainLyrics = ref('')
   const syncedLines = ref([])
   const lyricsfileDocument = ref(null)
@@ -61,7 +68,11 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
       selectedSyncedLineIndex.value < 0 ||
       selectedSyncedLineIndex.value >= syncedLines.value.length
     ) {
-      selectedSyncedLineIndex.value = 0
+      // Initial markers belong to the first timed lyric, not an intro clear cue.
+      const firstTimedLyric = syncedLines.value.findIndex(
+        line => line.text?.trim() && Number.isFinite(line.start_ms) && line.start_ms >= 0
+      )
+      selectedSyncedLineIndex.value = firstTimedLyric >= 0 ? firstTimedLyric : 0
     }
 
     // Remove any out-of-bounds indices from multi-selection
@@ -321,6 +332,52 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     withUpdatedLine(lineIndex, () => next)
   }
 
+  // Buttons and keyboard timing actions use the same bounds as waveform markers.
+  const recordingDurationMs = () => {
+    const seconds =
+      Number.isFinite(playbackDuration?.value) && playbackDuration.value > 0
+        ? playbackDuration.value
+        : audioSource.value?.duration
+    return Number.isFinite(seconds) ? seconds * 1000 : NaN
+  }
+  const validTimingChange = (lineIndex, line) => {
+    const durationMs = recordingDurationMs()
+    const endMs = line.end_ms ?? syncedLines.value[lineIndex + 1]?.start_ms ?? durationMs
+    if (!waveformMarkerBounds(line, endMs, durationMs)) {
+      toast.error(
+        'Timing not changed: keep start before end and all timed words inside the sentence and recording.'
+      )
+      return false
+    }
+    return true
+  }
+
+  const playbackTimestamp = () => {
+    if (!Number.isFinite(progress.value) || progress.value < 0) {
+      toast.error('Play or seek this recording before syncing its timestamps.')
+      return null
+    }
+    return Math.round(progress.value * 1000)
+  }
+
+  const updateLineWords = ({ lineIndex, words, lineStartMs }) => {
+    const line = syncedLines.value[lineIndex]
+    if (!Number.isInteger(lineIndex) || !line || !Array.isArray(words)) return false
+    if (
+      words.some(word => !word || typeof word.text !== 'string') ||
+      (words.length && words.map(word => word.text).join('') !== line.text)
+    )
+      return false
+    const nextLine = {
+      ...line,
+      ...(Number.isFinite(lineStartMs) ? { start_ms: Math.round(lineStartMs) } : {}),
+      words,
+    }
+    if (!validTimingChange(lineIndex, nextLine)) return false
+    withUpdatedLine(lineIndex, () => nextLine)
+    return true
+  }
+
   const syncLineToCurrentProgress = lineIndex => {
     if (!Number.isInteger(lineIndex) || lineIndex < 0 || lineIndex >= syncedLines.value.length) {
       return
@@ -328,21 +385,26 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
 
     const currentLine = syncedLines.value[lineIndex]
     const previousStartMs = Number.isFinite(currentLine?.start_ms) ? currentLine.start_ms : null
-    const newStartMs = Math.max(0, Math.round(progress.value * 1000))
+    const newStartMs = playbackTimestamp()
+    if (newStartMs == null) return false
     const lineStartOffsetMs = previousStartMs == null ? 0 : newStartMs - previousStartMs
+    const nextLine = {
+      ...currentLine,
+      start_ms: newStartMs,
+      words: shiftWordBoundariesByOffset(currentLine.words, lineStartOffsetMs),
+    }
+    if (!validTimingChange(lineIndex, nextLine)) return false
 
     // Update the current line's start_ms and optionally set previous line's end_ms
     const prevLineIndex = lineIndex - 1
     const shouldSetPrevEndMs =
-      prevLineIndex >= 0 && !Number.isFinite(syncedLines.value[prevLineIndex]?.end_ms)
+      prevLineIndex >= 0 &&
+      !Number.isFinite(syncedLines.value[prevLineIndex]?.end_ms) &&
+      !!waveformMarkerBounds(syncedLines.value[prevLineIndex], newStartMs, recordingDurationMs())
 
     syncedLines.value = syncedLines.value.map((line, index) => {
       if (index === lineIndex) {
-        return {
-          ...line,
-          start_ms: newStartMs,
-          words: shiftWordBoundariesByOffset(line.words, lineStartOffsetMs),
-        }
+        return nextLine
       }
       if (index === prevLineIndex && shouldSetPrevEndMs) {
         return {
@@ -353,6 +415,7 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
       return line
     })
     isDirty.value = true
+    return true
   }
 
   const shiftLineTimestampBy = (lineIndex, offsetMs) => {
@@ -364,7 +427,10 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     const baseStartMs = Number.isFinite(currentStartMs) ? currentStartMs : 0
     const newStartMs = Math.max(0, Math.round(baseStartMs + offsetMs))
 
-    withUpdatedLine(lineIndex, line => moveLineTo(line, newStartMs))
+    const nextLine = moveLineTo(syncedLines.value[lineIndex], newStartMs)
+    if (!validTimingChange(lineIndex, nextLine)) return false
+    withUpdatedLine(lineIndex, () => nextLine)
+    return true
   }
 
   const rewindLineBy100 = lineIndex => {
@@ -380,12 +446,12 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
       return
     }
 
-    const newEndMs = Math.max(0, Math.round(progress.value * 1000))
-
-    withUpdatedLine(lineIndex, line => ({
-      ...line,
-      end_ms: newEndMs,
-    }))
+    const newEndMs = playbackTimestamp()
+    if (newEndMs == null) return false
+    const nextLine = { ...syncedLines.value[lineIndex], end_ms: newEndMs }
+    if (!validTimingChange(lineIndex, nextLine)) return false
+    withUpdatedLine(lineIndex, () => nextLine)
+    return true
   }
 
   const shiftEndTimestampBy = (lineIndex, offsetMs) => {
@@ -397,10 +463,10 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     const baseEndMs = Number.isFinite(currentEndMs) ? currentEndMs : 0
     const newEndMs = Math.max(0, Math.round(baseEndMs + offsetMs))
 
-    withUpdatedLine(lineIndex, line => ({
-      ...line,
-      end_ms: newEndMs,
-    }))
+    const nextLine = { ...syncedLines.value[lineIndex], end_ms: newEndMs }
+    if (!validTimingChange(lineIndex, nextLine)) return false
+    withUpdatedLine(lineIndex, () => nextLine)
+    return true
   }
 
   const rewindEndBy100 = lineIndex => {
@@ -612,6 +678,7 @@ export function useEditLyricsV2Document({ audioSource, lyricsfile, trackId, prog
     initializeLyrics,
     updatePlainLyrics,
     updateSyncedLines,
+    updateLineWords,
     selectSyncedLine,
     selectSyncedLineRange,
     toggleSyncedLineSelection,

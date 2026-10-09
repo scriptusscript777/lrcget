@@ -114,7 +114,7 @@
         :style="{ left: `${marker.percent}%` }"
         role="slider"
         :aria-label="`Selected lyric ${marker.boundary}`"
-        :title="`${marker.boundary === 'start' ? 'Start (shifts words; end stays fixed)' : 'End'}: ${formatMarkerTime(marker.time)}`"
+        :title="`${marker.boundary === 'start' ? 'Start (shifts words; end stays fixed)' : Number.isFinite(selectedLine?.end_ms) ? 'End' : 'Inferred end (next lyric or recording end; set end to confirm)'}: ${formatMarkerTime(marker.time)}`"
         :aria-valuemin="marker.min"
         :aria-valuemax="marker.max"
         :aria-valuenow="marker.time"
@@ -591,13 +591,16 @@ watch(
   [
     () => waveformSourceKey(props.audioSource),
     () => props.selectedLine,
+    () => props.selectedLine?.start_ms,
+    () => props.selectedLine?.end_ms,
     () => props.selectedLineIndex,
     () => props.nextLineStartMs,
   ],
   discardMarkers,
-  { flush: 'sync' }
+  // Clear drafts before rendering, not during a nested document change notification.
+  { flush: 'pre' }
 )
-watch(() => props.selectedLine, discardMarkers, { deep: true, flush: 'sync' })
+watch(() => props.selectedLine, discardMarkers, { deep: true, flush: 'pre' })
 watch(
   () => props.playing,
   (playing, previous) => {

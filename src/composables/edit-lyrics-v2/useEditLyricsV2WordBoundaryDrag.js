@@ -307,7 +307,7 @@ export function useEditLyricsV2WordBoundaryDrag({
   }
 
   const syncSelectedBoundary = (progressMs, options = {}) => {
-    if (!isWordSyncAvailable.value) {
+    if (!isWordSyncAvailable.value || !Number.isFinite(progressMs) || progressMs < 0) {
       return false
     }
 
@@ -345,7 +345,9 @@ export function useEditLyricsV2WordBoundaryDrag({
       nextStartValues[index] = Math.min(maxStartMs, Math.max(nextStartValues[index], minStartMs))
     }
 
-    const hasChanges = nextStartValues.some((startMs, index) => startMs !== currentWords[index].start_ms)
+    const hasChanges = nextStartValues.some(
+      (startMs, index) => startMs !== currentWords[index].start_ms
+    )
 
     if (hasChanges) {
       const updatedWords = currentWords.map((word, index) => ({
@@ -356,7 +358,10 @@ export function useEditLyricsV2WordBoundaryDrag({
       onUpdateWords({
         lineIndex: selectedLineIndex.value,
         words: updatedWords,
-        lineStartMs: updatedWords[0].start_ms,
+        lineStartMs:
+          updatedWords[0].start_ms !== currentWords[0].start_ms
+            ? updatedWords[0].start_ms
+            : undefined,
       })
     }
 

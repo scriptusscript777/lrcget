@@ -1,4 +1,5 @@
 import { computed, onScopeDispose, ref, watch } from 'vue'
+import { waveformSourceKey } from '@/utils/waveform-viewport.js'
 
 export function useEditLyricsV2Playback({
   audioSource,
@@ -20,6 +21,8 @@ export function useEditLyricsV2Playback({
   let awaitingLoopSeek = false
   let initializingLoop = false
   let loopOperation = 0
+  let playOperation = 0
+  let disposed = false
   const stopLoop = () => {
     loopOperation++
     loopEnabled.value = false
@@ -65,35 +68,47 @@ export function useEditLyricsV2Playback({
   }
 
   const playLineAtOffset = async (lineIndex, offsetMs = 0) => {
-    if (!audioSource.value) {
-      return
-    }
-
-    const lineStartMs = syncedLines.value[lineIndex]?.start_ms
-    const baseStartMs = Number.isFinite(lineStartMs) ? lineStartMs : progress.value * 1000
+    const source = audioSource.value
+    const line = syncedLines.value[lineIndex]
+    if (!source || !line || !Number.isFinite(offsetMs) || disposed) return
+    const operation = ++playOperation
+    const sourceKey = waveformSourceKey(source)
+    const lineStartMs = line.start_ms
+    const baseStartMs = Number.isFinite(lineStartMs)
+      ? lineStartMs
+      : isPlayingCorrectTrack() && Number.isFinite(progress.value)
+        ? progress.value * 1000
+        : 0
     const seekTo = Math.max(0, baseStartMs + offsetMs) / 1000
-
-    if (!isPlayingCorrectTrack()) {
-      await playTrack(audioSource.value)
-    } else if (status.value === 'paused') {
-      await resume()
+    try {
+      if (!isPlayingCorrectTrack()) await playTrack(source)
+      else if (status.value === 'paused') await resume()
+      // A delayed resume/load must not seek another recording or an outdated lyric.
+      if (
+        disposed ||
+        operation !== playOperation ||
+        sourceKey !== waveformSourceKey(audioSource.value) ||
+        !isPlayingCorrectTrack() ||
+        syncedLines.value[lineIndex] !== line
+      )
+        return
+      await seek(seekTo)
+    } catch (error) {
+      if (!disposed && operation === playOperation) onError(error)
     }
-
-    seek(seekTo)
   }
 
   const playLine = async lineIndex => {
     return playLineAtOffset(lineIndex, 0)
   }
 
-  const resumeOrPlay = () => {
-    if (status.value === 'paused' && isPlayingCorrectTrack()) {
-      resume()
-      return
-    }
-
-    if (audioSource.value) {
-      playTrack(audioSource.value)
+  const resumeOrPlay = async () => {
+    if (disposed) return
+    try {
+      if (status.value === 'paused' && isPlayingCorrectTrack()) await resume()
+      else if (audioSource.value) await playTrack(audioSource.value)
+    } catch (error) {
+      if (!disposed) onError(error)
     }
   }
 
@@ -148,7 +163,11 @@ export function useEditLyricsV2Playback({
     watch(selectedLineIndex, stopLoop, { flush: 'sync' })
   }
   watch(audioSource, stopLoop, { deep: true, flush: 'sync' })
-  onScopeDispose(stopLoop)
+  onScopeDispose(() => {
+    disposed = true
+    playOperation++
+    stopLoop()
+  })
 
   return {
     loopEnabled,

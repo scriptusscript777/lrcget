@@ -69,7 +69,9 @@
     </template>
 
     <div class="grow flex flex-col gap-2 h-full">
-      <div class="toolbar bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700">
+      <div
+        class="toolbar bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
+      >
         <EditLyricsV2PlayerBar
           :status="status"
           :duration="duration"
@@ -102,7 +104,9 @@
         <div
           class="w-full max-w-lg rounded-lg border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 p-5 shadow-lg"
         >
-          <h3 class="text-base font-semibold text-neutral-900 dark:text-neutral-200">Track is marked as instrumental</h3>
+          <h3 class="text-base font-semibold text-neutral-900 dark:text-neutral-200">
+            Track is marked as instrumental
+          </h3>
           <div class="mt-4 flex flex-wrap gap-2">
             <button
               class="button button-normal px-2 py-1 text-xs rounded-full"
@@ -172,7 +176,6 @@
         @edit-word-text="handleEditWordText"
         @mark-as-instrumental="setInstrumental(true)"
       />
-
     </div>
   </BaseModal>
 </template>
@@ -253,7 +256,12 @@ const audioSourceRef = toRef(props, 'audioSource')
 const lyricsfileRef = toRef(props, 'lyricsfile')
 const trackIdRef = toRef(props, 'trackId')
 
-const { waveformProgress, waveformPlaying, initializeAudio, seekWaveform: handleWaveformSeek } = useWaveformPlayback({
+const {
+  waveformProgress,
+  waveformPlaying,
+  initializeAudio,
+  seekWaveform: handleWaveformSeek,
+} = useWaveformPlayback({
   audioSource: audioSourceRef,
   playingTrack,
   status,
@@ -263,7 +271,11 @@ const { waveformProgress, waveformPlaying, initializeAudio, seekWaveform: handle
   toast,
 })
 
-const progressMs = computed(() => Math.max(0, Math.round(progress.value * 1000)))
+const progressMs = computed(() =>
+  Number.isFinite(waveformProgress.value)
+    ? Math.max(0, Math.round(waveformProgress.value * 1000))
+    : -1
+)
 
 const activeTab = ref('plain')
 const wordTimingExpanded = ref(false)
@@ -288,6 +300,7 @@ const {
   initializeLyrics,
   updatePlainLyrics,
   updateSyncedLines,
+  updateLineWords,
   updateWaveformMarkers,
   selectSyncedLine,
   selectSyncedLineRange,
@@ -315,7 +328,10 @@ const {
   audioSource: audioSourceRef,
   lyricsfile: lyricsfileRef,
   trackId: trackIdRef,
-  progress,
+  progress: waveformProgress,
+  playbackDuration: computed(() =>
+    Number.isFinite(waveformProgress.value) ? duration.value : null
+  ),
   toast,
 })
 
@@ -339,7 +355,16 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
 
 const markerPreview = ref(null)
 const markerEditing = ref(false)
-const { playLine, playLineAtOffset, resumeOrPlay, loopEnabled, loopLeadSeconds, loopTailSeconds, canLoop, toggleLoop } = useEditLyricsV2Playback({
+const {
+  playLine,
+  playLineAtOffset,
+  resumeOrPlay,
+  loopEnabled,
+  loopLeadSeconds,
+  loopTailSeconds,
+  canLoop,
+  toggleLoop,
+} = useEditLyricsV2Playback({
   audioSource: audioSourceRef,
   syncedLines,
   progress,
@@ -368,33 +393,12 @@ const forwardLineBy100 = lineIndex => {
   void playLine(lineIndex)
 }
 
-const updateLineWords = ({ lineIndex, words, lineStartMs }) => {
-  if (!Number.isInteger(lineIndex) || lineIndex < 0 || lineIndex >= syncedLines.value.length) {
-    return
-  }
-
-  const nextLineStartMs = Number.isFinite(lineStartMs) ? Math.max(0, Math.round(lineStartMs)) : null
-
-  const newLines = syncedLines.value.map((line, index) => {
-    if (index !== lineIndex) {
-      return line
-    }
-
-    return {
-      ...line,
-      ...(nextLineStartMs === null ? {} : { start_ms: nextLineStartMs }),
-      words,
-    }
-  })
-
-  updateSyncedLines(newLines)
-}
-
 const handleUpdateLineText = (lineIndex, newText) => {
   updateLineText(lineIndex, newText)
 }
 const handleEditWordText = payload => {
-  if (!updateWordText(payload)) toast.error('Word edit not applied: the lyric or timing changed. Reopen the word editor.')
+  if (!updateWordText(payload))
+    toast.error('Word edit not applied: the lyric or timing changed. Reopen the word editor.')
 }
 
 const handleUpdateSelectedLineIndices = payload => {
@@ -457,7 +461,8 @@ const { open: openImportConfirmModal, close: closeImportConfirmModal } = useModa
   component: ConfirmModal,
   attrs: {
     title: 'Replace lyrics?',
-    message: 'Importing this file will replace the current plain lyrics and synced timings. Continue?',
+    message:
+      'Importing this file will replace the current plain lyrics and synced timings. Continue?',
     confirmText: 'Import lyrics',
     cancelText: 'Cancel',
     clickToClose: false,
@@ -539,22 +544,10 @@ const handlePasteLrc = async () => {
 }
 
 const handleWordTimingEdited = async ({ startMs }) => {
-  // Auto-replay from the beginning of the edited line for instant verification
-  const seekTo = Number.isFinite(startMs) ? startMs / 1000 : progress.value
-
-  // Ensure we're playing the correct audio source
-  const isPlayingCorrectTrack =
-    audioSourceRef.value.type === 'library'
-      ? playingTrack.value?.id === audioSourceRef.value.id
-      : playingTrack.value?.file_path === audioSourceRef.value.file_path
-
-  if (!playingTrack.value || !isPlayingCorrectTrack) {
-    await playTrack(audioSourceRef.value)
-  } else if (status.value === 'paused') {
-    resume()
-  }
-
-  seek(seekTo)
+  const index = selectedSyncedLineIndex.value
+  const lineStartMs = syncedLines.value[index]?.start_ms
+  if (!Number.isFinite(lineStartMs)) return
+  await playLineAtOffset(index, Number.isFinite(startMs) ? startMs - lineStartMs : 0)
 }
 
 watch(activeTab, value => {

@@ -277,7 +277,7 @@ const playLineTitle = withShortcutTitle(
 )
 
 const syncWordTitle = withShortcutTitle(
-  'Sync word at current playback position',
+  'Sync selected word boundary to playback; moving the first word also updates the sentence start marker',
   wordTimingShortcutBindings,
   'syncSelectedSeparatorAndAdvance'
 )

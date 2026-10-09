@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.14** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.15** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.14/LRCGET_2.2.0%2Blocal.14_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.14)
-| [Word editing and lyric following](docs/releases/2.2.0-local.14.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.15/LRCGET_2.2.0%2Blocal.15_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.15)
+| [Initial sentence markers](docs/releases/2.2.0-local.15.md)
 | [Editing guide](docs/editing-guide.md)
 | [Full workflow and feature how-to](docs/editing-guide.md#quick-workflow)
 | [Detailed changes](LOCAL_CHANGES.md)
@@ -29,6 +29,10 @@ official upstream release.
   inspection. Placed marker timestamps stay fixed during playback and navigation.
 - Selected phrase start/end handles, session undo/redo, 10/25/50/100 ms timing
   steps and phrase looping.
+- Entering Synced defaults to the first timed lyric rather than an opening
+  blank cue. Existing selections are preserved; untimed rows have no markers.
+- Sentence sync/nudge controls update the waveform markers through shared
+  timing checks. Follow Lyrics advances both markers; editing/loops pin them.
 - Marker preview with explicit Apply Markers / Cancel; confirmed boundaries
   form one undoable edit and stay fixed through playback and zoom.
 - Phrase loops audition pending marker previews with zero lead-in/tail by default.
@@ -51,8 +55,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.14_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.14_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.15_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.15_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -105,7 +109,7 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 327 frontend and 45 Rust tests passed, plus
+or lyric display in every player. 349 frontend and 45 Rust tests passed, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project

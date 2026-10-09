@@ -21,14 +21,19 @@ const line = () => ({
   end_ms: 2000,
   words: [{ text: 'test', start_ms: 1000, end_ms: 1400 }],
 })
-const document = () => {
+const document = (
+  playbackProgress = ref(1.5),
+  playbackDuration,
+  audioSource = ref({ type: 'library', id: 1, duration: 10 })
+) => {
   const scope = effectScope()
   const state = scope.run(() =>
     useEditLyricsV2Document({
-      audioSource: ref({ type: 'library', id: 1, duration: 10 }),
+      audioSource,
       lyricsfile: ref({ content: '' }),
       trackId: ref(1),
-      progress: ref(1.5),
+      progress: playbackProgress,
+      playbackDuration,
       toast: { error: vi.fn() },
     })
   )
@@ -37,6 +42,157 @@ const document = () => {
 }
 
 describe('synced editing history and timing steps', () => {
+  it('uses loaded recording duration when file metadata has no duration', () => {
+    const { state, scope } = document(
+      ref(1.5),
+      ref(10),
+      ref({ type: 'file', file_path: '/tmp/test.mp3' })
+    )
+    state.updateSyncedLines([{ text: 'sentence', start_ms: 1000, end_ms: 3000 }])
+    expect(state.syncLineToCurrentProgress(0)).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1500, end_ms: 3000 })
+    scope.stop()
+  })
+  it('updates first-word and sentence start together while keeping the end fixed and rejects invalid word edits', () => {
+    const { state, scope } = document()
+    state.updateSyncedLines([
+      {
+        text: 'first second',
+        start_ms: 1000,
+        end_ms: 3000,
+        words: [
+          { text: 'first ', start_ms: 1000 },
+          { text: 'second', start_ms: 2000 },
+        ],
+      },
+    ])
+    expect(
+      state.updateLineWords({
+        lineIndex: 0,
+        lineStartMs: 1200,
+        words: [
+          { text: 'first ', start_ms: 1200 },
+          { text: 'second', start_ms: 2200 },
+        ],
+      })
+    ).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1200, end_ms: 3000 })
+    const before = JSON.parse(JSON.stringify(state.syncedLines.value))
+    expect(
+      state.updateLineWords({ lineIndex: 0, words: [{ text: 'missing', start_ms: 2200 }] })
+    ).toBe(false)
+    expect(
+      state.updateLineWords({
+        lineIndex: 0,
+        words: [
+          { text: 'first ', start_ms: 1200 },
+          { text: 'second', start_ms: 3500 },
+        ],
+      })
+    ).toBe(false)
+    expect(state.syncedLines.value).toEqual(before)
+    state.undo()
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1000, end_ms: 3000 })
+    scope.stop()
+  })
+
+  it('syncs sentence boundaries from playback with one undoable update and fixed opposite marker', () => {
+    const progress = ref(1.2)
+    const { state, scope } = document(progress)
+    state.updateSyncedLines([line(), { ...line(), start_ms: 3000, end_ms: 4000, words: [] }])
+    const original = JSON.parse(JSON.stringify(state.syncedLines.value))
+    expect(state.syncLineToCurrentProgress(0)).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({
+      start_ms: 1200,
+      end_ms: 2000,
+      words: [{ text: 'test', start_ms: 1200, end_ms: 1600 }],
+    })
+    expect(state.syncedLines.value[1]).toEqual(original[1])
+    state.undo()
+    expect(state.syncedLines.value).toEqual(original)
+    state.redo()
+    progress.value = 2.5
+    expect(state.syncEndToCurrentProgress(0)).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1200, end_ms: 2500 })
+    state.undo()
+    expect(state.syncedLines.value[0].end_ms).toBe(2000)
+    state.forwardLineBy100(0)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1300, end_ms: 2100 })
+    state.forwardEndBy100(0)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1300, end_ms: 2200 })
+    scope.stop()
+  })
+
+  it('rejects unavailable playback, reversed boundaries, truncated words and out-of-recording changes', () => {
+    const progress = ref(null)
+    const { state, scope } = document(progress)
+    state.updateSyncedLines([line()])
+    const original = JSON.parse(JSON.stringify(state.syncedLines.value))
+    for (const value of [null, NaN, -1, Infinity, 20]) {
+      progress.value = value
+      expect(state.syncLineToCurrentProgress(0)).toBe(false)
+      expect(state.syncEndToCurrentProgress(0)).toBe(false)
+      expect(state.syncedLines.value).toEqual(original)
+    }
+    progress.value = 2.1
+    expect(state.syncLineToCurrentProgress(0)).toBe(false)
+    progress.value = 1.2
+    expect(state.syncEndToCurrentProgress(0)).toBe(false)
+    state.timingStepMs.value = 100
+    for (let i = 0; i < 10; i++) state.rewindEndBy100(0)
+    expect(state.syncedLines.value[0].end_ms).toBe(1400)
+    scope.stop()
+  })
+
+  it('assigns untimed sentence boundaries without fabricating word timestamps', () => {
+    const progress = ref(1.5)
+    const { state, scope } = document(progress)
+    state.updateSyncedLines([{ text: 'untimed words', start_ms: null, end_ms: null }])
+    expect(state.syncLineToCurrentProgress(0)).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1500, end_ms: null })
+    progress.value = 2.5
+    expect(state.syncEndToCurrentProgress(0)).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({
+      text: 'untimed words',
+      start_ms: 1500,
+      end_ms: 2500,
+    })
+    expect(state.syncedLines.value[0].words).toBeUndefined()
+    scope.stop()
+  })
+
+  it('initially selects the first timed lyric instead of an intro blank or untimed row', () => {
+    const { state, scope } = document()
+    const lines = [
+      { text: '', start_ms: 0, end_ms: 500 },
+      { text: 'not yet timed', start_ms: null, end_ms: null },
+      { text: 'first sung sentence', start_ms: 1000, end_ms: 2000 },
+      { text: 'second sentence', start_ms: 3000, end_ms: 4000 },
+    ]
+    state.updateSyncedLines(lines)
+    expect(state.selectedSyncedLineIndex.value).toBe(2)
+    expect(state.syncedLines.value).toEqual(lines)
+    state.selectSyncedLine(3)
+    state.ensureSelectedSyncedLine()
+    expect(state.selectedSyncedLineIndex.value).toBe(3)
+    state.selectSyncedLine(1)
+    state.ensureSelectedSyncedLine()
+    expect(state.selectedSyncedLineIndex.value).toBe(1)
+    scope.stop()
+  })
+
+  it('allows zero-time lyrics and never fabricates boundaries for untimed or empty documents', () => {
+    const { state, scope } = document()
+    state.updateSyncedLines([{ text: 'opening', start_ms: 0, end_ms: 500 }])
+    expect(state.selectedSyncedLineIndex.value).toBe(0)
+    state.selectedSyncedLineIndex.value = -1
+    state.updateSyncedLines([{ text: 'untimed', start_ms: null, end_ms: null }])
+    expect(state.syncedLines.value[0]).toEqual({ text: 'untimed', start_ms: null, end_ms: null })
+    state.updateSyncedLines([])
+    expect(state.selectedSyncedLineIndex.value).toBe(-1)
+    scope.stop()
+  })
+
   it('corrects word text atomically without shifting timestamps, punctuation spacing or neighboring lines', () => {
     const { state, scope } = document()
     state.updateSyncedLines([
@@ -149,7 +305,9 @@ describe('synced editing history and timing steps', () => {
         progressMs: 1500,
       })
     )
-    expect(html).toContain('title="phrase (00:01.000 - 00:02.000) - F2 or right-click to edit word"')
+    expect(html).toContain(
+      'title="phrase (00:01.000 - 00:02.000) - F2 or right-click to edit word"'
+    )
     expect(html).toContain('font-bold')
     expect(html).toContain('bg-hoa-1500 dark:bg-hoa-1500')
     expect(html).not.toContain('bg-neutral-200')
@@ -347,6 +505,60 @@ const player = () => {
 }
 
 describe('phrase loop', () => {
+  it.each(['source', 'dispose', 'timing'])(
+    'cancels a pending phrase replay when %s changes',
+    async change => {
+      const { state, controls, scope } = player()
+      let finish
+      controls.resume.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            finish = resolve
+          })
+      )
+      const pending = state.playLine(0)
+      if (change === 'source') {
+        controls.audioSource.value = { type: 'library', id: 2 }
+        controls.playingTrack.value = { id: 2 }
+      } else if (change === 'dispose') scope.stop()
+      else controls.syncedLines.value[0] = { ...line(), start_ms: 1200 }
+      finish()
+      await pending
+      expect(controls.seek).not.toHaveBeenCalled()
+      scope.stop()
+    }
+  )
+
+  it('keeps the newest replay request instead of seeking back when an older resume finishes', async () => {
+    const { state, controls, scope } = player()
+    const finish = []
+    controls.resume.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish.push(resolve)
+        })
+    )
+    const first = state.playLine(0)
+    const second = state.playLine(1)
+    finish[1]()
+    await second
+    finish[0]()
+    await first
+    expect(controls.seek).toHaveBeenCalledExactlyOnceWith(4)
+    scope.stop()
+  })
+
+  it('reports failed phrase seeks and play/resume without unhandled rejections', async () => {
+    const { state, controls, scope } = player()
+    controls.seek.mockRejectedValue(new Error('Seek unavailable'))
+    await state.playLine(0)
+    expect(controls.onError).toHaveBeenCalledOnce()
+    controls.resume.mockRejectedValue(new Error('Resume unavailable'))
+    await state.resumeOrPlay()
+    expect(controls.onError).toHaveBeenCalledTimes(2)
+    scope.stop()
+  })
+
   it('does not seek after a pending resume is canceled or the recording changes', async () => {
     for (const changeSource of [false, true]) {
       const { state, controls, scope } = player()

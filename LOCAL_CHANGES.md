@@ -4,7 +4,28 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.14`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.15`, based on upstream tag `2.2.0`.
+
+## Initial Sentence Markers (.15)
+
+Rick Lidgett changed default selection to the first nonblank, nonnegative timed
+lyric when there is no valid selected row. Intro screen-clear cues and untimed
+rows no longer become the default marker target. Existing selections survive
+Plain/Synced switching. Untimed-only documents retain editable rows without
+inventing timestamps or marker positions. Browser checks verify initial bounds,
+selection changes and mode reentry without creating history edits.
+
+Sentence sync, sentence shifts, end nudges and word boundaries now share the
+document's marker bounds checks. Playback syncing uses only the recording being
+edited and its loaded duration. Invalid/unavailable timing is rejected with
+feedback; failed sync-and-advance shortcuts stay on the current line. Word
+sync no longer overwrites sentence lead-in when only a later word changes.
+Tooltips distinguish syncing start/end, shifting both boundaries and individual
+word timing. Playback following updates marker targets without changing times.
+Untimed text stays unmarked until its start is assigned; provisional ends are
+labeled Inferred end until confirmed. Pending replay actions are invalidated
+when the lyric or recording changes. Batched cursor/draft updates prevent stale
+modal markers after track switches or in-place document edits.
 
 ## Word Editing and Lyric Following (.14)
 

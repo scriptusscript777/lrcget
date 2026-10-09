@@ -44,6 +44,25 @@ function setup() {
 }
 
 describe('word boundary pointer lifecycle', () => {
+  it('does not overwrite sentence lead-in when syncing a later word', () => {
+    const fixture = setup()
+    fixture.state.selectedBoundaryIndex.value = 1
+    expect(fixture.state.syncSelectedBoundary(2200)).toBe(true)
+    expect(fixture.update.mock.calls[0][0].lineStartMs).toBeUndefined()
+    fixture.state.selectedBoundaryIndex.value = 0
+    expect(fixture.state.syncSelectedBoundary(1200)).toBe(true)
+    expect(fixture.update.mock.calls[1][0].lineStartMs).toBe(1200)
+  })
+  it.each([null, NaN, Infinity, -1, undefined])(
+    'rejects unavailable playback %s without advancing or changing words',
+    value => {
+      const fixture = setup()
+      const previousIndex = fixture.state.selectedBoundaryIndex.value
+      expect(fixture.state.syncSelectedBoundary(value)).toBe(false)
+      expect(fixture.state.selectedBoundaryIndex.value).toBe(previousIndex)
+      expect(fixture.update).not.toHaveBeenCalled()
+    }
+  )
   it.each([false, true])(
     'cancels without committing, pending/active=%s, and cleans listeners',
     active => {

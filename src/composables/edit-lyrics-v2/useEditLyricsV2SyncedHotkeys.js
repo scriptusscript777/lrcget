@@ -66,7 +66,7 @@ export function useEditLyricsV2SyncedHotkeys({
           currentPlaybackMs > currentLineEndMs
 
         if (!isAfterCurrentEnd) {
-          syncEndToCurrentProgress(currentLineIndex)
+          if (syncEndToCurrentProgress(currentLineIndex) === false) return
         }
 
         selectSyncedLine(Math.min(syncedLines.value.length - 1, currentLineIndex + 1))
@@ -74,7 +74,7 @@ export function useEditLyricsV2SyncedHotkeys({
       }
       case 'syncLineAndAdvance': {
         const currentLineIndex = selectedSyncedLineIndex.value
-        syncLineToCurrentProgress(currentLineIndex)
+        if (syncLineToCurrentProgress(currentLineIndex) === false) return
 
         const previousLineIndex = currentLineIndex - 1
         if (previousLineIndex >= 0) {
@@ -86,7 +86,7 @@ export function useEditLyricsV2SyncedHotkeys({
       }
       case 'syncLineAndAdvanceNoPreviousEndSync': {
         const currentLineIndex = selectedSyncedLineIndex.value
-        syncLineToCurrentProgress(currentLineIndex)
+        if (syncLineToCurrentProgress(currentLineIndex) === false) return
         selectSyncedLine(Math.min(syncedLines.value.length - 1, selectedSyncedLineIndex.value + 1))
         return
       }

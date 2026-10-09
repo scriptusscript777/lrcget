@@ -32,10 +32,13 @@ describe('waveform playback isolation', () => {
     state.status.value = 'playing'
     expect(state.waveformPlaying.value).toBe(true)
     state.playingTrack.value = { id: 2 }
+    await nextTick()
     expect(state.waveformPlaying.value).toBe(false)
     state.playingTrack.value = { id: 1 }
+    await nextTick()
     expect(state.waveformPlaying.value).toBe(false)
     state.progress.value = 2
+    await nextTick()
     expect(state.waveformPlaying.value).toBe(true)
     state.status.value = 'paused'
     expect(state.waveformPlaying.value).toBe(false)
