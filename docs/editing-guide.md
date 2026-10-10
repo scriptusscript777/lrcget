@@ -3,6 +3,8 @@
 Rick Lidgett's enhanced LRCGET build, `2.2.0+local.20`.
 Original project authors and license remain credited.
 
+[Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
+
 ## Quick Workflow
 
 1. Open your music library and select the recording you want to edit.
@@ -120,7 +122,7 @@ resolve any highlighted duplicate shortcuts.
 
 ## Playback and Phrase Loops
 
-Use the bottom player to play/pause, seek and adjust playback speed. Slower
+Use the editor's playback controls to play/pause, seek and adjust playback speed. Slower
 playback can help locate consonants or long held notes; saved timestamps remain
 positions in the original recording, not the slowed playback clock.
 

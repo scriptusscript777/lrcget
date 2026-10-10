@@ -16,7 +16,9 @@ official upstream release.
 | [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.20)
 | [Playback and save corrections](docs/releases/2.2.0-local.20.md)
 | [Editing guide](docs/editing-guide.md)
-| [Full workflow and feature how-to](docs/editing-guide.md#quick-workflow)
+| [Illustrated overview](docs/app-overview.md)
+| [Step-by-step how-tos](docs/how-to.md)
+| [Documentation index](docs/README.md)
 | [Detailed changes](LOCAL_CHANGES.md)
 
 ### What's Included
@@ -50,6 +52,29 @@ official upstream release.
 - Synced LRC export selected by default, optional embedded lyrics, and safer
   sidecar/audio exports without leftover backups. Saving and publishing are explicit.
 - Incremental library scanning on opening and F5 refresh without reloading.
+- Green **Modified** date/time column, retained through embedding and restarts.
+
+### Documentation and How-Tos
+
+Start with the [illustrated app overview](docs/app-overview.md) for all current
+features and the [modification map](docs/app-overview.md#modification-map) for
+Rick Lidgett's enhancements. The [how-to guide](docs/how-to.md) includes:
+
+- [Create timestamps from plain TXT/Genius lyrics](docs/how-to.md#create-timed-lyrics-from-a-text-file).
+- [Edit an existing LRC or timed TXT](docs/how-to.md#edit-an-existing-lrc-or-timed-text-file).
+- [Preview and confirm precise markers](docs/how-to.md#place-precise-markers-and-preview-before-confirming).
+- [Zoom/follow without looping](docs/how-to.md#zoom-and-follow-without-looping).
+- [Loop the selected marker range](docs/how-to.md#loop-between-the-markers).
+- [Edit words and their timing](docs/how-to.md#edit-individual-words).
+- [Save, export and embed](docs/how-to.md#save-and-export-for-playback), or
+  [publish intentionally](docs/how-to.md#publish-lyrics-for-other-users).
+- [Check modification dates](docs/how-to.md#check-modified-dates) and
+  [troubleshoot common symptoms](docs/how-to.md#troubleshooting).
+
+Each workflow includes relevant screenshots. The [editing reference](docs/editing-guide.md)
+contains detailed shortcuts and limits; [LOCAL_CHANGES](LOCAL_CHANGES.md)
+records implementation history. Old release notes describe older behavior, not
+current defaults.
 
 ### Install This Build
 
@@ -77,7 +102,9 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 ![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-light.png)
 
-![Latest build: double-click waveform zoom and marker preview](docs/screenshots/point-zoom-light.png)
+![Current build: zoomed waveform following playback](docs/screenshots/lrcget-follow-20-light.png)
+
+![Saved modification dates after the Lyrics column](docs/screenshots/modified-light.png)
 
 ![Light theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-light.png)
 
@@ -110,7 +137,7 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 
 Screenshots use temporary fixture lyrics and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. 366 frontend and 50 Rust tests passed, plus
+or lyric display in every player. The .20 code run passed 369 frontend and 52 Rust tests, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
 
 ## Original Project

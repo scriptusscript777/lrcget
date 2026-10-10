@@ -6,6 +6,14 @@ and the existing license remain unchanged.
 
 Local version: `2.2.0+local.20`, based on upstream tag `2.2.0`.
 
+## Documentation
+
+The [documentation index](docs/README.md), [illustrated overview](docs/app-overview.md)
+and [practical how-tos](docs/how-to.md) cover the app and these modifications.
+The [editing reference](docs/editing-guide.md) details shortcuts and behavior.
+This documentation-only update keeps the executable version at .20; no new
+installer or changed audio/lyric files are required.
+
 ## Playback and Save Corrections (.20)
 
 Rick Lidgett corrected double-click zoom turning off waveform Follow. Both zoom
