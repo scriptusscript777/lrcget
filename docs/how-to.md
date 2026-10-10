@@ -47,10 +47,12 @@ Use shortcuts outside text input fields. To paste instead of importing, paste
 your words into **Plain**, switch to an empty **Synced** editor and choose
 **Import from plain lyrics**. No automatic speech alignment is performed.
 
-![Import replacement confirmation](screenshots/lyrics-import-light.png)
+![Import replacement confirmation](screenshots/current/lyrics-import-light.png)
 
 Your source TXT remains unchanged. The working Plain and Synced versions are
 separate; editing synced text does not silently edit Plain or the source TXT.
+
+![Imported text before any timestamps have been assigned](screenshots/current/untimed-text-light.png)
 
 ## Edit an Existing LRC or Timed Text File
 
@@ -88,7 +90,7 @@ automatically create missing words with Whisper or separate vocals with Demucs.
 5. Click **Apply Markers** to commit both boundaries as one undoable edit.
    Click **Cancel** to retain the original pair.
 
-![Preview before confirming timestamps](screenshots/marker-preview-light.png)
+![Preview before confirming timestamps](screenshots/current/marker-preview-light.png)
 
 Escape during dragging cancels that drag; otherwise it cancels the preview.
 Changing phrases or closing discards unconfirmed previews. Apply before Save/export.
@@ -103,7 +105,7 @@ end** until you explicitly set or confirm it.
 4. Continue playing: the viewport advances when needed, retaining magnification.
 5. For fixed-region editing, pause, turn Follow off or pan manually.
 
-![Magnified playback with the moving line still visible](screenshots/lrcget-follow-20-dark.png)
+![Magnified playback with the moving line still visible](screenshots/current/waveform-follow-dark.png)
 
 Zoom does not disable Follow. Manual panning temporarily holds the view;
 pause/play or the crosshair resumes following. An explicitly disabled Follow
@@ -134,7 +136,7 @@ off and plays forward from that phrase. Timing-edit auditions can retain Loop.
 4. To correct spelling, select its box and use **Edit word**, F2 or right-click.
 5. Press Enter/check to apply or Escape/cancel to discard the wording draft.
 
-![Direct spelling correction in a word box](screenshots/edit-word-light.png)
+![Direct spelling correction in a word box](screenshots/current/edit-word-light.png)
 
 Spelling changes retain whitespace/timing. Use explicit split/merge for structure.
 Double-click splits a word. Reset deliberately rebuilds that line's word timing;
@@ -150,7 +152,7 @@ the session. Moving the first word start may also move the sentence start.
 4. Optionally select **Embed into track** for supported MP3/FLAC files.
 5. Click **Save and export** and check the result for each selected target.
 
-![Choose exactly which destinations to write](screenshots/export-options-light.png)
+![Choose exactly which destinations to write](screenshots/current/export-options-light.png)
 
 If embedding is grayed out, enable experimental embedding in Settings and check
 the file type. The supported output is MP3 ID3v2.4 USLT/SYLT or FLAC metadata;
@@ -180,10 +182,12 @@ publication uploads lyric data, not your audio file or this app's installer.
 2. Return to the library: **Modified** appears after Lyrics with local date/time.
 3. Restart or refresh; the saved date remains.
 
-![Saved modification date and time](screenshots/modified-dark.png)
+![Saved modification date and time](screenshots/current/modified-dark.png)
 
 Opening a song or saving unchanged content does not update the date. Unknown
-historical dates show `--`. Embedding changes the file fingerprint but now keeps
+historical dates show `--`. Creating a new timeline from your plain text and
+saving it counts as a modification, just like editing an existing timed lyric.
+Embedding changes the file fingerprint but now keeps
 the track identity/date. Matching orphaned dates from older scans are repaired
 without rewriting the current lyrics; ambiguous matches are not guessed.
 

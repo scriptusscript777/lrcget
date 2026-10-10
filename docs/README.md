@@ -26,8 +26,8 @@ word editing, improved embedding, refresh controls and saved modification dates.
 It does not automatically identify singing, run Whisper/Demucs, or guarantee
 perfect synchronization or lyric display on every player.
 
-![Zoomed waveform following playback in light mode](screenshots/lrcget-follow-20-light.png)
+![Zoomed waveform following playback in light mode](screenshots/current/waveform-follow-light.png)
 
-Screenshots demonstrate controls with temporary fixture lyrics and waveform data.
+Screenshots were recaptured from .20 with temporary fixture lyrics and waveform data.
 The guides describe the current build; historical release notes describe their
 own versions, including behavior since changed.

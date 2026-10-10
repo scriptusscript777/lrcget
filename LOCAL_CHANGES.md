@@ -14,6 +14,10 @@ The [editing reference](docs/editing-guide.md) details shortcuts and behavior.
 This documentation-only update keeps the executable version at .20; no new
 installer or changed audio/lyric files are required.
 
+Current guide images were recaptured from .20 in both themes and are stored
+under `docs/screenshots/current/`. Historical images remain for old release
+notes. Untimed-text examples show the state before timestamps are assigned.
+
 ## Playback and Save Corrections (.20)
 
 Rick Lidgett corrected double-click zoom turning off waveform Follow. Both zoom

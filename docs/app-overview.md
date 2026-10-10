@@ -18,7 +18,7 @@ The enhanced editor keeps basic line editing visible and puts individual-word
 tools in a collapsible **Word timing** section. Light and dark themes cover
 timing controls, waveform navigation and export options.
 
-![Line editor with optional word tools collapsed](screenshots/editor-default-light.png)
+![Line editor with optional word tools collapsed](screenshots/current/editor-default-light.png)
 
 ## Library and Modified Dates
 
@@ -35,7 +35,7 @@ timing controls, waveform navigation and export options.
 - Removing a recording removes its library row on refresh. Existing preservation
   of orphaned lyric documents is separate from the visible library listing.
 
-![Modified dates after the Lyrics column](screenshots/modified-light.png)
+![Modified dates after the Lyrics column](screenshots/current/modified-light.png)
 
 ## Inputs and Working Documents
 
@@ -56,7 +56,7 @@ Line-level timestamp formats include `[mm:ss.xx]` and milliseconds. Enhanced
 inline word-tag LRC and nonzero offset headers need conversion to explicit
 line timestamps before file import. Mixed timed/untimed files are rejected.
 
-![Confirmation before replacing the working lyrics](screenshots/lyrics-import-light.png)
+![Confirmation before replacing the working lyrics](screenshots/current/lyrics-import-light.png)
 
 ## Waveform, Zoom and Markers
 
@@ -75,9 +75,9 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
 - Dragging/nudging creates a preview, not a saved edit. **Apply Markers** commits
   both boundaries as one undoable edit. **Cancel** discards the preview.
 
-![Zoomed playback following without requiring a loop](screenshots/lrcget-follow-20-dark.png)
+![Zoomed playback following without requiring a loop](screenshots/current/waveform-follow-dark.png)
 
-![Preview timestamps with Apply Markers and Cancel](screenshots/marker-preview-light.png)
+![Preview timestamps with Apply Markers and Cancel](screenshots/current/marker-preview-light.png)
 
 ## Loops and Playback
 
@@ -107,9 +107,9 @@ Spelling edits preserve timing/whitespace; structural split/merge is explicit.
 Moving the first word's start can move its sentence start; later words do not
 automatically shift an unchanged sentence start.
 
-![Word boxes following the active lyric](screenshots/follow-lyrics-light.png)
+![Word boxes following the active lyric](screenshots/current/follow-lyrics-light.png)
 
-![Correcting a word without changing its timestamps](screenshots/edit-word-dark.png)
+![Correcting a word without changing its timestamps](screenshots/current/edit-word-dark.png)
 
 ## Save, Export and Publish
 
@@ -138,7 +138,7 @@ removal is permitted. Unrelated backups are untouched. Keep separate backups
 if you need version history. Failure for one target can leave other targets
 successfully exported; inspect the result before retrying.
 
-![Explicit sidecar and embedding choices](screenshots/export-options-dark.png)
+![Explicit sidecar and embedding choices](screenshots/current/export-options-dark.png)
 
 ## Modification Map
 
@@ -158,8 +158,9 @@ successfully exported; inspect the result before retrying.
 
 For implementation notes and version-by-version changes, read
 [LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.0-local.20.md).
-Screenshots use demonstration fixtures, not personal recordings. Some screenshots
-were captured when their feature was introduced; current text describes .20.
+Screenshots were recaptured from .20 using demonstration fixtures, not personal
+recordings. [Capture details](screenshots/current/README.md) distinguish current
+guide images from historical release-note screenshots.
 
 ## Scope and Verification
 

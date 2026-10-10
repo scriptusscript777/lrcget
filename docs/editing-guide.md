@@ -67,12 +67,14 @@ Empty, malformed and mixed timed/untimed files are rejected without discarding
 words. This import supports line-level LRC; enhanced inline word tags and nonzero
 offset headers need to be converted to explicit line timestamps first.
 
-![Light theme: confirmation before replacing lyrics](screenshots/lyrics-import-light.png)
+![Light theme: confirmation before replacing lyrics](screenshots/current/lyrics-import-light.png)
 
-![Dark theme: confirmation before replacing lyrics](screenshots/lyrics-import-dark.png)
+![Dark theme: confirmation before replacing lyrics](screenshots/current/lyrics-import-dark.png)
 
 You need the corresponding audio recording to listen and set timings. LRCGET
 does not run Whisper/Demucs or automatically align plain text to singing.
+
+![Untimed imported text has no confirmed waveform markers](screenshots/current/untimed-text-dark.png)
 
 ## Create a Timeline
 
@@ -191,8 +193,8 @@ while playing, the zoomed view advances to keep the playhead visible, with or
 without Loop. Pause playback or turn Follow off to inspect a fixed region.
 The minus and Fit controls zoom back out. Marker timestamps never move with zoom.
 
-![Zoomed playback following in light mode](screenshots/lrcget-follow-20-light.png)
-![Zoomed playback following in dark mode](screenshots/lrcget-follow-20-dark.png)
+![Zoomed playback following in light mode](screenshots/current/waveform-follow-light.png)
+![Zoomed playback following in dark mode](screenshots/current/waveform-follow-dark.png)
 
 Magnification keeps a visible selected phrase marker in view, rather than
 anchoring to an unrelated playhead. Zoom preserves the playback-follow setting;
@@ -224,9 +226,9 @@ Save/export uses the confirmed lyric document: apply your markers first.
 Expand **Word timing** only when individual-word timing is needed. Its 1-8x
 zoom and horizontal scrolling are separate from waveform zoom.
 
-![Light theme: double-click point zoom with pending marker preview](screenshots/point-zoom-light.png)
+![Light theme: double-click point zoom with pending marker preview](screenshots/current/point-zoom-light.png)
 
-![Dark theme: double-click point zoom with pending marker preview](screenshots/point-zoom-dark.png)
+![Dark theme: double-click point zoom with pending marker preview](screenshots/current/point-zoom-dark.png)
 
 ## Individual Words
 
@@ -251,11 +253,11 @@ changes. Undo/Redo includes word corrections. Double-click still splits a word.
 Plain and Synced are separate working versions: a synced correction does not
 overwrite your Plain text or imported source file. Save and Export are explicit.
 
-![Light theme: following the current lyric](screenshots/follow-lyrics-light.png)
+![Light theme: following the current lyric](screenshots/current/follow-lyrics-light.png)
 
-![Dark theme: correcting one word](screenshots/edit-word-dark.png)
+![Dark theme: correcting one word](screenshots/current/edit-word-dark.png)
 
-![Expanded word timing and independent lane zoom](screenshots/word-timing-zoom.png)
+![Expanded word timing and independent lane zoom](screenshots/current/word-timing-zoom-light.png)
 
 ## Save, Export and Publish
 
@@ -279,9 +281,9 @@ TXT and LRC export coexist; exporting one does not delete the other. A chosen
 format can replace its existing destination, so leave TXT unchecked to avoid
 rewriting that TXT. Confirm waveform marker previews before saving/exporting.
 
-![Light theme: LRC, TXT and embedding choices](screenshots/export-options-light.png)
+![Light theme: LRC, TXT and embedding choices](screenshots/current/export-options-light.png)
 
-![Dark theme: LRC, TXT and embedding choices](screenshots/export-options-dark.png)
+![Dark theme: LRC, TXT and embedding choices](screenshots/current/export-options-dark.png)
 
 If **Embed into track** is disabled, enable experimental lyric embedding in
 settings and check that the recording is supported. MP3 embedding uses ID3v2.4
@@ -318,16 +320,16 @@ lead vocals, guarantee exact lip sync or run Whisper/Demucs.
 
 ## Current Views
 
-![Light theme: previewed markers awaiting confirmation](screenshots/marker-preview-light.png)
+![Light theme: previewed markers awaiting confirmation](screenshots/current/marker-preview-light.png)
 
-![Dark theme: previewed markers awaiting confirmation](screenshots/marker-preview-dark.png)
+![Dark theme: previewed markers awaiting confirmation](screenshots/current/marker-preview-dark.png)
 
 The preview timestamps above the waveform differ from the unchanged lyric-row
 timestamps. Apply Markers confirms both; Cancel restores the original pair.
 
-![Light theme: zoomed phrase end and manual pan](screenshots/waveform-navigation-light.png)
+![Light theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-light.png)
 
-![Dark theme: zoomed phrase end and manual pan](screenshots/waveform-navigation-dark.png)
+![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Screenshots use temporary fixture lyrics and mocked waveform data, not private
+Screenshots were recaptured from .20 using temporary fixture lyrics and mocked waveform data, not private
 music. A waveform shows the full mix; it is not proof of exact singer alignment.

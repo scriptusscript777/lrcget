@@ -96,46 +96,47 @@ The main phrase editor stays uncluttered; **Word timing** opens the optional
 individual-word tools. Pending marker edits show **Apply Markers** and **Cancel**;
 the lyric-row timestamps stay unchanged until you apply the pair.
 
-![Follow Lyrics advances the word boxes during playback](docs/screenshots/follow-lyrics-light.png)
+![Follow Lyrics advances the word boxes during playback](docs/screenshots/current/follow-lyrics-light.png)
 
-![Correct one word without changing its timestamps](docs/screenshots/edit-word-light.png)
+![Correct one word without changing its timestamps](docs/screenshots/current/edit-word-light.png)
 
-![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-light.png)
+![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/current/marker-preview-light.png)
 
-![Current build: zoomed waveform following playback](docs/screenshots/lrcget-follow-20-light.png)
+![Current build: zoomed waveform following playback](docs/screenshots/current/waveform-follow-light.png)
 
-![Saved modification dates after the Lyrics column](docs/screenshots/modified-light.png)
+![Saved modification dates after the Lyrics column](docs/screenshots/current/modified-light.png)
 
-![Light theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-light.png)
+![Light theme: phrase editor with word timing collapsed](docs/screenshots/current/editor-default-light.png)
 
 <details>
 <summary>Dark theme and expanded word-timing tools</summary>
 
-![Dark theme: Follow Lyrics](docs/screenshots/follow-lyrics-dark.png)
+![Dark theme: Follow Lyrics](docs/screenshots/current/follow-lyrics-dark.png)
 
-![Dark theme: direct word correction](docs/screenshots/edit-word-dark.png)
+![Dark theme: direct word correction](docs/screenshots/current/edit-word-dark.png)
 
-![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/marker-preview-dark.png)
+![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/current/marker-preview-dark.png)
 
-![Latest build: double-click waveform zoom in dark theme](docs/screenshots/point-zoom-dark.png)
+![Latest build: double-click waveform zoom in dark theme](docs/screenshots/current/point-zoom-dark.png)
 
-![Latest export menu: LRC, TXT and embedding](docs/screenshots/export-options-dark.png)
+![Latest export menu: LRC, TXT and embedding](docs/screenshots/current/export-options-dark.png)
 
-![Dark theme: phrase editor with word timing collapsed](docs/screenshots/editor-default-dark.png)
+![Dark theme: phrase editor with word timing collapsed](docs/screenshots/current/editor-default-dark.png)
 
-![Light theme: expanded word timing and phrase markers](docs/screenshots/editor-follow-light.png)
+![Light theme: expanded word timing and phrase markers](docs/screenshots/current/editor-follow-light.png)
 
-![Dark theme: expanded word timing and phrase markers](docs/screenshots/editor-follow-dark.png)
+![Dark theme: expanded word timing and phrase markers](docs/screenshots/current/editor-follow-dark.png)
 
-![Zoomed word-timing view](docs/screenshots/word-timing-zoom.png)
+![Zoomed word-timing view](docs/screenshots/current/word-timing-zoom-light.png)
 
-![Light theme: zoomed phrase end with manual scrolling](docs/screenshots/waveform-navigation-light.png)
+![Light theme: zoomed phrase end with manual scrolling](docs/screenshots/current/waveform-navigation-light.png)
 
-![Dark theme: zoomed phrase end with manual scrolling](docs/screenshots/waveform-navigation-dark.png)
+![Dark theme: zoomed phrase end with manual scrolling](docs/screenshots/current/waveform-navigation-dark.png)
 
 </details>
 
-Screenshots use temporary fixture lyrics and mocked waveform data, not personal
+Current guide screenshots were recaptured from .20 using temporary fixture lyrics
+and mocked waveform data, not personal
 music. These tools aid manual editing; they do not guarantee singer alignment
 or lyric display in every player. The .20 code run passed 369 frontend and 52 Rust tests, plus
 browser and isolated native Linux checks; existing lint/compiler warnings remain.
