@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.20`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.21`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -274,9 +274,10 @@ destination. Keep separate backups when version history is needed.
 - Missing directories, incomplete traversal or failed file imports prevent
   missing-track cleanup. A later successful scan can retry.
 
-Refresh does not export lyrics or rewrite music or LRC files. Imported lyrics
-remain database-owned: refresh is not an automatic overwrite of imported lyrics
-from externally edited sidecars. Export and publish remain explicit actions.
+Refresh does not export lyrics or rewrite music or LRC files. On startup and F5, a valid matching `.lrc` upgrades missing or plain lyrics,
+even when the audio is unchanged. Its words take precedence over `.txt`. If no
+valid LRC exists, matching `.txt` fills missing lyrics. Saved synced lyrics and
+instrumental records are protected; existing plain edits are not replaced by TXT. Export and publish remain explicit actions.
 
 ## Lyric Export
 

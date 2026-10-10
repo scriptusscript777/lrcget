@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.0+local.20. **Editing developer:** Rick Lidgett
+**Version:** 2.2.0+local.21. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -157,7 +157,7 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.0-local.20.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.0-local.21.md).
 Screenshots were recaptured from .20 using demonstration fixtures, not personal
 recordings. [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
@@ -173,3 +173,11 @@ The .20 code run passed 369 frontend and 52 Rust tests, with one optional fixtur
 test ignored, plus browser and isolated native checks. ESLint had no errors and
 74 existing warnings; Ruff reported 11 existing findings in the unchanged Python
 test-data generator. Those are test results, not guarantees of perfect lyrics.
+
+## Automatic External LRC Detection
+
+Startup and F5 prefer valid matching LRC for missing/Plain lyrics; TXT is the
+fallback for missing lyrics. Saved synced/instrumental records stay protected.
+See the [refresh workflow](how-to.md#add-music-and-refresh-the-library).
+
+![Matching LRC automatically upgrades Plain to Synced](screenshots/current/automatic-lrc-after-light.png)

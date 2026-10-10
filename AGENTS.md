@@ -33,3 +33,17 @@ driver.save_screenshot("/tmp/lrcget.png")          # full webview PNG
 print(driver.execute_script("return document.title"))
 driver.quit()                                       # always end the session
 ```
+
+## Rick's Maintenance Workflow
+
+For every code update, review control flow and bugs, fix introduced issues,
+and run checks appropriate to the language (including Ruff for Python and
+cargo check/tests for Rust). Distinguish existing findings from new ones.
+Update current documentation and release versions; capture current screenshots
+for visible behavior changes. Preserve historical release notes.
+Commit completed work locally and publish to Rick's GitHub fork and configured
+local Git server without rewriting history. Never push local releases to upstream.
+For completed LRCGET updates, notify the original creator through a GitHub issue
+linking the fork/release and a focused upstream pull request. Keep unrelated
+existing PRs unchanged, and avoid duplicate notifications. Report actual outcomes
+and any blocked installation or publication steps.

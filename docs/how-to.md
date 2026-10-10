@@ -1,16 +1,16 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.0+local.20**.
+For Rick Lidgett's LRCGET **2.2.0+local.21**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.20).
+1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.21).
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.20_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.20_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.21_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.21_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -26,8 +26,22 @@ do not contain these enhancements.
 3. After adding/removing recordings, close editing dialogs and press **F5**,
    or choose **Refresh library (F5)** in the library menu.
 
-Refresh is not export or publish. If you changed an LRC in another editor,
-explicitly import that file to replace LRCGET's working copy.
+Refresh does not export or publish. When a recording has Plain or missing
+lyrics, a valid matching LRC created by another application is picked up on
+startup or F5. Its words take precedence over matching TXT; TXT fills missing
+lyrics when no valid LRC exists. Already synced/instrumental lyrics are protected
+and require explicit import to replace the working document.
+
+Before: the matching TXT has been imported as Plain.
+
+![Plain lyrics before a matching external LRC exists](screenshots/current/automatic-lrc-before-light.png)
+
+After closing the app, creating a valid matching LRC and reopening: Synced.
+Neither recording nor sidecar is rewritten by the scan.
+
+![Synced lyrics after automatic external LRC detection](screenshots/current/automatic-lrc-after-light.png)
+
+![Automatic external LRC detection in dark mode](screenshots/current/automatic-lrc-after-dark.png)
 
 ## Create Timed Lyrics From a Text File
 
@@ -201,7 +215,7 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 | No markers or row playback for TXT    | Assign its start first; untimed text has no real timestamps yet                                 |
 | End says Inferred end                 | Set end at playback or confirm the intended pair with Apply Markers                             |
 | Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                    |
-| An external LRC edit is absent        | Explicitly import it; refresh is not automatic replacement of the working document              |
+| An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Already synced lyrics require explicit import to protect saved edits. |
 | Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                             |
 | Embedded option is disabled           | Experimental embedding setting and supported file type                                          |
 | Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry   |

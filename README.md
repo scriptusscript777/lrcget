@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.20** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.21** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.20/LRCGET_2.2.0%2Blocal.20_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.20)
-| [Playback and save corrections](docs/releases/2.2.0-local.20.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.21/LRCGET_2.2.0%2Blocal.20_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.21)
+| [Automatic external LRC detection](docs/releases/2.2.0-local.21.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -52,6 +52,8 @@ official upstream release.
 - Synced LRC export selected by default, optional embedded lyrics, and safer
   sidecar/audio exports without leftover backups. Saving and publishing are explicit.
 - Incremental library scanning on opening and F5 refresh without reloading.
+- Matching external LRC automatically upgrades Plain/missing lyrics to Synced;
+  TXT fills missing lyrics when no valid LRC exists. Saved synced edits stay protected.
 - Green **Modified** date/time column, retained through embedding and restarts.
 
 ### Documentation and How-Tos
@@ -81,8 +83,8 @@ current defaults.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.20_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.20_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.21_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.21_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.

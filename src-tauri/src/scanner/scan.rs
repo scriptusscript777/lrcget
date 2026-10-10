@@ -1,6 +1,7 @@
 use crate::db;
 use crate::db::ScanTrackInfo;
-use crate::lyricsfile::{build_lyricsfile, LyricsfileTrackMetadata};
+use crate::lyricsfile::{build_lyricsfile, LyricsfileTrackMetadata, INSTRUMENTAL_LRC};
+use crate::parser::lrc::parse_lrc;
 use crate::scanner::hasher::compute_quick_hash;
 use crate::scanner::metadata::extract_track_info;
 use crate::scanner::models::{ScanProgress, ScanResult};
@@ -223,6 +224,7 @@ fn process_batch(
                             Err(e) => {
                                 eprintln!("Error inserting track {:?}: {}", path, e);
                                 result.failed += 1;
+                                continue;
                             }
                         }
                     }
@@ -258,16 +260,74 @@ fn process_batch(
                             Err(e) => {
                                 eprintln!("Error inserting track {:?}: {}", path, e);
                                 result.failed += 1;
+                                continue;
                             }
                         }
                     }
                 }
             }
         }
+        import_matching_sidecar(path, &tx)?;
     }
 
     tx.commit()?;
     Ok(result)
+}
+
+/// Refresh external lyrics even when the audio fingerprint has not changed.
+/// Saved synced/instrumental lyrics and existing plain edits remain protected,
+/// except that a valid matching LRC can upgrade a plain record to synced.
+fn import_matching_sidecar(path: &std::path::Path, tx: &rusqlite::Transaction) -> Result<()> {
+    let Some(info) = db::find_track_by_path_tx(&path.to_string_lossy(), tx)? else {
+        return Ok(());
+    };
+    let (protected, has_plain): (bool, bool) = tx.query_row(
+        "SELECT EXISTS(SELECT 1 FROM lyricsfiles WHERE track_id = ?1
+         AND (has_synced_lyrics = 1 OR instrumental = 1)),
+         EXISTS(SELECT 1 FROM lyricsfiles WHERE track_id = ?1 AND has_plain_lyrics = 1)",
+        [info.id],
+        |row| Ok((row.get(0)?, row.get(1)?)),
+    )?;
+    if protected {
+        return Ok(());
+    }
+    let lrc = std::fs::read_to_string(path.with_extension("lrc"))
+        .ok()
+        .filter(|text| valid_lrc(text));
+    // TXT is a fallback for missing lyrics, never an overwrite of saved plain edits.
+    let txt = if lrc.is_none() && !has_plain {
+        std::fs::read_to_string(path.with_extension("txt")).ok()
+    } else {
+        None
+    };
+    if lrc.is_none() && txt.is_none() {
+        return Ok(());
+    }
+    let track = db::get_track_by_id(info.id, tx)?;
+    if let Some(content) = build_lyricsfile(
+        &LyricsfileTrackMetadata::from_persistent_track(&track),
+        txt.as_deref(),
+        lrc.as_deref(),
+    ) {
+        db::upsert_lyricsfile_for_track_tx(
+            track.id,
+            &track.title,
+            &track.album_name,
+            &track.artist_name,
+            track.duration,
+            &content,
+            tx,
+        )?;
+    }
+    Ok(())
+}
+
+fn valid_lrc(text: &str) -> bool {
+    text.trim() == INSTRUMENTAL_LRC
+        || parse_lrc(text)
+            .timed_lines
+            .iter()
+            .any(|line| !line.text.trim().is_empty())
 }
 
 /// Helper to insert a new track with metadata extraction
@@ -299,23 +359,38 @@ fn insert_new_track(
         tx.execute(
             "UPDATE tracks SET title = ?, title_lower = ?, album_id = ?, artist_id = ?,
              duration = ?, track_number = ? WHERE id = ?",
-            rusqlite::params![metadata.title, crate::utils::prepare_input(&metadata.title),
-                album_id, artist_id, metadata.duration, metadata.track_number, existing.id],
+            rusqlite::params![
+                metadata.title,
+                crate::utils::prepare_input(&metadata.title),
+                album_id,
+                artist_id,
+                metadata.duration,
+                metadata.track_number,
+                existing.id
+            ],
         )?;
-        db::update_track_path_and_fingerprint_tx(existing.id, &metadata.file_path,
-            file_size, modified_time, content_hash, tx)?;
+        db::update_track_path_and_fingerprint_tx(
+            existing.id,
+            &metadata.file_path,
+            file_size,
+            modified_time,
+            content_hash,
+            tx,
+        )?;
         db::delete_tracks_fts_by_ids_tx(&[existing.id], tx)?;
         existing.id
-    } else { db::insert_track_from_metadata_tx(
-        &metadata,
-        &lyrics,
-        file_size,
-        modified_time,
-        content_hash,
-        artist_id,
-        album_id,
-        tx,
-    )? };
+    } else {
+        db::insert_track_from_metadata_tx(
+            &metadata,
+            &lyrics,
+            file_size,
+            modified_time,
+            content_hash,
+            artist_id,
+            album_id,
+            tx,
+        )?
+    };
 
     // Sync FTS index
     db::insert_track_fts_tx(
@@ -342,30 +417,6 @@ fn insert_new_track(
     if let Some(lyricsfile_id) = orphaned_lyricsfile {
         // Reattach orphaned lyricsfile to this track
         db::reattach_lyricsfile_to_track_tx(lyricsfile_id, track_id, tx)?;
-    } else {
-        // No orphaned lyricsfile found, import embedded lyrics as usual
-        let lyricsfile_track_metadata = LyricsfileTrackMetadata::new(
-            &metadata.title,
-            &metadata.album,
-            &metadata.artist,
-            metadata.duration,
-        );
-
-        if let Some(lyricsfile) = build_lyricsfile(
-            &lyricsfile_track_metadata,
-            lyrics.txt_lyrics.as_deref(),
-            lyrics.lrc_lyrics.as_deref(),
-        ) {
-            db::upsert_lyricsfile_for_track_tx(
-                track_id,
-                &metadata.title,
-                &metadata.album,
-                &metadata.artist,
-                metadata.duration,
-                &lyricsfile,
-                tx,
-            )?;
-        }
     }
 
     Ok(true)
@@ -396,6 +447,122 @@ mod refresh_tests {
             .to_latest(&mut conn)
             .unwrap();
         conn
+    }
+
+    #[test]
+    fn matching_lrc_upgrades_plain_after_restart_and_preserves_synced_edits() {
+        for method in [DetectionMethod::Hash, DetectionMethod::Metadata] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("song.mp3");
+            std::fs::write(&path, include_bytes!("../../tests/fixtures/embedding.mp3")).unwrap();
+            add_metadata(&path, "song");
+            let audio = std::fs::read(&path).unwrap();
+            std::fs::write(path.with_extension("txt"), "original plain words").unwrap();
+            let directories = vec![directory.path().to_string_lossy().into_owned()];
+            let mut conn = test_database();
+            scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            let original = db::get_tracks(&conn).unwrap().remove(0);
+            let parsed =
+                crate::lyricsfile::parse_lyricsfile(original.lyricsfile.as_deref().unwrap())
+                    .unwrap();
+            assert!(parsed.plain_lyrics.is_some());
+            assert!(parsed.synced_lyrics.is_none());
+
+            // An external app creates an LRC while LRCGET is closed.
+            let database_path = directory.path().join("restart.sqlite3");
+            conn.execute("VACUUM INTO ?", [database_path.to_str().unwrap()])
+                .unwrap();
+            drop(conn);
+            let timed = "[00:01.00]external synced words\n[00:02.00]second line\n";
+            std::fs::write(path.with_extension("lrc"), timed).unwrap();
+            let mut conn = Connection::open(&database_path).unwrap();
+            let result = scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            assert_eq!(result.unchanged, 1);
+            let upgraded = db::get_track_by_id(original.id, &conn).unwrap();
+            let parsed =
+                crate::lyricsfile::parse_lyricsfile(upgraded.lyricsfile.as_deref().unwrap())
+                    .unwrap();
+            assert!(parsed
+                .synced_lyrics
+                .as_deref()
+                .unwrap()
+                .contains("external synced words"));
+            assert!(!parsed
+                .plain_lyrics
+                .as_deref()
+                .unwrap()
+                .contains("original plain words"));
+            assert!(upgraded.lyrics_modified_at.is_none());
+            assert_eq!(std::fs::read(&path).unwrap(), audio);
+            assert_eq!(
+                std::fs::read_to_string(path.with_extension("txt")).unwrap(),
+                "original plain words"
+            );
+            assert_eq!(
+                std::fs::read_to_string(path.with_extension("lrc")).unwrap(),
+                timed
+            );
+
+            let saved = build_lyricsfile(
+                &LyricsfileTrackMetadata::from_persistent_track(&upgraded),
+                None,
+                Some("[00:03.00]protected editor words\n"),
+            )
+            .unwrap();
+            db::save_edited_lyricsfile_for_track(&upgraded, &saved, &conn).unwrap();
+            let edited_at = db::get_track_by_id(original.id, &conn)
+                .unwrap()
+                .lyrics_modified_at;
+            std::fs::write(
+                path.with_extension("lrc"),
+                "[00:04.00]conflicting external words\n",
+            )
+            .unwrap();
+            scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            let protected = db::get_track_by_id(original.id, &conn).unwrap();
+            assert_eq!(protected.lyricsfile.as_deref(), Some(saved.as_str()));
+            assert_eq!(protected.lyrics_modified_at, edited_at);
+        }
+    }
+
+    #[test]
+    fn missing_lyrics_use_txt_fallback_until_valid_lrc_appears() {
+        for method in [DetectionMethod::Hash, DetectionMethod::Metadata] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("song.mp3");
+            std::fs::write(&path, include_bytes!("../../tests/fixtures/embedding.mp3")).unwrap();
+            add_metadata(&path, "song");
+            let directories = vec![directory.path().to_string_lossy().into_owned()];
+            let mut conn = test_database();
+            scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            let id = db::get_tracks(&conn).unwrap().remove(0).id;
+            assert!(db::get_track_by_id(id, &conn).unwrap().lyricsfile.is_none());
+            std::fs::write(path.with_extension("txt"), "fallback words").unwrap();
+            for invalid in ["untimed words", "[ti:metadata only]", "[00:01.00]\n"] {
+                std::fs::write(path.with_extension("lrc"), invalid).unwrap();
+                scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+                let plain = db::get_track_by_id(id, &conn).unwrap();
+                let parsed =
+                    crate::lyricsfile::parse_lyricsfile(plain.lyricsfile.as_deref().unwrap())
+                        .unwrap();
+                assert_eq!(parsed.plain_lyrics.as_deref(), Some("fallback words"));
+                assert!(parsed.synced_lyrics.is_none());
+            }
+            std::fs::write(
+                path.with_extension("lrc"),
+                "[00:01.00]preferred LRC words\n",
+            )
+            .unwrap();
+            scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            let upgraded = db::get_track_by_id(id, &conn).unwrap();
+            let parsed =
+                crate::lyricsfile::parse_lyricsfile(upgraded.lyricsfile.as_deref().unwrap())
+                    .unwrap();
+            assert!(parsed
+                .synced_lyrics
+                .unwrap()
+                .contains("preferred LRC words"));
+        }
     }
 
     #[test]
@@ -450,16 +617,25 @@ mod refresh_tests {
             let track = db::get_tracks(&conn).unwrap().remove(0);
             let text = build_lyricsfile(
                 &LyricsfileTrackMetadata::new("song", "test album", "test artist", track.duration),
-                Some("saved words"), Some("[00:01.00]saved words\n"),
-            ).unwrap();
+                Some("saved words"),
+                Some("[00:01.00]saved words\n"),
+            )
+            .unwrap();
             db::save_edited_lyricsfile_for_track(&track, &text, &conn).unwrap();
-            let edited = db::get_track_by_id(track.id, &conn).unwrap().lyrics_modified_at;
+            let edited = db::get_track_by_id(track.id, &conn)
+                .unwrap()
+                .lyrics_modified_at;
             let hash_before = compute_quick_hash(&path).unwrap();
-            crate::export::embed_lyrics(path.to_str().unwrap(), "saved words",
-                "[00:01.00]saved words\n").unwrap();
+            crate::export::embed_lyrics(
+                path.to_str().unwrap(),
+                "saved words",
+                "[00:01.00]saved words\n",
+            )
+            .unwrap();
             assert_ne!(compute_quick_hash(&path).unwrap(), hash_before);
             let database = directory.path().join("library.sqlite3");
-            conn.execute("VACUUM INTO ?", [database.to_str().unwrap()]).unwrap();
+            conn.execute("VACUUM INTO ?", [database.to_str().unwrap()])
+                .unwrap();
             drop(conn);
             let mut reopened = Connection::open(&database).unwrap();
             reopened.execute_batch("PRAGMA foreign_keys = ON").unwrap();
@@ -474,7 +650,10 @@ mod refresh_tests {
             assert_eq!(after[0].lyricsfile.as_deref(), Some(text.as_str()));
             let repeat = scan_library(&directories, &mut reopened, &|_| {}, method).unwrap();
             assert_eq!(repeat.unchanged, 1);
-            assert_eq!(db::get_tracks(&reopened).unwrap()[0].lyrics_modified_at, edited);
+            assert_eq!(
+                db::get_tracks(&reopened).unwrap()[0].lyrics_modified_at,
+                edited
+            );
             assert!(!path.with_extension("mp3.lrcget.bak").exists());
         }
     }

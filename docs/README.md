@@ -1,6 +1,6 @@
 # LRCGET Documentation
 
-Rick Lidgett's enhanced LRCGET, **2.2.0+local.20**.
+Rick Lidgett's enhanced LRCGET, **2.2.0+local.21**.
 An independent fork of the original project; original authors and license remain credited.
 
 ## Choose a Guide
@@ -16,7 +16,7 @@ An independent fork of the original project; original authors and license remain
 | Find keyboard shortcuts and detailed behavior    | [Complete editing reference](editing-guide.md)                                                         |
 | See what Rick changed in the source              | [Modification overview](app-overview.md#modification-map) and [technical history](../LOCAL_CHANGES.md) |
 | Install the current Linux build                  | [Installation](how-to.md#install-or-upgrade)                                                           |
-| Understand the latest fixes and test results     | [Release notes](releases/2.2.0-local.20.md)                                                            |
+| Understand the latest fixes and test results     | [Release notes](releases/2.2.0-local.21.md)                                                            |
 
 ## At a Glance
 

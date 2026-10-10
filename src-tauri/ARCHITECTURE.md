@@ -7,7 +7,12 @@ Startup and F5 use the normal incremental scan. Unconfigured/unavailable music
 directories are rejected before marking tracks pending; traversal errors abort
 before pruning missing tracks. File metadata/hash/import failures also prevent
 missing-track cleanup until a complete successful scan. Refresh never writes
-sidecars or audio tags.
+sidecars or audio tags. Each successfully processed track also checks matching
+sidecars inside its batch transaction. A valid LRC with nonempty timed words
+(or the instrumental marker) upgrades plain/missing lyrics, taking precedence
+over TXT; TXT only fills missing lyrics. Saved synced/instrumental records are
+protected. This also applies to unchanged audio and reattached orphaned lyrics.
+No external import sets an explicit editor-save date.
 TXT/LRC exports coexist. A shared writer lock serializes destination changes;
 `tempfile` stages sidecar/audio replacements on the destination filesystem.
 Preparation must succeed before replacing the file; the previous version is
