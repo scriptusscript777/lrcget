@@ -64,6 +64,7 @@ pub fn scan_library(
     let mut total_files = 0;
     let mut processed_files = 0;
     let mut added = 0;
+    let mut modified = 0;
     let mut moved = 0;
     let mut unchanged = 0;
     let mut failed = 0;
@@ -85,6 +86,7 @@ pub fn scan_library(
                     if batch.len() >= BATCH_SIZE {
                         let batch_result = process_batch(&batch, conn, detection_method)?;
                         added += batch_result.added;
+                        modified += batch_result.modified;
                         moved += batch_result.moved;
                         unchanged += batch_result.unchanged;
                         failed += batch_result.failed;
@@ -108,6 +110,7 @@ pub fn scan_library(
     if !batch.is_empty() {
         let batch_result = process_batch(&batch, conn, detection_method)?;
         added += batch_result.added;
+        modified += batch_result.modified;
         moved += batch_result.moved;
         unchanged += batch_result.unchanged;
         failed += batch_result.failed;
@@ -124,6 +127,7 @@ pub fn scan_library(
     // Phase 3: Delete tracks that weren't processed (deleted files)
     progress_callback(ScanProgress::updating());
     let deleted = db::delete_unprocessed_tracks(conn)?;
+    db::restore_orphaned_edit_dates(conn)?;
 
     // Mark as initialized after first successful scan
     if is_initial_scan {
@@ -135,7 +139,7 @@ pub fn scan_library(
     Ok(ScanResult {
         total_files,
         added,
-        modified: 0,
+        modified,
         deleted,
         moved,
         unchanged,
@@ -147,6 +151,7 @@ pub fn scan_library(
 #[derive(Default)]
 struct BatchResult {
     added: usize,
+    modified: usize,
     moved: usize,
     unchanged: usize,
     failed: usize,
@@ -213,7 +218,8 @@ fn process_batch(
                     None => {
                         // No match found - new file
                         match insert_new_track(path, file_size, modified_time, &hash, &tx) {
-                            Ok(_) => result.added += 1,
+                            Ok(true) => result.added += 1,
+                            Ok(false) => result.modified += 1,
                             Err(e) => {
                                 eprintln!("Error inserting track {:?}: {}", path, e);
                                 result.failed += 1;
@@ -247,7 +253,8 @@ fn process_batch(
                             }
                         };
                         match insert_new_track(path, file_size, modified_time, &hash, &tx) {
-                            Ok(_) => result.added += 1,
+                            Ok(true) => result.added += 1,
+                            Ok(false) => result.modified += 1,
                             Err(e) => {
                                 eprintln!("Error inserting track {:?}: {}", path, e);
                                 result.failed += 1;
@@ -270,7 +277,7 @@ fn insert_new_track(
     modified_time: i64,
     content_hash: &str,
     tx: &rusqlite::Transaction,
-) -> Result<()> {
+) -> Result<bool> {
     // Extract metadata and lyrics
     let (metadata, lyrics) = extract_track_info(path)?;
 
@@ -286,8 +293,20 @@ fn insert_new_track(
         Err(_) => db::add_album_tx(&metadata.album, &metadata.album_artist, tx)?,
     };
 
-    // Insert track
-    let track_id = db::insert_track_from_metadata_tx(
+    // Tag exports change fingerprints, not track identity or the user's saved lyrics.
+    let existing = db::find_track_by_path_tx(&metadata.file_path, tx)?;
+    let track_id = if let Some(existing) = &existing {
+        tx.execute(
+            "UPDATE tracks SET title = ?, title_lower = ?, album_id = ?, artist_id = ?,
+             duration = ?, track_number = ? WHERE id = ?",
+            rusqlite::params![metadata.title, crate::utils::prepare_input(&metadata.title),
+                album_id, artist_id, metadata.duration, metadata.track_number, existing.id],
+        )?;
+        db::update_track_path_and_fingerprint_tx(existing.id, &metadata.file_path,
+            file_size, modified_time, content_hash, tx)?;
+        db::delete_tracks_fts_by_ids_tx(&[existing.id], tx)?;
+        existing.id
+    } else { db::insert_track_from_metadata_tx(
         &metadata,
         &lyrics,
         file_size,
@@ -296,7 +315,7 @@ fn insert_new_track(
         artist_id,
         album_id,
         tx,
-    )?;
+    )? };
 
     // Sync FTS index
     db::insert_track_fts_tx(
@@ -306,6 +325,10 @@ fn insert_new_track(
         &crate::utils::prepare_input(&metadata.album),
         tx,
     )?;
+
+    if existing.is_some() {
+        return Ok(false);
+    }
 
     // Check for orphaned lyricsfile before importing embedded lyrics
     let orphaned_lyricsfile = db::find_orphaned_lyricsfile_tx(
@@ -345,7 +368,7 @@ fn insert_new_track(
         }
     }
 
-    Ok(())
+    Ok(true)
 }
 
 #[cfg(test)]
@@ -412,6 +435,48 @@ mod refresh_tests {
             })
             .unwrap();
         assert_eq!(status, 1);
+    }
+
+    #[test]
+    fn embedded_export_and_restart_preserve_track_identity_and_saved_edit() {
+        for method in [DetectionMethod::Hash, DetectionMethod::Metadata] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("song.mp3");
+            std::fs::write(&path, include_bytes!("../../tests/fixtures/embedding.mp3")).unwrap();
+            add_metadata(&path, "song");
+            let directories = vec![directory.path().to_string_lossy().into_owned()];
+            let mut conn = test_database();
+            scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            let track = db::get_tracks(&conn).unwrap().remove(0);
+            let text = build_lyricsfile(
+                &LyricsfileTrackMetadata::new("song", "test album", "test artist", track.duration),
+                Some("saved words"), Some("[00:01.00]saved words\n"),
+            ).unwrap();
+            db::save_edited_lyricsfile_for_track(&track, &text, &conn).unwrap();
+            let edited = db::get_track_by_id(track.id, &conn).unwrap().lyrics_modified_at;
+            let hash_before = compute_quick_hash(&path).unwrap();
+            crate::export::embed_lyrics(path.to_str().unwrap(), "saved words",
+                "[00:01.00]saved words\n").unwrap();
+            assert_ne!(compute_quick_hash(&path).unwrap(), hash_before);
+            let database = directory.path().join("library.sqlite3");
+            conn.execute("VACUUM INTO ?", [database.to_str().unwrap()]).unwrap();
+            drop(conn);
+            let mut reopened = Connection::open(&database).unwrap();
+            reopened.execute_batch("PRAGMA foreign_keys = ON").unwrap();
+            let result = scan_library(&directories, &mut reopened, &|_| {}, method).unwrap();
+            assert_eq!(result.modified, 1);
+            assert_eq!(result.added, 0);
+            assert_eq!(result.deleted, 0);
+            let after = db::get_tracks(&reopened).unwrap();
+            assert_eq!(after.len(), 1);
+            assert_eq!(after[0].id, track.id);
+            assert_eq!(after[0].lyrics_modified_at, edited);
+            assert_eq!(after[0].lyricsfile.as_deref(), Some(text.as_str()));
+            let repeat = scan_library(&directories, &mut reopened, &|_| {}, method).unwrap();
+            assert_eq!(repeat.unchanged, 1);
+            assert_eq!(db::get_tracks(&reopened).unwrap()[0].lyrics_modified_at, edited);
+            assert!(!path.with_extension("mp3.lrcget.bak").exists());
+        }
     }
 
     #[test]

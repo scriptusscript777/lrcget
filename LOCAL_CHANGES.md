@@ -4,7 +4,24 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.19`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.20`, based on upstream tag `2.2.0`.
+
+## Playback and Save Corrections (.20)
+
+Rick Lidgett corrected double-click zoom turning off waveform Follow. Both zoom
+methods retain the user's Follow choice, including with Loop off. Following
+also reacts to viewport changes immediately, not only the next player event.
+Manual panning still holds an inspection region; explicit Follow-off stays off.
+Markers and pending timestamp previews remain unchanged by zoom/playback.
+
+Startup scans now retain track IDs and saved lyric dates when embedding changes
+an audio file's fingerprint at the same path. Existing matching orphaned save
+dates can be restored without replacing any lyric content. Ambiguous matches
+and recordings outside the duration tolerance are not repaired automatically.
+
+Exports retain staged validation and atomic replacement but no longer keep
+rolling backups after a successful save. Only the exact destination's old
+`.lrcget.bak` is removed; unrelated backups and user TXT/LRC files are untouched.
 
 ## Lyric Modification Column (.19)
 
@@ -223,16 +240,15 @@ coarser than the editor's 10 ms adjustment step for long recordings.
 
 TXT and LRC exports now coexist; neither deletes the other format. Sidecars and
 embedded-audio exports are staged in the destination directory, checked, then
-replaced using an atomic rename. Existing destinations get one rolling backup
-named `<filename>.lrcget.bak` containing the previous version. Failed staging
+replaced using an atomic rename. Since .20, successful saves leave no rolling
+backup. Failed staging
 does not replace the original. Symlink/non-file and read-only destinations are
 rejected. A size/modification-time change detected during staging aborts export
 instead of replacing an external edit; this is not a cross-application file lock.
 
-Embedded export stages a complete audio copy and retains a complete previous
-audio backup. Allow space for both additional copies. Backups are local only;
-they are not uploaded or automatically deleted. Restore a backup with the app
-closed, keeping another copy of the current file first.
+Embedded export stages one complete audio copy. The original stays unchanged
+until replacement; successful saves remove old app-owned backups for that
+destination. Keep separate backups when version history is needed.
 
 ## Library Refresh
 

@@ -649,10 +649,10 @@ describe('waveform controls and states', () => {
     expect(invoke).toHaveBeenCalledTimes(1)
   })
 
-  it('repeatedly double-clicks into a point without moving selected markers or seeking', async () => {
+  it('repeatedly double-clicks into a point while paused without moving markers or seeking', async () => {
     const state = await mount({
       progress: 100,
-      playing: true,
+      playing: false,
       selectedLine: { start_ms: 20000, end_ms: 24000 },
       selectedLineIndex: 0,
     })
@@ -672,9 +672,57 @@ describe('waveform controls and states', () => {
     state.props.progress = 110
     await nextTick()
     expect(state.byId('waveform-pan').props.value).toBe(before)
-    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(false)
+    expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(true)
     expect(state.props.selectedLine).toEqual({ start_ms: 20000, end_ms: 24000 })
     expect(state.seek).not.toHaveBeenCalled()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
+
+  it.each([null, { start: 20, end: 24 }])(
+    'keeps double-click zoom following with loop range %j without editing markers',
+    async loopRange => {
+      const state = await mount({
+        progress: 20,
+        playing: true,
+        loopRange,
+        selectedLine: { start_ms: 20000, end_ms: 24000 },
+        selectedLineIndex: 0,
+      })
+      for (let index = 0; index < 4; index++) {
+        const slider = state.byId('waveform-seek')
+        slider.props.onDblclick({
+          clientX: 220,
+          currentTarget: slider,
+          stopPropagation: vi.fn(),
+          preventDefault: vi.fn(),
+        })
+        await nextTick()
+        expect(state.byId('waveform-playhead')).toBeDefined()
+      }
+      for (const progress of [23.9, 29, 45, 2, 119, 120]) {
+        state.props.progress = progress
+        await nextTick()
+        expect(state.byId('waveform-playhead')).toBeDefined()
+        expect(state.byId('waveform-pan').props.max).toBe(112.5)
+      }
+      expect(state.byLabel('Follow waveform playback').props['aria-pressed']).toBe(true)
+      expect(state.props.selectedLine).toEqual({ start_ms: 20000, end_ms: 24000 })
+      expect(state.seek).not.toHaveBeenCalled()
+      expect(state.updateMarkers).not.toHaveBeenCalled()
+    }
+  )
+
+  it('keeps a stationary playhead visible immediately after zooming a remote phrase', async () => {
+    const state = await mount({
+      progress: 100,
+      playing: true,
+      selectedLine: { start_ms: 20000, end_ms: 24000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    expect(state.byId('waveform-playhead')).toBeDefined()
+    expect(state.byId('waveform-pan').props.max).toBe(60)
     expect(state.updateMarkers).not.toHaveBeenCalled()
   })
 
@@ -772,6 +820,14 @@ describe('waveform controls and states', () => {
     })
     state.byLabel('Follow waveform playback').props.onClick()
     state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    const slider = state.byId('waveform-seek')
+    slider.props.onDblclick({
+      clientX: 220,
+      currentTarget: slider,
+      stopPropagation: vi.fn(),
+      preventDefault: vi.fn(),
+    })
     await nextTick()
     state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
     await nextTick()

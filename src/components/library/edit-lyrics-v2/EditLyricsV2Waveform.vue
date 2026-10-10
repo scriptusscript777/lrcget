@@ -54,7 +54,11 @@
           </button>
         </template>
         <button
-          v-tooltip="editorTooltip('Follow the moving playhead; manual scrolling pauses following')"
+          v-tooltip="
+            editorTooltip(
+              'Follow playback at the current zoom, with or without Loop; scrolling pauses following'
+            )
+          "
           class="button button-normal h-7 w-7 rounded"
           aria-label="Follow waveform playback"
           title="Follow waveform playback"
@@ -559,9 +563,7 @@ const pointerTime = event => {
 const zoomAtPointer = event => {
   const anchor = pointerTime(event)
   if (anchor === null) return
-  // Hold the inspected region during playback, just like manual panning.
-  if (follow.value) resumeFollowOnPlay = true
-  follow.value = false
+  // Magnification preserves Follow; only deliberate panning pauses it for inspection.
   viewport.value = zoomViewport(
     waveform.value.duration,
     viewport.value,
@@ -672,7 +674,8 @@ watch(
     }
   }
 )
-watch([displayProgress, () => props.playing, follow, drag], () => {
+watch([displayProgress, () => props.playing, follow, drag, viewport], () => {
+  // A zoom/selection can hide a stationary playhead before the next player event arrives.
   if (follow.value && props.playing && !drag.value && waveform.value)
     viewport.value = followViewport(waveform.value.duration, viewport.value, displayProgress.value)
 })

@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.19** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.0+local.20** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.19/LRCGET_2.2.0%2Blocal.19_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.19)
-| [Lyric modification dates](docs/releases/2.2.0-local.19.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.20/LRCGET_2.2.0%2Blocal.20_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.20)
+| [Playback and save corrections](docs/releases/2.2.0-local.20.md)
 | [Editing guide](docs/editing-guide.md)
 | [Full workflow and feature how-to](docs/editing-guide.md#quick-workflow)
 | [Detailed changes](LOCAL_CHANGES.md)
@@ -25,7 +25,8 @@ official upstream release.
 - Double-click a waveform point repeatedly to magnify it for marker editing.
 - Wheel/trackpad panning at any playback state, without follow snapping back;
   zoom preserves the visible phrase marker for precise editing.
-- Zoom keeps playback follow enabled; pause/play resumes following after manual
+- Zoom, including double-click zoom, keeps playback follow enabled with Loop off
+  or on; pause/play resumes following after manual
   inspection. Placed marker timestamps stay fixed during playback and navigation.
 - Selected phrase start/end handles, session undo/redo, 10/25/50/100 ms timing
   steps and phrase looping.
@@ -47,7 +48,7 @@ official upstream release.
 - Cleaner word editing without the pink selection bubble; canceled drags do
   not commit timing edits, and keyboard shortcuts respect the active tool.
 - Synced LRC export selected by default, optional embedded lyrics, and safer
-  sidecar/audio exports with rolling backups. Saving and publishing are explicit.
+  sidecar/audio exports without leftover backups. Saving and publishing are explicit.
 - Incremental library scanning on opening and F5 refresh without reloading.
 
 ### Install This Build
@@ -55,8 +56,8 @@ official upstream release.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.19_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.19_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.20_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.20_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.

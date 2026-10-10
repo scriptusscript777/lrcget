@@ -1410,6 +1410,45 @@ pub struct ScanTrackInfo {
     pub file_path: String,
 }
 
+/// Path identity survives tag exports, which change the file's hash and size.
+pub fn find_track_by_path_tx(
+    path: &str,
+    tx: &rusqlite::Transaction,
+) -> Result<Option<ScanTrackInfo>> {
+    Ok(tx.query_row(
+        "SELECT id, file_path FROM tracks WHERE file_path = ? ORDER BY id LIMIT 1",
+        [path],
+        |row| Ok(ScanTrackInfo { id: row.get(0)?, file_path: row.get(1)? }),
+    ).optional()?)
+}
+
+/// Repair dates orphaned by older fingerprint-only scans without overwriting lyrics.
+pub fn restore_orphaned_edit_dates(conn: &Connection) -> Result<usize> {
+    Ok(conn.execute(
+        "UPDATE lyricsfiles AS current SET edited_at = (
+            SELECT MAX(saved.edited_at) FROM lyricsfiles AS saved
+            WHERE saved.track_id IS NULL AND saved.edited_at IS NOT NULL
+              AND saved.track_title_lower = current.track_title_lower
+              AND saved.track_artist_name_lower = current.track_artist_name_lower
+              AND saved.track_album_name_lower = current.track_album_name_lower
+              AND ABS(saved.track_duration - current.track_duration) <= 2.0
+        ) WHERE current.track_id IS NOT NULL AND current.edited_at IS NULL
+          AND (SELECT COUNT(*) FROM lyricsfiles AS other
+               WHERE other.track_id IS NOT NULL
+                 AND other.track_title_lower = current.track_title_lower
+                 AND other.track_artist_name_lower = current.track_artist_name_lower
+                 AND other.track_album_name_lower = current.track_album_name_lower
+                 AND ABS(other.track_duration - current.track_duration) <= 2.0) = 1
+          AND EXISTS (SELECT 1 FROM lyricsfiles AS saved
+               WHERE saved.track_id IS NULL AND saved.edited_at IS NOT NULL
+                 AND saved.track_title_lower = current.track_title_lower
+                 AND saved.track_artist_name_lower = current.track_artist_name_lower
+                 AND saved.track_album_name_lower = current.track_album_name_lower
+                 AND ABS(saved.track_duration - current.track_duration) <= 2.0)",
+        [],
+    )?)
+}
+
 /// Find track by fingerprint (mtime + size) - for scan operations
 pub fn find_track_by_fingerprint_tx(
     modified_time: i64,
@@ -1888,6 +1927,26 @@ mod lyric_edit_time_tests {
         let after = get_track_by_id(1, &conn).unwrap();
         assert_eq!(after.lyricsfile, Some(old));
         assert_eq!(after.lyrics_modified_at, None);
+    }
+
+    #[test]
+    fn repairs_orphaned_date_without_replacing_current_lyrics_or_inventing_dates() {
+        let conn = fixture();
+        let track = get_track_by_id(1, &conn).unwrap();
+        save_edited_lyricsfile_for_track(&track, &lyrics("saved words"), &conn).unwrap();
+        let edited = get_track_by_id(1, &conn).unwrap().lyrics_modified_at;
+        conn.execute("UPDATE lyricsfiles SET track_id = NULL", []).unwrap();
+        let current = lyrics("current words remain untouched");
+        upsert_lyricsfile_for_track(1, "song", "album", "artist", 10.0, &current, &conn).unwrap();
+        assert_eq!(restore_orphaned_edit_dates(&conn).unwrap(), 1);
+        let after = get_track_by_id(1, &conn).unwrap();
+        assert_eq!(after.lyrics_modified_at, edited);
+        assert_eq!(after.lyricsfile, Some(current));
+        assert_eq!(restore_orphaned_edit_dates(&conn).unwrap(), 0);
+        // No candidate, or a different recording, must not manufacture a save date.
+        conn.execute("UPDATE lyricsfiles SET track_duration = 30 WHERE track_id IS NULL", []).unwrap();
+        conn.execute("UPDATE lyricsfiles SET edited_at = NULL WHERE track_id = 1", []).unwrap();
+        assert_eq!(restore_orphaned_edit_dates(&conn).unwrap(), 0);
     }
 
     #[test]

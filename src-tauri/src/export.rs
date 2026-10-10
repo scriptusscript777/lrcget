@@ -69,7 +69,7 @@ pub struct ExportResult {
 
 static EXPORT_WRITE_LOCK: Mutex<()> = Mutex::new(());
 
-// Stage on the same filesystem, preserve the previous destination, then replace.
+// Prepare and validate on the same filesystem; the original survives until atomic replacement.
 fn safe_replace(path: &Path, prepare: impl FnOnce(&Path) -> Result<()>) -> Result<()> {
     let _guard = EXPORT_WRITE_LOCK
         .lock()
@@ -117,19 +117,18 @@ fn safe_replace(path: &Path, prepare: impl FnOnce(&Path) -> Result<()>) -> Resul
     }
     if let Some(metadata) = existing {
         fs::set_permissions(staged.path(), metadata.permissions())?;
-        let mut backup_name = path.as_os_str().to_os_string();
-        backup_name.push(".lrcget.bak");
-        let backup = tempfile::Builder::new()
-            .prefix(".lrcget-backup-")
-            .tempfile_in(parent)?;
-        fs::copy(path, backup.path())?;
-        backup.as_file().sync_all()?;
-        backup
-            .persist(PathBuf::from(backup_name))
-            .map_err(|error| error.error)?;
     }
     staged.as_file().sync_all()?;
     staged.persist(path).map_err(|error| error.error)?;
+    // Remove only this destination's old app-owned backup after a successful commit.
+    let mut backup_name = path.as_os_str().to_os_string();
+    backup_name.push(".lrcget.bak");
+    let backup = PathBuf::from(backup_name);
+    if fs::symlink_metadata(&backup).is_ok_and(|metadata| metadata.is_file()) {
+        if let Err(error) = fs::remove_file(&backup) {
+            eprintln!("Saved successfully, but could not remove old backup {:?}: {}", backup, error);
+        }
+    }
     Ok(())
 }
 
@@ -682,7 +681,7 @@ mod tests {
     }
 
     #[test]
-    fn safe_replacement_preserves_previous_and_cleans_failed_staging() {
+    fn safe_replacement_preserves_failed_destination_and_removes_successful_backups() {
         let directory = tempfile::tempdir().unwrap();
         let path = directory.path().join("song.lrc");
         fs::write(&path, "original").unwrap();
@@ -693,26 +692,23 @@ mod tests {
         assert!(result.is_err());
         assert_eq!(fs::read_to_string(&path).unwrap(), "original");
         assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
+        let backup = directory.path().join("song.lrc.lrcget.bak");
+        fs::write(&backup, "old backup").unwrap();
         safe_replace(&path, |staged| {
             fs::write(staged, "updated")?;
             Ok(())
         })
         .unwrap();
         assert_eq!(fs::read_to_string(&path).unwrap(), "updated");
-        assert_eq!(
-            fs::read_to_string(directory.path().join("song.lrc.lrcget.bak")).unwrap(),
-            "original"
-        );
+        assert!(!backup.exists());
         safe_replace(&path, |staged| {
             fs::write(staged, "latest")?;
             Ok(())
         })
         .unwrap();
-        assert_eq!(
-            fs::read_to_string(directory.path().join("song.lrc.lrcget.bak")).unwrap(),
-            "updated"
-        );
-        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 2);
+        assert_eq!(fs::read_to_string(&path).unwrap(), "latest");
+        assert!(!backup.exists());
+        assert_eq!(fs::read_dir(directory.path()).unwrap().count(), 1);
     }
 
     #[test]

@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.19`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.20`.
 Original project authors and license remain credited.
 
 ## Quick Workflow
@@ -184,9 +184,13 @@ waveform drags still require Apply Markers to commit their preview.
 
 Double-click a point on the waveform to magnify it. Repeat to go deeper, then
 drag or nudge the selected lyric's start/end markers and use Apply Markers.
-A single click still seeks. Double-click inspection temporarily holds the view
-instead of following playback; pause/play or the Follow button resumes following.
+A single click still seeks. Double-click zoom preserves the Follow setting:
+while playing, the zoomed view advances to keep the playhead visible, with or
+without Loop. Pause playback or turn Follow off to inspect a fixed region.
 The minus and Fit controls zoom back out. Marker timestamps never move with zoom.
+
+![Zoomed playback following in light mode](screenshots/lrcget-follow-20-light.png)
+![Zoomed playback following in dark mode](screenshots/lrcget-follow-20-dark.png)
 
 Magnification keeps a visible selected phrase marker in view, rather than
 anchoring to an unrelated playhead. Zoom preserves the playback-follow setting;
@@ -283,12 +287,14 @@ UTF-8 USLT/SYLT, with milliseconds for synchronized words. Audio is not
 re-encoded. Some car stereos, Windows players and Jellyfin clients cannot
 display these lyrics; retaining the `.lrc` sidecar is still useful.
 
-## Backups and Recovery
+## Safe Saving
 
-Exports stage their output before replacing a destination. The previous version
-is retained as one rolling `<filename>.lrcget.bak` backup, not a full history.
-Embedded export needs disk space for a staged audio copy and previous audio copy.
-Close LRCGET before restoring a backup and preserve the current file separately.
+Exports stage and validate their output before atomically replacing a destination.
+Failed preparation leaves the original untouched and removes temporary files.
+Successful saves do not create `.bak` files; old `<filename>.lrcget.bak` files
+for that exact destination are removed after a successful replacement. Unrelated
+backups are not deleted. Embedded export needs space for one staged audio copy.
+Keep separate backups if you need version history.
 Read-only, symlink/non-file destinations and detected external edits can block
 an export. Resolve the error and retry rather than assuming every target saved.
 
