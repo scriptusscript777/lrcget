@@ -315,7 +315,7 @@ pub fn get_track_by_id(id: i64, db: &Connection) -> Result<PersistentTrack> {
       tracks.track_number,
       albums.image_path,
       lyricsfiles.id AS lyricsfile_id,
-      lyricsfiles.lyricsfile,
+      lyricsfiles.lyricsfile, lyricsfiles.edited_at AS lyrics_modified_at,
       COALESCE(lyricsfiles.instrumental, 0) AS instrumental
     FROM tracks
     JOIN albums ON tracks.album_id = albums.id
@@ -345,11 +345,36 @@ pub fn get_track_by_id(id: i64, db: &Connection) -> Result<PersistentTrack> {
             lrc_lyrics: None,
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
+            lyrics_modified_at: row.get("lyrics_modified_at")?,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         })
     })?;
     Ok(row)
+}
+
+/// Save lyric content and its explicit edit time together; scans use the normal upsert.
+pub fn save_edited_lyricsfile_for_track(
+    track: &PersistentTrack,
+    lyricsfile: &str,
+    db: &Connection,
+) -> Result<()> {
+    let tx = db.unchecked_transaction()?;
+    upsert_lyricsfile_for_track_tx(
+        track.id,
+        &track.title,
+        &track.album_name,
+        &track.artist_name,
+        track.duration,
+        lyricsfile,
+        &tx,
+    )?;
+    tx.execute(
+        "UPDATE lyricsfiles SET edited_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE track_id = ?",
+        [track.id],
+    )?;
+    tx.commit()?;
+    Ok(())
 }
 
 pub fn upsert_lyricsfile_for_track(
@@ -599,7 +624,7 @@ pub fn update_lyricsfile_by_id(
     let presence = lyrics_presence_from_lyricsfile(lyricsfile)?;
 
     db.execute(
-        "UPDATE lyricsfiles SET lyricsfile = ?, has_plain_lyrics = ?, has_synced_lyrics = ?, has_word_synced_lyrics = ?, instrumental = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+        "UPDATE lyricsfiles SET lyricsfile = ?, has_plain_lyrics = ?, has_synced_lyrics = ?, has_word_synced_lyrics = ?, instrumental = ?, updated_at = CURRENT_TIMESTAMP, edited_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now') WHERE id = ?",
         (
             lyricsfile,
             presence.has_plain_lyrics,
@@ -639,7 +664,7 @@ pub fn get_tracks(db: &Connection) -> Result<Vec<PersistentTrack>> {
           tracks.id, tracks.file_path, tracks.file_name, tracks.title,
           artists.name AS artist_name, tracks.artist_id,
           albums.name AS album_name, albums.album_artist_name, tracks.album_id, tracks.duration, tracks.track_number,
-          albums.image_path, lyricsfiles.id AS lyricsfile_id, lyricsfiles.lyricsfile, COALESCE(lyricsfiles.instrumental, 0) AS instrumental
+          albums.image_path, lyricsfiles.id AS lyricsfile_id, lyricsfiles.lyricsfile, lyricsfiles.edited_at AS lyrics_modified_at, COALESCE(lyricsfiles.instrumental, 0) AS instrumental
       FROM tracks
       JOIN albums ON tracks.album_id = albums.id
       JOIN artists ON tracks.artist_id = artists.id
@@ -669,6 +694,7 @@ pub fn get_tracks(db: &Connection) -> Result<Vec<PersistentTrack>> {
             lrc_lyrics: None,
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
+            lyrics_modified_at: row.get("lyrics_modified_at")?,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1035,7 +1061,7 @@ pub fn get_album_tracks(album_id: i64, db: &Connection) -> Result<Vec<Persistent
       tracks.track_number,
       albums.image_path,
       lyricsfiles.id AS lyricsfile_id,
-      lyricsfiles.lyricsfile,
+      lyricsfiles.lyricsfile, lyricsfiles.edited_at AS lyrics_modified_at,
       COALESCE(lyricsfiles.instrumental, 0) AS instrumental
     FROM tracks
     JOIN albums ON tracks.album_id = albums.id
@@ -1066,6 +1092,7 @@ pub fn get_album_tracks(album_id: i64, db: &Connection) -> Result<Vec<Persistent
             lrc_lyrics: None,
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
+            lyrics_modified_at: row.get("lyrics_modified_at")?,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1118,7 +1145,7 @@ pub fn get_artist_tracks(artist_id: i64, db: &Connection) -> Result<Vec<Persiste
     let mut statement = db.prepare(indoc! {"
       SELECT tracks.id, tracks.file_path, tracks.file_name, tracks.title, artists.name AS artist_name,
         tracks.artist_id, albums.name AS album_name, albums.album_artist_name, tracks.album_id, tracks.duration, tracks.track_number,
-        albums.image_path, lyricsfiles.id AS lyricsfile_id, lyricsfiles.lyricsfile, COALESCE(lyricsfiles.instrumental, 0) AS instrumental
+        albums.image_path, lyricsfiles.id AS lyricsfile_id, lyricsfiles.lyricsfile, lyricsfiles.edited_at AS lyrics_modified_at, COALESCE(lyricsfiles.instrumental, 0) AS instrumental
       FROM tracks
       JOIN albums ON tracks.album_id = albums.id
       JOIN artists ON tracks.artist_id = artists.id
@@ -1148,6 +1175,7 @@ pub fn get_artist_tracks(artist_id: i64, db: &Connection) -> Result<Vec<Persiste
             lrc_lyrics: None,
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
+            lyrics_modified_at: row.get("lyrics_modified_at")?,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1739,7 +1767,7 @@ pub fn find_tracks_by_metadata(
             tracks.track_number,
             albums.image_path,
             lyricsfiles.id AS lyricsfile_id,
-            lyricsfiles.lyricsfile,
+            lyricsfiles.lyricsfile, lyricsfiles.edited_at AS lyrics_modified_at,
             COALESCE(lyricsfiles.instrumental, 0) AS instrumental
         FROM tracks
         JOIN albums ON tracks.album_id = albums.id
@@ -1778,6 +1806,7 @@ pub fn find_tracks_by_metadata(
             lrc_lyrics: None,
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
+            lyrics_modified_at: row.get("lyrics_modified_at")?,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1786,6 +1815,107 @@ pub fn find_tracks_by_metadata(
     }
 
     Ok(tracks)
+}
+
+#[cfg(test)]
+mod lyric_edit_time_tests {
+    use super::*;
+
+    fn fixture() -> Connection {
+        let mut conn = Connection::open_in_memory().unwrap();
+        Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+        conn.execute_batch("PRAGMA foreign_keys = ON;
+            INSERT INTO artists (id, name, name_lower) VALUES (1, 'artist', 'artist');
+            INSERT INTO albums (id, name, name_lower, artist_id) VALUES (1, 'album', 'album', 1);
+            INSERT INTO tracks (id, file_path, file_name, title, title_lower, album_id, artist_id, duration)
+            VALUES (1, '/test/song.mp3', 'song.mp3', 'song', 'song', 1, 1, 10);").unwrap();
+        conn
+    }
+
+    fn lyrics(text: &str) -> String {
+        crate::lyricsfile::build_lyricsfile(
+            &crate::lyricsfile::LyricsfileTrackMetadata::new("song", "album", "artist", 10.0),
+            Some(text), None,
+        ).unwrap()
+    }
+
+    #[test]
+    fn migration_does_not_invent_dates_or_change_existing_lyrics() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let migrations = Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
+        migrations.to_version(&mut conn, 17).unwrap();
+        conn.execute("INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: retained')", []).unwrap();
+        migrations.to_latest(&mut conn).unwrap();
+        let (content, edited): (String, Option<String>) = conn.query_row(
+            "SELECT lyricsfile, edited_at FROM lyricsfiles", [], |r| Ok((r.get(0)?, r.get(1)?)),
+        ).unwrap();
+        assert_eq!(content, "plain: retained");
+        assert_eq!(edited, None);
+    }
+
+    #[test]
+    fn manual_edit_survives_scan_import_and_all_track_queries() {
+        let conn = fixture();
+        let content = lyrics("saved words");
+        upsert_lyricsfile_for_track(1, "song", "album", "artist", 10.0, &content, &conn).unwrap();
+        assert_eq!(get_track_by_id(1, &conn).unwrap().lyrics_modified_at, None);
+        let track = get_track_by_id(1, &conn).unwrap();
+        save_edited_lyricsfile_for_track(&track, &content, &conn).unwrap();
+        let edited = get_track_by_id(1, &conn).unwrap().lyrics_modified_at.unwrap();
+        assert!(edited.ends_with('Z'));
+        // Scanner/import upserts must preserve the explicit save time.
+        let tx = conn.unchecked_transaction().unwrap();
+        upsert_lyricsfile_for_track_tx(1, "song", "album", "artist", 10.0, &content, &tx).unwrap();
+        tx.commit().unwrap();
+        assert_eq!(get_track_by_id(1, &conn).unwrap().lyrics_modified_at.as_deref(), Some(edited.as_str()));
+        assert_eq!(get_tracks(&conn).unwrap()[0].lyrics_modified_at.as_deref(), Some(edited.as_str()));
+        assert_eq!(get_album_tracks(1, &conn).unwrap()[0].lyrics_modified_at.as_deref(), Some(edited.as_str()));
+        assert_eq!(get_artist_tracks(1, &conn).unwrap()[0].lyrics_modified_at.as_deref(), Some(edited.as_str()));
+        let id = get_track_by_id(1, &conn).unwrap().lyricsfile_id.unwrap();
+        update_lyricsfile_by_id(id, &lyrics("changed words"), &conn).unwrap();
+        assert!(get_track_by_id(1, &conn).unwrap().lyrics_modified_at.is_some());
+    }
+
+    #[test]
+    fn save_failure_rolls_back_content_and_edit_date() {
+        let conn = fixture();
+        let old = lyrics("original words");
+        upsert_lyricsfile_for_track(1, "song", "album", "artist", 10.0, &old, &conn).unwrap();
+        let track = get_track_by_id(1, &conn).unwrap();
+        conn.execute_batch("CREATE TRIGGER fail_edit_time BEFORE UPDATE OF edited_at ON lyricsfiles
+            BEGIN SELECT RAISE(ABORT, 'test save failure'); END;").unwrap();
+        assert!(save_edited_lyricsfile_for_track(&track, &lyrics("new words"), &conn).is_err());
+        let after = get_track_by_id(1, &conn).unwrap();
+        assert_eq!(after.lyricsfile, Some(old));
+        assert_eq!(after.lyrics_modified_at, None);
+    }
+
+    #[test]
+    fn saved_edit_date_survives_database_reopen() {
+        let conn = fixture();
+        let track = get_track_by_id(1, &conn).unwrap();
+        save_edited_lyricsfile_for_track(&track, &lyrics("saved words"), &conn).unwrap();
+        let edited = get_track_by_id(1, &conn).unwrap().lyrics_modified_at;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("library.sqlite3");
+        conn.execute("VACUUM INTO ?", [path.to_str().unwrap()]).unwrap();
+        drop(conn);
+        let reopened = Connection::open(&path).unwrap();
+        assert_eq!(get_track_by_id(1, &reopened).unwrap().lyrics_modified_at, edited);
+    }
+
+    #[test]
+    fn removed_track_disappears_without_deleting_orphaned_user_lyrics() {
+        let mut conn = fixture();
+        let track = get_track_by_id(1, &conn).unwrap();
+        save_edited_lyricsfile_for_track(&track, &lyrics("saved words"), &conn).unwrap();
+        mark_all_tracks_pending(&mut conn).unwrap();
+        assert_eq!(delete_unprocessed_tracks(&mut conn).unwrap(), 1);
+        assert!(get_tracks(&conn).unwrap().is_empty());
+        assert!(get_track_by_id(1, &conn).is_err());
+        let orphan_id: Option<i64> = conn.query_row("SELECT track_id FROM lyricsfiles", [], |r| r.get(0)).unwrap();
+        assert_eq!(orphan_id, None);
+    }
 }
 
 #[cfg(test)]

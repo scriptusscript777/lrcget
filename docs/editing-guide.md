@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.13`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.19`.
 Original project authors and license remain credited.
 
 ## Quick Workflow
@@ -27,6 +27,23 @@ then press **F5** or use **Refresh library (F5)** to scan after adding/removing 
 An active scan cannot be started again. Refresh does not publish/export lyrics,
 and it does not automatically overwrite database-owned lyrics with external edits.
 To load an LRC you edited in another application, explicitly import that file.
+
+### Modified Column
+
+Track, album and artist lists show **Modified** between Lyrics and the action
+buttons. A green badge and local date/time record your last lyric save in
+LRCGET. The date updates only after a successful editor save, not when you
+merely open a song, download lyrics or refresh the library. Unsaved edits do
+not change it. Imports become recorded edits when you save them in the editor.
+
+The database keeps this date through app restarts, F5 and rescans. Removing the
+song from its directory removes its library row on the next refresh. Existing
+orphaned lyric preservation still applies if a removed song is later re-added.
+Older edits with no recorded date show `--`; this version cannot infer when
+they were edited. File-system modification dates are not used as lyric-edit dates.
+
+Normal and maximized windows share aligned columns. In a very narrow window,
+scroll horizontally to see the date and action buttons.
 
 ## Start With Lyrics and a Recording
 

@@ -1,6 +1,9 @@
 <template>
   <div ref="parentRef" class="secondary-page">
-    <div :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+    <div
+      class="min-w-[760px]"
+      :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }"
+    >
       <div class="mb-4">
         <button class="button button-normal transition rounded-full p-4" @click="$emit('back')">
           <ArrowLeft />
@@ -13,11 +16,15 @@
             {{ album.name }}
           </div>
           <div class="flex items-center gap-2">
-            <div class="text-sm text-neutral-800 group-hover:text-neutral-800 transition dark:text-white">
+            <div
+              class="text-sm text-neutral-800 group-hover:text-neutral-800 transition dark:text-white"
+            >
               {{ album.tracks_count }} tracks
             </div>
             <div class="border-r border-neutral-300 h-3 flex-none" />
-            <div class="text-sm text-neutral-800 group-hover:text-neutral-800 transition dark:text-white">
+            <div
+              class="text-sm text-neutral-800 group-hover:text-neutral-800 transition dark:text-white"
+            >
               {{ album.artist_name }}
             </div>
           </div>
@@ -38,13 +45,18 @@
 
       <div class="w-full">
         <div class="w-full flex">
-          <div class="text-xs text-neutral-800/70 font-bold flex w-full dark:text-neutral-500">
-            <div class="text-right flex-none w-[5%] p-1 pr-2">#</div>
-            <div class="text-left flex-none w-[60%] p-1">Track</div>
+          <div
+            class="text-xs text-neutral-800/70 font-bold library-track-columns with-track-number w-full dark:text-neutral-500"
+          >
+            <div class="text-right flex-none p-1 pr-2">#</div>
+            <div class="text-left flex-none p-1">Track</div>
             <!-- Adjusted width percentage -->
-            <div class="text-right flex-none w-[10%] p-1">Duration</div>
-            <div class="text-center flex-none w-[10%] p-1">Lyrics</div>
-            <div class="text-right flex-none w-[15%] p-1" />
+            <div class="text-right flex-none p-1">Duration</div>
+            <div class="text-center flex-none p-1">Lyrics</div>
+            <div class="text-center flex-none p-1" title="Last lyric save in LRCGET (local time)">
+              Modified
+            </div>
+            <div class="text-right flex-none p-1" />
           </div>
         </div>
         <div class="w-full flex flex-col">
@@ -113,7 +125,9 @@ const downloadLyrics = track => {
 }
 
 const downloadAlbumLyrics = useDownloadTrigger(() => ({
-  type: 'album', id: props.album.id, name: props.album.name,
+  type: 'album',
+  id: props.album.id,
+  name: props.album.name,
 }))
 
 onMounted(async () => {

@@ -1,14 +1,22 @@
 <template>
-  <div v-show="props.isActive" ref="parentRef" class="p-4 overflow-y-auto h-full">
-    <div :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }">
+  <div v-show="props.isActive" ref="parentRef" class="p-4 overflow-auto h-full">
+    <div
+      class="min-w-[760px]"
+      :style="{ height: `${totalSize}px`, width: '100%', position: 'relative' }"
+    >
       <div class="w-full">
         <div class="w-full flex">
-          <div class="text-xs text-neutral-500 font-bold flex w-full dark:text-neutral-500">
-            <div class="text-left flex-none w-[65%] p-1">Track</div>
+          <div
+            class="text-xs text-neutral-500 font-bold library-track-columns w-full dark:text-neutral-500"
+          >
+            <div class="text-left flex-none p-1">Track</div>
             <!-- Adjusted width percentage -->
-            <div class="text-right flex-none w-[10%] p-1">Duration</div>
-            <div class="text-center flex-none w-[10%] p-1">Lyrics</div>
-            <div class="text-right flex-none w-[15%] p-1" />
+            <div class="text-right flex-none p-1">Duration</div>
+            <div class="text-center flex-none p-1">Lyrics</div>
+            <div class="text-center flex-none p-1" title="Last lyric save in LRCGET (local time)">
+              Modified
+            </div>
+            <div class="text-right flex-none p-1" />
           </div>
         </div>
         <div class="w-full flex flex-col">

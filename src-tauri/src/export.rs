@@ -739,6 +739,7 @@ mod tests {
             lrc_lyrics: None,
             lyricsfile: None,
             lyricsfile_id: None,
+            lyrics_modified_at: None,
             duration: 10.0,
             instrumental: false,
         };

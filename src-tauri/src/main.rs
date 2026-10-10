@@ -1080,15 +1080,7 @@ async fn save_lyrics(
         // Update or create the lyricsfile record (presence fields are set automatically)
         app_handle
             .db(|db: &Connection| {
-                db::upsert_lyricsfile_for_track(
-                    track.id,
-                    &track.title,
-                    &track.album_name,
-                    &track.artist_name,
-                    track.duration,
-                    lyricsfile,
-                    db,
-                )
+                db::save_edited_lyricsfile_for_track(&track, lyricsfile, db)
             })
             .map_err(|err| err.to_string())?;
 
@@ -1864,6 +1856,7 @@ mod auto_export_tests {
             lrc_lyrics: None,
             lyricsfile: None,
             lyricsfile_id: None,
+            lyrics_modified_at: None,
             duration: 100.0,
             instrumental: false,
         }

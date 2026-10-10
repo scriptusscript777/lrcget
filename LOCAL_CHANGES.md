@@ -4,7 +4,22 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.18`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.19`, based on upstream tag `2.2.0`.
+
+## Lyric Modification Column (.19)
+
+Rick Lidgett added a **Modified** column after Lyrics and before the action
+buttons in track, album and artist lists. A green badge accompanies the last
+explicit lyric-save date and time, displayed in the PC's local timezone.
+SQLite stores UTC and keeps this record through restart and F5/rescans.
+Imports/scans do not mark songs modified. Unknown historical dates show `--`.
+Removing the audio from its directory removes its library row on refresh;
+existing orphan lyric preservation remains unchanged.
+
+Lyric content and edit time save in one transaction. A failed save rolls back
+both. Virtual rows discard stale async loads and clean up event listeners on
+unmount. Shared grid columns align headers and rows in normal/maximized windows;
+narrow windows scroll rather than overlapping dates/buttons.
 
 ## Native Hover Descriptions (.18)
 

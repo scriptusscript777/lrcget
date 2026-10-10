@@ -208,6 +208,15 @@ body {
   transition: opacity 0.2s ease;
 }
 
+.library-track-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 64px 80px 156px 120px;
+}
+
+.library-track-columns.with-track-number {
+  grid-template-columns: 32px minmax(0, 1fr) 64px 80px 156px 120px;
+}
+
 .v-popper--theme-lrcget-tooltip .v-popper__inner {
   background: #f35697;
   color: #ffffff;
