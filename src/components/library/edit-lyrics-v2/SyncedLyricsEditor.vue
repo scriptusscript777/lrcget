@@ -1,8 +1,8 @@
 <template>
   <div class="grow overflow-hidden flex flex-col relative">
     <div class="shrink-0 flex flex-wrap items-center gap-3 py-2 border-b border-neutral-200 dark:border-neutral-700">
-      <button v-tooltip="editorTooltip('Undo the last synced edit (Ctrl+Z)')" class="button button-normal p-1.5 rounded disabled:opacity-40" title="Undo synced edit (Ctrl+Z)" aria-label="Undo synced edit (Ctrl+Z)" :disabled="!canUndo || editingLineIndex !== null" @click="emit('undo')"><Undo /></button>
-      <button v-tooltip="editorTooltip('Restore the last undone synced edit (Ctrl+Shift+Z)')" class="button button-normal p-1.5 rounded disabled:opacity-40" title="Redo synced edit (Ctrl+Shift+Z)" aria-label="Redo synced edit (Ctrl+Shift+Z)" :disabled="!canRedo || editingLineIndex !== null" @click="emit('redo')"><Redo /></button>
+      <button v-tooltip="editorTooltip('Undo the last confirmed synced edit (Ctrl+Z). Use Cancel for unconfirmed waveform marker edits.')" class="button button-normal p-1.5 rounded disabled:opacity-40" title="Undo synced edit (Ctrl+Z)" aria-label="Undo synced edit (Ctrl+Z)" :disabled="!canUndo || editingLineIndex !== null" @click="emit('undo')"><Undo /></button>
+      <button v-tooltip="editorTooltip('Redo the last undone synced edit (Ctrl+Shift+Z). Available after Undo.')" class="button button-normal p-1.5 rounded disabled:opacity-40" title="Redo synced edit (Ctrl+Shift+Z)" aria-label="Redo synced edit (Ctrl+Shift+Z)" :disabled="!canRedo || editingLineIndex !== null" @click="emit('redo')"><Redo /></button>
       <label class="text-xs inline-flex items-center gap-2">Timing step
         <!-- Shared styling also colors native dropdown options in dark mode. -->
         <select v-tooltip="editorTooltip('Choose how far each timing nudge moves; selecting a step does not change timestamps')" aria-label="Timing step" class="select select-xs [color-scheme:light] dark:[color-scheme:dark]" :value="timingStepMs" @change="emit('update:timing-step-ms', Number($event.target.value))">

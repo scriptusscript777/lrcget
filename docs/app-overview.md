@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.2. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.3. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -89,9 +89,9 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
 
 ![Zoomed playback following without requiring a loop](screenshots/current/waveform-follow-dark.png)
 
-![Preview timestamps with Sync Sentence Start/End and Cancel](screenshots/current/overlap-status-on-light.png)
+![Preview timestamps with Sync Sentence Start/End and Cancel](screenshots/current/marker-confirm-pending-light.png)
 
-![Persistent Start and End times](screenshots/current/overlap-status-on-dark.png)
+![Persistent Start and End times](screenshots/current/marker-confirm-pending-dark.png)
 
 ## Loops and Playback
 
@@ -199,3 +199,26 @@ fallback for missing lyrics. Saved synced/instrumental records stay protected.
 See the [refresh workflow](how-to.md#add-music-and-refresh-the-library).
 
 ![Matching LRC automatically upgrades Plain to Synced](screenshots/current/automatic-lrc-after-light.png)
+
+## Confirm Marker Previews and Cancel
+
+After moving a waveform marker, its sentence button shows **Confirm** in amber.
+The start button beside Play confirms only the pending start; the end button
+confirms only the pending end. Without a pending edit, each ordinary button still
+uses the current playback position.
+
+**Cancel** is always visible beside the waveform marker times. Release the drag,
+then Cancel to discard every unconfirmed movement, even after repeated edits or
+zooming. It restores the last confirmed pair; it keeps any boundary already
+confirmed. **Undo** reverses confirmed edits, and **Redo** reapplies an undone edit.
+F1 over either arrow explains its action, including when disabled.
+
+Word Timing shows the time range and editable word boxes without repeating the
+sentence in its header.
+
+![Confirm and Cancel, light](screenshots/current/marker-confirm-pending-light.png)
+![Confirm and Cancel, dark](screenshots/current/marker-confirm-pending-dark.png)
+![After Cancel](screenshots/current/marker-confirm-cancelled-light.png)
+
+![Word Timing without duplicate header text, light](screenshots/current/marker-word-timing-light.png)
+![Word Timing without duplicate header text, dark](screenshots/current/marker-word-timing-dark.png)

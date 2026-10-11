@@ -6,6 +6,8 @@ export function installTimedHoverHelp(
 ) {
   const win = doc.defaultView
   let target = null
+  let pointerPosition = null
+  let handledHelpKeyDown = false
   let bubble = null
   let hideTimer = null
   let showTimer = null
@@ -85,6 +87,8 @@ export function installTimedHoverHelp(
   }
   const enter = event => {
     if (event.pointerType === 'touch') return
+    if (Number.isFinite(event.clientX) && Number.isFinite(event.clientY))
+      pointerPosition = { x: event.clientX, y: event.clientY }
     const next = event.target.closest?.('[data-editor-help], [data-hover-help]')
     if (!next || next === target || !content(next)) return
     dismiss()
@@ -95,8 +99,17 @@ export function installTimedHoverHelp(
       }, 1000)
   }
   const requestHelp = event => {
+    if (event.key !== 'F1' && event.code !== 'F1' && event.keyCode !== 112) return
+    // Desktop webviews may consume the press but still deliver its release.
+    // A handled/overridden press must not request help again on release.
+    if (event.type === 'keyup') {
+      const handled = handledHelpKeyDown
+      handledHelpKeyDown = false
+      if (handled) return
+    } else {
+      handledHelpKeyDown = true
+    }
     if (
-      event.key !== 'F1' ||
       event.defaultPrevented ||
       event.repeat ||
       event.ctrlKey ||
@@ -105,7 +118,13 @@ export function installTimedHoverHelp(
       event.shiftKey
     )
       return
-    const element = target ?? doc.activeElement?.closest?.('[data-editor-help], [data-hover-help]')
+    // Disabled buttons can suppress pointerover. Resolve the actual hovered
+    // control at request time instead of relying solely on cached events.
+    const hovered = pointerPosition && doc.elementFromPoint?.(pointerPosition.x, pointerPosition.y)
+    const element =
+      hovered?.closest?.('[data-editor-help], [data-hover-help]') ??
+      target ??
+      doc.activeElement?.closest?.('[data-editor-help], [data-hover-help]')
     if (!element?.isConnected || !content(element)) return
     event.preventDefault()
     show(element)
@@ -122,6 +141,7 @@ export function installTimedHoverHelp(
   }
   const listeners = [
     [doc, 'pointerover', enter],
+    [doc, 'pointermove', enter],
     [doc, 'pointerout', leave],
     [doc, 'pointerdown', dismiss],
     [doc, 'scroll', dismiss],
@@ -131,6 +151,7 @@ export function installTimedHoverHelp(
     [win, 'resize', dismiss],
     // Run after document/editor shortcuts so configured bindings retain priority.
     [win, 'keydown', requestHelp, false],
+    [win, 'keyup', requestHelp, false],
   ]
   listeners.forEach(([owner, type, listener, capture = true]) =>
     owner.addEventListener(type, listener, capture)

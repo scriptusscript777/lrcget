@@ -40,7 +40,6 @@
             {{ formatTimestampMs(selectedLine.start_ms) }} -
             {{ formatTimestampMs(actualLineEndMs) }}
           </span>
-          <span class="truncate max-w-[12rem]">{{ selectedLine.text || '(empty)' }}</span>
         </div>
 
         <div class="flex flex-wrap items-center gap-2">

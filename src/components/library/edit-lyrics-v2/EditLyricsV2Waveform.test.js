@@ -1239,6 +1239,28 @@ describe('independent marker confirmations', () => {
     expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(1100)
     expect(state.byId('waveform-marker-end').props['aria-valuenow']).toBe(3000)
   })
+  it('keeps Cancel visible and restores both original markers after repeated edits and zoom', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+    })
+    expect(state.byId('waveform-cancel-markers').props.disabled).toBe(true)
+    for (let i = 0; i < 5; i++) {
+      state.byId('waveform-marker-start').props.onKeydown({ key: 'ArrowRight', preventDefault: vi.fn() })
+      state.byId('waveform-marker-end').props.onKeydown({ key: 'ArrowLeft', preventDefault: vi.fn() })
+      await nextTick()
+    }
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    expect(state.byId('waveform-cancel-markers').props.disabled).toBe(false)
+    expect(state.props.selectedLine).toEqual({ start_ms: 1000, end_ms: 3000 })
+    state.byId('waveform-cancel-markers').props.onClick()
+    await nextTick()
+    expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(1000)
+    expect(state.byId('waveform-marker-end').props['aria-valuenow']).toBe(3000)
+    expect(state.byId('waveform-cancel-markers').props.disabled).toBe(true)
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
   it('retains a rejected preview and uses playback only when the corresponding marker is unchanged', async () => {
     const state = await mount({
       selectedLine: { start_ms: 1000, end_ms: 3000 },

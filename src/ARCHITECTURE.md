@@ -56,15 +56,15 @@ src/
 
 Module-level ref composables (singletons by design):
 
-| Composable           | Purpose                                                                                                                                                                         |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useGlobalState()`   | `isHotkey`, `themeMode`, `lrclibInstance`                                                                                                                                       |
-| `usePlayer()`        | `playingTrack`, `status`, `duration`, `progress`, `volume`. Supports both library tracks (with `id`) and file-based tracks (with `file_path`). Listens to `player-state` events |
-| `useDownloader()`    | Download queue, progress. Loop started by App.vue at boot                                                                                                                       |
-| `useExporter()`      | Mass export queue, progress; each queued track retains submitted formats. Used by ExportViewer modal                                                                                                                         |
-| `useSearchLibrary()` | Shared search text and track-centric filters; used by Tracks, Albums, and Artists tabs |
-| `useSearchLyrics()`  | Search modal state                                                                                                                                                              |
-| `useEditLyricsV2()`  | Edit lyrics modal state                                                                                                                                                         |
+| Composable               | Purpose                                                                                                                                                                                                       |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `useGlobalState()`       | `isHotkey`, `themeMode`, `lrclibInstance`                                                                                                                                                                     |
+| `usePlayer()`            | `playingTrack`, `status`, `duration`, `progress`, `volume`. Supports both library tracks (with `id`) and file-based tracks (with `file_path`). Listens to `player-state` events                               |
+| `useDownloader()`        | Download queue, progress. Loop started by App.vue at boot                                                                                                                                                     |
+| `useExporter()`          | Mass export queue, progress; each queued track retains submitted formats. Used by ExportViewer modal                                                                                                          |
+| `useSearchLibrary()`     | Shared search text and track-centric filters; used by Tracks, Albums, and Artists tabs                                                                                                                        |
+| `useSearchLyrics()`      | Search modal state                                                                                                                                                                                            |
+| `useEditLyricsV2()`      | Edit lyrics modal state                                                                                                                                                                                       |
 | `useLibraryNavigation()` | Cross-tab navigation: clicking an album/artist name in `TrackItem.vue` or `NowPlaying.vue` switches to the Albums/Artists tab and opens the corresponding entity via `AlbumList`/`ArtistList` exposed methods |
 
 **Boot Flow**: `main.js` → Vue app init → `App.vue` checks `get_init()` → shows `ChooseDirectory.vue` (setup) or `Library.vue` (main). Loads config, applies theme, starts downloader loop.
@@ -95,16 +95,16 @@ Module-level ref composables (singletons by design):
 
 **Lyrics Workflows**:
 
-| Aspect | Details |
-|--------|---------|
-| **Display** | `LyricsViewer.vue` (synced) / `PlainLyricsViewer.vue`. Click to `seek()` |
-| **Search** | `SearchLyrics.vue` + `Preview.vue` for LRCLIB lookup; word-level highlight when available |
-| **Normalization** | `normalizeLrclibLyrics()` derives plain/synced/instrumental from `lyricsfile` when LRCLIB omits direct fields |
-| **Edit/Publish** | `EditLyricsV2.vue` + `useEditLyricsV2Publish.js` + `useEditLyricsV2Export.js`. For detailed editor behavior, see **Edit/Publish Details** below. |
-| **Keyboard Shortcuts** | `KeyboardShortcutsModal.vue` + shared registry in `composables/edit-lyrics-v2/shortcutRegistry.js`. See **Keyboard Shortcuts Details** below. |
-| **Mass Export** | `LibraryHeader.vue` → `ExportViewer.vue` → `useExporter()` queue → `export_track_lyrics` per track |
-| **My LRCLIB** | User workflows (preview, edit, publish, flag) in `my-lrclib/` |
-| **Track Association** | My LRCLIB edit flow: `prepare_lrclib_lyricsfile()` → `AssociateTrackModal.vue` → `EditLyricsV2.vue` with `trackId: null` (temporary association only) |
+| Aspect                 | Details                                                                                                                                               |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Display**            | `LyricsViewer.vue` (synced) / `PlainLyricsViewer.vue`. Click to `seek()`                                                                              |
+| **Search**             | `SearchLyrics.vue` + `Preview.vue` for LRCLIB lookup; word-level highlight when available                                                             |
+| **Normalization**      | `normalizeLrclibLyrics()` derives plain/synced/instrumental from `lyricsfile` when LRCLIB omits direct fields                                         |
+| **Edit/Publish**       | `EditLyricsV2.vue` + `useEditLyricsV2Publish.js` + `useEditLyricsV2Export.js`. For detailed editor behavior, see **Edit/Publish Details** below.      |
+| **Keyboard Shortcuts** | `KeyboardShortcutsModal.vue` + shared registry in `composables/edit-lyrics-v2/shortcutRegistry.js`. See **Keyboard Shortcuts Details** below.         |
+| **Mass Export**        | `LibraryHeader.vue` → `ExportViewer.vue` → `useExporter()` queue → `export_track_lyrics` per track                                                    |
+| **My LRCLIB**          | User workflows (preview, edit, publish, flag) in `my-lrclib/`                                                                                         |
+| **Track Association**  | My LRCLIB edit flow: `prepare_lrclib_lyricsfile()` → `AssociateTrackModal.vue` → `EditLyricsV2.vue` with `trackId: null` (temporary association only) |
 
 ### Download and Export preferences
 
@@ -271,3 +271,14 @@ inputs are disabled until configuration loads; a failed load displays an error.
 Migration 20 adds a checked boolean defaulting true. Optional command arguments
 preserve existing choices for older callers. The existing settings transaction
 includes the scoped overlap setter, with tests for upgrade, restart and rollback.
+
+### Pending marker controls (2.2.6+local.3)
+
+The frontend lyric-row buttons derive amber Confirm labels from the corresponding
+previewRange startChanged/endChanged flags, keeping ordinary playback Sync actions
+unchanged. Waveform Cancel remains visible, disabled without a preview or during
+drag, and clears only the preview; confirmed document times are the baseline.
+Word Timing omits the duplicate header sentence. Timed hover help resolves pointer
+coordinates for disabled controls and has a keyup fallback for desktop F1 presses,
+with press/release deduplication and consumed-shortcut priority. No backend timing,
+persistence, LRC export or data-identifier changes are required.

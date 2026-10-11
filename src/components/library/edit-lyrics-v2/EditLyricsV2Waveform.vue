@@ -74,21 +74,20 @@
         </span>
       </div>
       <div class="flex min-w-0 flex-wrap items-center gap-1">
-        <template v-if="hasDraft">
-          <button
-            v-tooltip="
-              editorTooltip(
-                'Discard all unconfirmed marker changes and restore the last confirmed timing'
-              )
-            "
-            class="button button-normal h-7 rounded px-2"
-            :disabled="!!drag"
-            data-testid="waveform-cancel-markers"
-            @click="cancelDraft"
-          >
-            Cancel
-          </button>
-        </template>
+        <button
+          v-tooltip="
+            editorTooltip(
+              'Discard all unconfirmed marker changes and restore the last confirmed timing'
+            )
+          "
+          class="button button-normal h-7 rounded px-2 disabled:opacity-40"
+          :disabled="!hasDraft || !!drag"
+          aria-label="Cancel unconfirmed marker edits"
+          data-testid="waveform-cancel-markers"
+          @click="cancelDraft"
+        >
+          Cancel
+        </button>
         <button
           v-tooltip="
             editorTooltip(

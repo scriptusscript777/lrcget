@@ -511,3 +511,14 @@ inputs are disabled until configuration loads; a failed load displays an error.
 Migration 20 adds a checked boolean defaulting true. Optional command arguments
 preserve existing choices for older callers. The existing settings transaction
 includes the scoped overlap setter, with tests for upgrade, restart and rollback.
+
+### Pending marker controls (2.2.6+local.3)
+
+The frontend lyric-row buttons derive amber Confirm labels from the corresponding
+previewRange startChanged/endChanged flags, keeping ordinary playback Sync actions
+unchanged. Waveform Cancel remains visible, disabled without a preview or during
+drag, and clears only the preview; confirmed document times are the baseline.
+Word Timing omits the duplicate header sentence. Timed hover help resolves pointer
+coordinates for disabled controls and has a keyup fallback for desktop F1 presses,
+with press/release deduplication and consumed-shortcut priority. No backend timing,
+persistence, LRC export or data-identifier changes are required.

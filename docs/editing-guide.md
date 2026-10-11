@@ -333,9 +333,9 @@ lead vocals, guarantee exact lip sync or run Whisper/Demucs.
 
 ## Current Views
 
-![Light theme: previewed markers awaiting confirmation](screenshots/current/overlap-status-on-light.png)
+![Light theme: previewed markers awaiting confirmation](screenshots/current/marker-confirm-pending-light.png)
 
-![Dark theme: previewed markers awaiting confirmation](screenshots/current/overlap-status-on-dark.png)
+![Dark theme: previewed markers awaiting confirmation](screenshots/current/marker-confirm-pending-dark.png)
 
 The preview timestamps above the waveform differ from the unchanged lyric-row
 timestamps. Sync Start/End confirms each boundary; Cancel restores the last confirmed pair.
@@ -391,8 +391,8 @@ loop stays unavailable until loading completes.
 ![Next lyric crossing in dark mode](screenshots/current/overlap-setting-warning-dark.png)
 ![Overlap protection](screenshots/current/overlap-setting-warning-dark.png)
 
-![Start and End in light mode](screenshots/current/overlap-status-on-light.png)
-![Start and End in dark mode](screenshots/current/overlap-status-on-dark.png)
+![Start and End in light mode](screenshots/current/marker-confirm-pending-light.png)
+![Start and End in dark mode](screenshots/current/marker-confirm-pending-dark.png)
 
 ### Optional Hover Help (2.2.4)
 
@@ -434,3 +434,26 @@ confirmed gaps of at least 250 ms with empty timestamped cues and also marks
 confirmed final ends. Duplicate clears and clears during overlapping lyrics are
 avoided. Exact end times remain in internal saved data; a bare LRC reimport can
 only recover the gaps represented by its timestamps, with blank cues as timed rows.
+
+## Confirm Marker Previews and Cancel
+
+After moving a waveform marker, its sentence button shows **Confirm** in amber.
+The start button beside Play confirms only the pending start; the end button
+confirms only the pending end. Without a pending edit, each ordinary button still
+uses the current playback position.
+
+**Cancel** is always visible beside the waveform marker times. Release the drag,
+then Cancel to discard every unconfirmed movement, even after repeated edits or
+zooming. It restores the last confirmed pair; it keeps any boundary already
+confirmed. **Undo** reverses confirmed edits, and **Redo** reapplies an undone edit.
+F1 over either arrow explains its action, including when disabled.
+
+Word Timing shows the time range and editable word boxes without repeating the
+sentence in its header.
+
+![Confirm and Cancel, light](screenshots/current/marker-confirm-pending-light.png)
+![Confirm and Cancel, dark](screenshots/current/marker-confirm-pending-dark.png)
+![After Cancel](screenshots/current/marker-confirm-cancelled-light.png)
+
+![Word Timing without duplicate header text, light](screenshots/current/marker-word-timing-light.png)
+![Word Timing without duplicate header text, dark](screenshots/current/marker-word-timing-dark.png)

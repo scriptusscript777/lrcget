@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.6+local.2`, based on upstream tag `2.2.0`.
+Local version: `2.2.6+local.3`, based on upstream tag `2.2.0`.
 
 ## Saved Overlap Setting (2.2.6+local.2)
 
@@ -454,3 +454,11 @@ resetting the mode. A conditional status explains invalid ranges; the active
 Loop button remains usable for turning it off. Source changes, closure and player
 failures keep their protective resets. Selection invalidates older asynchronous
 resume/replay seeks and errors so navigation cannot jump back to a previous line.
+
+## Pending-marker controls (2.2.6+local.3)
+
+- Per-boundary amber Confirm buttons for pending waveform edits; ordinary Sync keeps its playback behavior.
+- Always-visible Cancel restores the last confirmed markers after repeated edits and zoom.
+- F1 supports disabled hovered controls and release-only desktop events; Undo/Redo help explains Cancel.
+- Word Timing no longer repeats sentence text next to its time range.
+- Local release only; GitHub publishing and creator notifications remain paused.

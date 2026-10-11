@@ -119,10 +119,10 @@ recording duration. Moving the playhead does not change marker times.
    moved marker as separate undoable edits. **Cancel** restores the last confirmed
    timings; confirming one boundary preserves the other pending preview.
 
-![Preview before confirming timestamps](screenshots/current/overlap-status-on-light.png)
+![Preview before confirming timestamps](screenshots/current/marker-confirm-pending-light.png)
 
-![Start and End marker times in light mode](screenshots/current/overlap-status-on-light.png)
-![Start and End marker times in dark mode](screenshots/current/overlap-status-on-dark.png)
+![Start and End marker times in light mode](screenshots/current/marker-confirm-pending-light.png)
+![Start and End marker times in dark mode](screenshots/current/marker-confirm-pending-dark.png)
 
 ![Warning before extending into the next lyric](screenshots/current/overlap-setting-warning-light.png)
 ![Overlap protection in dark mode](screenshots/current/overlap-setting-warning-dark.png)
@@ -291,3 +291,26 @@ Turning protection on does not automatically change existing lyric overlaps.
 
 ![Overlap setting](screenshots/current/overlap-settings-light.png)
 ![Protection off in Synced](screenshots/current/overlap-status-off-dark.png)
+
+## Confirm Marker Previews and Cancel
+
+After moving a waveform marker, its sentence button shows **Confirm** in amber.
+The start button beside Play confirms only the pending start; the end button
+confirms only the pending end. Without a pending edit, each ordinary button still
+uses the current playback position.
+
+**Cancel** is always visible beside the waveform marker times. Release the drag,
+then Cancel to discard every unconfirmed movement, even after repeated edits or
+zooming. It restores the last confirmed pair; it keeps any boundary already
+confirmed. **Undo** reverses confirmed edits, and **Redo** reapplies an undone edit.
+F1 over either arrow explains its action, including when disabled.
+
+Word Timing shows the time range and editable word boxes without repeating the
+sentence in its header.
+
+![Confirm and Cancel, light](screenshots/current/marker-confirm-pending-light.png)
+![Confirm and Cancel, dark](screenshots/current/marker-confirm-pending-dark.png)
+![After Cancel](screenshots/current/marker-confirm-cancelled-light.png)
+
+![Word Timing without duplicate header text, light](screenshots/current/marker-word-timing-light.png)
+![Word Timing without duplicate header text, dark](screenshots/current/marker-word-timing-dark.png)

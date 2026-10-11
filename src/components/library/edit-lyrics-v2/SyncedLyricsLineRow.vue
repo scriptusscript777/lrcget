@@ -8,7 +8,7 @@
     @click="emit('select', index)"
     @mousedown="handleMouseDown"
   >
-    <div class="flex items-center gap-1 w-[3.5rem]">
+    <div class="flex shrink-0 items-center gap-1 min-w-[3.5rem]">
       <button
         v-tooltip="editorTooltip('Play from this sentence; keep Loop on when enabled, otherwise continue forward')"
         class="button p-1 rounded-full text-sm h-6 w-6"
@@ -21,14 +21,17 @@
         <Play />
       </button>
       <button
-        v-show="isLineControlsVisible"
+        v-show="isLineControlsVisible || previewRange?.startChanged"
         v-tooltip="editorTooltip(syncLineTitle)"
-        class="button button-primary p-1 rounded-full text-sm h-6 w-6"
+        class="button h-6"
+        :class="previewRange?.startChanged ? confirmButtonClass : 'button-primary p-1 rounded-full text-sm w-6'"
+        data-testid="sentence-sync-start"
         :title="syncLineTitle"
         :aria-label="syncLineTitle"
         @click.stop="emit('sync-line', index)"
       >
-        <Equal />
+        <span v-if="previewRange?.startChanged">Confirm</span>
+        <Equal v-else />
       </button>
     </div>
 
@@ -139,16 +142,19 @@
         </button>
       </div>
 
-      <div class="h-6 w-6 mr-4 shrink-0">
+      <div class="h-6 min-w-[1.5rem] mr-4 shrink-0">
         <button
-          v-show="isLineControlsVisible"
+          v-show="isLineControlsVisible || previewRange?.endChanged"
           v-tooltip="editorTooltip(syncEndTitle)"
-          class="button bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-300 hover:dark:bg-neutral-600 p-1 rounded-full text-sm h-6 w-6"
+          class="button h-6"
+          :class="previewRange?.endChanged ? confirmButtonClass : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-300 hover:dark:bg-neutral-600 p-1 rounded-full text-sm w-6'"
+          data-testid="sentence-sync-end"
           :title="syncEndTitle"
           :aria-label="syncEndTitle"
           @click.stop="emit('sync-end', index)"
         >
-          <Equal />
+          <span v-if="previewRange?.endChanged">Confirm</span>
+          <Equal v-else />
         </button>
       </div>
     </div>
@@ -250,6 +256,8 @@ const emit = defineEmits([
   'rewind-end',
   'forward-end',
 ])
+
+const confirmButtonClass = 'rounded px-2 text-xs bg-amber-200 text-amber-950 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700'
 
 const rowElement = ref(null)
 
