@@ -10,11 +10,11 @@
   >
     <div class="flex items-center gap-1 w-[3.5rem]">
       <button
-        v-tooltip="editorTooltip('Play from this sentence and continue forward; stop looping and follow lyrics')"
+        v-tooltip="editorTooltip('Play from this sentence; keep Loop on when enabled, otherwise continue forward')"
         class="button p-1 rounded-full text-sm h-6 w-6"
         :class="Number.isFinite(line.start_ms) && line.start_ms >= 0 ? 'button-normal' : 'button-disabled'"
         :disabled="!Number.isFinite(line.start_ms) || line.start_ms < 0"
-        :title="Number.isFinite(line.start_ms) && line.start_ms >= 0 ? 'Play line and continue; stop looping and follow lyrics' : 'Set a sentence start timestamp before playing this line'"
+        :title="Number.isFinite(line.start_ms) && line.start_ms >= 0 ? 'Play line; keep Loop on when enabled, otherwise continue forward' : 'Set a sentence start timestamp before playing this line'"
         :aria-label="`Play lyric ${index + 1}`"
         @click.stop="emit('play-line', index)"
       >

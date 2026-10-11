@@ -133,7 +133,13 @@ add listening context around that phrase without changing its lyric timestamps.
 Both context values default to zero: the loop is exactly between the two markers.
 Released/nudged marker previews are used immediately for auditioning; dragging
 does not continuously reseek the player. Apply confirms them; Cancel returns the
-loop to the saved document boundaries. Changing selected lines turns looping off.
+loop to the saved document boundaries. Changing selected lines moves the loop to
+the new lyric's markers without turning it off. Sentence Play, word playback,
+pause/resume, waveform seeking and zoom preserve the toggle. Waveform seeking
+uses the current selected range; it does not select a different lyric.
+Untimed/reversed selections suspend repetition and show a short status message;
+selecting valid markers resumes it. Switching to Plain suspends repetition and
+returning to Synced restores it.
 Turn looping off when you want to continue through the whole song.
 Changing recordings or closing the editor cancels a pending loop start. A player
 failure stops looping and displays an error rather than repeatedly seeking.
@@ -159,10 +165,10 @@ Optional Lead-in/Tail extend the loop range; set both to zero for exact markers.
 Normal Play continues beyond the end marker.
 
 Sentence **Play** buttons remain visible without hovering. Click one to select
-its markers and play forward from that sentence. Explicit Play turns Loop off
-and resumes Follow Lyrics; markers then follow each timed sentence in Word
-Timing. Use the separate Loop button when you want marker-range repetition.
-Timing-edit auditions retain Loop. An untimed sentence's Play button is disabled
+its markers and play from that sentence. Loop stays on when enabled; the new
+selected range repeats. With Loop off, playback continues forward and Follow
+Lyrics can move the selection. Turn the Loop button off explicitly for continuous
+playback. Timing-edit auditions also retain Loop. An untimed sentence's Play button is disabled
 until you assign its start; a start at `00:00.000` is valid.
 
 On entering **Synced**, markers show the selected sentence's saved start/end.
@@ -398,3 +404,15 @@ Existing configured shortcuts have priority over F1 help.
 ![Hover help setting in dark mode](screenshots/current/hover-help-settings-dark.png)
 ![On-demand help in light mode](screenshots/current/timed-hover-help-light.png)
 ![On-demand help in dark mode](screenshots/current/timed-hover-help-dark.png)
+
+### Persistent Loop Navigation (2.2.5)
+
+The Loop toggle stays on while navigating within the current recording. Selecting
+another lyric uses its markers; waveform seeking stays within the current selected
+loop range. Zoom/pan and word playback preserve the mode. Paused navigation does
+not start audio. Plain/instrumental/untimed states suspend repetition without
+losing the choice. Invalid ranges leave the Loop button enabled so you can turn
+it off. Source changes, editor closure and playback failures reset the mode.
+
+![Persistent Loop in light mode](screenshots/current/loop-persistent-navigation-light.png)
+![Persistent Loop in dark mode](screenshots/current/loop-persistent-navigation-dark.png)

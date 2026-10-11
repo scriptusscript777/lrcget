@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.4+local.1. **Editing developer:** Rick Lidgett
+**Version:** 2.2.5+local.1. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -100,8 +100,9 @@ marker previews become the audition range before confirmation. Dragging does
 not continuously reseek. Apply commits timestamps; Cancel restores saved bounds.
 
 Normal playback can pass the end marker. A sentence's Play button selects that
-phrase and plays forward, turning Loop off. Changing lyric selection also turns
-Loop off. Timing-edit auditions can retain an active loop.
+phrase and retains an enabled Loop. Changing lyric selection moves the loop to
+the new markers. Turn Loop off for forward playback. Untimed selections and
+inactive tabs suspend repetition without losing the mode.
 
 ## Lines and Individual Words
 
@@ -170,7 +171,7 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.4-local.1.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.5-local.1.md).
 Current images use demonstration fixtures, not personal recordings. New help/settings
 captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
@@ -183,10 +184,10 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The 2.2.4 code run passed 389 frontend tests and 57 Rust tests (one optional
-fixture test ignored), scoped ESLint/Prettier and Cargo check. Browser checks
-cover the saved help switch, keyboard use, Cancel/failed Save, timing and restart;
-isolated native checks verify real SQLite persistence and reload restoration.
+The 2.2.5 frontend run passed 396 tests and scoped ESLint. Browser checks cover
+persistent Loop, sentence navigation, repeat boundaries, zoom, tab suspension and
+explicit Off. The unchanged Rust logic passed 57 tests in 2.2.4 (one optional
+fixture ignored). Saved hover-help checks remain documented in the 2.2.4 review.
 Ruff reports 11 existing findings in the unchanged Python test-data generator.
 These results do not guarantee perfect lyrics.
 

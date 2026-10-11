@@ -13,6 +13,7 @@ export function useEditLyricsV2Playback({
   duration,
   selectedLineIndex,
   markerPreview,
+  loopAvailable = ref(true),
   onError = () => {},
 }) {
   const loopEnabled = ref(false)
@@ -20,6 +21,7 @@ export function useEditLyricsV2Playback({
   const loopTailSeconds = ref(0)
   let awaitingLoopSeek = false
   let initializingLoop = false
+  let initializingPlay = false
   let loopOperation = 0
   let playOperation = 0
   let disposed = false
@@ -68,13 +70,14 @@ export function useEditLyricsV2Playback({
       : playingTrack.value.file_path === audioSource.value.file_path
   }
 
-  const playLineAtOffset = async (lineIndex, offsetMs = 0, { continuePlayback = false } = {}) => {
+  const playLineAtOffset = async (lineIndex, offsetMs = 0) => {
     const source = audioSource.value
     const line = syncedLines.value[lineIndex]
     if (!source || !line || !Number.isFinite(offsetMs) || disposed) return
-    // Explicit Play continues through the recording; edit auditions preserve Loop.
-    if (continuePlayback) stopLoop()
+    // Loop is a mode: navigation moves its range without changing the toggle.
+    if (loopEnabled.value && selectedLineIndex) selectedLineIndex.value = lineIndex
     const operation = ++playOperation
+    initializingPlay = true
     const sourceKey = waveformSourceKey(source)
     const lineStartMs = line.start_ms
     const baseStartMs = Number.isFinite(lineStartMs)
@@ -98,11 +101,13 @@ export function useEditLyricsV2Playback({
       await seek(seekTo)
     } catch (error) {
       if (!disposed && operation === playOperation) onError(error)
+    } finally {
+      if (operation === playOperation) initializingPlay = false
     }
   }
 
   const playLine = async lineIndex => {
-    return playLineAtOffset(lineIndex, 0, { continuePlayback: true })
+    return playLineAtOffset(lineIndex)
   }
 
   const resumeOrPlay = async () => {
@@ -120,7 +125,7 @@ export function useEditLyricsV2Playback({
       stopLoop()
       return
     }
-    if (!audioSource.value || !loopRange.value) return
+    if (disposed || !audioSource.value || !loopAvailable.value || !loopRange.value) return
     const operation = ++loopOperation
     loopEnabled.value = true
     initializingLoop = true
@@ -129,7 +134,13 @@ export function useEditLyricsV2Playback({
       if (!isPlayingCorrectTrack()) await playTrack(audioSource.value)
       else if (status.value === 'paused') await resume()
       // A canceled/changed editor must not seek a different recording after an await.
-      if (operation !== loopOperation || !loopEnabled.value || !isPlayingCorrectTrack()) return
+      if (
+        operation !== loopOperation ||
+        !loopEnabled.value ||
+        !loopAvailable.value ||
+        !isPlayingCorrectTrack()
+      )
+        return
       if (loopRange.value) await seek(loopRange.value.start)
     } catch (error) {
       failLoop(error, operation)
@@ -141,10 +152,16 @@ export function useEditLyricsV2Playback({
   watch(loopRange, () => {
     awaitingLoopSeek = false
   })
-  watch([progress, status, loopRange, playingTrack], () => {
-    if (!loopEnabled.value || initializingLoop) return
-    if (!isPlayingCorrectTrack() || !loopRange.value) {
+  watch([progress, status, loopRange, playingTrack, loopAvailable], () => {
+    if (!loopEnabled.value || initializingLoop || initializingPlay) return
+    if (!isPlayingCorrectTrack()) {
       stopLoop()
+      return
+    }
+    // Untimed/reversed selections and inactive editor tabs suspend repetition,
+    // retaining the user's choice until usable boundaries return.
+    if (!loopAvailable.value || !loopRange.value) {
+      awaitingLoopSeek = false
       return
     }
     if (status.value !== 'playing' && status.value !== 'stopped') return
@@ -163,9 +180,28 @@ export function useEditLyricsV2Playback({
   })
 
   if (selectedLineIndex) {
-    watch(selectedLineIndex, stopLoop, { flush: 'sync' })
+    watch(
+      selectedLineIndex,
+      () => {
+        // Invalidate an old asynchronous start/replay, keeping the new range armed.
+        loopOperation++
+        playOperation++
+        initializingLoop = false
+        initializingPlay = false
+        awaitingLoopSeek = false
+      },
+      { flush: 'sync' }
+    )
   }
-  watch(audioSource, stopLoop, { deep: true, flush: 'sync' })
+  watch(
+    audioSource,
+    () => {
+      playOperation++
+      initializingPlay = false
+      stopLoop()
+    },
+    { deep: true, flush: 'sync' }
+  )
   onScopeDispose(() => {
     disposed = true
     playOperation++
@@ -177,7 +213,7 @@ export function useEditLyricsV2Playback({
     loopRange,
     loopLeadSeconds,
     loopTailSeconds,
-    canLoop: computed(() => !!loopRange.value),
+    canLoop: computed(() => loopAvailable.value && !!loopRange.value),
     toggleLoop,
     playLine,
     playLineAtOffset,

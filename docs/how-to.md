@@ -159,8 +159,14 @@ Use waveform Follow for viewport movement, Follow Lyrics for editing selection.
 5. Turn Loop off to keep playing forward.
 
 Lead-in/Tail add context to playback, not the saved lyric timestamps. Changing
-selected lines turns Loop off. Clicking a sentence's Play button also turns it
-off and plays forward from that phrase. Timing-edit auditions can retain Loop.
+selected lines moves the loop to the new lyric's markers while Loop stays on.
+Sentence Play and word playback also retain Loop. Turn the Loop button off for
+continuous playback. Untimed/reversed selections suspend repetition, keeping
+Loop on and showing a short status message; select valid markers to resume.
+Switching to Plain temporarily suspends repetition; returning to Synced resumes
+it. Changing recordings, closing the editor or a playback failure resets Loop.
+
+![Loop remains on after jumping to another sentence](screenshots/current/loop-persistent-navigation-light.png)
 
 ## Edit Individual Words
 
@@ -232,7 +238,7 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Playhead leaves the zoomed view       | Enable waveform Follow; manual panning holds inspection; double-click zoom now preserves Follow                                                     |
 | Markers do not advance with sentences | Enable Follow Lyrics; manual selection, edits and loops pin the target                                                                              |
-| Audio stops/repeats at a marker       | Turn Loop off; sentence Play starts forward playback                                                                                                |
+| Audio stops/repeats at a marker       | Turn Loop off for forward playback; sentence Play retains an enabled Loop                                                                           |
 | No markers or row playback for TXT    | Assign its start first; untimed text has no real timestamps yet                                                                                     |
 | End says Inferred end                 | Set end at playback or confirm the intended pair with Apply Markers                                                                                 |
 | Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                        |

@@ -39,6 +39,9 @@
   <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.5+local.1" date="2026-10-11">
+      <description><p>Loop stays enabled while navigating between lyrics. Selected markers retarget repetition; untimed selections and inactive tabs suspend it without losing the toggle. Explicit Off restores continuous playback.</p></description>
+    </release>
     <release version="2.2.4+local.1" date="2026-10-11">
       <description><p>Hover help is off by default with a saved Configuration toggle. F1 requests help on demand; enabled hover help expires after two seconds. Settings saves preserve the previous choice on cancellation or failure.</p></description>
     </release>

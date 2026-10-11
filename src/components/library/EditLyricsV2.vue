@@ -379,11 +379,12 @@ const {
   duration,
   selectedLineIndex: selectedSyncedLineIndex,
   markerPreview,
+  loopAvailable: computed(() => activeTab.value === 'synced' && !isInstrumental.value),
   onError: error => toast.error(`Loop playback failed: ${error?.message || error}`),
 })
 
 const handlePlayLineAtOffset = ({ lineIndex, offsetMs }) => {
-  return playLineAtOffset(lineIndex, offsetMs, { continuePlayback: true })
+  return playLineAtOffset(lineIndex, offsetMs)
 }
 
 const rewindLineBy100 = lineIndex => {
@@ -553,7 +554,6 @@ const handleWordTimingEdited = async ({ startMs }) => {
 
 watch(activeTab, value => {
   if (value !== 'synced') {
-    loopEnabled.value = false
     isSyncedLineEditing.value = false
     return
   }

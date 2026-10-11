@@ -279,7 +279,7 @@ const wordTextInput = ref(null)
 const canApplyWordText = computed(() => wordText.value.length > 0 && !/\s/u.test(wordText.value))
 
 const playLineTitle = withShortcutTitle(
-  'Play line and continue; stop looping and follow lyrics',
+  'Play line; keep Loop on when enabled, otherwise continue forward',
   syncedEditorShortcutBindings,
   'replaySelectedLine'
 )

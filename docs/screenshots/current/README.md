@@ -30,3 +30,8 @@ data. Hover remains quiet by default; F1 explicitly opens the depicted help.
 Checks cover saved on/off choice, keyboard access, Cancel/failed Save, restart,
 pending timer cancellation, timeout, dynamic controls and disposal. Other unchanged
 views retain the 2.2.2 captures described above.
+
+`loop-persistent-navigation-*` are fresh 2.2.5 browser captures using generated
+fixture data and the actual editor. Loop remains active after playing the second
+sentence; its marker range is 00:03.000–00:06.000. Light/dark captures were checked
+alongside navigation, repeat, zoom, tab suspension/restoration and explicit Off.

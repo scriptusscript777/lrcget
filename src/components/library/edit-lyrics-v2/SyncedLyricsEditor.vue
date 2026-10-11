@@ -9,7 +9,7 @@
           <option v-for="step in [10, 25, 50, 100]" :key="step" :value="step">{{ step }} ms</option>
         </select>
       </label>
-      <button v-tooltip="editorTooltip('Repeat between the selected start/end markers; optional lead-in and tail add listening context')" class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop" :aria-pressed="loopEnabled" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
+      <button v-tooltip="editorTooltip('Keep repeating the selected markers until Loop is turned off; selecting another lyric moves the loop')" class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop && !loopEnabled" :aria-pressed="loopEnabled" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
       <label v-tooltip="editorTooltip('Extra listening time before the loop start, in seconds; use zero for exact marker bounds')" class="text-xs inline-flex items-center gap-1">Lead-in
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
       </label>
@@ -17,6 +17,9 @@
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
       </label>
     </div>
+    <p v-if="loopEnabled && !canLoop" role="status" class="mt-1 shrink-0 text-xs text-neutral-600 dark:text-neutral-300">
+      Loop is on; select a lyric with valid start/end markers to repeat.
+    </p>
     <div class="mt-2 flex shrink-0 flex-wrap items-center gap-2">
       <button
         v-tooltip="editorTooltip('Show or hide word timing and karaoke editing controls')"

@@ -17,7 +17,7 @@ The synced editor keeps bounded session undo/redo snapshots via `useLyricHistory
 Timing steps (10/25/50/100 ms) apply to line, end and bulk controls; line nudges
 shift word/end timing by the same actual displacement. Phrase-loop controls
 use the selected line's boundaries and playback updates with seek deduplication.
-Changing the selection or leaving the Synced tab disables looping. Native undo
+Loop stays enabled across selection changes; inactive tabs suspend repetition. Native undo
 in editable fields is not intercepted. Save completion preserves in-flight edits.
 Timing-step and loop-context fields reuse shared `.select`/`.input` theme styles
 with explicit light/dark native color schemes for readable controls and options.
@@ -149,7 +149,7 @@ colors and apply-marker confirmation remains a separate local-draft action.
 - Neighbor warnings: the parent supplies the previous lyric and next start. `waveformNeighborWarnings` derives crossed-boundary distances from the live pair, using the saved selected start for a previous inferred end and skipping untimed/invalid neighbors. A conditional wrapping note persists through zoom/pan, without blocking Apply or mutating neighbors. Final-line Loop falls back to a known positive recording duration when no explicit/next end exists.
 - Waveform navigation: manual range/wheel/trackpad panning temporarily disables follow, so playback cannot undo inspection. A pending manual-inspection flag restores follow on pause/play, but explicit toggle choices clear that flag and remain respected. Zoom preserves the follow setting and prioritizes a visible playhead inside the selected phrase, then a visible start/end marker, then the visible phrase interior; an entirely off-screen selection is brought back around its start. Wheel deltas support pixel/line/page units, preserve modified browser gestures and use the plot width for linear mapping. Zoom/pan/fit are ignored during marker drags; navigation never emits document edits or seeks. Committed marker times remain in the document regardless of viewport/playhead movement.
 - Waveform lyric markers: selected synced line start/end are pointer-captured sliders with Arrow/Home/End controls using the timing step (Shift multiplies by ten). A compact persistent Start/End row displays the selected marker times in milliseconds, including off-screen markers. It uses the same live drag/draft values as the marker lines, labels unconfirmed edits Preview, and describes inferred ends through hover/accessibility text. Invalid/untimed selections hide the row. A decorative 10% tint spans the preview pair clipped against the viewport; entirely off-screen ranges hide it, and pointer-events none preserves seeking/marker input. Preview is local; release stages a draft and only Apply Markers commits through the document API/history. Pointer cancellation/lost capture discard only the active drag; Cancel/Escape outside a drag, source/selection/document changes and unmount discard the pending pair. Start changes shift word timestamps while keeping the lyric end fixed; end changes cannot truncate words. Bounds allow word ends exactly equal to the lyric end. Neighbors and overlaps are untouched, and an implicit end uses the next start or audio duration until explicitly edited.
-- Loop safety (.13): an operation counter cancels asynchronous initialization on source/selection changes, loop-off and scope disposal. Watchers do not seek during initialization; failed repeat seeks disable looping and report through the parent's toast callback. Track replacement is observed even while paused. Word highlighting still uses committed document timings until marker Apply.
+- Loop safety (.13): operation counters cancel stale asynchronous initialization/replay on source/selection changes, loop-off and scope disposal. Selection preserves the mode; inactive/invalid ranges suspend it. Watchers do not seek during initialization; failed repeat seeks disable looping and report through the parent's toast callback. Track replacement is observed even while paused. Word highlighting still uses committed document timings until marker Apply.
 - Preview loops (.12): `preview-markers` publishes valid released/nudged drafts with line identity/index to the parent. Playback uses that range only for the current selected line; null or stale previews fall back to committed bounds. Lead-in/tail default to zero. Range changes reset seek acknowledgement, and out-of-range playing positions seek back inside. No preview changes saved lyric data; active pointer drags do not emit new loop ranges.
 - Point zoom (.11): double-click maps the pointer through the current viewport and halves its span around that anchor. It shares minimum-span bounds and manual-inspection follow behavior with navigation. Single-click seeking remains; drag-time navigation and invalid pointer geometry are ignored. Zoom cannot change marker/document timestamps.
 - Marker confirmation (.10): drag release/keyboard nudges stage a component-local start/end draft. Apply Markers emits `update-markers` with both milliseconds, original line identity/index and duration; `updateWaveformMarkers` rejects stale or invalid pairs, shifts word timings once and records one history snapshot. Cancel discards the pair; a canceled drag restores the pre-drag draft. Source/selection/document changes and unmount discard unconfirmed drafts. Save/export never sees a pending draft. Bounds validate the virtual shifted-word line and the proposed end; navigation/follow cannot mutate draft timestamps.
@@ -229,3 +229,15 @@ help under the pointer or at keyboard focus independently of the preference, on
 window bubbling after configured editor shortcuts. Modifier/repeat/handled keys
 are ignored. Toggle changes cancel pending/displayed help. Disposal removes the
 watcher, timers, observer and listeners. Dropdown behavior and playback are unchanged.
+
+### Persistent loop mode (2.2.5)
+
+`useEditLyricsV2Playback` keeps `loopEnabled` separate from range availability.
+Selection invalidates old asynchronous starts/replays and resets seek acknowledgement
+without disabling the mode; the computed range follows the new selected lyric.
+Explicit sentence/word playback selects its loop target and suppresses automatic
+repeat seeks during load/resume/seek. `loopAvailable` suspends repetition for
+inactive Plain/instrumental states. Invalid/untimed ranges suspend rather than
+clear the mode. The active toggle remains enabled for Off and a conditional status
+explains unavailable markers. Source changes/disposal and genuine loop failures
+still reset safely. Waveform zoom/pan/seek preserve the mode and selected range.

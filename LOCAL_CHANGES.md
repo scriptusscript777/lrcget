@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.4+local.1`, based on upstream tag `2.2.0`.
+Local version: `2.2.5+local.1`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -418,3 +418,14 @@ Configured shortcuts have priority; held/repeated or modified F1 is ignored.
 Opt-in automatic help waits one second, expires after two seconds and hides on
 leave/click/scroll/Escape/blur/resize/removal. Turning it off cancels pending help.
 Other Linux package formats are paused at Rick's request.
+
+## Persistent Loop Navigation (2.2.5+local.1)
+
+The Loop toggle remains on across lyric selection, sentence/word playback,
+waveform seek, pause/resume and zoom. Selected-lyric navigation retargets the
+range; waveform seeking retains the current selected range. Untimed/reversed
+selections and inactive Plain/instrumental tabs suspend repetition without
+resetting the mode. A conditional status explains invalid ranges; the active
+Loop button remains usable for turning it off. Source changes, closure and player
+failures keep their protective resets. Selection invalidates older asynchronous
+resume/replay seeks and errors so navigation cannot jump back to a previous line.

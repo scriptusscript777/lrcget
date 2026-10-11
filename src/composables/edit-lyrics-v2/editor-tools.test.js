@@ -543,28 +543,30 @@ describe('phrase loop', () => {
       scope.stop()
     }
   )
-  it('explicit sentence Play stops a marker loop and continues beyond its end', async () => {
+  it('sentence Play retains Loop and repeats the newly selected phrase', async () => {
     const { state, controls, scope } = player()
     await state.toggleLoop()
     expect(state.loopEnabled.value).toBe(true)
     controls.seek.mockClear()
     await state.playLine(1)
-    expect(state.loopEnabled.value).toBe(false)
+    expect(state.loopEnabled.value).toBe(true)
+    expect(controls.selectedLineIndex.value).toBe(1)
     expect(controls.seek).toHaveBeenCalledExactlyOnceWith(4)
     controls.status.value = 'playing'
     controls.progress.value = 6
     await nextTick()
-    expect(controls.seek).toHaveBeenCalledTimes(1)
+    expect(controls.seek).toHaveBeenCalledTimes(2)
+    expect(controls.seek).toHaveBeenLastCalledWith(4)
     scope.stop()
   })
 
-  it('edit auditions retain looping, but explicit offset playback stops it', async () => {
+  it('edit auditions and explicit offset playback both retain looping', async () => {
     const { state, controls, scope } = player()
     await state.toggleLoop()
     await state.playLineAtOffset(0, 100)
     expect(state.loopEnabled.value).toBe(true)
-    await state.playLineAtOffset(1, 100, { continuePlayback: true })
-    expect(state.loopEnabled.value).toBe(false)
+    await state.playLineAtOffset(1, 100)
+    expect(state.loopEnabled.value).toBe(true)
     expect(controls.seek).toHaveBeenLastCalledWith(4.1)
     scope.stop()
   })
@@ -692,7 +694,158 @@ describe('phrase loop', () => {
     expect(controls.seek).toHaveBeenCalledTimes(3)
     controls.selectedLineIndex.value = 1
     await nextTick()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(state.loopRange.value).toEqual({ start: 3, end: 5.5 })
+    expect(controls.seek).toHaveBeenLastCalledWith(3)
+    scope.stop()
+  })
+
+  it('suspends an untimed or reversed selection without turning Loop off', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    controls.syncedLines.value.push(
+      { text: 'untimed' },
+      { text: 'reversed', start_ms: 3000, end_ms: 2000 }
+    )
+    controls.status.value = 'playing'
+    controls.seek.mockClear()
+    for (const index of [2, 3]) {
+      controls.selectedLineIndex.value = index
+      await nextTick()
+      expect(state.loopEnabled.value).toBe(true)
+      expect(state.canLoop.value).toBe(false)
+      expect(controls.seek).not.toHaveBeenCalled()
+    }
+    controls.selectedLineIndex.value = 1
+    await nextTick()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(controls.seek).toHaveBeenLastCalledWith(4)
+    await state.toggleLoop()
     expect(state.loopEnabled.value).toBe(false)
+    scope.stop()
+  })
+
+  it('can turn Loop off while its current selection has no usable range', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    controls.selectedLineIndex.value = -1
+    await nextTick()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(state.canLoop.value).toBe(false)
+    await state.toggleLoop()
+    expect(state.loopEnabled.value).toBe(false)
+    scope.stop()
+  })
+
+  it('suspends on an inactive tab and resumes the same armed mode on return', async () => {
+    const { scope, controls } = player()
+    // A separately scoped instance supplies the parent editor tab gate.
+    scope.stop()
+    const nextScope = effectScope()
+    const available = ref(true)
+    const loop = nextScope.run(() =>
+      useEditLyricsV2Playback({ ...controls, loopAvailable: available })
+    )
+    await loop.toggleLoop()
+    controls.status.value = 'playing'
+    controls.seek.mockClear()
+    available.value = false
+    controls.progress.value = 8
+    await nextTick()
+    expect(loop.loopEnabled.value).toBe(true)
+    expect(controls.seek).not.toHaveBeenCalled()
+    available.value = true
+    await nextTick()
+    expect(loop.loopEnabled.value).toBe(true)
+    expect(controls.seek).toHaveBeenLastCalledWith(1)
+    nextScope.stop()
+  })
+
+  it('does not finish a delayed loop start on an inactive tab', async () => {
+    const { scope, controls } = player()
+    scope.stop()
+    const nextScope = effectScope()
+    const available = ref(true)
+    const loop = nextScope.run(() =>
+      useEditLyricsV2Playback({ ...controls, loopAvailable: available })
+    )
+    let finish
+    controls.resume.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    )
+    const pending = loop.toggleLoop()
+    available.value = false
+    finish()
+    await pending
+    expect(loop.loopEnabled.value).toBe(true)
+    expect(controls.seek).not.toHaveBeenCalled()
+    nextScope.stop()
+  })
+
+  it('keeps the Loop control usable when repetition is suspended', async () => {
+    const html = await renderToString(
+      createSSRApp(SyncedLyricsEditor, {
+        modelValue: [{ text: 'Untimed lyric' }],
+        selectedLineIndex: 0,
+        loopEnabled: true,
+        canLoop: false,
+      })
+    )
+    const button = html.match(/<button\b[^>]*aria-label="Loop selected phrase"[^>]*>/)?.[0]
+    expect(button).toBeTruthy()
+    expect(button).not.toContain('disabled')
+    expect(button).toContain('aria-pressed="true"')
+    expect(html).toContain('Loop is on; select a lyric with valid start/end markers')
+  })
+
+  it('cancels stale replay and loop-start seeks when navigation changes during resume', async () => {
+    for (const startLoop of [false, true]) {
+      const { state, controls, scope } = player()
+      if (!startLoop) await state.toggleLoop()
+      controls.seek.mockClear()
+      let finish
+      controls.resume.mockImplementation(
+        () =>
+          new Promise(resolve => {
+            finish = resolve
+          })
+      )
+      const pending = startLoop ? state.toggleLoop() : state.playLine(0)
+      controls.selectedLineIndex.value = 1
+      finish()
+      await pending
+      expect(state.loopEnabled.value).toBe(true)
+      expect(controls.seek).not.toHaveBeenCalled()
+      controls.status.value = 'playing'
+      controls.progress.value = 0.5
+      await nextTick()
+      expect(controls.seek).toHaveBeenLastCalledWith(4)
+      scope.stop()
+    }
+  })
+
+  it('ignores a failed repeat seek from the previous lyric after navigation', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop()
+    let reject
+    controls.seek.mockImplementationOnce(
+      () =>
+        new Promise((_, fail) => {
+          reject = fail
+        })
+    )
+    controls.status.value = 'playing'
+    controls.progress.value = 3
+    await nextTick()
+    controls.selectedLineIndex.value = 1
+    await nextTick()
+    reject(new Error('old seek failed'))
+    await Promise.resolve()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(controls.onError).not.toHaveBeenCalled()
     scope.stop()
   })
 
