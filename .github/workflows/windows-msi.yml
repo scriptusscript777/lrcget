@@ -1,0 +1,48 @@
+name: Build and check Windows MSI
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows-msi:
+    runs-on: windows-2025
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install frontend dependencies and test
+        shell: pwsh
+        run: |
+          npm ci
+          if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
+          npm test
+          if ($LASTEXITCODE -ne 0) { throw 'Frontend tests failed' }
+          node --test packaging/windows/msi-config.checks.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'MSI configuration tests failed' }
+      - name: Build MSI with the supported Windows toolchain
+        shell: pwsh
+        run: ./packaging/windows/build-msi.ps1 -OutputDirectory "$env:GITHUB_WORKSPACE/packages"
+      - name: Test native backend
+        shell: pwsh
+        working-directory: src-tauri
+        run: |
+          cargo test --locked
+          if ($LASTEXITCODE -ne 0) { throw 'Native backend tests failed' }
+      - name: Check MSI installation and removal
+        shell: pwsh
+        run: ./packaging/windows/check-msi.ps1 -PackageDirectory "$env:GITHUB_WORKSPACE/packages"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-msi-results
+          path: packages/
+          if-no-files-found: error
