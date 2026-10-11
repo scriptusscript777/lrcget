@@ -1,4 +1,4 @@
-# Code and maintenance guide — 2.2.6+local.10
+# Code and maintenance guide — 2.2.7
 
 Start with [build instructions](build-from-source.md),
 [platform matrix](platform-builds.md), [frontend architecture](../src/ARCHITECTURE.md)
@@ -136,3 +136,14 @@ precedes replacement confirmation, so an invalid file cannot erase the editor.
 Normal LRC imports retain line timing with empty word arrays; plain TXT remains
 untimed. Native payload resolution retains raw server YAML and falls back only
 when it is absent/empty. Publication already sends that structured format.
+
+## Word Sync confirmation and additional Pause/Resume (2.2.7)
+
+Accepted manual timing is identified by sentence/index, word signature and bounds.
+Sync consumes that pending adjustment and exposes a confirmed state that blocks
+both clicks and shortcuts until another real timing adjustment. Reselecting the
+same word, unchanged precision values and playback do not unlock it; different
+word/document/bounds changes are reevaluated. Ordinary playback stamping retains
+advance, with duplicate unchanged-position actions suppressed without warnings.
+Pause/Resume emits through the synced editor to the existing player functions;
+it has no lyric mutation, seek, selection or loop-mode side effect.

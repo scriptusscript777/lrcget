@@ -1,18 +1,18 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.6+local.10**.
+For Rick Lidgett's LRCGET **2.2.7**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Use the current `.deb` and checksum in Downloads. The local.10 GitHub release
+1. Use the current `.deb` and checksum in Downloads. The 2.2.7 GitHub release
    remains unpublished until validation and the backup are complete.
    See [all package and source instructions](packages.md) for AppImage and Windows.
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.6+local.10_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.6+local.10_amd64.deb
+sha256sum -c LRCGET_2.2.7_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.7_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -178,13 +178,20 @@ it. Changing recordings, closing the editor or a playback failure resets Loop.
 2. Use its separate zoom/scrolling to inspect individual word boundaries.
 3. Select a word, drag its left divider, or enter precise Start/End seconds.
    Releasing a drag applies one undoable timing edit; sentence markers stay fixed.
-4. The next **Sync word** keeps that manual adjustment and selection. Otherwise
+4. **Sync word** keeps that manual adjustment and selection, then turns gray and
+   disables itself until the next divider or Start/End adjustment. Playback and
+   repeated shortcuts cannot reapply it. Otherwise
    Sync stamps playback only inside the word's available sentence/neighbor bounds,
    then advances when Loop word is off. An unsafe stamp shows a message and keeps
    the words and selection unchanged. Loop word keeps the selected target.
 5. Edit wording through the sentence row, not the word boxes. Double-click selects;
    F2/right-click do not open word editing and Delete cannot delete the sentence
    while the word lane is open. Collapse it before using sentence-delete shortcuts.
+
+The additional **Pause/Resume** button beside Play pauses at the current position
+and resumes there, retaining word Loop. **Play** keeps its existing replay behavior.
+
+![Confirmed manual word timing disables Sync](screenshots/current/word-sync-confirmed-light.png)
 
 ![Timing-only word boxes and protected Sync](screenshots/current/word-timing-protected-light.png)
 

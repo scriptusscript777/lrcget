@@ -39,6 +39,7 @@
   <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.7" date="2026-10-11"><description><p>Disable confirmed manual Word Sync until the next adjustment and add word-lane Pause and Resume.</p></description></release>
     <release version="2.2.6+local.10" date="2026-10-11"><description><p>Safe timing-only word edits with fixed sentence markers and protected synchronization.</p></description></release>
     <release version="2.2.6+local.9" date="2026-10-11"><description><p>Word-timed server downloads with automatic line/plain fallback and enhanced LRC import.</p></description></release>
     <release version="2.2.6+local.8" date="2026-10-11"><description><p>Loop individual words with precise timing fields, listening context and readable zoomed labels.</p></description></release>

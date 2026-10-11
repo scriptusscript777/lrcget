@@ -154,7 +154,7 @@ colors and apply-marker confirmation remains a separate local-draft action.
 - Point zoom (.11): double-click maps the pointer through the current viewport and halves its span around that anchor. It shares minimum-span bounds and manual-inspection follow behavior with navigation. Single-click seeking remains; drag-time navigation and invalid pointer geometry are ignored. Zoom cannot change marker/document timestamps.
 - Marker confirmation (.10): drag release/keyboard nudges stage a component-local start/end draft. The historical Apply Markers control emitted `update-markers` with both milliseconds, original line identity/index and duration; `updateWaveformMarkers` rejects stale or invalid pairs, shifts word timings once and records one history snapshot. Cancel discards the pair; a canceled drag restores the pre-drag draft. Source/selection/document changes and unmount discard unconfirmed drafts. Save/export never sees a pending draft. Bounds validate the virtual shifted-word line and the proposed end; navigation/follow cannot mutate draft timestamps.
 - Narrow word segments retain timed hover descriptions, active highlighting and divider drag timestamps; no hint bubble is rendered beneath selected dividers. Active words use a mutually exclusive dark accent/white text pair in both themes. Waveform controls preserve editor history and registry-configured global shortcuts while isolating local navigation/timing keys. The desktop window already enforces a 1024px minimum width; the waveform strip itself supports narrower embedded widths.
-- Boundary sync: can cascade adjacent boundaries so sync is not blocked by intervening separators, while staying within line bounds
+- Boundary sync: validates the selected interval without moving neighbors; manual confirmation disables Sync until a new timing adjustment.
 - Lyric following: `useLyricsFollow` selects the latest active nonblank cue during matching playback. Manual selection disables following; loops, marker drafts/drags, word edits and multi-selection block it. Selection changes never mutate timing. Blank cues/gaps and repeated phrases are resolved by timestamp, not wording.
 - Sentence markers: initial selection skips blank/untimed rows; valid existing selections survive mode changes. Sentence sync/nudges and word updates use shared document bounds checks, matching-recording progress and loaded duration. Failed sync-and-advance shortcuts do not advance. All word-only updates preserve sentence start/end markers. Marker selection follows playback only when lyric following is enabled and editing/loop guards allow it.
 - Word wording: the word lane is timing-only. Spelling/wording edits belong to sentence rows; double-click selects without splitting, F2/right-click do not edit, and Delete is suppressed while the lane is expanded to protect the sentence.
@@ -411,3 +411,15 @@ and positive explicit ends that do not overlap the next word. Word-only changes
 never move sentence markers. Keyboard navigation, Sync and Reset are guarded
 while a pointer interaction is pending/active. Editor export snapshots the target
 track before awaiting Save. Standard import now rejects seconds >= 60.
+
+### Word Sync lock and Pause/Resume (2.2.7)
+
+Manual confirmation is keyed by line/index, serialized word timing and lane bounds.
+The next Sync locks matching timing; the UI uses a gray disabled button and a help
+explanation, while the composable also blocks shortcuts. Playback/reselection and
+unchanged numeric values cannot unlock it. Accepted new edits and changed words/
+bounds invalidate the lock. Ordinary Sync retains advance; matching duplicate
+playback/selection/document states return false silently to prevent another advance.
+The added word-lane Pause/Resume emits through SyncedLyricsEditor to existing pause
+and resumeOrPlay functions. Play retains sentence replay; pause/resume retains
+position and loop state without lyric edits or explicit seeks.

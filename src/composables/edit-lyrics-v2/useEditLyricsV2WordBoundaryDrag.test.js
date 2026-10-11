@@ -15,6 +15,7 @@ function setup() {
   })
   const update = vi.fn(payload => payload.onResult?.(true))
   const replay = vi.fn()
+  const timingError = vi.fn()
   const words = ref([
     { text: 'first ', start_ms: 1000 },
     { text: 'second', start_ms: 2000 },
@@ -28,6 +29,7 @@ function setup() {
     selectedLineIndex: ref(0),
     onUpdateWords: update,
     onWordTimingEdited: replay,
+    onTimingError: timingError,
   })
   const event = {
     pointerId: 1,
@@ -40,7 +42,7 @@ function setup() {
   const send = (type, extra = {}) =>
     [...(listeners.get(type) || [])].forEach(handler => handler({ ...event, ...extra }))
   const start = () => state.startBoundaryDrag(1, event, x => 2000 + (x - 100) * 10)
-  return { state, update, replay, words, listeners, send, start }
+  return { state, update, replay, words, listeners, send, start, timingError }
 }
 
 describe('word boundary pointer lifecycle', () => {
@@ -189,10 +191,77 @@ it('keeps an accepted numeric edit on Sync and invalidates it after Undo', () =>
   f.state.rememberAdjustedBoundary(0, f.words.value)
   expect(f.state.syncSelectedBoundary(1800)).toBe(true)
   expect(f.update).not.toHaveBeenCalled()
-  expect(f.state.selectedBoundaryIndex.value).toBe(0)
-  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
   f.words.value[0].start_ms = 1000
   expect(f.state.hasAdjustedBoundary.value).toBe(false)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
   expect(f.state.syncSelectedBoundary(1500)).toBe(true)
   expect(f.update.mock.calls[0][0].words[0].start_ms).toBe(1500)
+})
+
+it('ignores repeated Sync after manual timing at unchanged playback without warning or advancing', () => {
+  const f = setup()
+  f.words.value[0].start_ms = 1400
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.syncSelectedBoundary(900)).toBe(true)
+  expect(f.state.syncSelectedBoundary(900)).toBe(false)
+  expect(f.state.syncSelectedBoundary(900)).toBe(false)
+  expect(f.timingError).not.toHaveBeenCalled()
+  expect(f.update).not.toHaveBeenCalled()
+  expect(f.state.selectedBoundaryIndex.value).toBe(0)
+  expect(f.state.syncSelectedBoundary(1500)).toBe(false)
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
+  f.words.value[0].start_ms = 1500
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
+  expect(f.state.syncSelectedBoundary(1500)).toBe(true)
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
+})
+
+it('ignores a double Sync after automatic advance but allows a new playback position', () => {
+  const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
+  expect(f.state.syncSelectedBoundary(1200)).toBe(true)
+  expect(f.state.selectedBoundaryIndex.value).toBe(1)
+  expect(f.state.syncSelectedBoundary(1200)).toBe(false)
+  expect(f.update).toHaveBeenCalledOnce()
+  expect(f.timingError).not.toHaveBeenCalled()
+  expect(f.state.syncSelectedBoundary(2200)).toBe(true)
+  expect(f.update).toHaveBeenCalledTimes(2)
+})
+
+it('keeps duplicate protection from masking explicit selection or external timing changes', () => {
+  const f = setup()
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.syncSelectedBoundary(900)).toBe(true)
+  f.state.selectBoundary(1)
+  expect(f.state.syncSelectedBoundary(900)).toBe(false)
+  expect(f.timingError).toHaveBeenCalledOnce()
+  f.state.selectBoundary(0)
+  expect(f.state.syncSelectedBoundary(900)).toBe(false)
+  expect(f.timingError).toHaveBeenCalledOnce()
+  f.words.value[0].start_ms = 1100
+  expect(f.state.syncSelectedBoundary(900)).toBe(false)
+  expect(f.timingError).toHaveBeenCalledTimes(2)
+})
+
+it('keeps manually confirmed timing locked across playback and same-word reselection, but unlocks on another adjustment', () => {
+  const f = setup()
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.syncSelectedBoundary(1000)).toBe(true)
+  f.state.selectBoundary(0)
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
+  expect(f.state.syncSelectedBoundary(1700, { advance: false })).toBe(false)
+  expect(f.timingError).not.toHaveBeenCalled()
+  f.words.value[0].start_ms = 1100
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
+  expect(f.state.syncSelectedBoundary(1100)).toBe(true)
+  f.state.selectBoundary(1)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
 })

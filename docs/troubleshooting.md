@@ -1,4 +1,4 @@
-# Troubleshooting — 2.2.6+local.10
+# Troubleshooting — 2.2.7
 
 ## A short word is difficult to see in its box
 
@@ -69,8 +69,9 @@ all Windows 11 playback behavior.
 
 ## Sync Word did not change timing
 
-After a divider drag or precise Start/End edit, the next Sync Word keeps that
-accepted adjustment rather than replacing it with playback. Other Sync actions
+After a divider drag or precise Start/End edit, Sync Word keeps that accepted
+adjustment and then turns gray/disabled until another timing adjustment. This
+prevents repeated presses from stamping playback over your chosen time. Other Sync actions
 reject playback outside this word's sentence/neighbor interval and show a message.
 Seek inside that interval or refine adjacent dividers/fields before retrying.
 Words should not disappear or shift neighboring starts; Undo restores each edit.

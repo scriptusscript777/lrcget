@@ -1,3 +1,11 @@
+## 2.2.7 — Word Sync confirmation and word-lane Pause/Resume
+
+Manual Word Sync turns gray/disabled after confirmation until another timing
+adjustment; the same guard blocks hotkeys without a misleading range warning.
+Normal timing advances and suppresses unchanged duplicate stamps. Add Pause/Resume
+next to existing Play, preserving playback position and phrase/word loop state.
+Debian-only release using the main version number; other platform work remains deferred.
+
 ## 2.2.6+local.10 — Debian word timing repairs
 
 Timing-only word boxes; wording is edited through sentence rows. Released drags

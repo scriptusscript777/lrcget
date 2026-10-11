@@ -97,3 +97,13 @@ views were also refreshed from local.10. `word-preview-loop-zoom-*` was refreshe
 with the read-only follow-along and current timing-only lane. The older standalone
 `edit-word-*` captures illustrate a retired control and are kept for historical
 notes; current guides use protected word timing images instead.
+
+## Debian 2.2.7 captures
+
+`word-sync-confirmed-*` illustrates the gray disabled Sync button after manual
+confirmation and the additional Pause/Resume beside Play. `selected-word-loop-*`,
+`word-timing-protected-*` and `word-preview-loop-zoom-*` show the current controls.
+Browser checks also exercised pause/resume without seeks or lyric mutations while
+word Loop stayed on. The broader guide images and enhanced import were refreshed
+with mocked native commands and temporary fixtures. Debian startup uses the actual
+packaged executable and an isolated temporary profile.

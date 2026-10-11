@@ -14,19 +14,33 @@ export function useEditLyricsV2WordBoundaryDrag({
   onTimingError = () => {},
 }) {
   const adjustedBoundary = ref(null)
+  const confirmedBoundary = ref(null)
   let ownUpdate = null
+  let lastSync = null
   const dragState = ref(null)
   const selectedBoundaryIndex = ref(0)
   const selectedBoundaryIndices = ref([0])
   const isDraggingBoundary = ref(false)
   const dragStartPos = ref(null)
 
-  const hasAdjustedBoundary = computed(
-    () =>
+  const hasAdjustedBoundary = computed(() =>
+    Boolean(
       adjustedBoundary.value &&
       adjustedBoundary.value.index === selectedBoundaryIndex.value &&
       adjustedBoundary.value.lineIndex === selectedLineIndex.value &&
       adjustedBoundary.value.signature === JSON.stringify(words.value)
+    )
+  )
+
+  const isManualTimingConfirmed = computed(() =>
+    Boolean(
+      confirmedBoundary.value &&
+      confirmedBoundary.value.index === selectedBoundaryIndex.value &&
+      confirmedBoundary.value.lineIndex === selectedLineIndex.value &&
+      confirmedBoundary.value.signature === JSON.stringify(words.value) &&
+      confirmedBoundary.value.startMs === timelineStartMs.value &&
+      confirmedBoundary.value.endMs === timelineEndMs.value
+    )
   )
 
   const displayedWords = computed(() => {
@@ -110,6 +124,14 @@ export function useEditLyricsV2WordBoundaryDrag({
   }
 
   const rememberAdjustedBoundary = (index, updatedWords) => {
+    if (
+      confirmedBoundary.value?.index === index &&
+      confirmedBoundary.value.lineIndex === selectedLineIndex.value &&
+      confirmedBoundary.value.signature === JSON.stringify(updatedWords)
+    )
+      return
+    confirmedBoundary.value = null
+    lastSync = null
     adjustedBoundary.value = {
       index,
       lineIndex: selectedLineIndex.value,
@@ -302,6 +324,7 @@ export function useEditLyricsV2WordBoundaryDrag({
       return
     }
 
+    lastSync = null
     const currentSelection = selectedBoundaryIndices.value
 
     if (event?.shiftKey && currentSelection.length > 0) {
@@ -336,6 +359,7 @@ export function useEditLyricsV2WordBoundaryDrag({
       return false
     }
 
+    lastSync = null
     const nextIndex = Math.max(0, selectedBoundaryIndex.value - 1)
     applySelection([nextIndex], nextIndex)
     return true
@@ -351,6 +375,7 @@ export function useEditLyricsV2WordBoundaryDrag({
       return false
     }
 
+    lastSync = null
     const nextIndex = Math.min(words.value.length - 1, selectedBoundaryIndex.value + 1)
     applySelection([nextIndex], nextIndex)
     return true
@@ -360,6 +385,7 @@ export function useEditLyricsV2WordBoundaryDrag({
     if (
       dragStartPos.value ||
       dragState.value ||
+      isManualTimingConfirmed.value ||
       !isWordSyncAvailable.value ||
       !Number.isFinite(progressMs) ||
       progressMs < 0
@@ -374,6 +400,20 @@ export function useEditLyricsV2WordBoundaryDrag({
       return false
     }
 
+    const playbackMs = Math.round(progressMs)
+    const signature = JSON.stringify(words.value)
+    if (
+      lastSync &&
+      lastSync.progressMs === playbackMs &&
+      lastSync.lineIndex === selectedLineIndex.value &&
+      lastSync.index === rightWordIndex &&
+      lastSync.signature === signature &&
+      lastSync.startMs === timelineStartMs.value &&
+      lastSync.endMs === timelineEndMs.value
+    ) {
+      return false // Already handled this unchanged position; do not stamp or advance again.
+    }
+    let acceptedSignature = signature
     const adjusted = adjustedBoundary.value
     const keepDraggedTime =
       adjusted &&
@@ -381,9 +421,16 @@ export function useEditLyricsV2WordBoundaryDrag({
       adjusted.lineIndex === selectedLineIndex.value &&
       adjusted.signature === JSON.stringify(words.value)
     adjustedBoundary.value = null
+    if (keepDraggedTime) {
+      confirmedBoundary.value = {
+        ...adjusted,
+        startMs: timelineStartMs.value,
+        endMs: timelineEndMs.value,
+      }
+    }
     if (!keepDraggedTime) {
       const { minStartMs, maxStartMs } = getBoundaryConstraint(rightWordIndex)
-      const startMs = Math.round(progressMs)
+      const startMs = playbackMs
       if (
         !Number.isFinite(minStartMs) ||
         !Number.isFinite(maxStartMs) ||
@@ -398,6 +445,7 @@ export function useEditLyricsV2WordBoundaryDrag({
       }
       const updatedWords = buildUpdatedWords(rightWordIndex, startMs)
       if (!submitWords(updatedWords)) return false
+      acceptedSignature = JSON.stringify(updatedWords)
     }
 
     if (advance && !keepDraggedTime) {
@@ -407,11 +455,20 @@ export function useEditLyricsV2WordBoundaryDrag({
       }
     }
 
+    lastSync = {
+      progressMs: playbackMs,
+      lineIndex: selectedLineIndex.value,
+      index: selectedBoundaryIndex.value,
+      signature: acceptedSignature,
+      startMs: timelineStartMs.value,
+      endMs: timelineEndMs.value,
+    }
     return true
   }
 
   const resetBoundarySelection = () => {
     if (dragStartPos.value || dragState.value) return
+    lastSync = null
     const defaultBoundaryIndex = Math.min(1, Math.max(0, words.value.length - 1))
     applySelection([defaultBoundaryIndex], defaultBoundaryIndex)
   }
@@ -428,6 +485,7 @@ export function useEditLyricsV2WordBoundaryDrag({
 
   return {
     hasAdjustedBoundary,
+    isManualTimingConfirmed,
     rememberAdjustedBoundary,
     consumeOwnWordUpdate,
     dragState,

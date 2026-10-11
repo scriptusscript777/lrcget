@@ -164,6 +164,8 @@
         @update:selected-line-indices="handleUpdateSelectedLineIndices"
         @editing-state-change="setSyncedLineEditingState"
         @play-line="playLine"
+        @pause="pause"
+        @resume-playback="resumeOrPlay"
         @play-line-at-offset="handlePlayLineAtOffset"
         @sync-line="syncLineToCurrentProgress"
         @rewind-line="rewindLineBy100"

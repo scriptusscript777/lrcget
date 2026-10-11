@@ -1,4 +1,4 @@
-# Local packages — 2.2.6+local.10
+# Local packages — 2.2.7
 
 All current features are from the reviewed local version. Final GitHub publishing
 and creator notification follow validation and the local backup. Historical upstream Windows/macOS links
@@ -6,14 +6,14 @@ are different releases and do not include Rick's local changes.
 
 ## Linux Debian package
 
-`LRCGET_2.2.6+local.10_amd64.deb` and its `.sha256` file are in Downloads.
+`LRCGET_2.2.7_amd64.deb` and its `.sha256` file are in Downloads.
 It upgrades the existing `lrcget` amd64 package and retains `net.lrclib.lrcget`
-data. Installed version remains local.9 because automatic installation requires
+data. Installed version remains 2.2.6+local.10 because automatic installation requires
 administrator authentication. Close the app before upgrading; see the command in the
-[local.10 review](reviews/2.2.6-local.10.md).
+[2.2.7 review](reviews/2.2.7.md).
 
 AppImage and Windows updates are deferred at Rick's request. The packages below
-are older local.9/local.8 artifacts and do not contain local.10's word-timing fixes.
+are older local.9/local.8 artifacts and do not contain the latest Debian word-timing fixes.
 
 ## Linux AppImage
 

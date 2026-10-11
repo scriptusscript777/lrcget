@@ -1,4 +1,4 @@
-# Build from source — 2.2.6+local.10
+# Build from source — 2.2.7
 
 The source ZIP/tar.gz contains the application, locked dependencies, license,
 documentation, screenshots and packaging scripts. Build products, dependencies,
@@ -44,7 +44,7 @@ destructive automated testing. See the architecture documents and `AGENTS.md`
 for repository conventions.
 
 AppImage and Windows updates/builds are deferred at Rick’s request. The current
-local.10 artifact is Debian only; older platform packages do not contain these fixes.
+2.2.7 artifact is Debian only; older platform packages do not contain these fixes.
 
 ## Windows x64
 

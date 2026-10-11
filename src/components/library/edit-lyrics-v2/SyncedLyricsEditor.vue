@@ -80,6 +80,8 @@
       @update:words="handleWordsUpdate"
       @word-timing-edited="handleWordTimingEdited"
       @play-line="handlePlayLine"
+      @pause="emit('pause')"
+      @resume-playback="emit('resume-playback')"
       @play-line-at-offset="handlePlayLineAtOffset"
       @select-next-line="selectLine(selectedLineIndex + 1)"
       @editing-change="wordEditing = $event"
@@ -271,6 +273,8 @@ const emit = defineEmits([
   'update:selected-line-index',
   'update:selected-line-indices',
   'play-line',
+  'pause',
+  'resume-playback',
   'play-line-at-offset',
   'sync-line',
   'rewind-line',

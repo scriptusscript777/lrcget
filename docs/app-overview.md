@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.10. **Editing developer:** Rick Lidgett
+**Version:** 2.2.7. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -171,7 +171,7 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.6-local.10.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.7.md).
 Current images use demonstration fixtures, not personal recordings. New help/settings
 captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
@@ -186,7 +186,7 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-Current checks are recorded in the [local.10 review](reviews/2.2.6-local.10.md).
+Current checks are recorded in the [2.2.7 review](reviews/2.2.7.md).
 Browser checks cover timing drags, fixed sentence markers, zoom, Undo/Redo,
 read-only wording, protected Sync, precision inputs and word loops. Native export
 checks use temporary files, preserving personal music and the live database.
@@ -350,3 +350,17 @@ Loop selection, context and zoom are listening aids, not exported lyric events.
 
 ![Selected word loop, light](screenshots/current/selected-word-loop-light.png)
 ![Selected word loop, dark](screenshots/current/selected-word-loop-dark.png)
+
+## Word timing confirmation and additional Pause/Resume (2.2.7)
+
+After a divider or precise Start/End adjustment, Sync Word retains the accepted
+time and turns gray/disabled. Another timing adjustment enables it again.
+Playback movement, selecting the same word or keyboard shortcuts cannot reapply
+confirmed manual timing. Other words remain available for normal timing.
+
+The additional **Pause/Resume** button beside **Play** pauses at the current
+position and resumes there, retaining word Loop. Existing Play still replays the
+sentence. Neither pause nor resume changes lyrics or saved timing.
+
+![Confirmed Word Sync, light](screenshots/current/word-sync-confirmed-light.png)
+![Confirmed Word Sync, dark](screenshots/current/word-sync-confirmed-dark.png)

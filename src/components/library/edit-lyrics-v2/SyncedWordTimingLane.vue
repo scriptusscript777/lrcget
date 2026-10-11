@@ -85,10 +85,28 @@
             <span>Play</span>
           </button>
           <button
-            v-tooltip="editorTooltip(syncWordTitle)"
-            class="button button-primary text-xs px-2 py-1 rounded flex items-center gap-1"
-            :title="syncWordTitle"
+            v-tooltip="
+              editorTooltip(
+                playing
+                  ? 'Pause playback at its current position; keep Loop enabled'
+                  : 'Resume playback from its current position; keep Loop enabled'
+              )
+            "
+            class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
+            :aria-label="playing ? 'Pause word timing playback' : 'Resume word timing playback'"
             :disabled="!!dragState || !!dragStartPos"
+            @click="emit(playing ? 'pause' : 'resume-playback')"
+          >
+            <Pause v-if="playing" class="w-3.5 h-3.5" />
+            <Play v-else class="w-3.5 h-3.5" />
+            <span>{{ playing ? 'Pause' : 'Resume' }}</span>
+          </button>
+          <button
+            v-tooltip="editorTooltip(syncWordHelp)"
+            class="button text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="isManualTimingConfirmed ? 'button-normal' : 'button-primary'"
+            :title="syncWordHelp"
+            :disabled="isManualTimingConfirmed || !!dragState || !!dragStartPos"
             @click="handleSyncWord"
           >
             <Equal class="w-3.5 h-3.5" />
@@ -274,6 +292,7 @@ import Repeat from '~icons/mdi/repeat'
 import { selectedWordRange, editWordBoundary } from '@/utils/word-loop-range.js'
 import Equal from '~icons/mdi/equal'
 import Play from '~icons/mdi/play'
+import Pause from '~icons/mdi/pause'
 import Close from '~icons/mdi/close'
 import Magnify from '~icons/mdi/magnify-plus-outline'
 import { scrollToTimelineTime } from '@/utils/word-timing-viewport.js'
@@ -319,6 +338,8 @@ const emit = defineEmits([
   'update:words',
   'word-timing-edited',
   'play-line',
+  'pause',
+  'resume-playback',
   'select-next-line',
   'editing-change',
   'word-loop-target',
@@ -435,6 +456,7 @@ const words = computed(() => {
 
 const {
   hasAdjustedBoundary,
+  isManualTimingConfirmed,
   rememberAdjustedBoundary,
   consumeOwnWordUpdate,
   dragState,
@@ -466,6 +488,12 @@ const {
     timingMessage.value = message
   },
 })
+
+const syncWordHelp = computed(() =>
+  isManualTimingConfirmed.value
+    ? 'Word timing is set. Adjust a divider or Start/End to enable Sync word again.'
+    : syncWordTitle
+)
 
 watch(
   () => Boolean(dragState.value || dragStartPos.value),

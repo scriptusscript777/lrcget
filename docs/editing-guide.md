@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.6+local.10`.
+Rick Lidgett's enhanced LRCGET build, `2.2.7`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -254,7 +254,9 @@ seeks. Selecting a row pins it; click **Follow Lyrics** to resume. Loops,
 marker previews, word drags and text edits hold the selected line in place.
 This changes the editing selection, not the recording or saved timestamps.
 
-Expand **Word timing** and select a line. Use **Play** to listen, **Sync word**
+Expand **Word timing** and select a line. Use **Play** to listen, **Pause/Resume**
+to pause and continue at the current position without restarting the sentence,
+and **Sync word**
 to place the selected separator at the current playback position, and the
 divider handles to refine word boundaries. The word lane has its own zoom and
 scrolling; changing it does not zoom the waveform. **Reset** resets that line's
@@ -266,7 +268,8 @@ selects a word without splitting it. F2/right-click no longer edit word spelling
 and Delete cannot remove a sentence while Word timing is expanded. Collapse the
 lane before using sentence-delete shortcuts. Every released timing drag is one
 Undo/Redo action. The next Sync word preserves manual drag/precision edits;
-otherwise it stamps playback within the selected word's safe bounds. A rejected
+the button then stays gray/disabled until another timing adjustment. Otherwise
+it stamps playback within the selected word's safe bounds. A rejected
 stamp reports why and never shifts neighbors or advances selection.
 
 ![Dark theme: word timing with safe Sync](screenshots/current/word-timing-protected-dark.png)
@@ -346,7 +349,7 @@ timestamps. Sync Start/End confirms each boundary; Cancel restores the last conf
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Current word-timing and word-loop screenshots were refreshed for 2.2.6+local.10. Earlier unchanged feature captures remain labeled by their behavior.
+Current word-timing and word-loop screenshots were refreshed for 2.2.7. Earlier unchanged feature captures remain labeled by their behavior.
 Unchanged native marker/playback captures use demonstration lyrics and generated
 silent audio; the screenshot index records each group’s version and provenance.
 A waveform shows the full mix; it is not proof of exact singer alignment.
