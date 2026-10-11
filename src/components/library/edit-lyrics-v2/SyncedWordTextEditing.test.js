@@ -57,13 +57,13 @@ function mount(component) {
   return { app, root }
 }
 
-function setupLane({ generated = false } = {}) {
+function setupLane({ generated = false, initialWordIndex = 0 } = {}) {
   const line = {
     text: generated ? 'I sing ' : ' I sing ', start_ms: 1000, end_ms: 3000,
     ...(!generated && { words: [{ text: ' I ', start_ms: 1000 }, { text: 'sing ', start_ms: 1500 }] }),
   }
   const props = reactive({
-    selectedLine: line, selectedLineIndex: 0, hasSelectedLine: true,
+    selectedLine: line, selectedLineIndex: 0, hasSelectedLine: true, initialWordIndex,
     allLines: [line], progressMs: 1100, playing: true,
   })
   let state
@@ -194,4 +194,82 @@ describe('word box edit entry points', () => {
     expect(edit.mock.calls).toEqual([[2], [2]])
     expect(select.mock.calls).toEqual([[2], [2]])
   })
+})
+
+
+describe('word loop precision controls', () => {
+  it('word selection also selects the keyboard timing boundary and emits a loop target', async () => {
+    const { state, emit, props } = setupLane()
+    state.selectWord(1)
+    await nextTick()
+    expect(state.selectedWordIndex.value).toBe(1)
+    expect(state.selectedBoundaryIndex.value).toBe(1)
+    expect(emit).toHaveBeenCalledWith('word-loop-target', expect.objectContaining({
+      line: props.selectedLine, lineIndex: 0, wordIndex: 1, startMs: 1500, endMs: 3000,
+    }))
+  })
+  it('editing a precise end emits preserved word text and clamps against its neighbor', async () => {
+    const { state, emit } = setupLane()
+    state.selectWord(0)
+    state.editSelectedBoundary('end', { target: { value: '2.000' } })
+    expect(emit).toHaveBeenCalledWith('update:words', expect.objectContaining({
+      words: [{ text: ' I ', start_ms: 1000, end_ms: 1500 }, { text: 'sing ', start_ms: 1500 }],
+    }))
+    await nextTick()
+  })
+  it('sync while word looping keeps the selected word and does not advance the sentence', async () => {
+    const { state, props, emit } = setupLane()
+    props.wordLoopEnabled = true
+    state.selectWord(1)
+    await nextTick()
+    props.progressMs = 1700
+    state.handleSyncWord()
+    expect(state.selectedWordIndex.value).toBe(1)
+    expect(state.selectedBoundaryIndex.value).toBe(1)
+    expect(emit).not.toHaveBeenCalledWith('select-next-line')
+    expect(emit).toHaveBeenCalledWith('update:words', expect.objectContaining({
+      words: [{ text: ' I ', start_ms: 1000 }, { text: 'sing ', start_ms: 1700 }],
+    }))
+    await nextTick()
+  })
+})
+
+
+it('restores the selected word when the word lane is reopened', async () => {
+  const { state } = setupLane({ initialWordIndex: 1 })
+  await nextTick()
+  expect(state.selectedWordIndex.value).toBe(1)
+  expect(state.selectedBoundaryIndex.value).toBe(1)
+})
+
+it('Reset submits an empty word list that the document handler accepts', async () => {
+  const { state, emit } = setupLane()
+  await state.handleResetWords()
+  expect(emit).toHaveBeenCalledWith('update:words', { lineIndex: 0, words: [] })
+})
+
+
+it('splitting a timed word preserves its explicit end and gap', () => {
+  const { state, props, emit } = setupLane()
+  props.selectedLine.words[1].end_ms = 2200
+  state.handleSegmentSplitAt({ wordIndex: 1, splitIndex: 2, splitRatio: 0.5 })
+  expect(emit).toHaveBeenCalledWith('update:words', expect.objectContaining({
+    words: [{ text: ' I ', start_ms: 1000 }, { text: 'si', start_ms: 1500 }, { text: 'ng ', start_ms: 1850, end_ms: 2200 }],
+  }))
+})
+
+
+it('precise first-word edits do not move the sentence start or prevent tuning back', async () => {
+  const { state, props, emit } = setupLane()
+  state.selectWord(0)
+  state.editSelectedBoundary('start', { target: { value: '1.010' } })
+  const first = emit.mock.calls.filter(([event]) => event === 'update:words').at(-1)[1]
+  expect(first.lineStartMs).toBeUndefined()
+  props.selectedLine.words = first.words
+  await nextTick()
+  state.editSelectedBoundary('start', { target: { value: '1.000' } })
+  const restored = emit.mock.calls.filter(([event]) => event === 'update:words').at(-1)[1]
+  expect(restored.words[0].start_ms).toBe(1000)
+  expect(props.selectedLine.start_ms).toBe(1000)
+  await nextTick()
 })

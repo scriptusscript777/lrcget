@@ -105,3 +105,18 @@ describe('word boundary pointer lifecycle', () => {
     expect([...fixture.listeners.values()].every(set => !set.size)).toBe(true)
   })
 })
+
+
+it('dragging preserves explicit neighboring word ends and silence gaps', () => {
+  const fixture = setup()
+  fixture.words.value[0].end_ms = 1800
+  fixture.words.value[1].end_ms = 2300
+  fixture.start()
+  fixture.send('pointermove', { clientX: 50 })
+  fixture.send('pointerup', { clientX: 50 })
+  expect(fixture.update.mock.calls[0][0].words[1].start_ms).toBe(1800)
+  fixture.start()
+  fixture.send('pointermove', { clientX: 150 })
+  fixture.send('pointerup', { clientX: 150 })
+  expect(fixture.update.mock.calls[1][0].words[1].start_ms).toBe(2299)
+})

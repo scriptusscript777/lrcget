@@ -60,26 +60,19 @@ export function useEditLyricsV2WordBoundaryDrag({
 
   const getBoundaryConstraint = rightWordIndex => {
     const currentWords = words.value
+    const word = currentWords[rightWordIndex]
+    const previous = currentWords[rightWordIndex - 1]
     const nextStartMs = currentWords[rightWordIndex + 1]?.start_ms
-
-    if (rightWordIndex === 0) {
-      const minStartMs = Number.isFinite(timelineStartMs.value) ? timelineStartMs.value : 0
-      const maxStartMs = Number.isFinite(nextStartMs) ? nextStartMs - 1 : timelineEndMs.value - 1
-
-      return {
-        minStartMs,
-        maxStartMs: Math.max(minStartMs, maxStartMs),
-      }
-    }
-
-    const previousStartMs = currentWords[rightWordIndex - 1]?.start_ms ?? timelineStartMs.value
-    const minStartMs = previousStartMs + 1
-    const maxStartMs = Number.isFinite(nextStartMs) ? nextStartMs - 1 : timelineEndMs.value - 1
-
-    return {
-      minStartMs,
-      maxStartMs: Math.max(minStartMs, maxStartMs),
-    }
+    const minStartMs = Math.max(
+      Number.isFinite(timelineStartMs.value) ? timelineStartMs.value : 0,
+      previous ? previous.start_ms + 1 : 0,
+      Number.isFinite(previous?.end_ms) ? previous.end_ms : 0
+    )
+    const maxStartMs = Math.min(
+      Number.isFinite(nextStartMs) ? nextStartMs - 1 : timelineEndMs.value - 1,
+      Number.isFinite(word?.end_ms) ? word.end_ms - 1 : Infinity
+    )
+    return { minStartMs, maxStartMs: Math.max(minStartMs, maxStartMs) }
   }
 
   const stopBoundaryDrag = () => {

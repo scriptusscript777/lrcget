@@ -39,6 +39,7 @@
   <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.6+local.8" date="2026-10-11"><description><p>Loop individual words with precise timing fields, listening context and readable zoomed labels.</p></description></release>
     <release version="2.2.6+local.7" date="2026-10-11"><description><p>Remember the Word-timed lyrics choice in Save and remove the duplicate configuration setting.</p></description></release>
     <release version="2.2.6+local.6" date="2026-10-11">
       <description><p>Native standard/enhanced MP3 lyric embedding and read-only word playback preview with Loop support.</p></description>

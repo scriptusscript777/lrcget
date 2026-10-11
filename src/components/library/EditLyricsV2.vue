@@ -149,12 +149,16 @@
         :can-undo="canUndo"
         :can-redo="canRedo"
         :loop-enabled="loopEnabled"
-        :can-loop="canLoop"
+        :loop-mode="loopMode"
+        :word-loop-target="wordLoopTarget"
+        :can-loop="canPhraseLoop"
         :marker-editing="markerEditing"
         @word-timing-expanded-change="wordTimingExpanded = $event"
         @undo="undo"
         @redo="redo"
-        @toggle-loop="toggleLoop"
+        @toggle-loop="toggleLoop('phrase')"
+        @toggle-word-loop="toggleLoop('word')"
+        @word-loop-target="wordLoopTarget = $event"
         @update:model-value="updateSyncedLines"
         @update:selected-line-index="selectSyncedLine"
         @update:selected-line-indices="handleUpdateSelectedLineIndices"
@@ -373,15 +377,17 @@ const confirmSentenceBoundary = (boundary, lineIndex) => {
 const syncLineToCurrentProgress = lineIndex => confirmSentenceBoundary('start', lineIndex)
 const syncEndToCurrentProgress = lineIndex => confirmSentenceBoundary('end', lineIndex)
 const markerEditing = ref(false)
+const wordLoopTarget = ref(null)
 const {
   playLine,
   playLineAtOffset,
   resumeOrPlay,
   loopEnabled,
+  loopMode,
   loopRange,
   loopLeadSeconds,
   loopTailSeconds,
-  canLoop,
+  canPhraseLoop,
   toggleLoop,
 } = useEditLyricsV2Playback({
   audioSource: audioSourceRef,
@@ -395,6 +401,8 @@ const {
   duration,
   selectedLineIndex: selectedSyncedLineIndex,
   markerPreview,
+  wordLoopTarget,
+  wordLoopAvailable: wordTimingExpanded,
   loopAvailable: computed(() => activeTab.value === 'synced' && !isInstrumental.value),
   onError: error => toast.error(`Loop playback failed: ${error?.message || error}`),
 })
@@ -562,6 +570,7 @@ const handlePasteLrc = async () => {
 }
 
 const handleWordTimingEdited = async ({ startMs }) => {
+  if (loopEnabled.value && loopMode.value === 'word') return
   const index = selectedSyncedLineIndex.value
   const lineStartMs = syncedLines.value[index]?.start_ms
   if (!Number.isFinite(lineStartMs)) return

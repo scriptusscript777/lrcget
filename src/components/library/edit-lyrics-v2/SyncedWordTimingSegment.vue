@@ -22,11 +22,11 @@
   >
     <div
       ref="previewContainerElement"
-      class="relative flex items-center justify-center w-full h-full min-w-0 overflow-hidden"
+      class="relative flex items-center justify-start w-full h-full min-w-0"
     >
       <span
         ref="textElement"
-        class="relative z-10 block max-w-full overflow-hidden whitespace-nowrap text-clip"
+        class="sticky left-1 z-10 block max-w-full overflow-hidden whitespace-nowrap text-clip"
       >
         {{ word.text }}
       </span>

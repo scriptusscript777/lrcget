@@ -8,6 +8,9 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
+Selected-word looping adds precise Start/End editing, padding and readable zoomed labels.
+See [word-loop instructions](docs/how-to.md#loop-one-word-for-precise-timing).
+
 Optional Enhanced LRC (`.elrc`) can now be exported alongside TXT and standard LRC.
 Select it under Save → file types; your choice is remembered until you change it.
 See the [illustrated export guide](docs/how-to.md#export-word-timing-as-enhanced-lrc).
@@ -16,14 +19,14 @@ Read-only **Word preview** follows playback/Loop without resizing timing boxes.
 MP3 embedding supports standard USLT/SYLT plus optional ELRC text and word timing;
 see the [embedding and preview guide](docs/how-to.md#embed-standard-and-enhanced-lyrics-in-mp3).
 
-**Version 2.2.6+local.7 (local update)** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.6+local.8 (local update)** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release. GitHub publication of 2.2.6 is paused; its installer
 is available locally in Rick’s Downloads folder.
 
 [Download the last published Linux amd64 installer (2.2.5)](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.5-local.1/LRCGET_2.2.5%2Blocal.1_amd64.deb)
 | [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.5-local.1)
-| [Local marker/export update](docs/releases/2.2.6-local.7.md)
+| [Local marker/export update](docs/releases/2.2.6-local.8.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -101,8 +104,8 @@ The 2.2.6 installer and checksum are in Rick’s local Downloads folder. Close
 LRCGET, then run there:
 
 ```bash
-sha256sum -c LRCGET_2.2.6+local.7_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.6+local.7_amd64.deb
+sha256sum -c LRCGET_2.2.6+local.8_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.6+local.8_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.

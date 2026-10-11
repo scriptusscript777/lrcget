@@ -496,6 +496,8 @@ const player = () => {
     duration: ref(10),
     selectedLineIndex: ref(0),
     markerPreview: ref(null),
+    wordLoopTarget: ref(null),
+    wordLoopAvailable: ref(true),
     onError: vi.fn(),
     playingTrack: ref({ id: 1 }),
     status: ref('paused'),
@@ -1027,5 +1029,98 @@ it('exports Enhanced LRC as an additional sidecar alongside TXT and standard LRC
     trackId: 7,
     formats: ['txt', 'lrc', 'elrc'],
     lyricsfile: 'saved word document',
+  })
+})
+
+
+describe('selected word loop', () => {
+  const select = (controls, wordIndex = 0, startMs = 1500, endMs = 1800) => {
+    controls.wordLoopTarget.value = {
+      line: controls.syncedLines.value[controls.selectedLineIndex.value],
+      lineIndex: controls.selectedLineIndex.value, wordIndex, startMs, endMs,
+    }
+  }
+  it('repeats a single word, preserves gaps and switches back to phrase looping', async () => {
+    const { state, controls, scope } = player()
+    select(controls)
+    await state.toggleLoop('word')
+    expect(state.loopMode.value).toBe('word')
+    expect(state.loopRange.value).toEqual({ start: 1.5, end: 1.8 })
+    expect(controls.seek).toHaveBeenLastCalledWith(1.5)
+    controls.status.value = 'playing'
+    controls.progress.value = 1.9
+    await nextTick()
+    expect(controls.seek).toHaveBeenLastCalledWith(1.5)
+    await state.toggleLoop('phrase')
+    expect(state.loopEnabled.value).toBe(true)
+    expect(state.loopMode.value).toBe('phrase')
+    await state.toggleLoop('phrase')
+    expect(state.loopEnabled.value).toBe(false)
+    scope.stop()
+  })
+  it('follows a newly selected word and updated timing without turning off', async () => {
+    const { state, controls, scope } = player()
+    select(controls)
+    await state.toggleLoop('word')
+    controls.status.value = 'playing'
+    controls.progress.value = 1.6
+    select(controls, 1, 1800, 2000)
+    await nextTick()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(controls.seek).toHaveBeenLastCalledWith(1.8)
+    select(controls, 1, 1810, 1950)
+    await nextTick()
+    expect(state.loopRange.value).toEqual({ start: 1.81, end: 1.95 })
+    scope.stop()
+  })
+  it('clamps padding to the recording and leaves timestamps unchanged', async () => {
+    const { state, controls, scope } = player()
+    select(controls, 0, 100, 9800)
+    const snapshot = JSON.stringify(controls.wordLoopTarget.value)
+    state.loopLeadSeconds.value = 1
+    state.loopTailSeconds.value = 1
+    await state.toggleLoop('word')
+    expect(state.loopRange.value).toEqual({ start: 0, end: 10 })
+    expect(JSON.stringify(controls.wordLoopTarget.value)).toBe(snapshot)
+    scope.stop()
+  })
+  it('suspends when hidden or stale and remains possible to turn off', async () => {
+    const { state, controls, scope } = player()
+    select(controls)
+    await state.toggleLoop('word')
+    controls.wordLoopAvailable.value = false
+    await nextTick()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(state.loopRange.value).toBeNull()
+    controls.wordLoopAvailable.value = true
+    controls.syncedLines.value = controls.syncedLines.value.map(l => ({ ...l }))
+    await nextTick()
+    expect(state.loopRange.value).toBeNull()
+    await state.toggleLoop('word')
+    expect(state.loopEnabled.value).toBe(false)
+    scope.stop()
+  })
+  it('rejects missing or reversed word ranges without changing phrase mode', async () => {
+    const { state, controls, scope } = player()
+    await state.toggleLoop('word')
+    expect(state.loopEnabled.value).toBe(false)
+    expect(state.loopMode.value).toBe('phrase')
+    select(controls, 0, 1800, 1500)
+    await state.toggleLoop('word')
+    expect(state.loopEnabled.value).toBe(false)
+    scope.stop()
+  })
+  it('cancels a delayed initial seek when a different word is selected', async () => {
+    const { state, controls, scope } = player()
+    select(controls)
+    let finish
+    controls.resume.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    const pending = state.toggleLoop('word')
+    select(controls, 1, 1800, 2000)
+    finish()
+    await pending
+    expect(controls.seek).not.toHaveBeenCalled()
+    expect(state.loopEnabled.value).toBe(true)
+    scope.stop()
   })
 })

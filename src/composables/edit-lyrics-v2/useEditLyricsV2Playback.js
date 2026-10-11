@@ -13,10 +13,13 @@ export function useEditLyricsV2Playback({
   duration,
   selectedLineIndex,
   markerPreview,
+  wordLoopTarget = ref(null),
+  wordLoopAvailable = ref(false),
   loopAvailable = ref(true),
   onError = () => {},
 }) {
   const loopEnabled = ref(false)
+  const loopMode = ref('phrase')
   const loopLeadSeconds = ref(0)
   const loopTailSeconds = ref(0)
   let awaitingLoopSeek = false
@@ -38,7 +41,7 @@ export function useEditLyricsV2Playback({
   }
   const boundedContext = value =>
     Number.isFinite(Number(value)) ? Math.min(5, Math.max(0, Number(value))) : 0
-  const loopRange = computed(() => {
+  const phraseRange = computed(() => {
     const index = selectedLineIndex?.value
     const line = syncedLines.value[index]
     const preview = markerPreview?.value
@@ -53,13 +56,38 @@ export function useEditLyricsV2Playback({
           (Number.isFinite(duration?.value) && duration.value > 0 ? duration.value * 1000 : null))
     if (!Number.isFinite(startMs) || startMs < 0 || !Number.isFinite(endMs) || endMs <= startMs)
       return null
-    const start = Math.max(0, startMs / 1000 - boundedContext(loopLeadSeconds.value))
+    return { startMs, endMs }
+  })
+  const wordRange = computed(() => {
+    const target = wordLoopTarget.value
+    const index = selectedLineIndex?.value
+    if (
+      !wordLoopAvailable.value ||
+      !target ||
+      target.lineIndex !== index ||
+      target.line !== syncedLines.value[index] ||
+      !Number.isInteger(target.wordIndex) ||
+      target.wordIndex < 0 ||
+      !Number.isFinite(target.startMs) ||
+      target.startMs < 0 ||
+      !Number.isFinite(target.endMs) ||
+      target.endMs <= target.startMs
+    )
+      return null
+    return { startMs: target.startMs, endMs: target.endMs }
+  })
+  const paddedRange = range => {
+    if (!range) return null
+    const start = Math.max(0, range.startMs / 1000 - boundedContext(loopLeadSeconds.value))
     const end = Math.min(
       duration?.value || Infinity,
-      endMs / 1000 + boundedContext(loopTailSeconds.value)
+      range.endMs / 1000 + boundedContext(loopTailSeconds.value)
     )
     return end > start ? { start, end } : null
-  })
+  }
+  const loopRange = computed(() =>
+    paddedRange(loopMode.value === 'word' ? wordRange.value : phraseRange.value)
+  )
   // Helper to check if the playing track matches the audio source
   const isPlayingCorrectTrack = () => {
     if (!playingTrack.value || !audioSource.value) {
@@ -120,12 +148,18 @@ export function useEditLyricsV2Playback({
     }
   }
 
-  const toggleLoop = async () => {
-    if (loopEnabled.value) {
+  const toggleLoop = async (mode = 'phrase') => {
+    if (mode !== 'word' && mode !== 'phrase') return
+    if (loopEnabled.value && loopMode.value === mode) {
       stopLoop()
       return
     }
-    if (disposed || !audioSource.value || !loopAvailable.value || !loopRange.value) return
+    const previousMode = loopMode.value
+    loopMode.value = mode
+    if (disposed || !audioSource.value || !loopAvailable.value || !loopRange.value) {
+      loopMode.value = previousMode
+      return
+    }
     const operation = ++loopOperation
     loopEnabled.value = true
     initializingLoop = true
@@ -181,7 +215,10 @@ export function useEditLyricsV2Playback({
 
   if (selectedLineIndex) {
     watch(
-      selectedLineIndex,
+      [
+        selectedLineIndex,
+        () => (loopMode.value === 'word' ? wordLoopTarget.value?.wordIndex : null),
+      ],
       () => {
         // Invalidate an old asynchronous start/replay, keeping the new range armed.
         loopOperation++
@@ -210,7 +247,9 @@ export function useEditLyricsV2Playback({
 
   return {
     loopEnabled,
+    loopMode,
     loopRange,
+    canPhraseLoop: computed(() => loopAvailable.value && !!paddedRange(phraseRange.value)),
     loopLeadSeconds,
     loopTailSeconds,
     canLoop: computed(() => loopAvailable.value && !!loopRange.value),

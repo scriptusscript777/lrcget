@@ -1,3 +1,9 @@
+## 2.2.6+local.8
+
+Exclusive phrase/word loops, selected-word precision controls, saved gap handling,
+selected target restoration, safe Sync behavior and sticky zoomed word labels.
+Fixed Reset submissions; updated tests and illustrated guides.
+
 ## 2.2.6+local.7
 
 ELRC is controlled directly by Save’s Word-timed lyrics checkbox; its remembered

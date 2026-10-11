@@ -12,15 +12,19 @@
       <span class="text-xs text-neutral-600 dark:text-neutral-300" data-testid="overlap-prevention-status" role="status">
         Overlap prevention: {{ preventOverlaps ? 'On' : 'Off' }}
       </span>
-      <button v-tooltip="editorTooltip('Keep repeating the selected markers until Loop is turned off; selecting another lyric moves the loop')" class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop && !loopEnabled" :aria-pressed="loopEnabled" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
+      <button v-tooltip="editorTooltip('Keep repeating the selected markers until Loop is turned off; selecting another lyric moves the loop')" class="button p-1.5 rounded" :class="loopEnabled && loopMode === 'phrase' ? 'button-primary' : 'button-normal'" :disabled="!canLoop && !loopEnabled" :aria-pressed="loopEnabled && loopMode === 'phrase'" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
       <label v-tooltip="editorTooltip('Extra listening time before the loop start, in seconds; use zero for exact marker bounds')" class="text-xs inline-flex items-center gap-1">Lead-in
-        <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
+        <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" aria-label="Loop lead-in seconds" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
       </label>
       <label v-tooltip="editorTooltip('Extra listening time after the loop end, in seconds; use zero for exact marker bounds')" class="text-xs inline-flex items-center gap-1">Tail
-        <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
+        <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" aria-label="Loop tail seconds" :value="loopTailSeconds" @change="emit('update:loop-tail-seconds', Number($event.target.value))">s
       </label>
     </div>
-    <p v-if="loopEnabled && !canLoop" role="status" class="mt-1 shrink-0 text-xs text-neutral-600 dark:text-neutral-300">
+    <p v-if="loopEnabled && loopMode === 'word' && !wordTimingExpanded" role="status" class="mt-1 text-xs text-neutral-600 dark:text-neutral-300">
+      Word loop is on; reopen Word timing to resume.
+      <button type="button" class="button button-normal rounded px-2 py-1 ml-2" @click="emit('toggle-word-loop')">Stop word loop</button>
+    </p>
+    <p v-if="loopEnabled && loopMode === 'phrase' && !canLoop" role="status" class="mt-1 shrink-0 text-xs text-neutral-600 dark:text-neutral-300">
       Loop is on; select a lyric with valid start/end markers to repeat.
     </p>
     <div class="mt-2 flex shrink-0 flex-wrap items-center gap-2">
@@ -68,6 +72,11 @@
       :playing="waveformPlaying"
       :all-lines="modelValue"
       :selected-line-index="selectedLineIndex"
+      :word-loop-enabled="loopEnabled && loopMode === 'word'"
+      :initial-word-index="wordLoopTarget?.lineIndex === selectedLineIndex ? wordLoopTarget.wordIndex : 0"
+      :timing-step-ms="timingStepMs"
+      @toggle-word-loop="emit('toggle-word-loop')"
+      @word-loop-target="emit('word-loop-target', $event)"
       @update:words="handleWordsUpdate"
       @word-timing-edited="handleWordTimingEdited"
       @play-line="handlePlayLine"
@@ -220,6 +229,8 @@ const props = defineProps({
   canRedo: Boolean,
   timingStepMs: { type: Number, default: 100 },
   loopEnabled: Boolean,
+  loopMode: { type: String, default: 'phrase' },
+  wordLoopTarget: { type: Object, default: null },
   markerEditing: Boolean,
   markerPreview: { type: Object, default: null },
   preventOverlaps: { type: Boolean, default: true },
@@ -254,6 +265,8 @@ const emit = defineEmits([
   'redo',
   'update:timing-step-ms',
   'toggle-loop',
+  'toggle-word-loop',
+  'word-loop-target',
   'update:loop-lead-seconds',
   'update:loop-tail-seconds',
   'update:modelValue',

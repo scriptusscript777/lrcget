@@ -341,3 +341,22 @@ until loaded and during writes; request generations discard stale reads.
 Configuration no longer displays or submits exportElrc, preserving this preference
 when unrelated settings are saved. Existing backend optional arguments remain
 compatible with older callers. Bulk/Download keep their applicable format choices.
+
+### Selected-word looping (2.2.6+local.8)
+
+The shared playback composable owns exclusive phrase/word modes. A word target
+contains line identity/index, word index and committed/estimated millisecond
+bounds. Availability follows the word lane and active Synced tab. Invalid/stale
+ranges suspend repetition, preserving mode; explicit stop remains available.
+Selection changes invalidate asynchronous starts. Playback bounds clamp shared
+lead/tail context to the recording without modifying the lyric document.
+
+Word lane emits targets from its selected word, not viewport geometry or live
+drag drafts. Explicit ends preserve gaps; missing ends infer the next word or
+line end. Precision fields use Timing step, clamp against adjacent words/line
+bounds and use normal document/history updates. Word-mode Sync does not advance.
+Word timing replay does not restart the whole sentence while word looping.
+Saved targets survive collapse/reopen; labels use horizontal CSS sticky positioning
+for zoomed readability. Reset submits an empty word array instead of undefined.
+No backend or lyric export format changes; the existing 40 ms player updates
+drive auditions. Saved timestamp precision is independent of audition latency.

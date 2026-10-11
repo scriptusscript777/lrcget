@@ -552,3 +552,39 @@ See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
 
 ![Embedded lyrics configuration, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics configuration, dark](screenshots/current/embedded-lyrics-settings-dark.png)
+
+
+## Loop One Word for Precise Timing
+
+1. Open **Synced → Word timing** and click the word you want to adjust.
+2. Enable **Loop word**. It repeats that word until you turn the mode off.
+3. Use **Lead-in** and **Tail** above the word lane for extra listening context;
+   these change playback only, never saved timestamps. Both start at zero.
+4. Set **Timing step** to **10 ms** or **25 ms**. Adjust the selected word’s
+   **Start** and **End** fields in seconds (three decimal places), using the input
+   arrows or typing the exact time. Boundaries are clamped to the sentence and
+   neighboring words. These fields edit the word without moving sentence markers.
+   The loop follows accepted edits. You can also drag starts.
+5. Slow playback if needed. **Sync word** stays on the selected word while its
+   loop is enabled; it does not automatically advance to another word/sentence.
+6. Click another word or use the boundary navigation keys to move the loop.
+   Zoom/scroll changes only the view. Word labels remain visible while scrolling.
+7. Turn **Loop word** off when finished. Phrase Loop switches back to repeating
+   a sentence; the two modes never run together.
+
+Explicit word ends preserve silence gaps; missing ends use the next word start
+or sentence end. Estimated timing is labeled and is not saved merely by looping.
+Editing estimated word boundaries saves word timing in the lyric document.
+**Undo** restores timing edits. **Reset** returns word timings to estimates.
+
+Collapsing Word timing suspends word repeats and preserves the target. Reopen to
+resume, or use **Stop word loop** without reopening. Inactive tabs and untimed
+sentences also suspend repeats; switching tracks or closing the editor ends the
+loop. Playback auditions use the existing player clock (40 ms updates), so loop
+playback is not sample-accurate; saved timestamps retain millisecond precision.
+
+Save/export keeps the existing TXT, LRC, ELRC and MP3 embedded format choices.
+Loop selection, context and zoom are listening aids, not exported lyric events.
+
+![Selected word loop, light](screenshots/current/selected-word-loop-light.png)
+![Selected word loop, dark](screenshots/current/selected-word-loop-dark.png)

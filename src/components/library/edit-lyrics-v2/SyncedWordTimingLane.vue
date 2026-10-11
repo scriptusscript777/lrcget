@@ -44,14 +44,36 @@
 
         <div class="flex flex-wrap items-center gap-2">
           <button
+            v-tooltip="
+              editorTooltip(
+                'Repeat the selected word; click another word to move the loop. Lead-in and Tail add listening context only.'
+              )
+            "
+            type="button"
+            class="button text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
+            :class="wordLoopEnabled ? 'button-primary' : 'button-normal'"
+            :aria-pressed="wordLoopEnabled"
+            aria-label="Loop selected word"
+            :disabled="!wordLoopEnabled && !selectedWordLoopRange"
+            @click="emit('toggle-word-loop')"
+          >
+            <Repeat class="w-3.5 h-3.5" />Loop word
+          </button>
+          <button
             v-if="!wordTextEdit"
-            v-tooltip="editorTooltip('Edit the selected word without changing its timestamps (F2 or right-click)')"
+            v-tooltip="
+              editorTooltip(
+                'Edit the selected word without changing its timestamps (F2 or right-click)'
+              )
+            "
             type="button"
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
             title="Edit selected word (F2 or right-click a word box)"
             :disabled="!words[selectedWordIndex] || !!dragState || !!dragStartPos"
             @click="startWordTextEdit(selectedWordIndex)"
-          ><Pencil class="w-3.5 h-3.5" /><span>Edit word</span></button>
+          >
+            <Pencil class="w-3.5 h-3.5" /><span>Edit word</span>
+          </button>
           <label class="inline-flex items-center gap-1" title="Word timing zoom">
             <span class="sr-only">Word timing zoom</span>
             <Magnify class="h-3.5 w-3.5" />
@@ -88,7 +110,11 @@
             <span>Sync word</span>
           </button>
           <button
-            v-tooltip="editorTooltip('Reset word timing to evenly spaced editable boundaries; keep lyric text')"
+            v-tooltip="
+              editorTooltip(
+                'Reset word timing to evenly spaced editable boundaries; keep lyric text'
+              )
+            "
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             title="Reset word timings to default state"
             :disabled="!!wordTextEdit"
@@ -99,6 +125,50 @@
           </button>
         </div>
       </div>
+
+      <div
+        v-if="selectedWordLoopRange"
+        class="mt-2 flex flex-wrap items-center gap-2 text-xs"
+        data-testid="selected-word-controls"
+      >
+        <span class="max-w-40 truncate font-semibold" :title="words[selectedWordIndex]?.text">{{
+          words[selectedWordIndex]?.text.trim()
+        }}</span>
+        <label class="inline-flex items-center gap-1"
+          >Start
+          <input
+            :key="`start-${selectedWordLoopRange.startMs}`"
+            class="input w-24 rounded px-1 py-1 font-mono"
+            type="number"
+            min="0"
+            :step="timingStepMs / 1000"
+            :value="(selectedWordLoopRange.startMs / 1000).toFixed(3)"
+            aria-label="Selected word start seconds"
+            :disabled="!!dragState || !!dragStartPos || !!wordTextEdit"
+            @change="editSelectedBoundary('start', $event)"
+          />s
+        </label>
+        <label class="inline-flex items-center gap-1"
+          >End
+          <input
+            :key="`end-${selectedWordLoopRange.endMs}`"
+            class="input w-24 rounded px-1 py-1 font-mono"
+            type="number"
+            min="0"
+            :step="timingStepMs / 1000"
+            :value="(selectedWordLoopRange.endMs / 1000).toFixed(3)"
+            aria-label="Selected word end seconds"
+            :disabled="!!dragState || !!dragStartPos || !!wordTextEdit"
+            @change="editSelectedBoundary('end', $event)"
+          />s
+        </label>
+        <span v-if="!hasActualWords" class="text-neutral-600 dark:text-neutral-400"
+          >Estimated timing; editing saves word timing.</span
+        >
+      </div>
+      <p v-if="wordLoopEnabled && !selectedWordLoopRange" role="status" class="mt-1 text-xs">
+        Word loop is on; select a word with valid timing to repeat.
+      </p>
 
       <form
         v-if="wordTextEdit"
@@ -116,8 +186,24 @@
           autocomplete="off"
           :aria-invalid="!canApplyWordText"
         />
-        <button type="submit" class="button rounded bg-hoa-1500 p-1.5 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400 disabled:opacity-40" title="Apply word edit (Enter)" aria-label="Apply word edit" :disabled="!canApplyWordText"><Check class="h-4 w-4" /></button>
-        <button type="button" class="button button-normal rounded p-1.5" title="Cancel word edit (Escape)" aria-label="Cancel word edit" @click="cancelWordTextEdit"><Close class="h-4 w-4" /></button>
+        <button
+          type="submit"
+          class="button rounded bg-hoa-1500 p-1.5 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400 disabled:opacity-40"
+          title="Apply word edit (Enter)"
+          aria-label="Apply word edit"
+          :disabled="!canApplyWordText"
+        >
+          <Check class="h-4 w-4" />
+        </button>
+        <button
+          type="button"
+          class="button button-normal rounded p-1.5"
+          title="Cancel word edit (Escape)"
+          aria-label="Cancel word edit"
+          @click="cancelWordTextEdit"
+        >
+          <Close class="h-4 w-4" />
+        </button>
       </form>
 
       <!-- Timeline with word segments -->
@@ -160,7 +246,7 @@
             :selected="selectedWordIndex === index"
             :editing="!!wordTextEdit"
             @split-at="handleSegmentSplitAt"
-            @select-word="selectedWordIndex = $event"
+            @select-word="selectWord"
             @edit-word="startWordTextEdit"
           />
 
@@ -209,6 +295,20 @@
         </div>
       </div>
     </template>
+    <div
+      v-if="wordLoopEnabled && !isWordSyncAvailable"
+      class="mt-2 flex items-center gap-2 text-xs"
+      role="status"
+    >
+      Word loop is on; select a timed sentence to resume.
+      <button
+        type="button"
+        class="button button-normal rounded px-2 py-1"
+        @click="emit('toggle-word-loop')"
+      >
+        Stop word loop
+      </button>
+    </div>
   </div>
 </template>
 
@@ -216,6 +316,8 @@
 import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import { computed, onMounted, onUnmounted, ref, shallowRef, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
+import Repeat from '~icons/mdi/repeat'
+import { selectedWordRange, editWordBoundary } from '@/utils/word-loop-range.js'
 import Equal from '~icons/mdi/equal'
 import Play from '~icons/mdi/play'
 import Close from '~icons/mdi/close'
@@ -236,6 +338,9 @@ import { ensureLineWords, distributeWordTimings, hasValidWords } from '@/utils/w
 
 const props = defineProps({
   playing: { type: Boolean, default: false },
+  wordLoopEnabled: { type: Boolean, default: false },
+  initialWordIndex: { type: Number, default: 0 },
+  timingStepMs: { type: Number, default: 10 },
   selectedLine: {
     type: Object,
     default: null,
@@ -258,7 +363,17 @@ const props = defineProps({
   },
 })
 
-const emit = defineEmits(['update:words', 'word-timing-edited', 'play-line', 'select-next-line', 'editing-change', 'word-text-editing-start', 'edit-word-text'])
+const emit = defineEmits([
+  'update:words',
+  'word-timing-edited',
+  'play-line',
+  'select-next-line',
+  'editing-change',
+  'word-text-editing-start',
+  'edit-word-text',
+  'word-loop-target',
+  'toggle-word-loop',
+])
 
 const timelineElement = ref(null)
 const scrollElement = ref(null)
@@ -271,7 +386,11 @@ const laneStartMs = ref(0)
 const laneEndMs = ref(0)
 const segmentedTokenTexts = ref(null)
 const segmentationRequestId = ref(0)
-const selectedWordIndex = ref(0)
+const selectedWordIndex = ref(
+  Number.isInteger(props.initialWordIndex) && props.initialWordIndex >= 0
+    ? props.initialWordIndex
+    : 0
+)
 const wordTextEdit = shallowRef(null)
 const wordText = ref('')
 const wordTextInput = ref(null)
@@ -405,8 +524,16 @@ const cancelWordTextEdit = () => {
 }
 
 const startWordTextEdit = async index => {
-  if (!isWordSyncAvailable.value || dragState.value || dragStartPos.value || !Number.isInteger(index) || !words.value[index]) return
+  if (
+    !isWordSyncAvailable.value ||
+    dragState.value ||
+    dragStartPos.value ||
+    !Number.isInteger(index) ||
+    !words.value[index]
+  )
+    return
   selectedWordIndex.value = index
+  selectBoundary(index)
   wordTextEdit.value = {
     line: props.selectedLine,
     lineIndex: props.selectedLineIndex,
@@ -427,12 +554,19 @@ const applyWordTextEdit = () => {
   const edit = wordTextEdit.value
   if (!edit || !canApplyWordText.value) return
   // Recheck the source at submission as well as watching it during the edit.
-  if (edit.line !== props.selectedLine || edit.lineIndex !== props.selectedLineIndex ||
-      edit.lineText !== props.selectedLine?.text || edit.words !== words.value ||
-      edit.snapshot.length !== words.value.length || edit.snapshot.some((word, index) =>
-        word.text !== words.value[index].text || word.start_ms !== words.value[index].start_ms ||
+  if (
+    edit.line !== props.selectedLine ||
+    edit.lineIndex !== props.selectedLineIndex ||
+    edit.lineText !== props.selectedLine?.text ||
+    edit.words !== words.value ||
+    edit.snapshot.length !== words.value.length ||
+    edit.snapshot.some(
+      (word, index) =>
+        word.text !== words.value[index].text ||
+        word.start_ms !== words.value[index].start_ms ||
         word.end_ms !== words.value[index].end_ms
-      )) {
+    )
+  ) {
     cancelWordTextEdit()
     return
   }
@@ -452,6 +586,58 @@ watch(
   () => cancelWordTextEdit(),
   { deep: true, flush: 'sync' }
 )
+
+const selectedWordLoopRange = computed(() =>
+  selectedWordRange(words.value, selectedWordIndex.value, actualLineEndMs.value)
+)
+watch(
+  [
+    selectedWordLoopRange,
+    () => props.selectedLine,
+    () => props.selectedLineIndex,
+    selectedWordIndex,
+  ],
+  () => {
+    const range = selectedWordLoopRange.value
+    emit(
+      'word-loop-target',
+      range
+        ? {
+            ...range,
+            line: props.selectedLine,
+            lineIndex: props.selectedLineIndex,
+            wordIndex: selectedWordIndex.value,
+          }
+        : null
+    )
+  },
+  { immediate: true }
+)
+
+const editSelectedBoundary = (boundary, event) => {
+  if (dragState.value || dragStartPos.value || wordTextEdit.value) return
+  const timeMs = event.target.value.trim() === '' ? NaN : Number(event.target.value) * 1000
+  const updatedWords = editWordBoundary(
+    words.value,
+    selectedWordIndex.value,
+    boundary,
+    timeMs,
+    lineStartMs.value,
+    actualLineEndMs.value
+  )
+  if (updatedWords)
+    emit('update:words', {
+      lineIndex: props.selectedLineIndex,
+      words: updatedWords,
+      lineStartMs: undefined,
+    })
+  // Reflect the actual accepted/clamped document after parent validation.
+  nextTick(() => {
+    const range = selectedWordLoopRange.value
+    if (range)
+      event.target.value = ((boundary === 'start' ? range.startMs : range.endMs) / 1000).toFixed(3)
+  })
+}
 
 const playheadPercent = computed(() => {
   if (!isWordSyncAvailable.value) return 0
@@ -498,6 +684,7 @@ watch(
   }
 )
 watch(selectedBoundaryIndex, async index => {
+  selectedWordIndex.value = index
   await nextTick()
   revealTime(displayedWords.value[index]?.start_ms)
 })
@@ -517,14 +704,26 @@ const timeToPercent = timeMs => {
   return Math.max(0, Math.min(100, (elapsed / duration) * 100))
 }
 
-const getWordEndMs = index => {
-  if (index >= displayedWords.value.length - 1) {
-    return laneEndMs.value
-  }
+const getWordEndMs = index =>
+  selectedWordRange(displayedWords.value, index, laneEndMs.value)?.endMs ?? laneEndMs.value
 
-  const nextWordStart = displayedWords.value[index + 1]?.start_ms
-  return Number.isFinite(nextWordStart) ? nextWordStart : laneEndMs.value
+const selectWord = index => {
+  if (
+    !Number.isInteger(index) ||
+    !words.value[index] ||
+    dragState.value ||
+    dragStartPos.value ||
+    wordTextEdit.value
+  )
+    return
+  selectedWordIndex.value = index
+  selectBoundary(index)
 }
+
+watch(words, current => {
+  if (selectedWordIndex.value >= current.length)
+    selectedWordIndex.value = Math.max(0, current.length - 1)
+})
 
 const handleBoundaryPointerDown = (rightWordIndex, event) => {
   if (wordTextEdit.value) return
@@ -558,6 +757,10 @@ const getBoundaryLineClass = index => {
 
 const handleSyncWord = () => {
   if (wordTextEdit.value) return
+  if (props.wordLoopEnabled) {
+    editSelectedBoundary('start', { target: { value: String(props.progressMs / 1000) } })
+    return
+  }
   const selectedBoundaryBeforeSync = selectedBoundaryIndex.value
   const synced = syncSelectedBoundary(props.progressMs)
 
@@ -572,6 +775,10 @@ const handleSyncWord = () => {
 
 const handleSyncWordNoAdvance = () => {
   if (wordTextEdit.value) return
+  if (props.wordLoopEnabled) {
+    editSelectedBoundary('start', { target: { value: String(props.progressMs / 1000) } })
+    return
+  }
   syncSelectedBoundary(props.progressMs, { advance: false })
 }
 
@@ -593,14 +800,8 @@ const splitTextByGrapheme = text => {
   return Array.from(text)
 }
 
-const getWordEndMsFromList = (wordsList, index) => {
-  if (index >= wordsList.length - 1) {
-    return laneEndMs.value
-  }
-
-  const nextWordStart = wordsList[index + 1]?.start_ms
-  return Number.isFinite(nextWordStart) ? nextWordStart : laneEndMs.value
-}
+const getWordEndMsFromList = (wordsList, index) =>
+  selectedWordRange(wordsList, index, laneEndMs.value)?.endMs ?? laneEndMs.value
 
 const handleDeleteSelectedBoundaries = () => {
   if (wordTextEdit.value) return
@@ -639,6 +840,7 @@ const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
     ? currentWord.start_ms
     : laneStartMs.value
   const wordEndMs = getWordEndMsFromList(displayedWords.value, wordIndex)
+  if (wordEndMs - wordStartMs < 2) return
   const normalizedSplitRatio = Number.isFinite(splitRatio)
     ? Math.max(0, Math.min(1, splitRatio))
     : normalizedSplitIndex / graphemes.length
@@ -653,7 +855,11 @@ const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
   const updatedWords = [
     ...displayedWords.value.slice(0, wordIndex),
     { text: leftText, start_ms: wordStartMs },
-    { text: rightText, start_ms: splitTimeMs },
+    {
+      text: rightText,
+      start_ms: splitTimeMs,
+      ...(Number.isFinite(currentWord.end_ms) ? { end_ms: currentWord.end_ms } : {}),
+    },
     ...displayedWords.value.slice(wordIndex + 1),
   ]
 
@@ -728,10 +934,12 @@ watch(
     cancelBoundaryInteraction()
     // Only reset boundary index when actually changing to a different line
     if (newIndex !== oldIndex) {
-      selectedWordIndex.value = 0
+      const preferred = Number.isInteger(props.initialWordIndex) ? props.initialWordIndex : 0
+      selectedWordIndex.value = Math.max(0, Math.min(preferred, words.value.length - 1))
       manualInspection.value = false
       if (scrollElement.value) scrollElement.value.scrollLeft = 0
       resetBoundarySelection()
+      selectBoundary(selectedWordIndex.value)
       syncLaneWindowToSelection()
     } else if (!props.hasSelectedLine) {
       syncLaneWindowToSelection()
@@ -754,7 +962,7 @@ const handleResetWords = async () => {
   // Clear the words object entirely - this removes persisted word timings.
   emit('update:words', {
     lineIndex: props.selectedLineIndex,
-    words: undefined,
+    words: [],
   })
 
   // Reset selected boundary after clearing.
