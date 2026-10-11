@@ -1,6 +1,6 @@
 # Current Interface Screenshots
 
-All current guide images were freshly captured from **LRCGET 2.2.2+local.1**
+Unchanged guide images were freshly captured from **LRCGET 2.2.2+local.1**
 on 2026-10-11 in both light and dark themes, using demonstration data.
 
 The `automatic-lrc-*`, `waveform-marker-times-*`, `waveform-click-play-*`,
@@ -23,3 +23,8 @@ These are screenshots of the actual interface, not generated mockups. Captures
 were settled after theme/zoom updates. Verification did not change user music,
 sidecars or the live lyrics database. Native hover help is not forced open.
 Historical screenshots outside this directory remain for old release notes.
+
+`timed-hover-help-light.png` and `timed-hover-help-dark.png` are new 2.2.3 browser
+captures of the actual editor and shared hover-help controller using generated
+fixture data. Checks keep the pointer stationary until help expires, then verify
+re-entry, Escape/click/scroll/leave, dynamic controls, literal text and cleanup.

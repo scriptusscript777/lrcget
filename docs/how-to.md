@@ -1,16 +1,16 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.2+local.1**.
+For Rick Lidgett's LRCGET **2.2.3+local.1**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.2-local.1).
+1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.3-local.1).
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.2+local.1_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.2+local.1_amd64.deb
+sha256sum -c LRCGET_2.2.3+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.3+local.1_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -241,7 +241,13 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 | Embedded option is disabled           | Experimental embedding setting and supported file type                                          |
 | Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry   |
 | Waveform is unavailable               | Use Retry; text editing/basic playback remain separate from waveform availability               |
-| Hover help seems delayed              | Descriptions use native titles; the browser controls their delay                                |
+| Hover help seems delayed              | Help appears after 350 ms and closes after two seconds; leave/re-enter to read again                                |
 
 Screenshots use temporary demonstration fixtures. Detailed keyboard bindings,
 format limits and safety behavior are in the [editing reference](editing-guide.md).
+
+Linux compatibility: the shared hover-help behavior is independent of desktop
+environment. This amd64 installer requires glibc 2.39 or newer, GTK 3 and
+WebKitGTK 4.1 (such as Ubuntu 24.04 / Mint 22 or compatible newer systems).
+Older Debian-based releases and ARM need a build for their platform; a `.deb`
+extension alone does not guarantee binary compatibility.

@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.2+local.1** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.3+local.1** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.2-local.1/LRCGET_2.2.2%2Blocal.1_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.2-local.1)
-| [Neighboring lyric warnings and loop fixes](docs/releases/2.2.2-local.1.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.3-local.1/LRCGET_2.2.3%2Blocal.1_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.3-local.1)
+| [Two-second hover help](docs/releases/2.2.3-local.1.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -91,8 +91,8 @@ current defaults.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.2+local.1_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.2+local.1_amd64.deb
+sha256sum -c LRCGET_2.2.3+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.3+local.1_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -293,3 +293,13 @@ Your built binaries are located at:
 ```
 
 For more detailed instruction, follow the [building guide](https://tauri.app/v1/guides/building/) to build the application according to your OS platform.
+
+Hover help closes after two seconds, including when the pointer stays still.
+Move away and return to read it again; clicks, scrolling and Escape dismiss it
+immediately. Help never blocks waveform editing or playback controls.
+
+Linux compatibility: the shared hover-help behavior is independent of desktop
+environment. This amd64 installer requires glibc 2.39 or newer, GTK 3 and
+WebKitGTK 4.1 (such as Ubuntu 24.04 / Mint 22 or compatible newer systems).
+Older Debian-based releases and ARM need a build for their platform; a `.deb`
+extension alone does not guarantee binary compatibility.

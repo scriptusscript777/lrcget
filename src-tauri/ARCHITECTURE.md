@@ -464,3 +464,10 @@ The following deprecated functions were removed from `db.rs` (no longer used):
 - The tracks table schema for new databases (post-reset) will not include these deprecated columns
 
 **Migration v14:** Uses `ALTER TABLE DROP COLUMN` (SQLite 3.35.0+) to remove deprecated columns: `txt_lyrics`, `lrc_lyrics`, `instrumental`, `has_plain_lyrics`, `has_synced_lyrics`, `has_word_synced_lyrics`. Drops related indexes and forces a library reset.
+
+### Linux binary baseline (2.2.3 packaging)
+
+The current amd64 binary links GLIBC_2.39 symbols on Mint 22 / Ubuntu 24.04.
+The Debian bundle explicitly declares `libc6 (>= 2.39)` in addition to generated
+GTK/WebKit dependencies so older hosts fail dependency resolution rather than
+installing an incompatible executable. The application identifier is unchanged.

@@ -1,7 +1,9 @@
-// Use native hover descriptions, not focusable/interactive popup panels.
-// The browser controls the delay; this directive never creates overlay elements.
+// Shared descriptions remain available after the timed visual help closes.
 const describeControl = (element, { value }) => {
-  element.setAttribute('title', value?.content ?? '')
+  const text = value?.content ?? ''
+  element.setAttribute('data-editor-help', text)
+  element.setAttribute('aria-description', text)
+  element.removeAttribute('title')
 }
 
 export const vTooltip = { mounted: describeControl, updated: describeControl }

@@ -28,7 +28,9 @@
         "files": {
           "/usr/share/metainfo/LRCGET.metainfo.xml": "../packaging/linux/LRCGET.metainfo.xml"
         },
-        "depends": []
+        "depends": [
+          "libc6 (>= 2.39)"
+        ]
       },
       "appimage": {
         "files": {

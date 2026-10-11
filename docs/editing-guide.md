@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.2+local.1`.
+Rick Lidgett's enhanced LRCGET build, `2.2.3+local.1`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -142,8 +142,10 @@ marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 
-Hover an editing control to see its standard description. The browser controls
-the delay. Editing help creates no popup panels or overlays to block clicks.
+Hover a control to see brief help after a 350 ms delay. It closes two seconds
+after appearing, even if the mouse stays still. Move away and return to read it
+again. Moving away, clicking, scrolling or pressing Escape closes help immediately.
+The bubble never blocks clicks; accessible descriptions remain available.
 The waveform shows
 the playhead position as `mm:ss.mmm`; the player reports updates every 40 ms,
 so three decimal places do not imply 1 ms playback accuracy.
@@ -381,3 +383,12 @@ loop stays unavailable until loading completes.
 
 ![Start and End in light mode](screenshots/current/waveform-marker-times-light.png)
 ![Start and End in dark mode](screenshots/current/waveform-marker-times-dark.png)
+
+### Brief Hover Help (2.2.3)
+
+Hover descriptions are shared across titled app controls and editor tools. They
+close automatically instead of staying over your work. Menus, dialogs and marker
+warnings are separate: their normal behavior is unchanged.
+
+![Timed hover help in light mode](screenshots/current/timed-hover-help-light.png)
+![Timed hover help in dark mode](screenshots/current/timed-hover-help-dark.png)

@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.2+local.1`, based on upstream tag `2.2.0`.
+Local version: `2.2.3+local.1`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -393,3 +393,13 @@ overlaps remain allowed. Apply never moves adjacent lyrics; Cancel and selection
 changes retain existing draft reset behavior. The final lyric's inferred Loop end
 now falls back to known recording duration, matching the waveform. Actionable
 recommendations are implemented rather than left as future ideas.
+
+## Timed Hover Help (2.2.3+local.1)
+
+Native browser title popups were outside app timing control. The app now renders
+one passive help bubble after a short hover delay and dismisses it two seconds
+after appearance, even with a stationary pointer. Leave/re-enter to read again.
+Leaving, clicking, scrolling, Escape, resizing, losing window focus or removing
+the control dismisses help; pending delays and app/HMR listeners are cleaned up.
+Descriptions remain accessible, text is literal, and help never captures input.
+This shared frontend behavior is independent of Linux desktop environment.

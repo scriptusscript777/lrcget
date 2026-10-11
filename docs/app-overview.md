@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.2+local.1. **Editing developer:** Rick Lidgett
+**Version:** 2.2.3+local.1. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -164,15 +164,15 @@ successfully exported; inspect the result before retrying.
 | Marker confirmation | Preview, audition, Apply/Cancel and fixed saved timestamps                                        | [Marker how-to](how-to.md#place-precise-markers-and-preview-before-confirming) |
 | Word editing        | Follow Lyrics, spelling edits, split/merge and independent lane zoom                              | [Word how-to](how-to.md#edit-individual-words)                                 |
 | Looping             | Selected-range loops, preview bounds, cancellation and explicit forward playback                  | [Loop how-to](how-to.md#loop-between-the-markers)                              |
-| Help and themes     | Native hover descriptions without blocking popup panels; light/dark controls                      | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
+| Help and themes     | Help closes after two seconds, never intercepts input; light/dark controls                      | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
 | Refresh             | Startup scanning and F5 with unavailable-directory safeguards                                     | [Library reference](editing-guide.md#library-search-and-refresh)               |
 | Modified column     | Explicit save date, responsive columns, persisted track identity                                  | [Modified column](editing-guide.md#modified-column)                            |
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.2-local.1.md).
-All current screenshots were freshly captured from 2.2.2 using demonstration
-fixtures, not personal recordings.
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.3-local.1.md).
+Current images use demonstration fixtures, not personal recordings. New timed
+help captures show 2.2.3; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 

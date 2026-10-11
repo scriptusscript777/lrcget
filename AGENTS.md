@@ -68,3 +68,13 @@ actionable improvements within its scope and verify them rather than leaving
 them as a list of future suggestions. Keep the result focused on lyric editing,
 clear controls and realistic user flows; report dependencies that cannot be
 completed without external access or a broader upstream port.
+
+### Existing local Git server backup
+
+Rick's server backup is the parent `/home/rick/Projects` repository, remote
+`origin` at `ssh://git@192.168.25.13/rick/Projects_Folder.git`, branch `main`.
+Refresh `lrcget-source/` from the release commit, `lrcget-backup.bundle` with full
+history/release tags, and `lrcget-installers/` with the installer/checksum. Update
+`lrcget-backup-README.md`, commit only these paths and push/verify `main`. Preserve
+unrelated projects and older installers. A separate server `rick/lrcget` repository
+is not needed.
