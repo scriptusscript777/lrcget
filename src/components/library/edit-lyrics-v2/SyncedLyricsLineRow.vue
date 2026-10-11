@@ -224,6 +224,8 @@ const props = defineProps({
     type: Function,
     required: true,
   },
+  previewRange: { type: Object, default: null },
+  inferredEndMs: { type: Number, default: null },
   progressMs: {
     type: Number,
     default: 0,
@@ -262,12 +264,12 @@ const handleMouseDown = event => {
 
 // Determine if this line is currently playing based on its own time range
 const isLinePlaying = computed(() => {
-  if (!Number.isFinite(props.line?.start_ms)) {
+  if (!Number.isFinite(props.previewRange?.startMs ?? props.line?.start_ms)) {
     return false
   }
 
-  const startMs = props.line.start_ms
-  const endMs = props.line?.end_ms
+  const startMs = props.previewRange?.startMs ?? props.line.start_ms
+  const endMs = props.previewRange?.endMs ?? props.line?.end_ms ?? props.inferredEndMs
 
   // If end_ms is set, check if progress is within [start_ms, end_ms)
   if (Number.isFinite(endMs)) {
@@ -284,11 +286,11 @@ const editingTextProxy = computed({
   set: value => emit('update:editing-text', value),
 })
 
-const syncLineTitle = withShortcutTitle(
-  'Sync sentence start and start marker to current playback; keep end fixed',
+const syncLineTitle = computed(() => withShortcutTitle(
+  props.previewRange?.startChanged ? 'Confirm previewed start marker; keep confirmed end fixed' : 'Sync sentence start to current playback; keep end fixed',
   syncedEditorShortcutBindings,
   'syncLineToPlayback'
-)
+))
 
 const rewindLineTitle = computed(() => withShortcutTitle(`Shift sentence and both markers earlier by ${props.timingStepMs}ms`, syncedEditorShortcutBindings, 'rewindLine'))
 
@@ -298,11 +300,11 @@ const forwardLineTitle = computed(() => withShortcutTitle(
   'forwardLine'
 ))
 
-const syncEndTitle = withShortcutTitle(
-  'Sync sentence end and end marker to current playback; keep start fixed',
+const syncEndTitle = computed(() => withShortcutTitle(
+  props.previewRange?.endChanged ? 'Confirm previewed end marker; keep confirmed start fixed' : 'Sync sentence end to current playback; keep start fixed',
   syncedEditorShortcutBindings,
   'syncLineEndToPlayback'
-)
+))
 
 const rewindEndTitle = computed(() => withShortcutTitle(
   `Move sentence end and end marker earlier by ${props.timingStepMs}ms`,

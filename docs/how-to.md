@@ -66,7 +66,7 @@ your words into **Plain**, switch to an empty **Synced** editor and choose
 Your source TXT remains unchanged. The working Plain and Synced versions are
 separate; editing synced text does not silently edit Plain or the source TXT.
 
-![Imported text before any timestamps have been assigned](screenshots/current/untimed-text-light.png)
+![Imported text before any timestamps have been assigned](screenshots/current/marker-sync-untimed-light.png)
 
 ## Edit an Existing LRC or Timed Text File
 
@@ -107,26 +107,28 @@ recording duration. Moving the playhead does not change marker times.
    handle for end; each has one vertical guide.
 3. Drag a handle, or focus it and nudge with Left/Right using the chosen timing
    step. Shift makes a marker nudge ten times larger.
-4. Replay or loop the preview. The preview clock changes, but the lyric row is
-   unchanged until confirmation.
+4. Replay or loop the preview. The preview clock and sentence highlighting follow
+   the proposed start/end; saved row timestamps stay unchanged until confirmation.
    The time row is labeled **Preview** and updates while you drag or nudge.
    The highlight follows the preview and clips to the visible waveform.
    If a boundary crosses the previous lyric's end or next lyric's start, a
    warning shows the distance in seconds. Correct an accidental crossing with
-   a nudge/drag or Cancel; intentional overlaps may still be applied.
-5. Click **Apply Markers** to commit both boundaries as one undoable edit.
-   Click **Cancel** to retain the original pair.
+   a nudge/drag or Cancel. **Prevent overlapping lyrics** is on by default;
+   turn it off explicitly to confirm an intentional overlap.
+5. Use **Sync Sentence Start** and **Sync Sentence End** to confirm the corresponding
+   moved marker as separate undoable edits. **Cancel** restores the last confirmed
+   timings; confirming one boundary preserves the other pending preview.
 
-![Preview before confirming timestamps](screenshots/current/marker-preview-light.png)
+![Preview before confirming timestamps](screenshots/current/marker-sync-preview-light.png)
 
-![Start and End marker times in light mode](screenshots/current/waveform-marker-times-light.png)
-![Start and End marker times in dark mode](screenshots/current/waveform-marker-times-dark.png)
+![Start and End marker times in light mode](screenshots/current/marker-sync-preview-light.png)
+![Start and End marker times in dark mode](screenshots/current/marker-sync-preview-dark.png)
 
-![Warning before extending into the next lyric](screenshots/current/marker-overlap-light.png)
-![Warning before moving into the previous lyric](screenshots/current/marker-previous-overlap-dark.png)
+![Warning before extending into the next lyric](screenshots/current/marker-sync-overlap-light.png)
+![Overlap protection in dark mode](screenshots/current/marker-sync-overlap-dark.png)
 
 Escape during dragging cancels that drag; otherwise it cancels the preview.
-Changing phrases or closing discards unconfirmed previews. Apply before Save/export.
+Changing phrases or closing discards unconfirmed previews. Confirm Start/End before Save/export.
 For untimed text, first assign the line start; the provisional end says **Inferred
 end** until you explicitly set or confirm it.
 
@@ -155,7 +157,7 @@ Use waveform Follow for viewport movement, Follow Lyrics for editing selection.
 1. Select a timed lyric and enable **Loop selected phrase**.
 2. Set **Lead-in** and **Tail** to zero for exact marker-to-marker repetition.
 3. Move/release marker previews to audition the revised range.
-4. Apply the pair when satisfied; Cancel restores saved bounds.
+4. Confirm the corresponding Start/End when satisfied; Cancel restores saved bounds.
 5. Turn Loop off to keep playing forward.
 
 Lead-in/Tail add context to playback, not the saved lyric timestamps. Changing
@@ -186,7 +188,7 @@ the session. Moving the first word start may also move the sentence start.
 
 ## Save and Export for Playback
 
-1. Apply any pending marker previews.
+1. Confirm any pending marker previews with Sync Sentence Start/End.
 2. Click **Save** to retain the local lyric document.
 3. Open the arrow next to Save. Select **Synced lyrics (.lrc)** to write a timed
    sidecar. Select Plain TXT only if you also want that destination rewritten.
@@ -239,8 +241,8 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 | Playhead leaves the zoomed view       | Enable waveform Follow; manual panning holds inspection; double-click zoom now preserves Follow                                                     |
 | Markers do not advance with sentences | Enable Follow Lyrics; manual selection, edits and loops pin the target                                                                              |
 | Audio stops/repeats at a marker       | Turn Loop off for forward playback; sentence Play retains an enabled Loop                                                                           |
-| No markers or row playback for TXT    | Assign its start first; untimed text has no real timestamps yet                                                                                     |
-| End says Inferred end                 | Set end at playback or confirm the intended pair with Apply Markers                                                                                 |
+| Row playback unavailable for TXT      | Provisional markers do not assign timing; confirm its start first                                                                                   |
+| End says Inferred end                 | Set end at playback or confirm the intended pair with Sync Sentence Start/End                                                                       |
 | Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                        |
 | An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Already synced lyrics require explicit import to protect saved edits. |
 | Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                                                                                 |
@@ -267,3 +269,12 @@ or while that control has keyboard focus. Closing Configuration without Save
 discards the change. Menus and marker warnings are unaffected.
 
 ![Hover help setting](screenshots/current/hover-help-settings-light.png)
+
+## Preserve Sentence Ends When Exporting
+
+1. Confirm Start and End with the sentence Sync controls, then Save.
+2. Export LRC. Gaps of at least 250 ms become blank timestamped cues; final ends
+   are included. Tiny gaps are omitted to avoid flashing lyrics between sentences.
+3. Reopen the saved song to retain exact end-marker times. If importing only the
+   LRC, its exported blank cues appear as real empty timed rows; omitted short
+   gaps cannot restore their exact end times from that file alone.

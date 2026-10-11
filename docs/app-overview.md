@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.5+local.1. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.1. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -80,24 +80,25 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
   areas, so close markers remain selectable.
 - A subtle tint between the markers shows the selected phrase, follows marker
   previews, and clips at the viewport edges without blocking clicks or handles.
-- Dragging/nudging creates a preview, not a saved edit. **Apply Markers** commits
-  both boundaries as one undoable edit. **Cancel** discards the preview.
+- Dragging/nudging creates a preview, not a saved edit. **Sync Sentence Start** and **Sync Sentence End** confirm
+  their corresponding moved markers as independent undoable edits. **Cancel** restores the last confirmed timing.
 - Crossing a neighboring lyric boundary shows a warning with the distance in
-  seconds, including zoomed/off-screen previews. Intentional overlaps are allowed;
-  applying a marker edit never moves neighboring lyrics automatically.
+  seconds, including zoomed/off-screen previews. **Prevent overlapping lyrics**
+  blocks confirmation by default; turn it off for deliberate overlaps.
+  Existing neighboring timestamps are preserved by marker edits.
 
 ![Zoomed playback following without requiring a loop](screenshots/current/waveform-follow-dark.png)
 
-![Preview timestamps with Apply Markers and Cancel](screenshots/current/marker-preview-light.png)
+![Preview timestamps with Sync Sentence Start/End and Cancel](screenshots/current/marker-sync-preview-light.png)
 
-![Persistent Start and End times](screenshots/current/waveform-marker-times-dark.png)
+![Persistent Start and End times](screenshots/current/marker-sync-preview-dark.png)
 
 ## Loops and Playback
 
 **Loop selected phrase** repeats the selected range. Lead-in and Tail add audition
 context; both default to zero for exact marker-to-marker repetition. Released
 marker previews become the audition range before confirmation. Dragging does
-not continuously reseek. Apply commits timestamps; Cancel restores saved bounds.
+not continuously reseek. Sentence Sync confirms timestamps; Cancel restores saved bounds.
 
 Normal playback can pass the end marker. A sentence's Play button selects that
 phrase and retains an enabled Loop. Changing lyric selection moves the loop to
@@ -143,7 +144,7 @@ Jellyfin client. Keep an LRC sidecar when useful for your playback software.
 
 TXT and LRC exports coexist. Selecting a format can replace its existing
 destination; leaving TXT unchecked protects an existing TXT from that export.
-Unconfirmed waveform previews are not exported. Apply them first.
+Unconfirmed waveform previews are not exported. Confirm them with the sentence Sync buttons first.
 
 Exports stage/check output and then replace the destination atomically. Failed
 preparation leaves the original intact. Since .20, successful exports create no
@@ -162,7 +163,7 @@ successfully exported; inspect the result before retrying.
 | File import         | Plain TXT, timestamped TXT and LRC with confirmation and source protection                        | [Import how-to](how-to.md#create-timed-lyrics-from-a-text-file)                |
 | Timing editor       | Line/word tools, steps, contextual playback, keyboard handling and session undo                   | [Editing reference](editing-guide.md#edit-lines-and-text)                      |
 | Waveform navigation | Cached peaks, seek, zoom, pan and playback following                                              | [Waveform how-to](how-to.md#zoom-and-follow-without-looping)                   |
-| Marker confirmation | Preview, audition, Apply/Cancel and fixed saved timestamps                                        | [Marker how-to](how-to.md#place-precise-markers-and-preview-before-confirming) |
+| Marker confirmation | Live preview, sentence Sync confirmation, Cancel and exact saved ends                             | [Marker how-to](how-to.md#place-precise-markers-and-preview-before-confirming) |
 | Word editing        | Follow Lyrics, spelling edits, split/merge and independent lane zoom                              | [Word how-to](how-to.md#edit-individual-words)                                 |
 | Looping             | Selected-range loops, preview bounds, cancellation and explicit forward playback                  | [Loop how-to](how-to.md#loop-between-the-markers)                              |
 | Help and themes     | Saved hover-help toggle defaults off; F1 help expires after two seconds                           | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
@@ -184,10 +185,10 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The 2.2.5 frontend run passed 396 tests and scoped ESLint. Browser checks cover
-persistent Loop, sentence navigation, repeat boundaries, zoom, tab suspension and
-explicit Off. The unchanged Rust logic passed 57 tests in 2.2.4 (one optional
-fixture ignored). Saved hover-help checks remain documented in the 2.2.4 review.
+The 2.2.6 frontend run passed 411 tests and scoped ESLint. Browser checks cover
+independent marker confirmation, cancel baselines, live highlighting, zoom,
+untimed text and overlap opt-out. Rust passed 60 tests (one optional fixture
+ignored). Saved hover-help checks remain documented in the 2.2.4 review.
 Ruff reports 11 existing findings in the unchanged Python test-data generator.
 These results do not guarantee perfect lyrics.
 

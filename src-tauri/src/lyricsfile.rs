@@ -1,4 +1,4 @@
-use crate::parser::lrc::{parse_lrc, format_timestamp};
+use crate::parser::lrc::parse_lrc;
 use crate::persistent_entities::PersistentTrack;
 use crate::utils::strip_timestamp;
 use anyhow::Result;
@@ -77,7 +77,8 @@ struct LyricsfileMetadata {
 #[derive(Debug, Serialize, Deserialize)]
 struct LyricsfileLine {
     text: String,
-    start_ms: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    start_ms: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     end_ms: Option<i64>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
@@ -87,7 +88,8 @@ struct LyricsfileLine {
 #[derive(Debug, Serialize, Deserialize)]
 struct LyricsfileWord {
     text: String,
-    start_ms: i64,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    start_ms: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     end_ms: Option<i64>,
 }
@@ -198,8 +200,14 @@ pub fn lyrics_presence_from_lyricsfile(lyricsfile: &str) -> Result<LyricsPresenc
         });
     }
 
-    let has_synced_lyrics = !document.lines.is_empty();
-    let has_word_synced_lyrics = document.lines.iter().any(|line| !line.words.is_empty());
+    let has_synced_lyrics = document
+        .lines
+        .iter()
+        .any(|line| line.start_ms.is_some_and(|start| start >= 0));
+    let has_word_synced_lyrics = document
+        .lines
+        .iter()
+        .any(|line| line.start_ms.is_some_and(|start| start >= 0) && !line.words.is_empty());
     let has_plain_from_lines = document.lines.iter().any(|line| {
         normalize_non_empty(Some(line.text.as_str())).is_some()
             || line
@@ -207,8 +215,8 @@ pub fn lyrics_presence_from_lyricsfile(lyricsfile: &str) -> Result<LyricsPresenc
                 .iter()
                 .any(|word| normalize_non_empty(Some(word.text.as_str())).is_some())
     });
-    let has_plain_lyrics = normalize_non_empty(document.plain.as_deref()).is_some()
-        || (has_synced_lyrics && has_plain_from_lines);
+    let has_plain_lyrics =
+        normalize_non_empty(document.plain.as_deref()).is_some() || has_plain_from_lines;
 
     Ok(LyricsPresence {
         has_plain_lyrics,
@@ -239,7 +247,7 @@ fn parse_lrc_lines(synced_lyrics: &str) -> Vec<LyricsfileLine> {
 
             LyricsfileLine {
                 text: timed_line.text.clone(),
-                start_ms,
+                start_ms: Some(start_ms),
                 end_ms,
                 words: Vec::new(),
             }
@@ -247,19 +255,75 @@ fn parse_lrc_lines(synced_lyrics: &str) -> Vec<LyricsfileLine> {
         .collect()
 }
 
+const MIN_LRC_GAP_MS: i64 = 250;
+
 fn lines_to_lrc(lines: &[LyricsfileLine]) -> Option<String> {
-    let mut output = String::new();
-
-    for line in lines {
-        let text = if !line.words.is_empty() {
-            line.words.iter().map(|word| word.text.as_str()).collect()
-        } else {
-            line.text.clone()
+    let mut timed: Vec<_> = lines
+        .iter()
+        .filter_map(|line| {
+            line.start_ms
+                .filter(|start| *start >= 0)
+                .map(|start| (start, line))
+        })
+        .collect();
+    timed.sort_by_key(|(start, _)| *start);
+    let mut events: Vec<(i64, String)> = timed
+        .iter()
+        .map(|(start, line)| {
+            let text = if !line.words.is_empty() {
+                line.words.iter().map(|word| word.text.as_str()).collect()
+            } else {
+                line.text.clone()
+            };
+            (*start, text)
+        })
+        .collect();
+    let mut occupied: std::collections::HashSet<i64> =
+        timed.iter().map(|(start, _)| *start).collect();
+    for (start, line) in &timed {
+        let Some(end) = line.end_ms.filter(|end| *end > *start) else {
+            continue;
         };
-
-        output.push_str(&format!("{} {}\n", format_timestamp(line.start_ms), text));
+        if line.text.trim().is_empty() || occupied.contains(&end) {
+            continue;
+        }
+        let next_start = timed
+            .iter()
+            .find(|(candidate, _)| *candidate > end)
+            .map(|(candidate, _)| *candidate);
+        if next_start.is_some_and(|next| next - end < MIN_LRC_GAP_MS) {
+            continue;
+        }
+        let active = timed.iter().any(|(other_start, other)| {
+            if std::ptr::eq(*other, *line) || other.text.trim().is_empty() || *other_start > end {
+                return false;
+            }
+            let next = timed
+                .iter()
+                .find(|(candidate, _)| *candidate > *other_start)
+                .map(|(candidate, _)| *candidate);
+            let other_end = other.end_ms.or(next).unwrap_or(i64::MAX);
+            *other_start <= end && other_end > end
+        });
+        if !active {
+            events.push((end, String::new()));
+            occupied.insert(end);
+        }
     }
-
+    events.sort_by_key(|(time, _)| *time);
+    let output = events
+        .iter()
+        .map(|(time, text)| {
+            // Milliseconds keep short gaps distinct, matching the frontend exporter.
+            format!(
+                "[{:02}:{:02}.{:03}]{}\n",
+                time / 60_000,
+                (time % 60_000) / 1_000,
+                time % 1_000,
+                text
+            )
+        })
+        .collect::<String>();
     normalize_non_empty(Some(output.as_str()))
 }
 
@@ -275,4 +339,66 @@ fn normalize_non_empty(value: Option<&str>) -> Option<String> {
     value
         .map(str::to_string)
         .filter(|content| !content.trim().is_empty())
+}
+
+#[cfg(test)]
+mod gap_export_tests {
+    use super::*;
+
+    fn line(text: &str, start: Option<i64>, end: Option<i64>) -> LyricsfileLine {
+        LyricsfileLine {
+            text: text.into(),
+            start_ms: start,
+            end_ms: end,
+            words: vec![],
+        }
+    }
+
+    #[test]
+    fn standard_lrc_preserves_gaps_final_end_and_milliseconds() {
+        let output = lines_to_lrc(&[
+            line("First", Some(1001), Some(2001)),
+            line("Last", Some(3001), Some(4001)),
+        ])
+        .unwrap();
+        assert_eq!(
+            output,
+            "[00:01.001]First\n[00:02.001]\n[00:03.001]Last\n[00:04.001]\n"
+        );
+        let parsed = parse_lrc(&output);
+        assert_eq!(parsed.timed_lines.len(), 4);
+        assert_eq!(parsed.timed_lines[1].timestamp_ms, 2001);
+        assert!(parsed.timed_lines[1].text.is_empty());
+    }
+
+    #[test]
+    fn avoids_short_duplicate_and_overlapping_clear_cues() {
+        for start in [1500, 2000, 2001, 2249] {
+            let output = lines_to_lrc(&[
+                line("First", Some(1000), Some(2000)),
+                line("Last", Some(start), Some(4000)),
+            ])
+            .unwrap();
+            assert!(!output.contains("[00:02.000]\n"));
+        }
+        let output = lines_to_lrc(&[
+            line("First", Some(1000), Some(2000)),
+            line("", Some(2000), None),
+            line("Last", Some(2250), Some(4000)),
+        ])
+        .unwrap();
+        assert_eq!(output.matches("[00:02.000]").count(), 1);
+    }
+
+    #[test]
+    fn untimed_rows_are_plain_and_survive_internal_storage() {
+        let document = "metadata:\n  title: Song\n  artist: Artist\nlines:\n  - text: untimed phrase\n  - text: other phrase\n    words:\n      - text: other phrase\nplain: |\n  untimed phrase\n  other phrase\n";
+        let parsed = parse_lyricsfile(document).unwrap();
+        assert!(parsed.synced_lyrics.is_none());
+        assert!(parsed.plain_lyrics.unwrap().contains("untimed phrase"));
+        let presence = lyrics_presence_from_lyricsfile(document).unwrap();
+        assert!(presence.has_plain_lyrics);
+        assert!(!presence.has_synced_lyrics);
+        assert!(!presence.has_word_synced_lyrics);
+    }
 }

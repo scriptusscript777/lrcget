@@ -9,6 +9,10 @@
           <option v-for="step in [10, 25, 50, 100]" :key="step" :value="step">{{ step }} ms</option>
         </select>
       </label>
+      <label class="text-xs inline-flex items-center gap-1">
+        <input type="checkbox" aria-label="Prevent overlapping lyrics" :checked="preventOverlaps" @change="emit('update:prevent-overlaps', $event.target.checked)">
+        Prevent overlapping lyrics
+      </label>
       <button v-tooltip="editorTooltip('Keep repeating the selected markers until Loop is turned off; selecting another lyric moves the loop')" class="button p-1.5 rounded" :class="loopEnabled ? 'button-primary' : 'button-normal'" :disabled="!canLoop && !loopEnabled" :aria-pressed="loopEnabled" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
       <label v-tooltip="editorTooltip('Extra listening time before the loop start, in seconds; use zero for exact marker bounds')" class="text-xs inline-flex items-center gap-1">Lead-in
         <input class="input w-14 rounded px-1 py-1 text-xs [color-scheme:light] dark:[color-scheme:dark]" type="number" min="0" max="5" step="0.1" :value="loopLeadSeconds" @change="emit('update:loop-lead-seconds', Number($event.target.value))">s
@@ -90,6 +94,8 @@
             :end-timestamp-text="formatTimestampMs(line.end_ms)"
             :set-line-input-ref="setLineInputRef"
             :progress-ms="progressMs"
+            :preview-range="markerPreview?.line === line && markerPreview?.lineIndex === index ? markerPreview : null"
+            :inferred-end-ms="modelValue[index + 1]?.start_ms"
             :timing-step-ms="timingStepMs"
             @mouseenter="hoveredLineIndex = index"
             @mouseleave="hoveredLineIndex = null"
@@ -199,6 +205,8 @@ const props = defineProps({
   timingStepMs: { type: Number, default: 100 },
   loopEnabled: Boolean,
   markerEditing: Boolean,
+  markerPreview: { type: Object, default: null },
+  preventOverlaps: { type: Boolean, default: true },
   canLoop: Boolean,
   loopLeadSeconds: { type: Number, default: 1 },
   loopTailSeconds: { type: Number, default: 0.5 },
@@ -237,6 +245,7 @@ const emit = defineEmits([
   'update:selected-line-indices',
   'play-line',
   'play-line-at-offset',
+  'update:prevent-overlaps',
   'sync-line',
   'rewind-line',
   'forward-line',

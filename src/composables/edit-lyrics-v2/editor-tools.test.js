@@ -315,7 +315,9 @@ describe('synced editing history and timing steps', () => {
     expect(html).not.toContain('top-full')
   })
   it('commits marker edits once, holds the end, shifts words, and never changes neighbors', () => {
+    // This existing scenario intentionally overlaps the previous sentence.
     const { state, scope } = document()
+    state.preventOverlaps.value = false
     const original = { ...line(), words: [{ text: 'test', start_ms: 1000, end_ms: 2000 }] }
     state.updateSyncedLines([original, { ...line(), start_ms: 1500 }])
     const commit = (startMs, endMs, selected = state.syncedLines.value[0]) =>
@@ -945,4 +947,64 @@ describe('editor exports', () => {
     expect(toast.warning).toHaveBeenCalledWith(expect.stringContaining('embedded: disk full'))
     expect(state.isExporting.value).toBe(false)
   })
+})
+
+describe('marker confirmation overlap protection', () => {
+  it('blocks overlapping confirmations by default and allows deliberate opt-out', () => {
+    const { state, scope } = document()
+    state.updateSyncedLines([
+      { text: 'previous', start_ms: 0, end_ms: 1000 },
+      { text: 'selected', start_ms: 1000, end_ms: 3000 },
+      { text: 'next', start_ms: 3000, end_ms: 4000 },
+    ])
+    const original = JSON.stringify(state.syncedLines.value)
+    expect(state.preventOverlaps.value).toBe(true)
+    expect(state.syncLineToCurrentProgress(1, 900)).toBe(false)
+    expect(state.syncEndToCurrentProgress(1, 3100)).toBe(false)
+    expect(JSON.stringify(state.syncedLines.value)).toBe(original)
+    state.preventOverlaps.value = false
+    expect(state.syncLineToCurrentProgress(1, 900)).toBe(true)
+    expect(state.syncEndToCurrentProgress(1, 3100)).toBe(true)
+    expect(state.syncedLines.value[0].end_ms).toBe(1000)
+    expect(state.syncedLines.value[2].start_ms).toBe(3000)
+    scope.stop()
+  })
+  it('confirms marker times without depending on playback and records independent undo steps', () => {
+    const { state, scope } = document(ref(null))
+    state.updateSyncedLines([{ text: 'phrase', start_ms: 1000, end_ms: 3000 }])
+    expect(state.syncLineToCurrentProgress(0, 1200)).toBe(true)
+    expect(state.syncEndToCurrentProgress(0, 2800)).toBe(true)
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1200, end_ms: 2800 })
+    state.undo()
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1200, end_ms: 3000 })
+    state.undo()
+    expect(state.syncedLines.value[0]).toMatchObject({ start_ms: 1000, end_ms: 3000 })
+    scope.stop()
+  })
+  it('assigns an untimed start first and rejects an end without a confirmed start', () => {
+    const { state, scope } = document(ref(null))
+    state.updateSyncedLines([{ text: 'untimed' }])
+    expect(state.syncEndToCurrentProgress(0, 2000)).toBe(false)
+    expect(state.syncedLines.value[0].end_ms).toBeUndefined()
+    expect(state.syncLineToCurrentProgress(0, 1000)).toBe(true)
+    expect(state.syncEndToCurrentProgress(0, 2000)).toBe(true)
+    scope.stop()
+  })
+})
+
+it('rejects bulk overlaps atomically and reports failed individual nudges', () => {
+  const { state, scope } = document()
+  state.updateSyncedLines([
+    { text: 'first', start_ms: 1000, end_ms: 2000 },
+    { text: 'second', start_ms: 2000, end_ms: 3000 },
+    { text: 'third', start_ms: 4000, end_ms: 5000 },
+  ])
+  const original = JSON.stringify(state.syncedLines.value)
+  expect(state.forwardLineBy100(0)).toBe(false)
+  state.bulkForwardLines([0, 2])
+  expect(JSON.stringify(state.syncedLines.value)).toBe(original)
+  state.bulkForwardLines([0, 1])
+  expect(state.syncedLines.value[0].start_ms).toBe(1100)
+  expect(state.syncedLines.value[1].start_ms).toBe(2100)
+  scope.stop()
 })

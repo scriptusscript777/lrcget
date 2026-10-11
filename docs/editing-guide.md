@@ -10,7 +10,7 @@ Original project authors and license remain credited.
 1. Open your music library and select the recording you want to edit.
 2. Open its lyrics editor. Import TXT/LRC or use the online lyrics search.
 3. Use **Synced** to listen, set line starts/ends and refine markers.
-4. Preview each change, use **Apply Markers**, then **Save**.
+4. Preview each change, use **Sync Sentence Start/End**, then **Save**.
 5. Open the arrow beside Save and choose **Synced lyrics (.lrc)**, then
    **Save and export**. Choose embedding separately if you want it.
 
@@ -74,7 +74,7 @@ offset headers need to be converted to explicit line timestamps first.
 You need the corresponding audio recording to listen and set timings. LRCGET
 does not run Whisper/Demucs or automatically align plain text to singing.
 
-![Untimed imported text has no confirmed waveform markers](screenshots/current/untimed-text-dark.png)
+![Untimed imported text has no confirmed waveform markers](screenshots/current/marker-sync-untimed-dark.png)
 
 ## Create a Timeline
 
@@ -132,7 +132,7 @@ Select a timed line and enable **Loop selected phrase**. **Lead-in** and **Tail*
 add listening context around that phrase without changing its lyric timestamps.
 Both context values default to zero: the loop is exactly between the two markers.
 Released/nudged marker previews are used immediately for auditioning; dragging
-does not continuously reseek the player. Apply confirms them; Cancel returns the
+does not continuously reseek the player. Sentence Sync confirms them; Cancel returns the
 loop to the saved document boundaries. Changing selected lines moves the loop to
 the new lyric's markers without turning it off. Sentence Play, word playback,
 pause/resume, waveform seeking and zoom preserve the toggle. Waveform seeking
@@ -143,8 +143,9 @@ returning to Synced restores it.
 Turn looping off when you want to continue through the whole song.
 Changing recordings or closing the editor cancels a pending loop start. A player
 failure stops looping and displays an error rather than repeatedly seeking.
-The word lane and lyric rows show committed timings until Apply: auditioning a
-marker preview is not a save, and changing markers does not rewrite lyric words.
+Saved row timestamps and word timing remain committed until confirmation.
+Sentence highlighting uses the proposed bounds as soon as a marker moves;
+previewing does not save or rewrite lyric words.
 
 ## Zoom and Precision
 
@@ -175,12 +176,12 @@ On entering **Synced**, markers show the selected sentence's saved start/end.
 If nothing is selected, the first timed lyric is selected, skipping opening
 blank cues and untimed rows. Selecting another lyric updates the marker pair;
 switching between Plain and Synced preserves your selection. Untimed rows
-remain unmarked until you assign timing. Selection alone never edits timestamps.
+show provisional markers without confirmed timestamps. Selection alone never edits timestamps.
 
 For untimed text, select a sentence and use sentence start sync at its beginning,
 then end sync when it finishes. After setting only the start, the end marker is
 provisional: its tooltip says **Inferred end** (the next timed lyric or recording
-end). End sync or Apply Markers confirms your chosen end. Importing or entering
+end). Sync Sentence End confirms your chosen end. Importing or entering
 Synced does not invent timestamps or overwrite your original text file.
 
 - Sentence start sync sets the start marker to playback and keeps the end fixed.
@@ -194,10 +195,10 @@ Synced does not invent timestamps or overwrite your original text file.
 
 Invalid boundaries are rejected with a message, and unavailable playback cannot
 sync timestamps from another recording. Sync/nudge edits support Undo/Redo;
-waveform drags still require Apply Markers to commit their preview.
+waveform drags require the corresponding sentence Sync action to commit their preview.
 
 Double-click a point on the waveform to magnify it. Repeat to go deeper, then
-drag or nudge the selected lyric's start/end markers and use Apply Markers.
+drag or nudge the selected lyric's start/end markers and use Sync Sentence Start/End.
 A single waveform click moves to that point and starts playback, including when
 paused. Keyboard seeking retains paused inspection. Play resumes the current
 position without restarting the recording. Double-click zoom preserves Follow:
@@ -224,9 +225,9 @@ move them.
 
 Drag the start/end markers, or focus a marker and use Left/Right with the
 selected 10/25/50/100 ms timing step. Shift multiplies a marker nudge by ten.
-Dragging or nudging a marker stages a preview. Click **Apply Markers** when
-both boundaries are ready; they become one undoable document edit. **Cancel**
-discards the pending pair. Escape during a drag discards that drag; outside a
+Dragging or nudging a marker stages a preview. Use **Sync Sentence Start** or **Sync Sentence End** to confirm the corresponding
+moved marker. Each confirmation is one undoable edit. **Cancel** restores the
+last confirmed boundary times, including after repeated marker movements. Escape during a drag discards that drag; outside a
 drag it discards the pending preview. Switching phrases or closing the editor
 also discards unconfirmed previews.
 
@@ -332,12 +333,12 @@ lead vocals, guarantee exact lip sync or run Whisper/Demucs.
 
 ## Current Views
 
-![Light theme: previewed markers awaiting confirmation](screenshots/current/marker-preview-light.png)
+![Light theme: previewed markers awaiting confirmation](screenshots/current/marker-sync-preview-light.png)
 
-![Dark theme: previewed markers awaiting confirmation](screenshots/current/marker-preview-dark.png)
+![Dark theme: previewed markers awaiting confirmation](screenshots/current/marker-sync-preview-dark.png)
 
 The preview timestamps above the waveform differ from the unchanged lyric-row
-timestamps. Apply Markers confirms both; Cancel restores the original pair.
+timestamps. Sync Start/End confirms each boundary; Cancel restores the last confirmed pair.
 
 ![Light theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-light.png)
 
@@ -362,13 +363,14 @@ the playhead visible during zoomed playback unless explicitly turned off.
 Select a timed lyric in Synced to see **Start** and **End** above the waveform.
 The values use `mm:ss.mmm` and remain visible when a marker is outside the zoomed
 view. Dragging or nudging updates the values immediately. **Preview** identifies
-unconfirmed changes; Apply Markers commits them, and Cancel restores saved times.
+unconfirmed changes; Sync Sentence Start/End commits them, and Cancel restores saved times.
 For a lyric without an explicit end, hover End and press F1 to read its inferred-end explanation.
-Untimed or invalid selections do not display a marker pair.
+Untimed selections display provisional markers without inventing timestamps;
+confirm Start before End. Invalid ranges do not display editable markers.
 
 A faint shaded range joins the two markers. It follows their preview positions
 and clips to the visible view; it disappears for an entirely off-screen phrase
-or invalid/untimed selection. The overlay does not intercept clicks or drags.
+or an invalid range. The overlay does not intercept clicks or drags.
 
 ### Neighboring Lyrics and Final-Line Loops (2.2.2)
 
@@ -378,19 +380,19 @@ through zooming/panning. Exact adjoining boundaries show no warning. Untimed
 neighbors are skipped; a previous lyric without an explicit end uses the saved
 current start as its inferred end. Distances describe crossed boundaries, not
 the duration of every possible overlapping phrase. Correct accidental crossings
-before Apply, or keep intentional overlaps. Neighboring lyrics are never moved
+before confirming. Turn off **Prevent overlapping lyrics** for intentional overlaps. Neighboring lyrics are never moved
 automatically. Cancel restores the saved pair and its warning state.
 
 For the last lyric without an explicit end, Loop uses the known recording end,
 matching the waveform's inferred-end behavior. Without a known duration, that
 loop stays unavailable until loading completes.
 
-![Next lyric crossing in light mode](screenshots/current/marker-overlap-light.png)
-![Next lyric crossing in dark mode](screenshots/current/marker-overlap-dark.png)
-![Previous lyric crossing](screenshots/current/marker-previous-overlap-dark.png)
+![Next lyric crossing in light mode](screenshots/current/marker-sync-overlap-light.png)
+![Next lyric crossing in dark mode](screenshots/current/marker-sync-overlap-dark.png)
+![Overlap protection](screenshots/current/marker-sync-overlap-dark.png)
 
-![Start and End in light mode](screenshots/current/waveform-marker-times-light.png)
-![Start and End in dark mode](screenshots/current/waveform-marker-times-dark.png)
+![Start and End in light mode](screenshots/current/marker-sync-preview-light.png)
+![Start and End in dark mode](screenshots/current/marker-sync-preview-dark.png)
 
 ### Optional Hover Help (2.2.4)
 
@@ -416,3 +418,19 @@ it off. Source changes, editor closure and playback failures reset the mode.
 
 ![Persistent Loop in light mode](screenshots/current/loop-persistent-navigation-light.png)
 ![Persistent Loop in dark mode](screenshots/current/loop-persistent-navigation-dark.png)
+
+### Marker Confirmation and LRC Gaps (2.2.6)
+
+Move Start/End to preview sentence highlighting with its normal colors. Use the
+matching **Sync Sentence Start** or **Sync Sentence End** action to confirm that
+boundary; an unchanged boundary uses playback. Confirm Start first on untimed text.
+The other pending boundary survives confirmation, and Cancel restores only the
+unconfirmed changes to the last confirmed pair. Save persists confirmed timings.
+
+**Prevent overlapping lyrics** defaults on per editor session. Crossings can be
+previewed but cannot be confirmed unless resolved or protection is turned off.
+Standard LRC has start cues rather than separate end fields: export represents
+confirmed gaps of at least 250 ms with empty timestamped cues and also marks
+confirmed final ends. Duplicate clears and clears during overlapping lyrics are
+avoided. Exact end times remain in internal saved data; a bare LRC reimport can
+only recover the gaps represented by its timestamps, with blank cues as timed rows.

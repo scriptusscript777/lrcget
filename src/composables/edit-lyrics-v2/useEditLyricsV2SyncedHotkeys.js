@@ -1,4 +1,7 @@
-import { syncedEditorShortcutBindings, wordTimingShortcutBindings } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
+import {
+  syncedEditorShortcutBindings,
+  wordTimingShortcutBindings,
+} from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
 
 export function useEditLyricsV2SyncedHotkeys({
   wordTimingExpanded,
@@ -15,6 +18,7 @@ export function useEditLyricsV2SyncedHotkeys({
   clearSyncedLineSelection,
   syncLineToCurrentProgress,
   syncEndToCurrentProgress,
+  syncEndToTimestamp,
   deleteSyncedLine,
   rewindLineBy100,
   forwardLineBy100,
@@ -78,7 +82,9 @@ export function useEditLyricsV2SyncedHotkeys({
 
         const previousLineIndex = currentLineIndex - 1
         if (previousLineIndex >= 0) {
-          syncEndToCurrentProgress(previousLineIndex)
+          if (syncEndToTimestamp)
+            syncEndToTimestamp(previousLineIndex, syncedLines.value[currentLineIndex]?.start_ms)
+          else syncEndToCurrentProgress(previousLineIndex)
         }
 
         selectSyncedLine(Math.min(syncedLines.value.length - 1, selectedSyncedLineIndex.value + 1))
@@ -123,7 +129,13 @@ export function useEditLyricsV2SyncedHotkeys({
   }
 
   const handleSyncedEditorKeyboardShortcuts = event => {
-    if (activeTab.value === 'synced' && !isSyncedLineEditing.value && !isKeyboardTargetEditable(event) && !event.altKey && (event.ctrlKey || event.metaKey)) {
+    if (
+      activeTab.value === 'synced' &&
+      !isSyncedLineEditing.value &&
+      !isKeyboardTargetEditable(event) &&
+      !event.altKey &&
+      (event.ctrlKey || event.metaKey)
+    ) {
       const key = event.key.toLowerCase()
       if (key === 'z' || (key === 'y' && !event.shiftKey)) {
         event.preventDefault()
@@ -142,7 +154,11 @@ export function useEditLyricsV2SyncedHotkeys({
     }
 
     // Expanded word shortcuts take precedence over colliding phrase actions (notably Delete).
-    if (wordTimingExpanded?.value && wordTimingShortcutBindings.some(binding => binding.matches(event))) return
+    if (
+      wordTimingExpanded?.value &&
+      wordTimingShortcutBindings.some(binding => binding.matches(event))
+    )
+      return
     for (const binding of syncedEditorShortcutBindings) {
       if (!binding.matches(event)) {
         continue

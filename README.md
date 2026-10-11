@@ -8,13 +8,14 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.5+local.1** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.6+local.1 (local update)** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
-official upstream release.
+official upstream release. GitHub publication of 2.2.6 is paused; its installer
+is available locally in Rick’s Downloads folder.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.5-local.1/LRCGET_2.2.5%2Blocal.1_amd64.deb)
+[Download the last published Linux amd64 installer (2.2.5)](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.5-local.1/LRCGET_2.2.5%2Blocal.1_amd64.deb)
 | [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.5-local.1)
-| [Persistent Loop navigation](docs/releases/2.2.5-local.1.md)
+| [Local marker/export update](docs/releases/2.2.6-local.1.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -88,11 +89,12 @@ current defaults.
 
 ### Install This Build
 
-Download the installer and checksum from the release, close LRCGET, then run:
+The 2.2.6 installer and checksum are in Rick’s local Downloads folder. Close
+LRCGET, then run there:
 
 ```bash
-sha256sum -c LRCGET_2.2.5+local.1_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.5+local.1_amd64.deb
+sha256sum -c LRCGET_2.2.6+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.6+local.1_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.

@@ -39,6 +39,9 @@
   <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.6+local.1" date="2026-10-11">
+      <description><p>Live marker previews use the existing sentence Sync buttons. Optional overlap protection is on by default. Standard LRC export preserves confirmed gaps of at least 250 milliseconds and final end cues; exact ends remain in saved editor data.</p></description>
+    </release>
     <release version="2.2.5+local.1" date="2026-10-11">
       <description><p>Loop stays enabled while navigating between lyrics. Selected markers retarget repetition; untimed selections and inactive tabs suspend it without losing the toggle. Explicit Off restores continuous playback.</p></description>
     </release>

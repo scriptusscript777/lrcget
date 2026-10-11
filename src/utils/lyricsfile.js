@@ -157,23 +157,43 @@ const formatLrcTimestamp = timestampMs => {
   return `[${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(3, '0')}]`
 }
 
-const linesToLrc = lines => {
-  if (!Array.isArray(lines) || lines.length === 0) {
-    return ''
-  }
+// A blank timestamped cue preserves a confirmed gap in standard LRC.
+export const MIN_LRC_GAP_MS = 250
 
-  const output = lines
-    .map(line => {
-      const text =
-        Array.isArray(line.words) && line.words.length > 0
-          ? line.words.map(word => word.text || '').join('')
-          : line.text || ''
-
-      return `${formatLrcTimestamp(line.start_ms)}${text}`
+export const linesToLrc = lines => {
+  if (!Array.isArray(lines)) return ''
+  const timed = lines
+    .filter(line => Number.isFinite(line?.start_ms) && line.start_ms >= 0)
+    .slice()
+    .sort((a, b) => a.start_ms - b.start_ms)
+  const events = timed.map(line => ({
+    time: line.start_ms,
+    text:
+      Array.isArray(line.words) && line.words.length
+        ? line.words.map(word => word.text || '').join('')
+        : line.text || '',
+  }))
+  const occupied = new Set(timed.map(line => line.start_ms))
+  for (const line of timed) {
+    const end = line.end_ms
+    if (!line.text?.trim() || !Number.isFinite(end) || end <= line.start_ms || occupied.has(end))
+      continue
+    const nextStart = timed.find(candidate => candidate.start_ms > end)?.start_ms
+    if (Number.isFinite(nextStart) && nextStart - end < MIN_LRC_GAP_MS) continue
+    // Clearing during another overlapping sentence would discard that sentence in a player.
+    const active = timed.some(other => {
+      if (other === line || !other.text?.trim() || other.start_ms > end) return false
+      const next = timed.find(candidate => candidate.start_ms > other.start_ms)?.start_ms
+      const otherEnd = other.end_ms ?? next ?? Infinity
+      return other.start_ms <= end && otherEnd > end
     })
-    .join('\n')
-
-  return normalizeNonEmpty(output) || ''
+    if (!active) {
+      events.push({ time: end, text: '' })
+      occupied.add(end)
+    }
+  }
+  events.sort((a, b) => a.time - b.time)
+  return events.map(event => `${formatLrcTimestamp(event.time)}${event.text}`).join('\n')
 }
 
 const isInstrumentalLyrics = lyrics => {

@@ -2,7 +2,9 @@
 export function waveformNeighborWarnings(times, previousLine, selectedStartMs, nextStartMs) {
   if (!Number.isFinite(times?.startMs) || !Number.isFinite(times?.endMs)) return []
   const warnings = []
-  const previousEnd = previousLine?.end_ms ?? selectedStartMs
+  const previousEnd =
+    previousLine?.end_ms ??
+    (Number.isFinite(selectedStartMs) ? selectedStartMs : previousLine?.start_ms + 1)
   if (
     Number.isFinite(previousLine?.start_ms) &&
     previousLine.start_ms >= 0 &&

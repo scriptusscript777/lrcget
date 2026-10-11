@@ -35,7 +35,12 @@
         class="flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums"
         data-testid="waveform-marker-preview"
       >
-        <span v-if="hasDraft" class="text-neutral-600 dark:text-neutral-400">Preview</span>
+        <span v-if="hasDraft" class="text-neutral-600 dark:text-neutral-400"
+          >Preview — confirm with Sync Start/End</span
+        >
+        <span v-else-if="!Number.isFinite(selectedLine?.start_ms)"
+          >Untimed — provisional markers</span
+        >
         <span class="whitespace-nowrap">
           Start
           <output
@@ -72,17 +77,10 @@
         <template v-if="hasDraft">
           <button
             v-tooltip="
-              editorTooltip('Confirm the previewed start/end markers as one undoable timing edit')
+              editorTooltip(
+                'Discard all unconfirmed marker changes and restore the last confirmed timing'
+              )
             "
-            class="button h-7 rounded bg-hoa-1500 px-2 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400"
-            :disabled="!!drag"
-            data-testid="waveform-apply-markers"
-            @click="applyMarkers"
-          >
-            Apply Markers
-          </button>
-          <button
-            v-tooltip="editorTooltip('Discard the marker preview and keep saved timestamps')"
             class="button button-normal h-7 rounded px-2"
             :disabled="!!drag"
             data-testid="waveform-cancel-markers"
@@ -146,7 +144,12 @@
       class="py-1 text-xs text-amber-800 dark:text-amber-300"
       data-testid="waveform-marker-warning"
     >
-      {{ neighborWarnings.join(' · ') }}. Intentional overlap is allowed.
+      {{ neighborWarnings.join(' · ') }}.
+      {{
+        preventOverlaps
+          ? 'Confirmation is blocked until the overlap is resolved.'
+          : 'Intentional overlap is allowed.'
+      }}
     </p>
     <div ref="plot" class="relative h-[110px] min-w-0" @wheel="panAtWheel">
       <span
@@ -261,7 +264,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import MagnifyMinus from '~icons/mdi/magnify-minus-outline'
 import MagnifyPlus from '~icons/mdi/magnify-plus-outline'
@@ -296,8 +299,9 @@ const props = defineProps({
   nextLineStartMs: { type: Number, default: null },
   previousLine: { type: Object, default: null },
   timingStepMs: { type: Number, default: 100 },
+  preventOverlaps: { type: Boolean, default: true },
 })
-const emit = defineEmits(['seek', 'update-markers', 'preview-markers', 'marker-editing-change'])
+const emit = defineEmits(['seek', 'preview-markers', 'marker-editing-change'])
 const isEditorShortcut = event =>
   globalShortcutBindings.some(binding => binding.matches(event)) ||
   event.ctrlKey ||
@@ -333,6 +337,7 @@ const toggleFollow = () => {
 }
 const drag = ref(null)
 const draft = ref(null)
+const provisionalStart = ref(null)
 watch([drag, draft], () => emit('marker-editing-change', !!drag.value || !!draft.value), {
   flush: 'sync',
 })
@@ -346,11 +351,12 @@ const markerTitle = marker => {
       : Number.isFinite(props.selectedLine?.end_ms)
         ? 'End (start stays fixed)'
         : 'Inferred end (next lyric or recording end; set end to confirm)'
-  return `${label}: ${formatMarkerTime(marker.time)}. Drag or nudge to preview; Apply Markers confirms.`
+  return `${label}: ${formatMarkerTime(marker.time)}. Drag or nudge to preview; Sync Sentence Start/End confirms the corresponding marker.`
 }
+const baseStart = computed(() => props.selectedLine?.start_ms ?? provisionalStart.value)
 const previewTimes = computed(() => {
   const times = draft.value || {
-    startMs: props.selectedLine?.start_ms,
+    startMs: baseStart.value,
     endMs: markerEnd.value,
   }
   return drag.value
@@ -361,12 +367,11 @@ const hasDraft = computed(
   () =>
     !!waveform.value &&
     !!props.selectedLine &&
-    (previewTimes.value.startMs !== props.selectedLine?.start_ms ||
-      previewTimes.value.endMs !== markerEnd.value)
+    (previewTimes.value.startMs !== baseStart.value || previewTimes.value.endMs !== markerEnd.value)
 )
 const boundsForTimes = times => {
   if (!waveform.value || !props.selectedLine) return null
-  const offset = times.startMs - props.selectedLine.start_ms
+  const offset = times.startMs - (props.selectedLine.start_ms ?? times.startMs)
   // Validate translated words against the fixed draft end without touching the document.
   const line = {
     ...props.selectedLine,
@@ -403,17 +408,21 @@ const markerHighlight = computed(() => {
   const right = Math.min(100, timeToPixel(previewTimes.value.endMs / 1000, viewport.value, 100))
   return right > left ? { left, width: right - left } : null
 })
-// Publish released/nudged previews for auditioning without modifying saved lyrics.
+// Publish live drag/nudge previews for auditioning without modifying confirmed lyrics.
 watch(
-  draft,
+  previewTimes,
   times => {
     emit(
       'preview-markers',
-      times && boundsForTimes(times)
+      hasDraft.value && boundsForTimes(times)
         ? {
             ...times,
             line: props.selectedLine,
             lineIndex: props.selectedLineIndex,
+            loopStartMs: draft.value?.startMs ?? baseStart.value,
+            loopEndMs: draft.value?.endMs ?? markerEnd.value,
+            startChanged: times.startMs !== baseStart.value,
+            endChanged: times.endMs !== markerEnd.value,
           }
         : null
     )
@@ -458,17 +467,42 @@ const discardMarkers = () => {
   cancelMarkerDrag()
   draft.value = null
 }
-const applyMarkers = () => {
-  if (drag.value || !hasDraft.value || !boundsForTimes(previewTimes.value)) return
+// Return synchronously for keyboard actions that advance only after a successful commit.
+const confirmBoundary = (
+  boundary,
+  commit,
+  expectedLine = props.selectedLine,
+  expectedIndex = props.selectedLineIndex
+) => {
+  if (disposed || drag.value) return false
+  // A row can select then Sync in one event, before this component receives its new props.
+  if (expectedLine !== props.selectedLine || expectedIndex !== props.selectedLineIndex)
+    return !!commit(undefined)
+  const original = props.selectedLine
+  const index = props.selectedLineIndex
   const times = { ...previewTimes.value }
+  const changed =
+    boundary === 'start' ? times.startMs !== baseStart.value : times.endMs !== markerEnd.value
+  const otherChanged =
+    boundary === 'start' ? times.endMs !== markerEnd.value : times.startMs !== baseStart.value
+  const result = commit(changed ? times[boundary === 'start' ? 'startMs' : 'endMs'] : undefined)
+  if (!result) return false
   draft.value = null
-  emit('update-markers', {
-    lineIndex: props.selectedLineIndex,
-    line: props.selectedLine,
-    ...times,
-    durationMs: waveform.value.duration * 1000,
+  const confirmedLine = result.line
+  // Document watchers discard stale previews first; then restore only the other pending boundary.
+  nextTick(() => {
+    if (props.selectedLineIndex !== index || props.selectedLine !== confirmedLine) return
+    if (otherChanged && original) {
+      const remaining =
+        boundary === 'start'
+          ? { startMs: confirmedLine.start_ms, endMs: times.endMs }
+          : { startMs: times.startMs, endMs: confirmedLine.end_ms }
+      if (boundsForTimes(remaining)) draft.value = remaining
+    }
   })
+  return true
 }
+defineExpose({ confirmBoundary })
 const startMarkerDrag = (marker, event) => {
   if (event.button !== 0 || drag.value) return
   cancelPointerSeek()
@@ -727,6 +761,15 @@ watch(
   waveform,
   () => {
     discardMarkers()
+    const line = props.selectedLine
+    nextTick(() => {
+      if (props.selectedLine !== line || !line || Number.isFinite(line.start_ms)) return
+      if (Number.isFinite(markerEnd.value))
+        provisionalStart.value = Math.max(
+          0,
+          Math.min(markerEnd.value - 1, (props.progress ?? 0) * 1000)
+        )
+    })
     fit()
   },
   { flush: 'sync' }
@@ -741,7 +784,17 @@ watch(
     () => props.selectedLineIndex,
     () => props.nextLineStartMs,
   ],
-  discardMarkers,
+  () => {
+    discardMarkers()
+    const end = markerEnd.value
+    provisionalStart.value =
+      Number.isFinite(end) && end > 0
+        ? Math.max(
+            0,
+            Math.min(end - 1, Number.isFinite(props.progress) ? props.progress * 1000 : 0)
+          )
+        : null
+  },
   // Clear drafts before rendering, not during a nested document change notification.
   { flush: 'pre' }
 )

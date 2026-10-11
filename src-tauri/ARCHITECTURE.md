@@ -481,3 +481,21 @@ settings plus the preference in one transaction; omission preserves the choice
 for old callers. The scoped database setter leaves unrelated fields untouched.
 Tests cover upgrade preservation, default, connection restart, unrelated writes
 and transaction rollback.
+
+### Local marker and LRC export update (2.2.6)
+
+Sentence Sync Start/End confirms only its corresponding moved waveform boundary,
+otherwise taking the playback position. The waveform exposes a synchronous
+confirmation callback so hotkeys advance only on success, then restores the
+other pending boundary after document watchers settle. Source/line identity guards
+prevent stale restoration. Live previews drive sentence highlighting; released
+or nudged drafts drive Loop to avoid repeated seek requests during a drag.
+Untimed rows get stable provisional markers without assigning document timestamps.
+Optional session overlap protection defaults on and validates timing mutations.
+
+Frontend and backend standard-LRC conversion sort timed rows and add blank cues
+for confirmed gaps of at least 250 ms, plus final ends. Existing timestamps are
+not duplicated and cues cannot clear another active overlapping phrase. Untimed
+rows and words allow absent starts in the internal schema; exports omit untimed
+rows and presence flags no longer label them Synced. Exact ends remain internal;
+LRC-only reimports retain exported blank rows but cannot recover omitted tiny gaps.

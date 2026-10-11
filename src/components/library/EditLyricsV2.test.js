@@ -315,6 +315,6 @@ describe('lyrics file import', () => {
     expect(header).toContain('title="Import lyrics file"')
     expect(header).toContain(':disabled="isSaving || isExporting || isImporting"')
     expect(header).toContain('@click="handleImportLrcFile"')
-    expect(source).toContain('@update-markers="updateWaveformMarkers"')
+    expect(source).toContain('waveformEditor.value.confirmBoundary(boundary, commit, syncedLines.value[lineIndex], lineIndex)')
   })
 })

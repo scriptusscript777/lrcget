@@ -4,7 +4,23 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.5+local.1`, based on upstream tag `2.2.0`.
+Local version: `2.2.6+local.1`, based on upstream tag `2.2.0`.
+
+## Marker Confirmation and Standard LRC Gaps (2.2.6)
+
+Moving a waveform marker previews sentence highlighting using the proposed
+bounds and normal colors. The existing Sync Sentence Start/End actions confirm
+the corresponding moved boundary, or use playback when that boundary is unchanged.
+Cancel restores the most recently confirmed pair. Untimed text has provisional
+markers and must confirm Start before End. Optional session overlap protection
+is on by default; intentional overlap requires opting out.
+
+Standard LRC export adds blank timestamped cues for confirmed gaps of at least
+250 ms and confirmed final ends. It avoids duplicate cues and clearing active
+overlapping lyrics. Untimed rows stay internal/plain, without invented start
+timestamps. Exact ends remain in saved lyricsfile data. Reimported LRC shows its
+actual blank timed rows; tiny omitted gaps cannot recover their exact end from
+LRC alone. GitHub publication is paused at Rick’s request.
 
 ## Documentation
 

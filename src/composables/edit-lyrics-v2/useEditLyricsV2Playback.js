@@ -41,12 +41,12 @@ export function useEditLyricsV2Playback({
   const loopRange = computed(() => {
     const index = selectedLineIndex?.value
     const line = syncedLines.value[index]
-    if (!Number.isFinite(line?.start_ms)) return null
     const preview = markerPreview?.value
+    if (!line) return null
     const usePreview = preview?.line === line && preview?.lineIndex === index
-    const startMs = usePreview ? preview.startMs : line.start_ms
+    const startMs = usePreview ? (preview.loopStartMs ?? preview.startMs) : line.start_ms
     const endMs = usePreview
-      ? preview.endMs
+      ? (preview.loopEndMs ?? preview.endMs)
       : Number.isFinite(line.end_ms)
         ? line.end_ms
         : (syncedLines.value[index + 1]?.start_ms ??

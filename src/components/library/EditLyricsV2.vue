@@ -83,6 +83,8 @@
           @set-playback-speed="setPlaybackSpeed"
         />
         <EditLyricsV2Waveform
+          ref="waveformEditor"
+          :prevent-overlaps="preventOverlaps"
           :audio-source="audioSource"
           :progress="waveformProgress"
           :playing="waveformPlaying"
@@ -94,7 +96,6 @@
           :next-line-start-ms="syncedLines[selectedSyncedLineIndex + 1]?.start_ms"
           :previous-line="syncedLines[selectedSyncedLineIndex - 1]"
           :timing-step-ms="timingStepMs"
-          @update-markers="updateWaveformMarkers"
           @preview-markers="markerPreview = $event"
           @marker-editing-change="markerEditing = $event"
           @seek="handleWaveformSeek"
@@ -134,8 +135,10 @@
       <SyncedLyricsEditor
         v-else
         v-model:timing-step-ms="timingStepMs"
+        v-model:prevent-overlaps="preventOverlaps"
         v-model:loop-lead-seconds="loopLeadSeconds"
         v-model:loop-tail-seconds="loopTailSeconds"
+        :marker-preview="markerPreview"
         :model-value="syncedLines"
         :can-import-from-plain="hasPlainLyrics"
         :selected-line-index="selectedSyncedLineIndex"
@@ -287,6 +290,7 @@ const {
   canUndo,
   canRedo,
   timingStepMs,
+  preventOverlaps,
   plainLyrics,
   syncedLines,
   lyricsfileDocument,
@@ -303,7 +307,6 @@ const {
   updatePlainLyrics,
   updateSyncedLines,
   updateLineWords,
-  updateWaveformMarkers,
   selectSyncedLine,
   selectSyncedLineRange,
   toggleSyncedLineSelection,
@@ -315,10 +318,10 @@ const {
   bulkRewindLines,
   bulkForwardLines,
   importSyncedLinesFromPlain,
-  syncLineToCurrentProgress,
+  syncLineToCurrentProgress: syncStartAt,
   rewindLineBy100: rewindLineTimestampBy100,
   forwardLineBy100: forwardLineTimestampBy100,
-  syncEndToCurrentProgress,
+  syncEndToCurrentProgress: syncEndAt,
   rewindEndBy100,
   forwardEndBy100,
   saveLyrics,
@@ -355,7 +358,19 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
   toast,
 })
 
+const waveformEditor = ref(null)
 const markerPreview = ref(null)
+const confirmSentenceBoundary = (boundary, lineIndex) => {
+  const commit = markerMs => {
+    const action = boundary === 'start' ? syncStartAt : syncEndAt
+    return action(lineIndex, markerMs) === true ? { line: syncedLines.value[lineIndex] } : false
+  }
+  return lineIndex === selectedSyncedLineIndex.value && waveformEditor.value
+    ? waveformEditor.value.confirmBoundary(boundary, commit, syncedLines.value[lineIndex], lineIndex)
+    : !!commit(undefined)
+}
+const syncLineToCurrentProgress = lineIndex => confirmSentenceBoundary('start', lineIndex)
+const syncEndToCurrentProgress = lineIndex => confirmSentenceBoundary('end', lineIndex)
 const markerEditing = ref(false)
 const {
   playLine,
@@ -576,6 +591,7 @@ const { bindSyncedHotkeys, unbindSyncedHotkeys } = useEditLyricsV2SyncedHotkeys(
   clearSyncedLineSelection,
   syncLineToCurrentProgress,
   syncEndToCurrentProgress,
+  syncEndToTimestamp: syncEndAt,
   deleteSyncedLine,
   rewindLineBy100: rewindLineTimestampBy100,
   forwardLineBy100: forwardLineTimestampBy100,

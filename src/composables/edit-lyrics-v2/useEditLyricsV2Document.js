@@ -1,7 +1,7 @@
 import { invoke } from '@tauri-apps/api/core'
 import { computed, ref, watch } from 'vue'
 import { useLyricHistory } from './useLyricHistory.js'
-import { waveformMarkerBounds } from '@/utils/waveform-markers.js'
+import { waveformMarkerBounds, waveformNeighborWarnings } from '@/utils/waveform-markers.js'
 import {
   createSyncedLinesFromPlain,
   normalizeSyncedLine,
@@ -31,6 +31,7 @@ export function useEditLyricsV2Document({
   const selectedSyncedLineIndices = ref([])
   const isSyncedLineEditing = ref(false)
   const isInstrumental = ref(false)
+  const preventOverlaps = ref(true)
   const timingStepMs = ref(100)
   const timingStep = () =>
     [10, 25, 50, 100].includes(Number(timingStepMs.value)) ? Number(timingStepMs.value) : 100
@@ -227,8 +228,17 @@ export function useEditLyricsV2Document({
       const newStartMs = Math.max(0, Math.round(baseStartMs + offsetMs))
       return moveLineTo(line, newStartMs)
     })
+    if (
+      [...indexSet].some(
+        index =>
+          !nextLines[index] ||
+          !validTimingChange(index, nextLines[index], nextLines, nextLines[index].start_ms)
+      )
+    )
+      return false
     syncedLines.value = nextLines
     isDirty.value = true
+    return true
   }
 
   const bulkRewindLines = indices => {
@@ -317,7 +327,8 @@ export function useEditLyricsV2Document({
     )
       return
     const oldEnd = line.end_ms ?? syncedLines.value[lineIndex + 1]?.start_ms ?? durationMs
-    if (!waveformMarkerBounds(line, oldEnd, durationMs)) return
+    if (Number.isFinite(line.start_ms) && !waveformMarkerBounds(line, oldEnd, durationMs))
+      return false
     const start = Math.round(startMs)
     const end = Math.round(endMs)
     if (start === line.start_ms && end === oldEnd) return
@@ -325,11 +336,13 @@ export function useEditLyricsV2Document({
       ...line,
       start_ms: start,
       end_ms: end,
-      words: shiftWordBoundariesByOffset(line.words, start - line.start_ms),
+      words: shiftWordBoundariesByOffset(line.words, start - (line.start_ms ?? start)),
     }
     // Validate the pair together and record one undo step; never partially apply a draft.
-    if (!waveformMarkerBounds(next, end, durationMs)) return
+    if (!waveformMarkerBounds(next, end, durationMs) || !validTimingChange(lineIndex, next))
+      return false
     withUpdatedLine(lineIndex, () => next)
+    return true
   }
 
   // Buttons and keyboard timing actions use the same bounds as waveform markers.
@@ -340,14 +353,33 @@ export function useEditLyricsV2Document({
         : audioSource.value?.duration
     return Number.isFinite(seconds) ? seconds * 1000 : NaN
   }
-  const validTimingChange = (lineIndex, line) => {
+  const validTimingChange = (
+    lineIndex,
+    line,
+    lines = syncedLines.value,
+    priorStart = syncedLines.value[lineIndex]?.start_ms
+  ) => {
     const durationMs = recordingDurationMs()
-    const endMs = line.end_ms ?? syncedLines.value[lineIndex + 1]?.start_ms ?? durationMs
+    const endMs = line.end_ms ?? lines[lineIndex + 1]?.start_ms ?? durationMs
     if (!waveformMarkerBounds(line, endMs, durationMs)) {
       toast.error(
         'Timing not changed: keep start before end and all timed words inside the sentence and recording.'
       )
       return false
+    }
+    if (preventOverlaps.value) {
+      const warnings = waveformNeighborWarnings(
+        { startMs: line.start_ms, endMs },
+        lines[lineIndex - 1],
+        priorStart,
+        lines[lineIndex + 1]?.start_ms
+      )
+      if (warnings.length) {
+        toast.error(
+          `Timing not changed: ${warnings.join('; ')}. Adjust markers or turn off Prevent overlapping lyrics.`
+        )
+        return false
+      }
     }
     return true
   }
@@ -378,14 +410,14 @@ export function useEditLyricsV2Document({
     return true
   }
 
-  const syncLineToCurrentProgress = lineIndex => {
+  const syncLineToCurrentProgress = (lineIndex, markerMs) => {
     if (!Number.isInteger(lineIndex) || lineIndex < 0 || lineIndex >= syncedLines.value.length) {
       return
     }
 
     const currentLine = syncedLines.value[lineIndex]
     const previousStartMs = Number.isFinite(currentLine?.start_ms) ? currentLine.start_ms : null
-    const newStartMs = playbackTimestamp()
+    const newStartMs = Number.isFinite(markerMs) ? Math.round(markerMs) : playbackTimestamp()
     if (newStartMs == null) return false
     const lineStartOffsetMs = previousStartMs == null ? 0 : newStartMs - previousStartMs
     const nextLine = {
@@ -434,19 +466,24 @@ export function useEditLyricsV2Document({
   }
 
   const rewindLineBy100 = lineIndex => {
-    shiftLineTimestampBy(lineIndex, -timingStep())
+    return shiftLineTimestampBy(lineIndex, -timingStep())
   }
 
   const forwardLineBy100 = lineIndex => {
-    shiftLineTimestampBy(lineIndex, timingStep())
+    return shiftLineTimestampBy(lineIndex, timingStep())
   }
 
-  const syncEndToCurrentProgress = lineIndex => {
+  const syncEndToCurrentProgress = (lineIndex, markerMs) => {
     if (!Number.isInteger(lineIndex) || lineIndex < 0 || lineIndex >= syncedLines.value.length) {
       return
     }
 
-    const newEndMs = playbackTimestamp()
+    if (!Number.isFinite(syncedLines.value[lineIndex].start_ms)) {
+      toast.error('Confirm a sentence start before confirming its end.')
+      return false
+    }
+
+    const newEndMs = Number.isFinite(markerMs) ? Math.round(markerMs) : playbackTimestamp()
     if (newEndMs == null) return false
     const nextLine = { ...syncedLines.value[lineIndex], end_ms: newEndMs }
     if (!validTimingChange(lineIndex, nextLine)) return false
@@ -470,11 +507,11 @@ export function useEditLyricsV2Document({
   }
 
   const rewindEndBy100 = lineIndex => {
-    shiftEndTimestampBy(lineIndex, -timingStep())
+    return shiftEndTimestampBy(lineIndex, -timingStep())
   }
 
   const forwardEndBy100 = lineIndex => {
-    shiftEndTimestampBy(lineIndex, timingStep())
+    return shiftEndTimestampBy(lineIndex, timingStep())
   }
 
   const updateLineText = (lineIndex, newText) => {
@@ -658,6 +695,7 @@ export function useEditLyricsV2Document({
 
   return {
     timingStepMs,
+    preventOverlaps,
     updateWaveformMarkers,
     undo: history.undo,
     redo: history.redo,
