@@ -1,3 +1,8 @@
+## 2.2.6+local.7
+
+ELRC is controlled directly by Save’s Word-timed lyrics checkbox; its remembered
+choice defaults off. Removed the duplicate Configuration default switch.
+
 # Local Changes
 
 Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).

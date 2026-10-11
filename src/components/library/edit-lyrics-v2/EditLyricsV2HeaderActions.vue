@@ -60,12 +60,22 @@
             <label class="dropdown-item">
               <CheckboxButton
                 id="export-enhanced-lrc"
-                v-model="exportEnhancedLrc"
+                :model-value="exportEnhancedLrc"
+                :disabled="!exportPreferencesLoaded || isSavingEnhancedPreference"
                 name="export-enhanced-lrc"
+                @update:model-value="saveEnhancedPreference"
               >
                 <span class="dropdown-label">Word-timed lyrics (.elrc)</span>
               </CheckboxButton>
             </label>
+
+            <p
+              v-if="exportPreferenceError"
+              role="alert"
+              class="px-2 py-1 text-xs text-red-600 dark:text-red-400"
+            >
+              {{ exportPreferenceError }}
+            </p>
 
             <label
               class="dropdown-item"
@@ -86,9 +96,11 @@
                 v-close-popper
                 class="button w-full text-sm h-8 rounded"
                 :class="
-                  hasSelectedExportFormat && !isExporting ? 'button-primary' : 'button-disabled'
+                  hasSelectedExportFormat && !isExporting && !isSavingEnhancedPreference
+                    ? 'button-primary'
+                    : 'button-disabled'
                 "
-                :disabled="!hasSelectedExportFormat || isExporting"
+                :disabled="!hasSelectedExportFormat || isExporting || isSavingEnhancedPreference"
                 type="button"
                 @click="handleExportClick"
               >
@@ -127,15 +139,43 @@ const exportSyncedLrc = ref(true)
 const exportEnhancedLrc = ref(false)
 const embedIntoTrack = ref(false)
 const tryEmbedLyrics = ref(false)
-let exportPreferencesLoaded = false
+const exportPreferencesLoaded = ref(false)
+const isSavingEnhancedPreference = ref(false)
+const exportPreferenceError = ref('')
+let configRequest = 0
 
 const refreshEmbedConfig = async () => {
-  const config = await invoke('get_config')
-  tryEmbedLyrics.value = config.try_embed_lyrics
-  if (!exportPreferencesLoaded) {
+  const request = ++configRequest
+  try {
+    const config = await invoke('get_config')
+    if (request !== configRequest) return
+    tryEmbedLyrics.value = config.try_embed_lyrics
+    if (!isSavingEnhancedPreference.value) {
+      exportEnhancedLrc.value = config.export_elrc === true
+    }
+    if (!exportPreferencesLoaded.value) {
+      embedIntoTrack.value = config.try_embed_lyrics && config.export_embedded
+    }
+    exportPreferencesLoaded.value = true
+    exportPreferenceError.value = ''
+  } catch {
+    if (request !== configRequest) return
+    exportPreferenceError.value = 'Could not load export preferences. Reopen the menu to retry.'
+  }
+}
+
+const saveEnhancedPreference = async enabled => {
+  if (!exportPreferencesLoaded.value || isSavingEnhancedPreference.value) return
+  ++configRequest
+  isSavingEnhancedPreference.value = true
+  exportPreferenceError.value = ''
+  try {
+    const config = await invoke('set_export_preferences', { exportElrc: enabled })
     exportEnhancedLrc.value = config.export_elrc === true
-    embedIntoTrack.value = config.try_embed_lyrics && config.export_embedded
-    exportPreferencesLoaded = true
+  } catch {
+    exportPreferenceError.value = 'Could not remember Word-timed lyrics. Please try again.'
+  } finally {
+    isSavingEnhancedPreference.value = false
   }
 }
 
@@ -150,7 +190,7 @@ const hasSelectedExportFormat = computed(
 )
 
 const handleExportClick = () => {
-  if (!hasSelectedExportFormat.value) {
+  if (!hasSelectedExportFormat.value || isSavingEnhancedPreference.value) {
     return
   }
 

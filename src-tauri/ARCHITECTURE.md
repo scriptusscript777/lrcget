@@ -570,3 +570,14 @@ hold selection. The preview reads word timing and respects explicit ends/gaps,
 wraps long text, and scrolls only its own text container while playing. Unsaved
 word timing is shown as an evenly spaced estimate. Preview emits no edits or
 seeks, and Loop keeps its existing playback/selection behavior.
+
+### Remembered editor ELRC choice (2.2.6+local.7)
+
+Save's Word-timed lyrics checkbox writes only exportElrc via the existing scoped
+set_export_preferences command and reloads the saved choice on menu opening.
+The schema's false default remains; upgrades preserve existing choices. Failed
+writes retain the confirmed choice and show a retry message. Inputs are disabled
+until loaded and during writes; request generations discard stale reads.
+Configuration no longer displays or submits exportElrc, preserving this preference
+when unrelated settings are saved. Existing backend optional arguments remain
+compatible with older callers. Bulk/Download keep their applicable format choices.

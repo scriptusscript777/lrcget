@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.6. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.7. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -228,12 +228,10 @@ sentence in its header.
 
 ## Export Word Timing as Enhanced LRC
 
-Enhanced LRC export is optional. Enable **Configuration → Common → Export Enhanced
-LRC by default**, or select **Word-timed lyrics (.elrc)** in the arrow menu beside
-Save. Select Plain TXT and Synced LRC too when you want all three files:
-`Song.txt`, `Song.lrc`, and `Song.elrc`, beside `Song.mp3` (or other audio).
-The same optional choice is available in batch Export and Download auto-export.
-Normal LRC stays separate and never receives inline word tags.
+Enhanced LRC export is optional. Under **Save → Export to track’s directory**,
+select **Word-timed lyrics (.elrc)**. It starts unchecked; selecting or clearing it
+is remembered across editor openings and app restarts. Configuration has no
+separate ELRC default switch. Existing saved selections are preserved.
 
 Confirm your edits, including word timing, before exporting. ELRC uses the saved
 word starts and ends, with millisecond precision; it preserves known word silence
@@ -261,10 +259,10 @@ word highlighting to Jellyfin's web player. Keep standard LRC for line playback.
 Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.0/MediaBrowser.Providers/Lyric/LrcLyricParser.cs),
 [Jellyfin web lyric player](https://github.com/jellyfin/jellyfin-web/blob/v10.11.0/src/controllers/lyrics.js).
 
-![TXT, LRC and Enhanced LRC exports, light](screenshots/current/enhanced-lrc-export-light.png)
-![TXT, LRC and Enhanced LRC exports, dark](screenshots/current/enhanced-lrc-export-dark.png)
-![Optional Enhanced LRC default, light](screenshots/current/embedded-lyrics-settings-light.png)
-![Optional Enhanced LRC default, dark](screenshots/current/embedded-lyrics-settings-dark.png)
+![TXT, LRC and Enhanced LRC exports, light](screenshots/current/embedded-word-export-light.png)
+![TXT, LRC and Enhanced LRC exports, dark](screenshots/current/embedded-word-export-dark.png)
+![Embedded lyrics settings, light](screenshots/current/embedded-lyrics-settings-light.png)
+![Embedded lyrics settings, dark](screenshots/current/embedded-lyrics-settings-dark.png)
 
 
 ## Review Words Without Resizing Timing Boxes
