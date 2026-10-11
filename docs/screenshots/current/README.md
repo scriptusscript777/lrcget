@@ -3,7 +3,7 @@
 `waveform-marker-times-light.png`, `waveform-marker-times-dark.png` and both
 `marker-preview-*` images are fresh native **2.2.1+local.1** captures at 1024x768.
 They show persistent labeled Start/End times, zoomed markers, and live previews
-beside Apply/Cancel, plus Elapsed/Total, Position and View labels. The isolated
+beside Apply/Cancel, plus Elapsed/Total, Position and View labels and subtle marker-range shading. The isolated
 profile uses a generated silent 45-second MP3
 and demonstration lyrics. Settled canvas frames were captured after zoom/theme
 updates. Layout checks found no overlapping header controls or horizontal

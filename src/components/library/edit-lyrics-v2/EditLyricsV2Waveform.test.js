@@ -148,6 +148,32 @@ async function mount(initial = {}) {
 }
 
 describe('waveform controls and states', () => {
+  it('clips marker shading to the viewport and clears it for off-screen or untimed selections', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 20000, end_ms: 90000 },
+      selectedLineIndex: 0,
+    })
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 0 } })
+    await nextTick()
+    let highlight = state.byId('waveform-marker-highlight')
+    expect(highlight.props.style.left).toBe(`${(20 / 60) * 100}%`)
+    expect(Number.parseFloat(highlight.props.style.width)).toBeCloseTo((40 / 60) * 100)
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    await nextTick()
+    highlight = state.byId('waveform-marker-highlight')
+    expect(highlight.props.style).toEqual({ left: '0%', width: '50%' })
+    state.props.selectedLine = { start_ms: 1000, end_ms: 3000 }
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    await nextTick()
+    expect(state.byId('waveform-marker-highlight')).toBeUndefined()
+    state.props.selectedLine = { start_ms: null, end_ms: null }
+    await nextTick()
+    expect(state.byId('waveform-marker-highlight')).toBeUndefined()
+  })
+
   it('keeps labeled marker times visible before edits and restores them on cancel', async () => {
     const state = await mount({
       selectedLine: { start_ms: 12350, end_ms: 15820 },
@@ -157,6 +183,7 @@ describe('waveform controls and states', () => {
     const endTime = () => state.text(state.byId('waveform-marker-end-time'))
     expect(startTime()).toBe('00:12.350')
     expect(endTime()).toBe('00:15.820')
+    const savedHighlight = { ...state.byId('waveform-marker-highlight').props.style }
     expect(state.text(state.byId('waveform-marker-preview'))).not.toContain('Preview')
     expect(state.byId('waveform-apply-markers')).toBeUndefined()
     state.byId('waveform-marker-start').props.onKeydown({
@@ -168,9 +195,11 @@ describe('waveform controls and states', () => {
     expect(endTime()).toBe('00:15.820')
     expect(state.text(state.byId('waveform-marker-preview'))).toContain('Preview')
     expect(state.props.selectedLine.start_ms).toBe(12350)
+    expect(state.byId('waveform-marker-highlight').props.style.left).not.toBe(savedHighlight.left)
     state.byId('waveform-cancel-markers').props.onClick()
     await nextTick()
     expect(startTime()).toBe('00:12.350')
+    expect(state.byId('waveform-marker-highlight').props.style).toEqual(savedHighlight)
     expect(state.updateMarkers).not.toHaveBeenCalled()
   })
 

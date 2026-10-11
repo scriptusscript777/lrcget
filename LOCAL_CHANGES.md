@@ -377,3 +377,8 @@ is replaced, with no additional buttons. Package version advances to 2.2.1 while
 the local suffix continues to distinguish this fork from upstream.
 The transport clocks are labeled Elapsed and Total; the waveform labels Position
 for the precise playhead and View for its visible range.
+
+The selected marker interval has a 10% accent tint behind the waveform. It follows
+live previews, clips to the viewport, hides invalid/off-screen ranges and ignores
+pointer input. Standing maintenance/version/upgrade requirements are recorded in
+AGENTS.md for future updates.

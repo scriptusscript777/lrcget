@@ -78,6 +78,8 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
   **Position** playhead, the **View** range, and selected lyric **Start / End**.
 - Start/end handles each use one vertical guide and separate upper/lower hit
   areas, so close markers remain selectable.
+- A subtle tint between the markers shows the selected phrase, follows marker
+  previews, and clips at the viewport edges without blocking clicks or handles.
 - Dragging/nudging creates a preview, not a saved edit. **Apply Markers** commits
   both boundaries as one undoable edit. **Cancel** discards the preview.
 

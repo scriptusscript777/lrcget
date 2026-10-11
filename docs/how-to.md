@@ -102,6 +102,7 @@ recording duration. Moving the playhead does not change marker times.
 1. In Synced, select a timed lyric. Its start/end markers appear on the waveform.
    Read **Start** and **End** above the waveform for their exact millisecond times;
    both remain visible when a marker is outside the zoomed view.
+   A faint highlight between the lines shows that lyric's selected time range.
 2. Pause and zoom around the boundary. Use the upper handle for start and lower
    handle for end; each has one vertical guide.
 3. Drag a handle, or focus it and nudge with Left/Right using the chosen timing
@@ -109,6 +110,7 @@ recording duration. Moving the playhead does not change marker times.
 4. Replay or loop the preview. The preview clock changes, but the lyric row is
    unchanged until confirmation.
    The time row is labeled **Preview** and updates while you drag or nudge.
+   The highlight follows the preview and clips to the visible waveform.
 5. Click **Apply Markers** to commit both boundaries as one undoable edit.
    Click **Cancel** to retain the original pair.
 

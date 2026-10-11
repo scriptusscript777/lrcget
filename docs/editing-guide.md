@@ -356,5 +356,9 @@ unconfirmed changes; Apply Markers commits them, and Cancel restores saved times
 For a lyric without an explicit end, hover End to see its inferred-end explanation.
 Untimed or invalid selections do not display a marker pair.
 
+A faint shaded range joins the two markers. It follows their preview positions
+and clips to the visible view; it disappears for an entirely off-screen phrase
+or invalid/untimed selection. The overlay does not intercept clicks or drags.
+
 ![Start and End in light mode](screenshots/current/waveform-marker-times-light.png)
 ![Start and End in dark mode](screenshots/current/waveform-marker-times-dark.png)

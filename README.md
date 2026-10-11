@@ -28,6 +28,7 @@ official upstream release.
   Double-click/button zoom preserves audio position, with smooth playhead movement.
 - Double-click a waveform point repeatedly to magnify it for marker editing.
 - Always-visible Start/End marker times include milliseconds and follow previews.
+- A faint highlight between the markers identifies the selected lyric range.
 - Labeled Elapsed, Total, Position and View clocks distinguish recording time,
   playhead position and the zoomed range.
 - Wheel/trackpad panning at any playback state, without follow snapping back;

@@ -142,6 +142,13 @@
       </div>
     </div>
     <div ref="plot" class="relative h-[110px] min-w-0" @wheel="panAtWheel">
+      <span
+        v-if="markerHighlight"
+        class="pointer-events-none absolute top-0 h-[90px] bg-hoa-500/10 dark:bg-hoa-400/10"
+        :style="{ left: `${markerHighlight.left}%`, width: `${markerHighlight.width}%` }"
+        aria-hidden="true"
+        data-testid="waveform-marker-highlight"
+      />
       <canvas
         ref="canvas"
         class="pointer-events-none absolute inset-0 h-full w-full"
@@ -372,6 +379,12 @@ const boundsForTimes = times => {
   return waveformMarkerBounds(line, times.endMs, waveform.value.duration * 1000)
 }
 const markerBounds = computed(() => boundsForTimes(previewTimes.value))
+const markerHighlight = computed(() => {
+  if (!markerBounds.value || viewport.value.span <= 0) return null
+  const left = Math.max(0, timeToPixel(previewTimes.value.startMs / 1000, viewport.value, 100))
+  const right = Math.min(100, timeToPixel(previewTimes.value.endMs / 1000, viewport.value, 100))
+  return right > left ? { left, width: right - left } : null
+})
 // Publish released/nudged previews for auditioning without modifying saved lyrics.
 watch(
   draft,

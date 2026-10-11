@@ -47,3 +47,18 @@ For completed LRCGET updates, notify the original creator through a GitHub issue
 linking the fork/release and a focused upstream pull request. Keep unrelated
 existing PRs unchanged, and avoid duplicate notifications. Report actual outcomes
 and any blocked installation or publication steps.
+
+For significant published fork updates, advance the public version. Rick prefers
+decimal carry: 2.2.1 through 2.2.9, then 2.3.0; 2.9.9 advances to 3.0.0.
+Keep the local suffix to distinguish fork builds from official upstream releases.
+Combine changes made before a release is published into that same release.
+
+Apply this maintenance workflow every time this app is modified. Update feature
+lists, how-tos and release notes together; capture fresh light/dark screenshots
+for changed visible behavior and verify documentation/download links. Verify the
+Debian package remains `lrcget` for the same architecture, uses the existing
+`net.lrclib.lrcget` identifier/data location, and sorts above the installed version
+so it upgrades in place. Publish the installer/checksum and link the illustrated
+guides in the creator notification. Report existing check findings separately
+from new ones, and never claim a blocked server backup, install or upstream PR
+was completed.
