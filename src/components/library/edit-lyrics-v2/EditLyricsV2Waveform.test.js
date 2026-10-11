@@ -72,6 +72,7 @@ beforeEach(() => {
 afterEach(() => {
   resetAllShortcutOverrides()
   apps.splice(0).forEach(app => app.unmount())
+  vi.useRealTimers()
   vi.unstubAllGlobals()
 })
 
@@ -623,6 +624,7 @@ describe('waveform controls and states', () => {
 
   it('keeps labeled zoom/fit/pan controls local and maps clicks within the zoomed view', async () => {
     const state = await mount()
+    vi.useFakeTimers()
     const zoomIn = state.byLabel('Zoom in waveform')
     expect(zoomIn.props.title).toBe('Zoom in waveform')
     expect(state.byLabel('Zoom out waveform').props.disabled).toBe(true)
@@ -640,13 +642,48 @@ describe('waveform controls and states', () => {
     await nextTick()
     const slider = state.byId('waveform-seek')
     slider.props.onClick({ clientX: 220, currentTarget: slider })
-    expect(state.seek).toHaveBeenLastCalledWith(90)
+    await vi.advanceTimersByTimeAsync(350)
+    expect(state.seek).toHaveBeenLastCalledWith(90, { play: true })
     slider.props.onClick({ clientX: 900, currentTarget: slider })
-    expect(state.seek).toHaveBeenLastCalledWith(120)
+    await vi.advanceTimersByTimeAsync(350)
+    expect(state.seek).toHaveBeenLastCalledWith(120, { play: true })
     state.byLabel('Fit entire waveform').props.onClick()
     await nextTick()
     expect(state.byId('waveform-pan')).toBeUndefined()
     expect(invoke).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not play during the real click/click/double-click sequence used for point zoom', async () => {
+    const state = await mount({ progress: 30, playing: false })
+    vi.useFakeTimers()
+    const slider = state.byId('waveform-seek')
+    slider.props.onClick({ detail: 1, clientX: 220, currentTarget: slider })
+    await vi.advanceTimersByTimeAsync(100)
+    slider.props.onClick({ detail: 2, clientX: 220, currentTarget: slider })
+    slider.props.onDblclick({
+      clientX: 220,
+      currentTarget: slider,
+      stopPropagation: vi.fn(),
+      preventDefault: vi.fn(),
+    })
+    await vi.advanceTimersByTimeAsync(500)
+    expect(state.seek).not.toHaveBeenCalled()
+    expect(state.props.progress).toBe(30)
+    expect(state.byId('waveform-seek').props['aria-valuenow']).toBe(30)
+    expect(state.byId('waveform-pan')).toBeDefined()
+  })
+
+  it.each(['unmount', 'source', 'zoom'])('cancels a pending pointer seek after %s', async mode => {
+    const state = await mount()
+    vi.useFakeTimers()
+    const slider = state.byId('waveform-seek')
+    slider.props.onClick({ detail: 1, clientX: 220, currentTarget: slider })
+    if (mode === 'unmount') state.app.unmount()
+    else if (mode === 'source') state.props.audioSource = { type: 'library', id: 2 }
+    else state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    await vi.advanceTimersByTimeAsync(500)
+    expect(state.seek).not.toHaveBeenCalled()
   })
 
   it('repeatedly double-clicks into a point while paused without moving markers or seeking', async () => {

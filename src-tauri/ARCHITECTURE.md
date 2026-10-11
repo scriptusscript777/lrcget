@@ -33,7 +33,7 @@ version, canonical-path key and size/mtime fingerprint. Invalid caches rebuild;
 read-only cache storage is nonfatal. Oldest previews are pruned above 128 files.
 Neither extraction nor cache storage touches music, tags, lyrics or SQLite.
 `seek_track` accepts optional `preserve_paused`; only waveform inspection opts
-in. Existing seek/loop callers keep resume behavior. A newly loaded editor
+in for keyboard seeking. Waveform pointer clicks use the existing resume behavior. Existing seek/loop callers keep resume behavior. A newly loaded editor
 source skips a second load while the old stopped player-state event is pending.
 
 ## Architecture Overview

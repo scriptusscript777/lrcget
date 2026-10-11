@@ -1,16 +1,16 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.0+local.21**.
+For Rick Lidgett's LRCGET **2.2.0+local.22**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.21).
+1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.22).
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.21_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.21_amd64.deb
+sha256sum -c LRCGET_2.2.0+local.22_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.0+local.22_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -115,7 +115,9 @@ end** until you explicitly set or confirm it.
 
 1. Turn **Loop selected phrase** off for continuous playback.
 2. Enable the crosshair **Follow waveform playback** button above the waveform.
-3. Use Zoom in or double-click a waveform point repeatedly.
+3. Use Zoom in or double-click a waveform point repeatedly. Zoom preserves the
+   audio position; Play continues from the current point. A single waveform click
+   starts playback from the clicked point, including when paused.
 4. Continue playing: the viewport advances when needed, retaining magnification.
 5. For fixed-region editing, pause, turn Follow off or pan manually.
 

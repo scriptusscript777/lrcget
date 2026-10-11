@@ -505,6 +505,20 @@ const player = () => {
 }
 
 describe('phrase loop', () => {
+  it.each(['paused', 'playing'])(
+    'continues from the current point when Play sees %s',
+    async status => {
+      const { state, controls, scope } = player()
+      controls.status.value = status
+      controls.progress.value = 7
+      await state.resumeOrPlay()
+      expect(controls.resume).toHaveBeenCalledOnce()
+      expect(controls.playTrack).not.toHaveBeenCalled()
+      expect(controls.seek).not.toHaveBeenCalled()
+      expect(controls.progress.value).toBe(7)
+      scope.stop()
+    }
+  )
   it('explicit sentence Play stops a marker loop and continues beyond its end', async () => {
     const { state, controls, scope } = player()
     await state.toggleLoop()

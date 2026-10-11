@@ -61,6 +61,66 @@ describe('waveform playback isolation', () => {
     state.scope.stop()
   })
 
+  it.each(['paused', 'playing', 'stopped'])(
+    'plays from the clicked point for a %s source',
+    async initialStatus => {
+      const state = setup({ id: 1 }, initialStatus)
+      await state.seekWaveform(12, { play: true })
+      expect(state.seek).toHaveBeenCalledWith(12, {
+        preservePaused: false,
+        sourceReady: initialStatus === 'stopped',
+      })
+      expect(state.waveformProgress.value).toBe(12)
+      state.scope.stop()
+    }
+  )
+
+  it('holds the clicked point through old load/resume positions until seek acknowledgement', async () => {
+    const state = setup({ id: 2 }, 'playing')
+    let finish
+    state.seek.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    )
+    const seeking = state.seekWaveform(12, { play: true })
+    await vi.waitFor(() => expect(state.seek).toHaveBeenCalledOnce())
+    expect(state.waveformProgress.value).toBe(12)
+    state.progress.value = 0
+    state.status.value = 'paused'
+    await nextTick()
+    expect(state.waveformProgress.value).toBe(12)
+    finish()
+    await seeking
+    state.status.value = 'playing'
+    await nextTick()
+    expect(state.waveformProgress.value).toBe(12)
+    state.progress.value = 12.04
+    await nextTick()
+    expect(state.waveformProgress.value).toBe(12.04)
+    state.progress.value = 12.08
+    await nextTick()
+    expect(state.waveformProgress.value).toBe(12.08)
+    state.scope.stop()
+  })
+
+  it('recovers from a clamped seek without leaving a frozen playhead', async () => {
+    const state = setup()
+    vi.useFakeTimers()
+    try {
+      await state.seekWaveform(120, { play: true })
+      state.progress.value = 119
+      await nextTick()
+      expect(state.waveformProgress.value).toBe(120)
+      await vi.advanceTimersByTimeAsync(1001)
+      expect(state.waveformProgress.value).toBe(119)
+    } finally {
+      state.scope.stop()
+      vi.useRealTimers()
+    }
+  })
+
   it('preserves the newly loaded paused source on the first queued seek', async () => {
     const state = setup({ id: 2 }, 'playing')
     invoke.mockImplementation(async command => {
@@ -98,7 +158,7 @@ describe('waveform playback isolation', () => {
     const first = state.seekWaveform(2)
     const second = state.seekWaveform(3)
     await nextTick()
-    expect(state.waveformProgress.value).toBeNull()
+    expect(state.waveformProgress.value).toBe(2)
     expect(state.seek).not.toHaveBeenCalled()
     finish()
     await Promise.all([initialization, first, second])

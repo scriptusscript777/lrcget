@@ -107,7 +107,7 @@ export function useEditLyricsV2Playback({
   const resumeOrPlay = async () => {
     if (disposed) return
     try {
-      if (status.value === 'paused' && isPlayingCorrectTrack()) await resume()
+      if (status.value !== 'stopped' && isPlayingCorrectTrack()) await resume()
       else if (audioSource.value) await playTrack(audioSource.value)
     } catch (error) {
       if (!disposed) onError(error)

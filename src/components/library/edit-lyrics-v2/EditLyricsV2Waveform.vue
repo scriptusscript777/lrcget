@@ -115,7 +115,7 @@
         role="slider"
         tabindex="0"
         aria-label="Seek in waveform"
-        title="Click to seek; double-click to zoom at this point"
+        title="Click to play from here; double-click to zoom at this point"
         aria-valuemin="0"
         :aria-valuemax="waveform.duration"
         :aria-valuenow="cursorTime"
@@ -128,6 +128,7 @@
         <span
           v-if="playheadVisible"
           class="pointer-events-none absolute top-0 h-full w-px bg-hoa-600 dark:bg-hoa-400"
+          :class="{ 'waveform-playhead-moving': playing }"
           :style="{ left: `${playheadPercent}%` }"
           data-testid="waveform-playhead"
         />
@@ -401,6 +402,7 @@ const applyMarkers = () => {
 }
 const startMarkerDrag = (marker, event) => {
   if (event.button !== 0 || drag.value) return
+  cancelPointerSeek()
   event.preventDefault()
   event.stopPropagation()
   event.currentTarget.focus?.()
@@ -488,10 +490,12 @@ const formatTime = seconds => {
 }
 
 const fit = () => {
+  cancelPointerSeek()
   if (drag.value) return
   viewport.value = normalizeViewport(waveform.value?.duration)
 }
 const zoom = factor => {
+  cancelPointerSeek()
   if (!waveform.value || drag.value) return
   let anchor = props.progress
   if (markerBounds.value) {
@@ -526,6 +530,7 @@ const zoom = factor => {
   )
 }
 const pan = start => {
+  cancelPointerSeek()
   if (!waveform.value || drag.value) return
   if (follow.value) resumeFollowOnPlay = true
   follow.value = false
@@ -561,6 +566,7 @@ const pointerTime = event => {
   )
 }
 const zoomAtPointer = event => {
+  cancelPointerSeek()
   const anchor = pointerTime(event)
   if (anchor === null) return
   // Magnification preserves Follow; only deliberate panning pauses it for inspection.
@@ -572,9 +578,24 @@ const zoomAtPointer = event => {
     minimumSpan.value
   )
 }
+let pointerSeekTimer = null
+const cancelPointerSeek = () => {
+  clearTimeout(pointerSeekTimer)
+  pointerSeekTimer = null
+}
 const seekAtPointer = event => {
+  cancelPointerSeek()
+  if (event.detail > 1) return
   const time = pointerTime(event)
-  if (time !== null) emit('seek', time)
+  if (time === null) return
+  const sourceKey = waveformSourceKey(props.audioSource)
+  // A native double-click also fires click events. Resolve that gesture before
+  // starting playback so point zoom does not unexpectedly start paused audio.
+  pointerSeekTimer = setTimeout(() => {
+    pointerSeekTimer = null
+    if (!disposed && !drag.value && sourceKey === waveformSourceKey(props.audioSource))
+      emit('seek', time, { play: true })
+  }, 350)
 }
 const seekAtKey = event => {
   if (isEditorShortcut(event)) return
@@ -586,6 +607,7 @@ const seekAtKey = event => {
     End: waveform.value.duration,
   }
   if (!(event.key in targets)) return
+  cancelPointerSeek()
   event.preventDefault()
   emit('seek', clampTime(targets[event.key], waveform.value.duration))
 }
@@ -640,6 +662,7 @@ watch(
   },
   { flush: 'sync' }
 )
+watch(() => waveformSourceKey(props.audioSource), cancelPointerSeek, { flush: 'sync' })
 watch(
   [
     () => waveformSourceKey(props.audioSource),
@@ -694,6 +717,7 @@ onMounted(() => {
   scheduleDraw()
 })
 onUnmounted(() => {
+  cancelPointerSeek()
   discardMarkers()
   disposed = true
   cancelAnimationFrame(frame)
@@ -702,3 +726,15 @@ onUnmounted(() => {
   window.removeEventListener('resize', scheduleDraw)
 })
 </script>
+
+<style scoped>
+.waveform-playhead-moving {
+  transition: left 40ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .waveform-playhead-moving {
+    transition: none;
+  }
+}
+</style>

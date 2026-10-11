@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.20`.
+Rick Lidgett's enhanced LRCGET build, `2.2.0+local.22`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -188,7 +188,9 @@ waveform drags still require Apply Markers to commit their preview.
 
 Double-click a point on the waveform to magnify it. Repeat to go deeper, then
 drag or nudge the selected lyric's start/end markers and use Apply Markers.
-A single click still seeks. Double-click zoom preserves the Follow setting:
+A single waveform click moves to that point and starts playback, including when
+paused. Keyboard seeking retains paused inspection. Play resumes the current
+position without restarting the recording. Double-click zoom preserves Follow:
 while playing, the zoomed view advances to keep the playhead visible, with or
 without Loop. Pause playback or turn Follow off to inspect a fixed region.
 The minus and Fit controls zoom back out. Marker timestamps never move with zoom.
@@ -333,3 +335,13 @@ timestamps. Apply Markers confirms both; Cancel restores the original pair.
 
 Screenshots were recaptured from .20 using temporary fixture lyrics and mocked waveform data, not private
 music. A waveform shows the full mix; it is not proof of exact singer alignment.
+
+### Waveform Playhead Continuity (.22)
+
+The playhead advances smoothly with audio. Pause holds its position; Play
+continues from there. Zoom buttons, double-click zoom, Fit and panning change the
+view without changing the recording position or lyric timestamps. Follow keeps
+the playhead visible during zoomed playback unless explicitly turned off.
+
+![Click-to-play waveform in light mode](screenshots/current/waveform-click-play-light.png)
+![Click-to-play waveform in dark mode](screenshots/current/waveform-click-play-dark.png)

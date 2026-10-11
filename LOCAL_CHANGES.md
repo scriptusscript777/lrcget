@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.21`, based on upstream tag `2.2.0`.
+Local version: `2.2.0+local.22`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -350,3 +350,18 @@ The Debian package upgrades the same application, not a second copy.
 the editor/export and stale embedded-lyrics fixes. It does **not** include this
 branch's F5/startup refresh, safe export, editor tools or local version metadata. Submission
 does not mean the upstream project has merged or released these changes.
+
+## Waveform Click Playback (.22)
+
+A single pointer click starts playback at its waveform position, including when
+paused or when the editor source must be loaded. Click resolution is briefly
+deferred so native click/click/double-click sequences only zoom. Keyboard seeking
+retains paused inspection. Marker dragging and source changes cancel pending
+pointer actions; zoom/fit/pan leave the audio position and timestamps unchanged.
+
+The playhead holds its requested position through loading and stale seek/resume
+updates until the player acknowledges it, with bounded fallback for clamped/end
+positions. Play resumes an already active source instead of restarting it.
+During playback its CSS position interpolates over the existing 40ms player
+updates; reduced-motion preferences disable that interpolation. Follow retains
+its existing behavior and explicit off setting.

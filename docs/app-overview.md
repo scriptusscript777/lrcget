@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.0+local.21. **Editing developer:** Rick Lidgett
+**Version:** 2.2.0+local.22. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -62,7 +62,8 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
 
 - The waveform shows the whole mix, not a separated singer. It is decoded and
   cached; normal zooming/playback does not repeatedly analyze the recording.
-- Click to seek. Use zoom buttons or repeated double-clicks for magnification.
+- Click to start playback from that point, including when paused. Use zoom buttons
+  or repeated double-clicks for magnification; Play resumes the current position.
   Wheel/trackpad gestures and the bottom pan control reach off-screen regions.
 - **Follow waveform playback** keeps the playhead visible at the selected zoom,
   with Loop on or off. Zoom preserves Follow. Manual panning holds the inspected
@@ -157,9 +158,10 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.0-local.21.md).
-Screenshots were recaptured from .20 using demonstration fixtures, not personal
-recordings. [Capture details](screenshots/current/README.md) distinguish current
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.0-local.22.md).
+Screenshots use demonstration fixtures, not personal recordings. Waveform playback
+images were captured from .22; unchanged tools retain .20 images.
+[Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 
 ## Scope and Verification

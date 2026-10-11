@@ -1,4 +1,4 @@
-import { computed, onScopeDispose, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, shallowRef, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { isWaveformSourcePlaying, waveformSourceKey } from '@/utils/waveform-viewport.js'
 
@@ -15,21 +15,27 @@ export function useWaveformPlayback({
   const cursor = ref(matches.value ? progress.value : null)
   const loading = ref(false)
   const failedKey = ref('')
-  const waveformProgress = computed(() =>
-    matches.value && !loading.value && failedKey.value !== waveformSourceKey(audioSource.value)
-      ? cursor.value
-      : null
-  )
+  const pendingSeek = shallowRef(null)
+  const waveformProgress = computed(() => {
+    if (failedKey.value === waveformSourceKey(audioSource.value)) return null
+    if (pendingSeek.value) return pendingSeek.value.target
+    return matches.value && !loading.value ? cursor.value : null
+  })
   let disposed = false
   let generation = 0
   let audioLoad = null
   let seekQueue = Promise.resolve()
+  const clearPendingSeek = () => {
+    clearTimeout(pendingSeek.value?.timer)
+    pendingSeek.value = null
+  }
 
   watch(
     () => waveformSourceKey(audioSource.value),
     () => {
       generation++
       cursor.value = null
+      clearPendingSeek()
     },
     { flush: 'sync' }
   )
@@ -45,7 +51,16 @@ export function useWaveformPlayback({
   watch(
     [progress, status],
     () => {
-      if (matches.value && !loading.value) cursor.value = progress.value
+      if (!matches.value || loading.value) return
+      const pending = pendingSeek.value
+      if (pending) {
+        // Load/resume events can contain the position from before the seek.
+        // Keep the selected point until the audio thread acknowledges it.
+        if (pending.awaitingCommand || !Number.isFinite(progress.value)) return
+        if (Math.abs(progress.value - pending.target) > 0.25) return
+        clearPendingSeek()
+      }
+      cursor.value = progress.value
     },
     // Update after identity changes settle, before rendering the editor's modal slot.
     { flush: 'pre' }
@@ -53,6 +68,7 @@ export function useWaveformPlayback({
   onScopeDispose(() => {
     disposed = true
     generation++
+    clearPendingSeek()
   })
 
   const ensureAudio = async source => {
@@ -108,7 +124,7 @@ export function useWaveformPlayback({
   const initializeAudio = () => {
     if (!matches.value) return ensureAudio({ ...audioSource.value }).catch(reportError)
   }
-  const seekWaveform = seconds => {
+  const seekWaveform = (seconds, { play = false } = {}) => {
     const source = { ...audioSource.value }
     const key = waveformSourceKey(source)
     const requestGeneration = generation
@@ -117,26 +133,55 @@ export function useWaveformPlayback({
     seekQueue = seekQueue
       .then(async () => {
         if (disposed || requestGeneration !== generation) return
-        const loadedPaused = await ensureAudio(source)
-        if (
-          disposed ||
-          requestGeneration !== generation ||
-          !isWaveformSourcePlaying(source, playingTrack.value)
-        )
-          return
-        await seek(Math.max(0, seconds), {
-          // The player-state event can trail the completed load/pause commands.
-          // Do not restart/resume freshly loaded audio based on that stale event.
-          preservePaused: loadedPaused === true || status.value === 'paused',
-          sourceReady: loadedPaused === true,
-        })
-        if (!disposed && requestGeneration === generation) cursor.value = Math.max(0, seconds)
+        const pending = { target: Math.max(0, seconds), awaitingCommand: true, timer: null }
+        clearPendingSeek()
+        pendingSeek.value = pending
+        try {
+          const loadedPaused = await ensureAudio(source)
+          if (
+            disposed ||
+            requestGeneration !== generation ||
+            !isWaveformSourcePlaying(source, playingTrack.value)
+          ) {
+            if (pendingSeek.value === pending) clearPendingSeek()
+            return
+          }
+          await seek(pending.target, {
+            // Pointer playback is explicit. Inspection still respects a completed
+            // load/pause even when the player-state event has not arrived yet.
+            preservePaused: !play && (loadedPaused === true || status.value === 'paused'),
+            sourceReady: loadedPaused === true,
+          })
+          if (
+            !disposed &&
+            requestGeneration === generation &&
+            isWaveformSourcePlaying(source, playingTrack.value)
+          ) {
+            cursor.value = pending.target
+            pending.awaitingCommand = false
+            // Bound acknowledgement waiting so an ended/clamped source can recover.
+            pending.timer = setTimeout(() => {
+              if (pendingSeek.value !== pending) return
+              cursor.value = matches.value ? progress.value : null
+              clearPendingSeek()
+            }, 1000)
+          } else if (pendingSeek.value === pending) {
+            clearPendingSeek()
+          }
+        } catch (error) {
+          if (pendingSeek.value === pending) clearPendingSeek()
+          throw error
+        }
       })
       .catch(reportError)
     return seekQueue
   }
   const waveformPlaying = computed(
-    () => Number.isFinite(waveformProgress.value) && status.value === 'playing'
+    () =>
+      matches.value &&
+      !loading.value &&
+      Number.isFinite(waveformProgress.value) &&
+      status.value === 'playing'
   )
   return { waveformProgress, waveformPlaying, initializeAudio, seekWaveform }
 }
