@@ -59,6 +59,18 @@
           >
             <Repeat class="w-3.5 h-3.5" />Loop word
           </button>
+          <button
+            v-tooltip="editorTooltip('Repeat the selected sentence and its waveform markers; switching from Word loop selects Sentence loop')"
+            type="button"
+            class="button text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
+            :class="sentenceLoopEnabled ? 'button-primary' : 'button-normal'"
+            :aria-pressed="sentenceLoopEnabled"
+            aria-label="Loop selected sentence"
+            :disabled="!sentenceLoopEnabled && !canSentenceLoop"
+            @click="emit('toggle-sentence-loop')"
+          >
+            <Repeat class="w-3.5 h-3.5" />Loop sentence
+          </button>
           <label class="inline-flex items-center gap-1" title="Word timing zoom">
             <span class="sr-only">Word timing zoom</span>
             <Magnify class="h-3.5 w-3.5" />
@@ -310,6 +322,8 @@ import { ensureLineWords, distributeWordTimings, hasValidWords } from '@/utils/w
 const props = defineProps({
   playing: { type: Boolean, default: false },
   wordLoopEnabled: { type: Boolean, default: false },
+  sentenceLoopEnabled: { type: Boolean, default: false },
+  canSentenceLoop: { type: Boolean, default: false },
   initialWordIndex: { type: Number, default: 0 },
   timingStepMs: { type: Number, default: 10 },
   selectedLine: {
@@ -344,6 +358,7 @@ const emit = defineEmits([
   'editing-change',
   'word-loop-target',
   'toggle-word-loop',
+  'toggle-sentence-loop',
 ])
 
 const timelineElement = ref(null)

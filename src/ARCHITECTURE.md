@@ -449,3 +449,9 @@ restores the exact saved snapshot or clears sentence/word timing while retaining
 text. Cleared working copies remain recoverable. Editor revisions remount word
 and waveform children to discard stale local buffers/previews and stop Loop.
 No file/database commands run on reset. See docs/master-reset.md.
+
+Word timing exposes adjacent Loop word/Loop sentence buttons. Sentence mode
+props and toggle-sentence-loop flow through SyncedLyricsEditor to the existing
+phrase playback toggle. Both phrase/sentence buttons share the same state and
+availability; the playback composable keeps modes exclusive. No new persistence
+or export behavior is introduced.

@@ -570,3 +570,6 @@ imports; imported Plain records still upgrade from matching LRC. See the reset
 guide and maintenance review. Version remains 2.2.7.
 
 Recovery maintenance: removed the routine protected-work status text at Rick's request. Recovery continues silently; errors/conflicts remain visible.
+
+Word timing: added Loop sentence beside Loop word, reusing existing phrase
+loop state/range and keeping the two modes exclusive. Version remains 2.2.7.

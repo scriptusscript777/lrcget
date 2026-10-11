@@ -122,3 +122,7 @@ Master reset captures: `master-reset-saved-warning-*`,
 `master-reset-timing-warning-*`, `master-reset-cleared-*` and
 `master-reset-plain-*`. Both themes show the current icon/warning and Plain-mode
 graying using safe temporary fixtures. See docs/master-reset.md.
+
+Sentence-loop maintenance captures: `selected-sentence-loop-{light,dark}.png`
+show the adjacent word/sentence controls and active sentence mode. Current word,
+reset and recovery screenshots were refreshed using isolated browser fixtures.

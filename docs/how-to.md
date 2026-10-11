@@ -439,8 +439,10 @@ See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
    loop is enabled; it does not automatically advance to another word/sentence.
 6. Click another word or use the boundary navigation keys to move the loop.
    Zoom/scroll changes only the view. Word labels remain visible while scrolling.
-7. Turn **Loop word** off when finished. Phrase Loop switches back to repeating
-   a sentence; the two modes never run together.
+7. Turn **Loop word** off when finished, or click **Loop sentence** beside it
+   to repeat the selected sentence and waveform markers. The two modes never run
+   together. Both sentence-loop buttons share the same state. Pause/Resume keeps
+   your chosen mode; Lead-in/Tail apply to either range.
 
 Explicit word ends preserve silence gaps; missing ends use the next word start
 or sentence end. Estimated timing is labeled and is not saved merely by looping.
@@ -533,3 +535,6 @@ A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
 Synced mode opens a warning and choices to return to the last save or clear
 all timing while keeping text. Cancel keeps work; confirmation affects only
 this song. See the [illustrated reset guide](master-reset.md).
+
+![Word timing with Sentence loop selected](screenshots/current/selected-sentence-loop-light.png)
+![Sentence loop in dark mode](screenshots/current/selected-sentence-loop-dark.png)

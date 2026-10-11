@@ -8,7 +8,8 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-Selected-word looping adds precise Start/End editing, padding and readable zoomed labels.
+Word timing provides adjacent **Loop word** and **Loop sentence** controls,
+precise Start/End editing, padding and readable zoomed labels.
 See [word-loop instructions](docs/how-to.md#loop-one-word-for-precise-timing).
 
 Optional Enhanced LRC (`.elrc`) can now be exported alongside TXT and standard LRC.
