@@ -568,3 +568,5 @@ It supports TXT/LRC/ELRC and preserves current text/other projects/files.
 Manual saved untimed/empty lyrics are now protected against stale LRC scan
 imports; imported Plain records still upgrade from matching LRC. See the reset
 guide and maintenance review. Version remains 2.2.7.
+
+Recovery maintenance: removed the routine protected-work status text at Rick's request. Recovery continues silently; errors/conflicts remain visible.

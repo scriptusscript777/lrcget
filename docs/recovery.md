@@ -7,8 +7,8 @@ sidecars or the last explicit SQLite save.
 
 ## Continue unfinished work
 
-1. Edit plain text, sentence text/timing or word timing normally. A compact editor
-   message confirms that unfinished work is protected.
+1. Edit plain text, sentence text/timing or word timing normally. Recovery runs
+   silently; storage errors and recovery conflicts still display when needed.
 2. Close the editor or app when needed. Draft writes happen immediately as the
    working document changes; recovery does not depend on a shutdown handler.
 3. Reopen LRCGET. The main window names the latest unfinished song. Choose

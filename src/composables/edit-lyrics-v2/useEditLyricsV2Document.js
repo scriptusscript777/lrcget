@@ -91,7 +91,7 @@ export function useEditLyricsV2Document({
           context: recoveryContext.value,
           source: recoverySource,
         })
-        recoveryStatus.value = 'Unfinished work protected by recovery'
+        recoveryStatus.value = ''
       }
       return true
     } catch (error) {
