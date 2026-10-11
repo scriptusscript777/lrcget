@@ -4,6 +4,7 @@ const isHotkeyState = ref(true)
 const themeModeState = ref(true)
 const lrclibInstanceState = ref('')
 const showHoverHelpState = ref(false)
+const preventLyricOverlapsState = ref(true)
 
 export function useGlobalState() {
   const disableHotkey = () => {
@@ -35,6 +36,10 @@ export function useGlobalState() {
     themeMode,
     setLrclibInstance,
     lrclibInstance,
+    preventOverlaps: computed(() => preventLyricOverlapsState.value),
+    setPreventOverlaps: enabled => {
+      preventLyricOverlapsState.value = enabled !== false
+    },
     showHoverHelp: computed(() => showHoverHelpState.value),
     setShowHoverHelp: enabled => {
       showHoverHelpState.value = enabled === true

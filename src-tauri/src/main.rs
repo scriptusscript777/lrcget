@@ -233,6 +233,7 @@ async fn set_config(
     lrclib_instance: &str,
     volume: f64,
     show_hover_help: Option<bool>,
+    prevent_lyric_overlaps: Option<bool>,
     app_state: State<'_, AppState>,
 ) -> Result<(), String> {
     let conn_guard = app_state.db.lock().unwrap();
@@ -252,6 +253,9 @@ async fn set_config(
 
     if let Some(enabled) = show_hover_help {
         db::set_hover_help_enabled(enabled, &tx).map_err(|err| err.to_string())?;
+    }
+    if let Some(enabled) = prevent_lyric_overlaps {
+        db::set_lyric_overlap_prevention(enabled, &tx).map_err(|err| err.to_string())?;
     }
     tx.commit().map_err(|err| err.to_string())?;
 

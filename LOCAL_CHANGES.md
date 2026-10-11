@@ -4,7 +4,16 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.6+local.1`, based on upstream tag `2.2.0`.
+Local version: `2.2.6+local.2`, based on upstream tag `2.2.0`.
+
+## Saved Overlap Setting (2.2.6+local.2)
+
+The overlap checkbox moved to Configuration → Common to avoid accidental clicks
+near Loop. Synced shows read-only **Overlap prevention: On/Off** in its previous
+location. The saved preference defaults on and persists across editor sessions
+and restarts. Cancel, failed saves and failed configuration loads cannot change
+it. Schema migration 20 preserves lyrics and existing preferences. Docs and
+light/dark screenshots cover both Settings and editor status.
 
 ## Marker Confirmation and Standard LRC Gaps (2.2.6)
 

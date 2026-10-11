@@ -499,3 +499,15 @@ not duplicated and cues cannot clear another active overlapping phrase. Untimed
 rows and words allow absent starts in the internal schema; exports omit untimed
 rows and presence flags no longer label them Synced. Exact ends remain internal;
 LRC-only reimports retain exported blank rows but cannot recover omitted tiny gaps.
+
+### Saved overlap protection (2.2.6+local.2)
+
+Configuration → Common owns the overlap checkbox. Synced exposes only read-only
+On/Off status. App hydrates `prevent_lyric_overlaps` into a shared reactive
+preference; document validation receives the readonly preference. A missing
+field defaults on for compatibility. Configuration submits an immutable snapshot
+and updates runtime state only after successful atomic save. Save and preference
+inputs are disabled until configuration loads; a failed load displays an error.
+Migration 20 adds a checked boolean defaulting true. Optional command arguments
+preserve existing choices for older callers. The existing settings transaction
+includes the scoped overlap setter, with tests for upgrade, restart and rollback.

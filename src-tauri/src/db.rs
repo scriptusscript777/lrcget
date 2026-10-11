@@ -160,6 +160,7 @@ pub fn get_config(db: &Connection) -> Result<PersistentConfig> {
         skip_tracks_with_plain_lyrics,
         show_line_count,
         show_hover_help,
+        prevent_lyric_overlaps,
         try_embed_lyrics,
         theme_mode,
         lrclib_instance,
@@ -181,6 +182,7 @@ pub fn get_config(db: &Connection) -> Result<PersistentConfig> {
             skip_tracks_with_plain_lyrics: r.get("skip_tracks_with_plain_lyrics")?,
             show_line_count: r.get("show_line_count")?,
             show_hover_help: r.get("show_hover_help")?,
+            prevent_lyric_overlaps: r.get("prevent_lyric_overlaps")?,
             try_embed_lyrics: r.get("try_embed_lyrics")?,
             theme_mode: r.get("theme_mode")?,
             lrclib_instance: r.get("lrclib_instance")?,
@@ -227,6 +229,11 @@ pub fn set_config(
 // Independent preference; legacy Settings callers can omit it without resetting it.
 pub fn set_hover_help_enabled(enabled: bool, db: &Connection) -> Result<()> {
     db.execute("UPDATE config_data SET show_hover_help = ? WHERE 1", [enabled])?;
+    Ok(())
+}
+
+pub fn set_lyric_overlap_prevention(enabled: bool, db: &Connection) -> Result<()> {
+    db.execute("UPDATE config_data SET prevent_lyric_overlaps = ? WHERE 1", [enabled])?;
     Ok(())
 }
 
@@ -2191,5 +2198,60 @@ mod hover_help_tests {
         assert_eq!(after.show_hover_help, before.show_hover_help);
         assert_eq!(after.theme_mode, before.theme_mode);
         assert_eq!(after.volume, before.volume);
+    }
+}
+
+#[cfg(test)]
+mod overlap_preference_tests {
+    use super::*;
+
+    #[test]
+    fn upgrading_defaults_protection_on_without_touching_lyrics_or_preferences() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        let migrations = Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
+        migrations.to_version(&mut conn, 19).unwrap();
+        set_hover_help_enabled(true, &conn).unwrap();
+        conn.execute("INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: keep me')", []).unwrap();
+        migrations.to_latest(&mut conn).unwrap();
+        let config = get_config(&conn).unwrap();
+        assert!(config.prevent_lyric_overlaps);
+        assert!(config.show_hover_help);
+        let lyrics: String = conn.query_row("SELECT lyricsfile FROM lyricsfiles LIMIT 1", [], |r| r.get(0)).unwrap();
+        assert_eq!(lyrics, "plain: keep me");
+    }
+
+    #[test]
+    fn saved_choice_survives_restart_and_unrelated_settings() {
+        let file = tempfile::NamedTempFile::new().unwrap();
+        {
+            let mut conn = Connection::open(file.path()).unwrap();
+            Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+            set_lyric_overlap_prevention(false, &conn).unwrap();
+            set_config(false, true, true, false, "dark", "https://example.test", 0.3, &conn).unwrap();
+            set_hover_help_enabled(true, &conn).unwrap();
+            set_export_preferences(None, Some(true), None, None, None, None, &conn).unwrap();
+            assert!(!get_config(&conn).unwrap().prevent_lyric_overlaps);
+        }
+        let conn = Connection::open(file.path()).unwrap();
+        assert!(!get_config(&conn).unwrap().prevent_lyric_overlaps);
+        set_lyric_overlap_prevention(true, &conn).unwrap();
+        assert!(get_config(&conn).unwrap().prevent_lyric_overlaps);
+    }
+
+    #[test]
+    fn failed_settings_transaction_preserves_overlap_and_other_choices() {
+        let mut conn = Connection::open_in_memory().unwrap();
+        Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+        let before = get_config(&conn).unwrap();
+        {
+            let tx = conn.unchecked_transaction().unwrap();
+            set_config(false, true, true, false, "dark", "https://example.test", 0.1, &tx).unwrap();
+            set_lyric_overlap_prevention(false, &tx).unwrap();
+            set_hover_help_enabled(true, &tx).unwrap();
+        }
+        let after = get_config(&conn).unwrap();
+        assert_eq!(after.prevent_lyric_overlaps, before.prevent_lyric_overlaps);
+        assert_eq!(after.show_hover_help, before.show_hover_help);
+        assert_eq!(after.theme_mode, before.theme_mode);
     }
 }

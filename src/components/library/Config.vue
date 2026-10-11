@@ -86,7 +86,7 @@
               type="checkbox"
               class="h-4 w-4 accent-hoa-1500"
               aria-describedby="hover-help-instructions"
-              :disabled="isSaving"
+              :disabled="isSaving || !isConfigLoaded"
             />
             Show hover help
           </label>
@@ -94,6 +94,28 @@
             id="hover-help-instructions"
             class="mt-1 text-xs text-neutral-600 dark:text-neutral-400"
             >Off by default. F1 shows help for a hovered or focused control.</span
+          >
+        </div>
+
+        <div class="flex flex-col mb-4">
+          <label
+            for="prevent-lyric-overlaps"
+            class="inline-flex cursor-pointer items-center gap-2 child-label"
+          >
+            <input
+              id="prevent-lyric-overlaps"
+              v-model="editingPreventOverlaps"
+              type="checkbox"
+              class="h-4 w-4 accent-hoa-1500"
+              aria-describedby="overlap-instructions"
+              :disabled="isSaving || !isConfigLoaded"
+            />
+            Prevent overlapping lyrics
+          </label>
+          <span
+            id="overlap-instructions"
+            class="mt-1 text-xs text-neutral-600 dark:text-neutral-400"
+            >On by default. Turn off to allow intentional timing overlaps.</span
           >
         </div>
 
@@ -143,7 +165,7 @@
         </p>
         <button
           class="button button-primary px-8 py-2 rounded-full disabled:opacity-50"
-          :disabled="isSaving"
+          :disabled="isSaving || !isConfigLoaded"
           :aria-busy="isSaving"
           @click="save"
         >
@@ -162,7 +184,7 @@ import { usePlayer } from '@/composables/player.js'
 import RadioButton from '@/components/common/RadioButton.vue'
 import CheckboxButton from '@/components/common/CheckboxButton.vue'
 
-const { setThemeMode, setLrclibInstance, setShowHoverHelp } = useGlobalState()
+const { setThemeMode, setLrclibInstance, setShowHoverHelp, setPreventOverlaps } = useGlobalState()
 const { volume } = usePlayer()
 
 const emit = defineEmits(['close', 'refreshLibrary', 'fullScanLibrary', 'manageDirectories'])
@@ -174,12 +196,14 @@ const showLineCount = ref(true)
 const tryEmbedLyrics = ref(false)
 const editingThemeMode = ref('auto')
 const editingShowHoverHelp = ref(false)
+const editingPreventOverlaps = ref(true)
 const editingLrclibInstance = ref('')
 const isSaving = ref(false)
+const isConfigLoaded = ref(false)
 const saveError = ref('')
 
 const save = async () => {
-  if (isSaving.value) return
+  if (isSaving.value || !isConfigLoaded.value) return
   isSaving.value = true
   saveError.value = ''
   const submitted = {
@@ -191,10 +215,12 @@ const save = async () => {
     lrclibInstance: editingLrclibInstance.value,
     volume: volume.value,
     showHoverHelp: editingShowHoverHelp.value,
+    preventLyricOverlaps: editingPreventOverlaps.value,
   }
   try {
     await invoke('set_config', submitted)
     setShowHoverHelp(submitted.showHoverHelp)
+    setPreventOverlaps(submitted.preventLyricOverlaps)
     setThemeMode(submitted.themeMode)
     setLrclibInstance(submitted.lrclibInstance)
     emit('close')
@@ -222,7 +248,14 @@ const manageDirectories = () => {
 
 const beforeOpenHandler = async () => {
   saveError.value = ''
-  const config = await invoke('get_config')
+  isConfigLoaded.value = false
+  let config
+  try {
+    config = await invoke('get_config')
+  } catch {
+    saveError.value = 'Could not load configuration. Close and reopen Settings to retry.'
+    return
+  }
   skipTracksWithSyncedLyrics.value = config.skip_tracks_with_synced_lyrics
   skipTracksWithPlainLyrics.value = config.skip_tracks_with_plain_lyrics
 
@@ -239,8 +272,10 @@ const beforeOpenHandler = async () => {
   showLineCount.value = config.show_line_count
   tryEmbedLyrics.value = config.try_embed_lyrics
   editingShowHoverHelp.value = config.show_hover_help === true
+  editingPreventOverlaps.value = config.prevent_lyric_overlaps !== false
   editingThemeMode.value = config.theme_mode
   editingLrclibInstance.value = config.lrclib_instance
+  isConfigLoaded.value = true
 }
 
 watch(downloadLyricsFor, newVal => {

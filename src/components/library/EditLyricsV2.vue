@@ -135,9 +135,9 @@
       <SyncedLyricsEditor
         v-else
         v-model:timing-step-ms="timingStepMs"
-        v-model:prevent-overlaps="preventOverlaps"
         v-model:loop-lead-seconds="loopLeadSeconds"
         v-model:loop-tail-seconds="loopTailSeconds"
+        :prevent-overlaps="preventOverlaps"
         :marker-preview="markerPreview"
         :model-value="syncedLines"
         :can-import-from-plain="hasPlainLyrics"
@@ -241,7 +241,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const { disableHotkey, enableHotkey } = useGlobalState()
+const { disableHotkey, enableHotkey, preventOverlaps: overlapPreference } = useGlobalState()
 const {
   status,
   duration,
@@ -334,6 +334,7 @@ const {
   lyricsfile: lyricsfileRef,
   trackId: trackIdRef,
   progress: waveformProgress,
+  overlapPreference,
   playbackDuration: computed(() =>
     Number.isFinite(waveformProgress.value) ? duration.value : null
   ),

@@ -66,7 +66,7 @@ your words into **Plain**, switch to an empty **Synced** editor and choose
 Your source TXT remains unchanged. The working Plain and Synced versions are
 separate; editing synced text does not silently edit Plain or the source TXT.
 
-![Imported text before any timestamps have been assigned](screenshots/current/marker-sync-untimed-light.png)
+![Imported text before any timestamps have been assigned](screenshots/current/overlap-untimed-light.png)
 
 ## Edit an Existing LRC or Timed Text File
 
@@ -113,19 +113,19 @@ recording duration. Moving the playhead does not change marker times.
    The highlight follows the preview and clips to the visible waveform.
    If a boundary crosses the previous lyric's end or next lyric's start, a
    warning shows the distance in seconds. Correct an accidental crossing with
-   a nudge/drag or Cancel. **Prevent overlapping lyrics** is on by default;
+   a nudge/drag or Cancel. **Prevent overlapping lyrics** is in Settings → Configuration → Common and on by default;
    turn it off explicitly to confirm an intentional overlap.
 5. Use **Sync Sentence Start** and **Sync Sentence End** to confirm the corresponding
    moved marker as separate undoable edits. **Cancel** restores the last confirmed
    timings; confirming one boundary preserves the other pending preview.
 
-![Preview before confirming timestamps](screenshots/current/marker-sync-preview-light.png)
+![Preview before confirming timestamps](screenshots/current/overlap-status-on-light.png)
 
-![Start and End marker times in light mode](screenshots/current/marker-sync-preview-light.png)
-![Start and End marker times in dark mode](screenshots/current/marker-sync-preview-dark.png)
+![Start and End marker times in light mode](screenshots/current/overlap-status-on-light.png)
+![Start and End marker times in dark mode](screenshots/current/overlap-status-on-dark.png)
 
-![Warning before extending into the next lyric](screenshots/current/marker-sync-overlap-light.png)
-![Overlap protection in dark mode](screenshots/current/marker-sync-overlap-dark.png)
+![Warning before extending into the next lyric](screenshots/current/overlap-setting-warning-light.png)
+![Overlap protection in dark mode](screenshots/current/overlap-setting-warning-dark.png)
 
 Escape during dragging cancels that drag; otherwise it cancels the preview.
 Changing phrases or closing discards unconfirmed previews. Confirm Start/End before Save/export.
@@ -278,3 +278,16 @@ discards the change. Menus and marker warnings are unaffected.
 3. Reopen the saved song to retain exact end-marker times. If importing only the
    LRC, its exported blank cues appear as real empty timed rows; omitted short
    gaps cannot restore their exact end times from that file alone.
+
+## Turn Overlap Prevention On or Off
+
+1. Open Settings (**Configuration**) and find **Common**.
+2. Check or uncheck **Prevent overlapping lyrics**, then click **Save**.
+3. In Synced, read **Overlap prevention: On/Off** beside Timing step. This text
+   is informational; clicking it cannot change the setting or affect Loop.
+
+The choice survives restarting. Cancel and failed saves preserve the prior choice.
+Turning protection on does not automatically change existing lyric overlaps.
+
+![Overlap setting](screenshots/current/overlap-settings-light.png)
+![Protection off in Synced](screenshots/current/overlap-status-off-dark.png)

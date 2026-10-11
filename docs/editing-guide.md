@@ -74,7 +74,7 @@ offset headers need to be converted to explicit line timestamps first.
 You need the corresponding audio recording to listen and set timings. LRCGET
 does not run Whisper/Demucs or automatically align plain text to singing.
 
-![Untimed imported text has no confirmed waveform markers](screenshots/current/marker-sync-untimed-dark.png)
+![Untimed imported text has no confirmed waveform markers](screenshots/current/overlap-untimed-dark.png)
 
 ## Create a Timeline
 
@@ -333,9 +333,9 @@ lead vocals, guarantee exact lip sync or run Whisper/Demucs.
 
 ## Current Views
 
-![Light theme: previewed markers awaiting confirmation](screenshots/current/marker-sync-preview-light.png)
+![Light theme: previewed markers awaiting confirmation](screenshots/current/overlap-status-on-light.png)
 
-![Dark theme: previewed markers awaiting confirmation](screenshots/current/marker-sync-preview-dark.png)
+![Dark theme: previewed markers awaiting confirmation](screenshots/current/overlap-status-on-dark.png)
 
 The preview timestamps above the waveform differ from the unchanged lyric-row
 timestamps. Sync Start/End confirms each boundary; Cancel restores the last confirmed pair.
@@ -387,12 +387,12 @@ For the last lyric without an explicit end, Loop uses the known recording end,
 matching the waveform's inferred-end behavior. Without a known duration, that
 loop stays unavailable until loading completes.
 
-![Next lyric crossing in light mode](screenshots/current/marker-sync-overlap-light.png)
-![Next lyric crossing in dark mode](screenshots/current/marker-sync-overlap-dark.png)
-![Overlap protection](screenshots/current/marker-sync-overlap-dark.png)
+![Next lyric crossing in light mode](screenshots/current/overlap-setting-warning-light.png)
+![Next lyric crossing in dark mode](screenshots/current/overlap-setting-warning-dark.png)
+![Overlap protection](screenshots/current/overlap-setting-warning-dark.png)
 
-![Start and End in light mode](screenshots/current/marker-sync-preview-light.png)
-![Start and End in dark mode](screenshots/current/marker-sync-preview-dark.png)
+![Start and End in light mode](screenshots/current/overlap-status-on-light.png)
+![Start and End in dark mode](screenshots/current/overlap-status-on-dark.png)
 
 ### Optional Hover Help (2.2.4)
 
@@ -427,7 +427,7 @@ boundary; an unchanged boundary uses playback. Confirm Start first on untimed te
 The other pending boundary survives confirmation, and Cancel restores only the
 unconfirmed changes to the last confirmed pair. Save persists confirmed timings.
 
-**Prevent overlapping lyrics** defaults on per editor session. Crossings can be
+**Prevent overlapping lyrics**, in Settings → Configuration → Common, defaults on as a saved Configuration preference. Crossings can be
 previewed but cannot be confirmed unless resolved or protection is turned off.
 Standard LRC has start cues rather than separate end fields: export represents
 confirmed gaps of at least 250 ms with empty timestamped cues and also marks

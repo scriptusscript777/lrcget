@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.1. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.2. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -89,9 +89,9 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
 
 ![Zoomed playback following without requiring a loop](screenshots/current/waveform-follow-dark.png)
 
-![Preview timestamps with Sync Sentence Start/End and Cancel](screenshots/current/marker-sync-preview-light.png)
+![Preview timestamps with Sync Sentence Start/End and Cancel](screenshots/current/overlap-status-on-light.png)
 
-![Persistent Start and End times](screenshots/current/marker-sync-preview-dark.png)
+![Persistent Start and End times](screenshots/current/overlap-status-on-dark.png)
 
 ## Loops and Playback
 
@@ -187,7 +187,7 @@ YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
 The 2.2.6 frontend run passed 411 tests and scoped ESLint. Browser checks cover
 independent marker confirmation, cancel baselines, live highlighting, zoom,
-untimed text and overlap opt-out. Rust passed 60 tests (one optional fixture
+untimed text and overlap opt-out. Rust passed 63 tests (one optional fixture
 ignored). Saved hover-help checks remain documented in the 2.2.4 review.
 Ruff reports 11 existing findings in the unchanged Python test-data generator.
 These results do not guarantee perfect lyrics.

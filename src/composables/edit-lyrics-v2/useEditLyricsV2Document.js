@@ -20,6 +20,7 @@ export function useEditLyricsV2Document({
   trackId,
   progress,
   playbackDuration,
+  overlapPreference,
   toast,
 }) {
   const plainLyrics = ref('')
@@ -31,7 +32,7 @@ export function useEditLyricsV2Document({
   const selectedSyncedLineIndices = ref([])
   const isSyncedLineEditing = ref(false)
   const isInstrumental = ref(false)
-  const preventOverlaps = ref(true)
+  const preventOverlaps = overlapPreference ?? ref(true)
   const timingStepMs = ref(100)
   const timingStep = () =>
     [10, 25, 50, 100].includes(Number(timingStepMs.value)) ? Number(timingStepMs.value) : 100
