@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.4+local.1`.
+Rick Lidgett's enhanced LRCGET build, `2.2.6+local.8`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -187,8 +187,10 @@ Synced does not invent timestamps or overwrite your original text file.
 - Sentence start sync sets the start marker to playback and keeps the end fixed.
 - Sentence shift arrows move the entire sentence, its words and both markers.
 - End sync/arrows change only the sentence end and its end marker.
-- Sync word changes the selected word boundary. If the first word moves, the
-  sentence start follows it; editing a later word preserves an unchanged start.
+- With word looping off, Sync word changes the selected boundary and advances.
+  If the first word moves, the sentence start follows it. With Loop word on,
+  Sync word refines the selected word start without advancing or shifting the
+  sentence start. The precision Start/End fields also leave sentence markers fixed.
 - Timing step chooses the nudge amount; choosing a step does not move anything.
 - Follow Lyrics moves marker selection during playback, not saved timestamps.
   Manual selection, marker previews, word/text editing and loops hold the target.
@@ -287,7 +289,7 @@ does not itself publish your lyrics. Player support for lyric display varies.
 | Save                   | Retains edits in LRCGET's lyric document; does not itself export sidecars |
 | Save and export: TXT   | Writes plain lyrics beside the track                                      |
 | Save and export: LRC   | Writes timed lyrics beside the track; selected initially                  |
-| Save and export: ELRC | Writes saved word timing to a separate `.elrc` |
+| Save and export: ELRC  | Writes saved word timing to a separate `.elrc`                            |
 | Save and export: Embed | Writes lyrics into supported audio metadata                               |
 | Save and Publish       | Uploads lyrics to the configured LRCLIB instance after confirmation       |
 
@@ -345,8 +347,9 @@ timestamps. Sync Start/End confirms each boundary; Cancel restores the last conf
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-All current screenshots were refreshed for 2.2.2. Native marker/playback captures
-use demonstration lyrics and generated silent audio; other tools use browser fixtures.
+Current word-loop and embedding screenshots were refreshed for 2.2.6+local.8.
+Unchanged native marker/playback captures use demonstration lyrics and generated
+silent audio; the screenshot index records each group’s version and provenance.
 A waveform shows the full mix; it is not proof of exact singer alignment.
 
 ### Waveform Playhead Continuity (.22)
@@ -460,7 +463,6 @@ sentence in its header.
 ![Word Timing without duplicate header text, light](screenshots/current/marker-color-word-timing-light.png)
 ![Word Timing without duplicate header text, dark](screenshots/current/marker-color-word-timing-dark.png)
 
-
 ## Export Word Timing as Enhanced LRC
 
 Enhanced LRC export is optional. Under **Save → Export to track’s directory**,
@@ -499,7 +501,6 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 ![Embedded lyrics settings, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics settings, dark](screenshots/current/embedded-lyrics-settings-dark.png)
 
-
 ## Review Words Without Resizing Timing Boxes
 
 1. In **Synced**, select a sentence and enable **Word preview** beside Word timing.
@@ -528,12 +529,12 @@ playback, then save. The readable preview remains independent of box size/zoom.
 Configuration now calls the section **Embedded lyrics**, with **Enable embedded
 lyrics** as the saved opt-in. It remains an optional, saved setting.
 
-| Frame | This build writes | Meaning |
-| --- | --- | --- |
-| USLT | Plain lyrics in the ordinary frame | Unsynchronized UTF-8 text |
-| USLT, description `Enhanced LRC` | Optional complete ELRC text | Text storage; this frame itself is unsynchronized |
-| SYLT | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
-| TXXX, description `LYRICS_ELRC` | Optional complete ELRC text | Custom text field; name is this app's convention |
+| Frame                            | This build writes                                            | Meaning                                                 |
+| -------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
+| USLT                             | Plain lyrics in the ordinary frame                           | Unsynchronized UTF-8 text                               |
+| USLT, description `Enhanced LRC` | Optional complete ELRC text                                  | Text storage; this frame itself is unsynchronized       |
+| SYLT                             | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
+| TXXX, description `LYRICS_ELRC`  | Optional complete ELRC text                                  | Custom text field; name is this app's convention        |
 
 For Enhanced MP3 embedding, select **Word-timed lyrics (.elrc)** and **Embed into
 track** together, then Save and export. Normal plain USLT remains available while
@@ -552,7 +553,6 @@ See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
 
 ![Embedded lyrics configuration, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics configuration, dark](screenshots/current/embedded-lyrics-settings-dark.png)
-
 
 ## Loop One Word for Precise Timing
 

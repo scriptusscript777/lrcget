@@ -611,3 +611,14 @@ SHA256. The default x64 UpgradeCode is pinned; patch*1000+local maps the app
 revision into the MSI's third version field. It embeds WebView2's downloader,
 not the whole offline runtime. Windows execution requires a Windows builder.
 No app UI/schema/export changes are required by this packaging update.
+
+### Native Windows MSI verification
+
+`packaging/windows/build-msi.ps1` builds the fixed x64 identity using native
+MSVC/WiX and the tested version overlay. The manual `windows-msi.yml` workflow
+runs frontend tests, builds the MSI, runs native backend tests and calls
+`check-msi.ps1` on a disposable Windows Server runner. The latter checks SHA256,
+silent install, same-version reinstall and removal, retaining verbose MSI logs.
+It refuses execution outside Windows GitHub Actions to protect personal installs.
+The workflow uploads diagnostics but does not publish releases. Windows 11
+interactive playback/older-version upgrade checks are separate from CI results.

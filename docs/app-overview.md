@@ -128,14 +128,14 @@ automatically shift an unchanged sentence start.
 
 ## Save, Export and Publish
 
-| Action                 | Destination                                    | Shared Online? |
-| ---------------------- | ---------------------------------------------- | -------------- |
-| Save                   | LRCGET's local lyric document                  | No             |
-| Save and export: TXT   | Plain sidecar beside the recording             | No             |
-| Save and export: LRC   | Timed sidecar beside the recording             | No             |
-| Save and export: ELRC | Optional word-timed sidecar beside the recording | No |
-| Save and export: Embed | Supported MP3/FLAC metadata                    | No             |
-| Save and Publish       | Configured LRCLIB instance, after confirmation | Yes            |
+| Action                 | Destination                                      | Shared Online? |
+| ---------------------- | ------------------------------------------------ | -------------- |
+| Save                   | LRCGET's local lyric document                    | No             |
+| Save and export: TXT   | Plain sidecar beside the recording               | No             |
+| Save and export: LRC   | Timed sidecar beside the recording               | No             |
+| Save and export: ELRC  | Optional word-timed sidecar beside the recording | No             |
+| Save and export: Embed | Supported MP3/FLAC metadata                      | No             |
+| Save and Publish       | Configured LRCLIB instance, after confirmation   | Yes            |
 
 LRC export is initially selected in the editor. Embedding requires the saved
 setting and a supported file. MP3 output uses ID3v2.4 UTF-8 USLT/SYLT; timed
@@ -173,7 +173,7 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.5-local.1.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.6-local.8.md).
 Current images use demonstration fixtures, not personal recordings. New help/settings
 captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
@@ -183,14 +183,14 @@ guide images from historical release-note screenshots.
 
 This fork's current packages are Linux amd64 Debian/AppImage; see
 [package instructions](packages.md). The Windows MSI build is prepared and awaits
-a Windows builder. Historical upstream
+successful native validation before publication. Historical upstream
 Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The 2.2.6 frontend run passed 411 tests and scoped ESLint. Browser checks cover
+The 2.2.6 local.8 frontend run passed 442 tests and scoped ESLint. Browser checks cover
 independent marker confirmation, cancel baselines, live highlighting, zoom,
-untimed text and overlap opt-out. Rust passed 63 tests (one optional fixture
+untimed text and overlap opt-out. The current Linux native run passed 73 tests (two optional fixture tests
 ignored). Saved hover-help checks remain documented in the 2.2.4 review.
 Ruff reports 11 existing findings in the unchanged Python test-data generator.
 These results do not guarantee perfect lyrics.
@@ -226,7 +226,6 @@ sentence in its header.
 
 ![Word Timing without duplicate header text, light](screenshots/current/marker-color-word-timing-light.png)
 ![Word Timing without duplicate header text, dark](screenshots/current/marker-color-word-timing-dark.png)
-
 
 ## Export Word Timing as Enhanced LRC
 
@@ -266,7 +265,6 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 ![Embedded lyrics settings, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics settings, dark](screenshots/current/embedded-lyrics-settings-dark.png)
 
-
 ## Review Words Without Resizing Timing Boxes
 
 1. In **Synced**, select a sentence and enable **Word preview** beside Word timing.
@@ -295,12 +293,12 @@ playback, then save. The readable preview remains independent of box size/zoom.
 Configuration now calls the section **Embedded lyrics**, with **Enable embedded
 lyrics** as the saved opt-in. It remains an optional, saved setting.
 
-| Frame | This build writes | Meaning |
-| --- | --- | --- |
-| USLT | Plain lyrics in the ordinary frame | Unsynchronized UTF-8 text |
-| USLT, description `Enhanced LRC` | Optional complete ELRC text | Text storage; this frame itself is unsynchronized |
-| SYLT | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
-| TXXX, description `LYRICS_ELRC` | Optional complete ELRC text | Custom text field; name is this app's convention |
+| Frame                            | This build writes                                            | Meaning                                                 |
+| -------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
+| USLT                             | Plain lyrics in the ordinary frame                           | Unsynchronized UTF-8 text                               |
+| USLT, description `Enhanced LRC` | Optional complete ELRC text                                  | Text storage; this frame itself is unsynchronized       |
+| SYLT                             | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
+| TXXX, description `LYRICS_ELRC`  | Optional complete ELRC text                                  | Custom text field; name is this app's convention        |
 
 For Enhanced MP3 embedding, select **Word-timed lyrics (.elrc)** and **Embed into
 track** together, then Save and export. Normal plain USLT remains available while
@@ -319,7 +317,6 @@ See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
 
 ![Embedded lyrics configuration, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics configuration, dark](screenshots/current/embedded-lyrics-settings-dark.png)
-
 
 ## Loop One Word for Precise Timing
 

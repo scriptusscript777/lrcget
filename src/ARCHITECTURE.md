@@ -367,7 +367,15 @@ AppImage uses the existing Linux bundle configuration and unchanged identifier.
 Windows MSI tooling under packaging/windows is platform-gated, generates a
 temporary Windows config overlay, uses locked frontend dependencies and the
 x86_64-pc-windows-msvc target, checks each command and delivers one installer plus
-SHA256. The default x64 UpgradeCode is pinned; patch*1000+local maps the app
+SHA256. The default x64 UpgradeCode is pinned; patch\*1000+local maps the app
 revision into the MSI's third version field. It embeds WebView2's downloader,
 not the whole offline runtime. Windows execution requires a Windows builder.
 No app UI/schema/export changes are required by this packaging update.
+
+### Illustrated feature documentation
+
+`docs/features.md` indexes current library/editor/export behavior;
+`docs/troubleshooting.md` distinguishes measured word timing from Reset estimates
+and documents sequential Sync word versus Loop word refinement. The source build
+and package guides cover both Linux and native Windows packaging. Screenshots use
+isolated fixture profiles; `docs/screenshots/current/README.md` records provenance.

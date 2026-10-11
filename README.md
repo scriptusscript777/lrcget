@@ -26,7 +26,7 @@ is available locally in Rick’s Downloads folder.
 
 [Download the last published Linux amd64 installer (2.2.5)](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.5-local.1/LRCGET_2.2.5%2Blocal.1_amd64.deb)
 | [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.5-local.1)
-| [Local marker/export update](docs/releases/2.2.6-local.8.md)
+| [Current marker/word/export update](docs/releases/2.2.6-local.8.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -323,3 +323,7 @@ extension alone does not guarantee binary compatibility.
 Loop now remains enabled when selecting or playing another lyric. Its range moves
 to the selected markers; turn Loop off explicitly for continuous playback.
 See the [loop how-to](docs/how-to.md#loop-between-the-markers).
+
+See the [complete feature index](docs/features.md), [troubleshooting](docs/troubleshooting.md),
+and [package/source guide](docs/packages.md). The manual Windows MSI build is in
+[Windows packaging](packaging/windows/README.md).

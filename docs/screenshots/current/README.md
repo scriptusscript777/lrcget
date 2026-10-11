@@ -35,3 +35,32 @@ views retain the 2.2.2 captures described above.
 fixture data and the actual editor. Loop remains active after playing the second
 sentence; its marker range is 00:03.000–00:06.000. Light/dark captures were checked
 alongside navigation, repeat, zoom, tab suspension/restoration and explicit Off.
+
+## Current 2.2.6+local.8 captures
+
+On 2026-10-11 the actual Vue editor was checked again with an isolated mocked
+Tauri player and temporary fixture lyrics. Single-word looping, precise Start/End,
+10 ms steps, Lead-in/Tail, selection/zoom, lane collapse, Undo, export settings,
+read-only word preview and phrase/word loop exclusivity passed. Current captures:
+
+- `selected-word-loop-light.png` and `selected-word-loop-dark.png`: selected word,
+  loop control and precision fields.
+- `embedded-word-export-light.png` and `embedded-word-export-dark.png`: current Save
+  choices, including remembered optional ELRC.
+- `embedded-lyrics-settings-light.png` and `embedded-lyrics-settings-dark.png`: current
+  embedding Configuration without a duplicate ELRC-default setting.
+- `word-playback-preview-*` and `word-preview-loop-zoom-*`: readable follow-along
+  and zoom/loop context.
+- `appimage-startup.png`: native Linux AppImage using a temporary profile.
+
+These images illustrate tested fixture behavior, not a diagnosis of a personal
+recording. Earlier unchanged controls retain their historical capture provenance
+above; they are not represented as fresh native screenshots.
+
+The broader browser guide views were also recaptured from 2.2.6+local.8:
+`editor-default-*`, `editor-follow-*`, `word-timing-zoom-*`, `point-zoom-*`,
+`waveform-navigation-*`, `waveform-follow-*`, `export-options-*`, `lyrics-import-*`
+and `untimed-text-*` (18 light/dark captures). The fixture selector was updated
+for the current Cancel accessibility label; the full capture run then passed
+without save/export writes or browser errors. Native import/marker demonstration
+captures retain the older provenance above.

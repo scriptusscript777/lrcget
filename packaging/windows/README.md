@@ -1,8 +1,10 @@
 # Windows 11 x64 MSI build
 
 This folder builds the reviewed local LRCGET source into a Windows MSI. The MSI
-has not been built or tested on Windows yet; no Windows builder is configured on
-Rick's Linux PC. Tauri's supported MSI/WiX toolchain requires Windows.
+has been built on the native Windows runner. The first backend test run exposed
+missing FFmpeg and a Linux-specific test assertion; corrected setup awaits
+Windows revalidation before distribution. Windows 11 desktop tests remain
+required. Tauri’s supported MSI/WiX toolchain requires Windows.
 
 On a Windows 11 x64 PC, install Node.js 22 LTS, Rust (MSVC stable), and Microsoft
 Visual Studio Build Tools with **Desktop development with C++** and a Windows
@@ -37,3 +39,23 @@ Before distributing the MSI, verify installation and uninstallation on Windows
 word loops, preferences and TXT/LRC/ELRC/ID3 exports. The Linux checks do not
 substitute for these Windows checks. Packages are unsigned unless a signing
 certificate is configured; no signing certificate is included here.
+
+## Manual Windows build runner
+
+The fork includes `.github/workflows/windows-msi.yml`, triggered manually rather
+than on arbitrary pushes. On GitHub, open **Actions → Build and check Windows MSI →
+Run workflow**, choose the reviewed release branch, and wait for success. Download
+`windows-msi-results`: it contains the MSI, SHA256 and installation logs.
+The workflow has read-only repository permissions and does not create a release.
+
+The runner is Windows Server 2025, not a Windows 11 desktop. It runs frontend and
+MSI configuration tests, builds with native MSVC/WiX, runs backend tests, and
+checks silent installation, same-version reinstall and uninstallation. A failed
+run can still upload diagnostic artifacts; only use a package from a successful
+run. Desktop playback and an older-version upgrade still need Windows 11 checks.
+
+Linux cross-build prerequisites installed on Rick's PC include `cargo-xwin`,
+the Rust `x86_64-pc-windows-msvc` target, and a user-local LLD 18 under
+`~/.local/share/lrcget-build-tools/root`. Existing MinGW, wixl, msitools and NSIS
+are available, but the supported MSI workflow uses the native Windows toolchain
+rather than claiming those Linux tools alone validate this Tauri app.

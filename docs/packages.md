@@ -1,7 +1,7 @@
 # Local packages — 2.2.6+local.8
 
-All current features are from the reviewed local version. GitHub publishing and
-creator notifications remain paused. Historical upstream Windows/macOS links
+All current features are from the reviewed local version. Final GitHub publishing
+and creator notification follow validation and the local backup. Historical upstream Windows/macOS links
 are different releases and do not include Rick's local changes.
 
 ## Linux Debian package
@@ -35,10 +35,19 @@ distributions.
 
 ## Windows 11 MSI
 
-An actual MSI still requires a Windows builder. The supported build instructions
+A native Windows MSI was built by the manual workflow. Backend validation found
+a missing FFmpeg test dependency and a Linux-specific test assertion; these are
+corrected locally and await Windows revalidation. The supported build instructions
 and version/upgrade logic are in [packaging/windows](../packaging/windows/README.md).
 `LRCGET_2.2.6+local.8_windows-source.zip` supplies this exact source plus the build
 script; it is a source archive, not an installer.
 
-No MSI has been created or Windows smoke-tested yet. Once a Windows builder is
-provided, build and verify it before claiming a Windows installer is ready.
+The first MSI is a diagnostic artifact, not a validated release download. Windows
+installation checks and native revalidation must pass before distribution. Windows
+11 interactive playback and older-version upgrades remain unverified.
+
+See [building from source](build-from-source.md) for Linux/Windows prerequisites,
+locked builds, tests and application identity.
+
+See the [all-platform build matrix and limitations](platform-builds.md) and
+[complete code/maintenance guide](developer-guide.md).

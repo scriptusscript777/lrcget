@@ -1,16 +1,18 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.4+local.1**.
+For Rick Lidgett's LRCGET **2.2.6+local.8**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.4-local.1).
+1. Use the current `.deb` and checksum in Downloads or the assets of the
+   [2.2.6 local.8 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.6-local.8).
+   See [all package and source instructions](packages.md) for AppImage and Windows.
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.4+local.1_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.4+local.1_amd64.deb
+sha256sum -c LRCGET_2.2.6+local.8_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.6+local.8_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -246,7 +248,7 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 | Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                        |
 | An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Already synced lyrics require explicit import to protect saved edits. |
 | Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                                                                                 |
-| Embedded option is disabled           | Saved embedding setting and supported file type                                                                                              |
+| Embedded option is disabled           | Saved embedding setting and supported file type                                                                                                     |
 | Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry                                                       |
 | Waveform is unavailable               | Use Retry; text editing/basic playback remain separate from waveform availability                                                                   |
 | Hover help seems delayed              | Off by default. Enable Show hover help in Configuration and Save, or press F1 over a control                                                        |
@@ -316,7 +318,6 @@ sentence in its header.
 ![Word Timing without duplicate header text, light](screenshots/current/marker-color-word-timing-light.png)
 ![Word Timing without duplicate header text, dark](screenshots/current/marker-color-word-timing-dark.png)
 
-
 ## Export Word Timing as Enhanced LRC
 
 Enhanced LRC export is optional. Under **Save → Export to track’s directory**,
@@ -355,7 +356,6 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 ![Embedded lyrics settings, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics settings, dark](screenshots/current/embedded-lyrics-settings-dark.png)
 
-
 ## Review Words Without Resizing Timing Boxes
 
 1. In **Synced**, select a sentence and enable **Word preview** beside Word timing.
@@ -384,12 +384,12 @@ playback, then save. The readable preview remains independent of box size/zoom.
 Configuration now calls the section **Embedded lyrics**, with **Enable embedded
 lyrics** as the saved opt-in. It remains an optional, saved setting.
 
-| Frame | This build writes | Meaning |
-| --- | --- | --- |
-| USLT | Plain lyrics in the ordinary frame | Unsynchronized UTF-8 text |
-| USLT, description `Enhanced LRC` | Optional complete ELRC text | Text storage; this frame itself is unsynchronized |
-| SYLT | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
-| TXXX, description `LYRICS_ELRC` | Optional complete ELRC text | Custom text field; name is this app's convention |
+| Frame                            | This build writes                                            | Meaning                                                 |
+| -------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- |
+| USLT                             | Plain lyrics in the ordinary frame                           | Unsynchronized UTF-8 text                               |
+| USLT, description `Enhanced LRC` | Optional complete ELRC text                                  | Text storage; this frame itself is unsynchronized       |
+| SYLT                             | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
+| TXXX, description `LYRICS_ELRC`  | Optional complete ELRC text                                  | Custom text field; name is this app's convention        |
 
 For Enhanced MP3 embedding, select **Word-timed lyrics (.elrc)** and **Embed into
 track** together, then Save and export. Normal plain USLT remains available while
@@ -408,7 +408,6 @@ See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
 
 ![Embedded lyrics configuration, light](screenshots/current/embedded-lyrics-settings-light.png)
 ![Embedded lyrics configuration, dark](screenshots/current/embedded-lyrics-settings-dark.png)
-
 
 ## Loop One Word for Precise Timing
 
@@ -444,3 +443,33 @@ Loop selection, context and zoom are listening aids, not exported lyric events.
 
 ![Selected word loop, light](screenshots/current/selected-word-loop-light.png)
 ![Selected word loop, dark](screenshots/current/selected-word-loop-dark.png)
+
+## Sync Every Word in a Sentence in One Continuous Pass
+
+This is manual timing: one press per word, not automatic singing recognition.
+The existing Sync word action advances through boundaries; no separate
+one-click sentence alignment mode has been added.
+
+1. Set the sentence start/end first, then expand **Word timing**.
+2. Turn **Loop word** and phrase **Loop** off so audio continues through the sentence.
+3. Select the first word boundary and play from just before the sentence.
+4. Use **Sync word** as each word starts. It stamps playback time and advances
+   to the next boundary. After the final boundary it may select the next sentence.
+   Use the keyboard menu to check the current word timing shortcut; do not
+   invoke shortcuts while typing in a time or spelling field.
+5. Pause and inspect the result. Use Undo for a mistaken stamp. Do not use Reset
+   to undo a single mistake: Reset replaces the sentence's word timings with estimates.
+6. Select uncertain words and turn **Loop word** on for refinement. In that mode,
+   Sync word stays on the current word. Use **Start** and **End** for its precise
+   bounds, and Lead-in/Tail for listening context without changing saved times.
+7. Save the document and select **ELRC** under the Save file types if you want a
+   word-timed sidecar. Standard LRC remains sentence timed; selecting ELRC does
+   not replace the independent TXT/LRC choices. Publishing sends standard LRCLIB
+   lyrics, not an ELRC sidecar upload.
+
+![Selected word loop and precise times, light](screenshots/current/selected-word-loop-light.png)
+![Selected word loop and precise times, dark](screenshots/current/selected-word-loop-dark.png)
+
+Saved word timing is more than the displayed estimates. Looping or previewing
+estimates alone does not save them as measured word timings. End fields permit
+silence between words; listen through transitions before export.

@@ -23,6 +23,9 @@ See [Enhanced LRC export](how-to.md#export-word-timing-as-enhanced-lrc) for the 
 See [read-only word preview](how-to.md#review-words-without-resizing-timing-boxes) and
 [standard/enhanced MP3 embedding](how-to.md#embed-standard-and-enhanced-lyrics-in-mp3).
 
+See the [complete feature index](features.md), [word-sync walkthrough](how-to.md#sync-every-word-in-a-sentence-in-one-continuous-pass),
+and [troubleshooting guide](troubleshooting.md).
+
 ## At a Glance
 
 LRCGET finds lyrics through LRCLIB and helps you manually synchronize them to
@@ -33,8 +36,16 @@ perfect synchronization or lyric display on every player.
 
 ![Zoomed waveform following playback in light mode](screenshots/current/waveform-follow-light.png)
 
-Screenshots were recaptured from .20 with temporary fixture lyrics and waveform data.
+Screenshots use temporary fixture lyrics and waveform data. Word-loop and embedding
+views were recaptured from 2.2.6+local.8; the screenshot index identifies older
+unchanged views.
 The guides describe the current build; historical release notes describe their
 own versions, including behavior since changed.
 
 See [local package instructions](packages.md) for Debian/AppImage use and the Windows MSI build prerequisites.
+
+See [building from source](build-from-source.md) for Linux/Windows prerequisites,
+locked builds, tests and application identity.
+
+See the [all-platform build matrix and limitations](platform-builds.md) and
+[complete code/maintenance guide](developer-guide.md).

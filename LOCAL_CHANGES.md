@@ -511,3 +511,19 @@ resume/replay seeks and errors so navigation cannot jump back to a previous line
 
 Pending markers now change only the original Sync button color to amber. No
 Confirm text or button resizing. Cancel and timing behavior remain unchanged.
+
+### 2.2.6+local.8 — complete guides and platform packaging
+
+- Added a complete feature index, troubleshooting guide and Linux/Windows source
+  build instructions. Updated how-tos, current versions, links and screenshot provenance.
+- Documented a continuous manual word-sync pass using the existing advance behavior;
+  no one-click automatic singing alignment has been added. Word-loop Sync remains
+  on its selected word. Reset estimates and session Undo are explicitly distinguished.
+- Added a manually triggered native Windows MSI build/test workflow with read-only
+  repository permissions. It validates configuration/frontend/backend behavior and
+  disposable-runner install/reinstall/uninstall, retaining logs and SHA256.
+- AppImage startup was rechecked in an isolated Linux profile. Personal music and
+  the live lyrics database were not used for packaging tests.
+- GitHub publication was reauthorized by Rick, with release updates to be the
+  final step after validation and local backup. Windows 11 desktop claims depend
+  on actual Windows 11 testing, not merely a Windows Server build.
