@@ -38,9 +38,10 @@
                 {{ result.track.name }}
               </div>
               <div class="text-[0.65rem] font-bold flex gap-1">
-                <span class="bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 px-1 py-0.5 rounded">{{
-                  humanDuration(result.track.duration)
-                }}</span>
+                <span
+                  class="bg-neutral-100 text-neutral-800 dark:bg-neutral-800 dark:text-neutral-200 px-1 py-0.5 rounded"
+                  >{{ humanDuration(result.track.duration) }}</span
+                >
                 <template v-if="showLineCount === true">
                   <span
                     v-if="!!result.lyrics.syncedLyrics"
@@ -54,7 +55,12 @@
                   >
                 </template>
                 <span
-                  v-if="!!result.lyrics.syncedLyrics"
+                  v-if="result.lyrics.hasWordSync"
+                  class="bg-hoa-1100 text-white px-1 py-0.5 rounded"
+                  >Word timed</span
+                >
+                <span
+                  v-else-if="!!result.lyrics.syncedLyrics"
                   class="bg-green-800 text-green-200 px-1 py-0.5 rounded"
                   >Synced</span
                 >
@@ -119,6 +125,7 @@ import LyricsfileConflictModal from './LyricsfileConflictModal.vue'
 import EditLyricsV2 from '../EditLyricsV2.vue'
 import { useModal } from 'vue-final-modal'
 
+defineEmits(['back'])
 const toast = useToast()
 
 const props = defineProps({

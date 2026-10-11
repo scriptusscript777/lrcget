@@ -527,3 +527,10 @@ Confirm text or button resizing. Cancel and timing behavior remain unchanged.
 - GitHub publication was reauthorized by Rick, with release updates to be the
   final step after validation and local backup. Windows 11 desktop claims depend
   on actual Windows 11 testing, not merely a Windows Server build.
+
+### 2.2.6+local.9 — word-timed downloads and import
+
+See [release notes](docs/releases/2.2.6-local.9.md) and
+[download/import guide](docs/how-to.md#download-and-reopen-word-timed-lyrics).
+Server word timing is retained, ordinary LRC/plain data falls back automatically,
+and explicit enhanced files can be reopened without losing word ends or gaps.

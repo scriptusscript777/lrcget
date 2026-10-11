@@ -304,8 +304,8 @@ validates saved word text reconstruction, monotonic starts and valid end bounds;
 missing ends use the next word/sentence boundary when known. Only timed rows with
 saved word timing produce inline tags. Mixed line-only rows are retained. Missing
 word timing skips ELRC; invalid timing errors only that format. Atomic verified
-sidecar replacement preserves older files on skip/failure. No ELRC import or
-player change is included; the internal lyric document retains editable words.
+sidecar replacement preserves older files on skip/failure. This export change originally added no import or player changes; enhanced
+file import was added in local.9. The internal document retains editable words.
 
 ### Native MP3 embedding and read-only word preview (2.2.6+local.6)
 
@@ -379,3 +379,21 @@ No app UI/schema/export changes are required by this packaging update.
 and documents sequential Sync word versus Loop word refinement. The source build
 and package guides cover both Linux and native Windows packaging. Screenshots use
 isolated fixture profiles; `docs/screenshots/current/README.md` records provenance.
+
+### Server word timing and enhanced import (2.2.6+local.9)
+
+LRCLIB supplies optional word timing in its raw YAML `lyricsfile`, not through
+a dedicated ELRC download endpoint. Download/apply/prepare/refresh retain that
+document unchanged. Empty structured payloads fall back to standard LRC and then
+plain text; malformed nonempty structured payloads report errors on application.
+The frontend validates actual word data instead of trusting `hasWordSync`. Search
+labels word-timed records and offers an optional local result filter; ordinary
+results remain visible by default. Preview respects explicit word ends and gaps.
+Structured content takes precedence over stale legacy text, matching native apply.
+
+The editor file picker imports TXT/LRC/ELRC through `lyrics-import.js`; enhanced
+inline timestamps route to `enhanced-lrc.js`, preserving explicit end tags and
+untimed rows. Ambiguous/malformed input errors before editor replacement. Existing
+replace confirmation, undo and dirty/session guards remain in effect. TXT/LRC/ELRC
+export selections are independent. Publishing already sends serialized YAML with
+word timing to compatible LRCLIB servers; it does not upload ELRC sidecar files.

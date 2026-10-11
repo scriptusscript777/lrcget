@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.6+local.8`.
+Rick Lidgett's enhanced LRCGET build, `2.2.6+local.9`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -63,9 +63,10 @@ scroll horizontally to see the date and action buttons.
 
 Import asks before replacing existing words/timings. Cancel leaves them intact.
 Import does not rewrite your source TXT or LRC file. Save/export is a separate action.
-Empty, malformed and mixed timed/untimed files are rejected without discarding
-words. This import supports line-level LRC; enhanced inline word tags and nonzero
-offset headers need to be converted to explicit line timestamps first.
+Malformed files are rejected before replacing existing lyrics. The picker supports
+plain TXT, line-timed LRC and enhanced inline ELRC (including enhanced .lrc files).
+ELRC retains mixed untimed rows and explicit word gaps. Nonzero offset headers and
+ambiguous repeated line tags with absolute word times need correction first.
 
 ![Light theme: confirmation before replacing lyrics](screenshots/current/lyrics-import-light.png)
 
@@ -347,7 +348,7 @@ timestamps. Sync Start/End confirms each boundary; Cancel restores the last conf
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Current word-loop and embedding screenshots were refreshed for 2.2.6+local.8.
+Current word-loop and embedding screenshots were refreshed for 2.2.6+local.9.
 Unchanged native marker/playback captures use demonstration lyrics and generated
 silent audio; the screenshot index records each group’s version and provenance.
 A waveform shows the full mix; it is not proof of exact singer alignment.
@@ -489,8 +490,9 @@ The final inline tag marks the word end; the empty timestamped line clears the
 sentence. Existing rules avoid unnecessary sentence clear cues for gaps under
 250 ms. TXT remains plain text, and standard LRC remains line-timed.
 
-Keep the local saved lyric document to reopen and edit word timing. ELRC file
-import/scanning is not added by this update. Karaoke display depends on the
+Keep the local saved lyric document to reopen and edit word timing. The editor
+can also import TXT, LRC and ELRC with the file picker; explicit word ends and
+gaps are retained. Automatic library scanning for .elrc sidecars is not added. Karaoke display depends on the
 player. Jellyfin 10.11's server parser supports word cues, but this update does not add
 word highlighting to Jellyfin's web player. Keep standard LRC for line playback.
 Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.0/MediaBrowser.Providers/Lyric/LrcLyricParser.cs),
@@ -588,3 +590,5 @@ Loop selection, context and zoom are listening aids, not exported lyric events.
 
 ![Selected word loop, light](screenshots/current/selected-word-loop-light.png)
 ![Selected word loop, dark](screenshots/current/selected-word-loop-dark.png)
+
+See [server word timing and enhanced import](how-to.md#download-and-reopen-word-timed-lyrics) for fallback and reopen details.

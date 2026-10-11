@@ -706,6 +706,13 @@ async fn download_lyrics(
 
     let message = if resolved.is_instrumental {
         "Marked track as instrumental"
+    } else if resolved.provided_lyricsfile.as_deref().is_some_and(|content| {
+        lyricsfile::parse_lyricsfile(content)
+            .ok()
+            .and_then(|parsed| parsed.enhanced_lyrics.ok().flatten())
+            .is_some()
+    }) {
+        "Word-timed lyrics downloaded"
     } else if !resolved.synced_lyrics.is_empty() {
         "Synced lyrics downloaded"
     } else if !resolved.plain_lyrics.is_empty() {
@@ -976,7 +983,10 @@ async fn prepare_lrclib_lyricsfile(
     let duration = lrclib_response.duration.unwrap_or(0.0);
 
     // Build or use existing lyricsfile content
-    let lyricsfile_content = if let Some(lyricsfile) = lrclib_response.lyricsfile {
+    let lyricsfile_content = if let Some(lyricsfile) = lrclib_response
+        .lyricsfile
+        .filter(|value| !value.trim().is_empty())
+    {
         // LRCLIB provided a lyricsfile, use it directly
         lyricsfile
     } else {
@@ -1044,7 +1054,10 @@ async fn refresh_lrclib_lyricsfile(
     let duration = lrclib_response.duration.unwrap_or(0.0);
 
     // Build or use existing lyricsfile content
-    let lyricsfile_content = if let Some(lyricsfile) = lrclib_response.lyricsfile {
+    let lyricsfile_content = if let Some(lyricsfile) = lrclib_response
+        .lyricsfile
+        .filter(|value| !value.trim().is_empty())
+    {
         // LRCLIB provided a lyricsfile, use it directly
         lyricsfile
     } else {
@@ -2005,5 +2018,56 @@ mod auto_export_tests {
         let result = download_export_message("Lyrics downloaded", &track, "[invalid", &formats, || true);
         assert!(result.starts_with("Lyrics downloaded; export failed:"));
         std::fs::remove_dir_all(directory).unwrap();
+    }
+}
+
+#[cfg(test)]
+mod server_word_download_tests {
+    use super::*;
+
+    fn response(value: serde_json::Value) -> lrclib::get::RawResponse {
+        serde_json::from_value(value).unwrap()
+    }
+
+    #[test]
+    fn structured_server_words_keep_exact_data_and_export_enhanced_timing() {
+        let yaml = "version: '1.0'\nmetadata: {instrumental: false}\nplain: Hello world\nlines:\n- text: Hello world\n  start_ms: 1000\n  end_ms: 3000\n  words:\n  - {text: 'Hello ', start_ms: 1100, end_ms: 1500}\n  - {text: world, start_ms: 2000, end_ms: 2500}\n";
+        let resolved = resolve_lrclib_lyrics_payload(response(serde_json::json!({
+            "lyricsfile": yaml, "syncedLyrics": "[00:09.00]stale legacy",
+            "plainLyrics": "stale legacy", "instrumental": false
+        })))
+        .unwrap();
+        assert_eq!(resolved.provided_lyricsfile.as_deref(), Some(yaml));
+        assert_eq!(resolved.plain_lyrics, "Hello world");
+        let parsed =
+            lyricsfile::parse_lyricsfile(resolved.provided_lyricsfile.as_deref().unwrap()).unwrap();
+        let enhanced = parsed.enhanced_lyrics.unwrap().unwrap();
+        assert!(enhanced.contains("<00:01.100>Hello <00:01.500><00:02.000>world<00:02.500>"));
+    }
+
+    #[test]
+    fn legacy_server_lrc_and_plain_remain_independent_fallbacks() {
+        let resolved = resolve_lrclib_lyrics_payload(response(serde_json::json!({
+            "lyricsfile": " ", "syncedLyrics": "[00:01.00]ordinary line",
+            "plainLyrics": null, "instrumental": false
+        })))
+        .unwrap();
+        assert!(resolved.provided_lyricsfile.is_none());
+        assert_eq!(resolved.synced_lyrics, "[00:01.00]ordinary line");
+        let plain = resolve_lrclib_lyrics_payload(response(serde_json::json!({
+            "plainLyrics": "Untimed text", "instrumental": false
+        })))
+        .unwrap();
+        assert_eq!(plain.plain_lyrics, "Untimed text");
+        assert!(plain.synced_lyrics.is_empty());
+    }
+
+    #[test]
+    fn malformed_structured_words_do_not_silently_replace_with_legacy_data() {
+        assert!(resolve_lrclib_lyrics_payload(response(serde_json::json!({
+            "lyricsfile": "broken: [", "syncedLyrics": "[00:01.00]legacy",
+            "instrumental": false
+        })))
+        .is_err());
     }
 }

@@ -64,3 +64,11 @@ and `untimed-text-*` (18 light/dark captures). The fixture selector was updated
 for the current Cancel accessibility label; the full capture run then passed
 without save/export writes or browser errors. Native import/marker demonstration
 captures retain the older provenance above.
+
+## Current 2.2.6+local.9 captures
+
+`server-lyrics-types-*` show real search components with word-timed, standard
+LRC and plain fixtures. Filtering, raw-data application, fallback and explicit
+word-end gaps were checked. `enhanced-import-*` show the editor after confirmed
+ELRC import with editable words and preserved ends. Both themes use temporary
+fixtures and a mocked backend; no personal files or online publication are used.

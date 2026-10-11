@@ -1,4 +1,4 @@
-# Troubleshooting — 2.2.6+local.8
+# Troubleshooting — 2.2.6+local.9
 
 ## A short word is difficult to see in its box
 

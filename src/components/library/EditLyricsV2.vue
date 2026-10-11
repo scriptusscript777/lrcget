@@ -515,7 +515,7 @@ const handleImportLrcFile = async () => {
     const filePath = await open({
       multiple: false,
       directory: false,
-      filters: [{ name: 'Lyrics files', extensions: ['txt', 'lrc'] }],
+      filters: [{ name: 'Lyrics files', extensions: ['txt', 'lrc', 'elrc'] }],
     })
 
     if (!filePath || !isCurrentImport(context)) {

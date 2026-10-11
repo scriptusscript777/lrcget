@@ -1,4 +1,5 @@
 import YAML from 'yaml'
+import { hasMeasuredWordTiming } from './word-timing-status.js'
 
 export const LYRICSFILE_VERSION = '1.0'
 export const INSTRUMENTAL_LRC = '[au: instrumental]'
@@ -251,18 +252,27 @@ export const normalizeLrclibLyrics = item => {
       syncedLyrics: syncedLyrics || '',
       instrumental,
       hasLyricsfile: false,
+      hasWordSync: false,
     }
   }
 
   const parsed = parseLyricsfile(lyricsfile)
   const fallbackPlainLyrics = normalizeNonEmpty(parsed.plainLyrics) || ''
   const fallbackSyncedLyrics = normalizeNonEmpty(parsed.syncedLyrics) || ''
+  const hasStructuredContent = Boolean(
+    parsed.isInstrumental || fallbackPlainLyrics || fallbackSyncedLyrics
+  )
+  const resolvedInstrumental = hasStructuredContent ? Boolean(parsed.isInstrumental) : instrumental
 
   return {
-    plainLyrics: plainLyrics || fallbackPlainLyrics,
-    syncedLyrics: syncedLyrics || fallbackSyncedLyrics,
-    instrumental: instrumental || Boolean(parsed.isInstrumental),
+    plainLyrics: hasStructuredContent ? fallbackPlainLyrics : plainLyrics || '',
+    syncedLyrics: hasStructuredContent ? fallbackSyncedLyrics : syncedLyrics || '',
+    instrumental: resolvedInstrumental,
     hasLyricsfile: true,
+    hasWordSync:
+      !resolvedInstrumental &&
+      Array.isArray(parsed.document?.lines) &&
+      parsed.document.lines.some(hasMeasuredWordTiming),
   }
 }
 

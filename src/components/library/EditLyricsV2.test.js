@@ -140,7 +140,7 @@ describe('lyrics file import', () => {
     expect(state.activeTab.value).toBe('synced')
     expect(open).toHaveBeenCalledWith(
       expect.objectContaining({
-        filters: [{ name: 'Lyrics files', extensions: ['txt', 'lrc'] }],
+        filters: [{ name: 'Lyrics files', extensions: ['txt', 'lrc', 'elrc'] }],
       })
     )
     expect(invoke).toHaveBeenCalledExactlyOnceWith('read_text_file', { filePath: '/lyrics.txt' })

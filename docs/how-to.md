@@ -1,18 +1,18 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.6+local.8**.
+For Rick Lidgett's LRCGET **2.2.6+local.9**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Use the current `.deb` and checksum in Downloads or the assets of the
-   [2.2.6 local.8 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.6-local.8).
+1. Use the current `.deb` and checksum in Downloads. The local.9 GitHub release
+   remains unpublished until validation and the backup are complete.
    See [all package and source instructions](packages.md) for AppImage and Windows.
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.6+local.8_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.6+local.8_amd64.deb
+sha256sum -c LRCGET_2.2.6+local.9_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.6+local.9_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -344,8 +344,9 @@ The final inline tag marks the word end; the empty timestamped line clears the
 sentence. Existing rules avoid unnecessary sentence clear cues for gaps under
 250 ms. TXT remains plain text, and standard LRC remains line-timed.
 
-Keep the local saved lyric document to reopen and edit word timing. ELRC file
-import/scanning is not added by this update. Karaoke display depends on the
+Keep the local saved lyric document to reopen and edit word timing. The editor
+can also import TXT, LRC and ELRC with the file picker; explicit word ends and
+gaps are retained. Automatic library scanning for .elrc sidecars is not added. Karaoke display depends on the
 player. Jellyfin 10.11's server parser supports word cues, but this update does not add
 word highlighting to Jellyfin's web player. Keep standard LRC for line playback.
 Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.0/MediaBrowser.Providers/Lyric/LrcLyricParser.cs),
@@ -464,8 +465,8 @@ one-click sentence alignment mode has been added.
    bounds, and Lead-in/Tail for listening context without changing saved times.
 7. Save the document and select **ELRC** under the Save file types if you want a
    word-timed sidecar. Standard LRC remains sentence timed; selecting ELRC does
-   not replace the independent TXT/LRC choices. Publishing sends standard LRCLIB
-   lyrics, not an ELRC sidecar upload.
+   not replace the independent TXT/LRC choices. Publishing sends the structured lyric document, including confirmed word
+   timing, to a compatible LRCLIB server; it does not upload an ELRC sidecar file.
 
 ![Selected word loop and precise times, light](screenshots/current/selected-word-loop-light.png)
 ![Selected word loop and precise times, dark](screenshots/current/selected-word-loop-dark.png)
@@ -473,3 +474,31 @@ one-click sentence alignment mode has been added.
 Saved word timing is more than the displayed estimates. Looping or previewing
 estimates alone does not save them as measured word timings. End fields permit
 silence between words; listen through transitions before export.
+
+## Download and reopen word-timed lyrics
+
+Search normally to see **Word timed**, **Synced** and **Plain** records. The app
+checks actual timestamps rather than trusting a server flag. **Show only word-timed
+lyrics** is optional and starts unchecked. If no word results appear, uncheck it
+to use ordinary LRC or plain lyrics. Applying/download preserves the server's
+structured document, including confirmed word starts/ends. No word timing is
+invented when the server only supplies sentence timing or untimed text.
+
+Use the editor's lyric-file import picker to open TXT, LRC or ELRC. Enhanced tags
+inside .lrc files are recognized. Replacement follows the existing confirmation
+and Undo workflow. Saved explicit word gaps remain editable after reopening; a
+standard LRC alone cannot preserve word timing. Nonzero offsets and ambiguous or
+invalid enhanced ranges need correction before import.
+
+Under **Save file types**, select only TXT, LRC, ELRC, or any combination. These
+choices do not require one another. ELRC starts unchecked and remembers changes.
+Without saved word timing, ELRC is skipped rather than estimated. Local export
+and server publishing are separate: compatible LRCLIB accepts structured YAML
+with word timing, not a dedicated uploaded ELRC sidecar. Older/custom servers
+may offer only ordinary LRC or text. See [LRCLIB API documentation](https://lrclib.net/docs).
+
+![Server lyric formats, light](screenshots/current/server-lyrics-types-light.png)
+![Server lyric formats, dark](screenshots/current/server-lyrics-types-dark.png)
+
+![Enhanced import, light](screenshots/current/enhanced-import-light.png)
+![Enhanced import, dark](screenshots/current/enhanced-import-dark.png)

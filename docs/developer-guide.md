@@ -1,4 +1,4 @@
-# Code and maintenance guide — 2.2.6+local.8
+# Code and maintenance guide — 2.2.6+local.9
 
 Start with [build instructions](build-from-source.md),
 [platform matrix](platform-builds.md), [frontend architecture](../src/ARCHITECTURE.md)
@@ -62,7 +62,9 @@ The document-save action is separate from writing selected outputs. `useEditLyri
 prepares format choices; `useEditLyricsV2Publish` handles explicit server publication.
 Standard LRC expresses starts and uses empty timestamp cues for appropriate explicit
 sentence gaps. ELRC adds word timestamp text. These are independent sidecars.
-LRCLIB publication sends standard lyric data, not an ELRC file upload.
+LRCLIB publication sends structured YAML including saved word timing to a
+compatible server, not a dedicated ELRC sidecar upload. Search/apply/download
+retain server YAML; ordinary line LRC and plain text remain automatic fallbacks.
 
 Native `export.rs` serializes writes, prepares staged outputs on the destination
 filesystem, validates embedded frames and then replaces accepted targets. MP3

@@ -96,10 +96,14 @@ import Pause from '~icons/mdi/pause'
 import { usePlayer } from '@/composables/player.js'
 import Seek from '@/components/now-playing/Seek.vue'
 import { normalizeLrclibLyrics, parseLyricsfile, parseLrcLines } from '@/utils/lyricsfile.js'
+import { hasMeasuredWordTiming } from '@/utils/word-timing-status.js'
+import { selectedWordRange } from '@/utils/word-loop-range.js'
 
-const props = defineProps(['track', 'lyrics'])
-const { playingTrack, status, duration, progress, playTrack, pause, resume, stop, seek } =
-  usePlayer()
+const props = defineProps({
+  track: { type: Object, required: true },
+  lyrics: { type: Object, required: true },
+})
+const { status, duration, progress, playTrack, pause, resume, stop, seek } = usePlayer()
 const emit = defineEmits(['close'])
 
 const parsedLyrics = ref(null)
@@ -111,13 +115,15 @@ const lyricsfileSyncedLines = computed(() => {
     return []
   }
 
-  return parseLyricsfile(props.lyrics.lyricsfile).syncedLines || []
+  const parsed = parseLyricsfile(props.lyrics.lyricsfile)
+  return parsed.syncedLines.map((line, index) => ({
+    ...line,
+    words: hasMeasuredWordTiming(parsed.document?.lines?.[index]) ? line.words : [],
+  }))
 })
 
 const hasWordSyncedLyrics = computed(() => {
-  return lyricsfileSyncedLines.value.some(
-    line => Array.isArray(line?.words) && line.words.length > 0
-  )
+  return lyricsfileSyncedLines.value.some(hasMeasuredWordTiming)
 })
 
 const visibleSyncedLines = computed(() => {
@@ -151,7 +157,7 @@ const lineText = line => {
 }
 
 const hasWordSyncLine = line => {
-  return Array.isArray(line?.words) && line.words.length > 0
+  return hasMeasuredWordTiming(line)
 }
 
 const getCurrentWordIndex = (line, currentTimeMs) => {
@@ -160,12 +166,11 @@ const getCurrentWordIndex = (line, currentTimeMs) => {
   }
 
   for (let i = 0; i < line.words.length; i++) {
-    const word = line.words[i]
-    const nextWord = line.words[i + 1]
-    const wordStart = word.start_ms
-    const wordEnd = nextWord ? nextWord.start_ms : Infinity
-
-    if (currentTimeMs >= wordStart && currentTimeMs < wordEnd) {
+    const lineIndex = visibleSyncedLines.value.indexOf(line)
+    const lineEnd =
+      line.end_ms ?? visibleSyncedLines.value[lineIndex + 1]?.start_ms ?? duration.value * 1000
+    const range = selectedWordRange(line.words, i, lineEnd)
+    if (range && currentTimeMs >= range.startMs && currentTimeMs < range.endMs) {
       return i
     }
   }

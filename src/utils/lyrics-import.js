@@ -1,4 +1,5 @@
 import { LineType, parseLine } from 'lrc-kit'
+import { parseEnhancedLrc } from './enhanced-lrc.js'
 
 export function parseImportedLyrics(content, filePath = '') {
   if (typeof content !== 'string') throw new Error('The lyrics file could not be read as text')
@@ -7,6 +8,8 @@ export function parseImportedLyrics(content, filePath = '') {
     .replace(/\r\n?/g, '\n')
     .trim()
   if (!text) throw new Error('The lyrics file is empty')
+  if (/\.elrc$/i.test(filePath) || /^\s*\[\d+:[^\]]+\].*<\s*\d+\s*:/m.test(text))
+    return parseEnhancedLrc(text)
   const rows = text.split('\n').map(raw => ({ raw, parsed: parseLine(raw) }))
   const timed = rows.some(
     ({ raw, parsed }) => parsed.type === LineType.TIME || /^\s*\[\s*\d+\s*:/.test(raw)

@@ -1,6 +1,6 @@
 # LRCGET Documentation
 
-Rick Lidgett's enhanced LRCGET, **2.2.6+local.8**.
+Rick Lidgett's enhanced LRCGET, **2.2.6+local.9**.
 An independent fork of the original project; original authors and license remain credited.
 
 ## Choose a Guide
@@ -16,7 +16,7 @@ An independent fork of the original project; original authors and license remain
 | Find keyboard shortcuts and detailed behavior    | [Complete editing reference](editing-guide.md)                                                         |
 | See what Rick changed in the source              | [Modification overview](app-overview.md#modification-map) and [technical history](../LOCAL_CHANGES.md) |
 | Install the current Linux build                  | [Installation](how-to.md#install-or-upgrade)                                                           |
-| Understand the latest fixes and test results     | [Release notes](releases/2.2.6-local.8.md)                                                             |
+| Understand the latest fixes and test results     | [Release notes](releases/2.2.6-local.9.md)                                                             |
 
 See [Enhanced LRC export](how-to.md#export-word-timing-as-enhanced-lrc) for the new optional word-timed sidecar.
 
@@ -49,3 +49,5 @@ locked builds, tests and application identity.
 
 See the [all-platform build matrix and limitations](platform-builds.md) and
 [complete code/maintenance guide](developer-guide.md).
+
+See [word-timed downloads and TXT/LRC/ELRC import](how-to.md#download-and-reopen-word-timed-lyrics) for automatic server fallback and independent format workflows.

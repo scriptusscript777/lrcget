@@ -24,7 +24,7 @@
           <div>
             <label for="albumName" class="group-label mb-1">Album</label>
             <input
-              id="artistName"
+              id="albumName"
               v-model="albumName"
               type="text"
               class="input w-full py-1.5 px-2"
@@ -57,15 +57,20 @@
         </div>
       </form>
 
+      <label class="flex items-center gap-2 text-sm text-neutral-800 dark:text-neutral-300">
+        <input v-model="wordTimedOnly" type="checkbox" />
+        Show only word-timed lyrics
+      </label>
+
       <div class="grow overflow-hidden">
         <div v-if="loading" class="flex justify-center items-center h-full">
           <Loading class="animate-spin text-xl text-neutral-800 dark:text-neutral-400" />
         </div>
 
         <div v-else class="flex flex-col h-full gap-2 overflow-auto">
-          <div v-if="normalizedSearchResult.length" class="flex flex-col gap-1 overflow-auto">
+          <div v-if="visibleSearchResults.length" class="flex flex-col gap-1 overflow-auto">
             <div
-              v-for="result in normalizedSearchResult"
+              v-for="result in visibleSearchResults"
               :key="result.item.id"
               class="rounded bg-white dark:bg-neutral-900 hover:bg-neutral-50 dark:hover:bg-neutral-800 border border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:hover:border-neutral-700 transition px-2 py-1 flex gap-2"
             >
@@ -87,7 +92,12 @@
                     >
                   </template>
                   <span
-                    v-if="result.lyrics.syncedLyrics"
+                    v-if="result.lyrics.hasWordSync"
+                    class="text-white font-bold text-[0.65rem] bg-hoa-1100 rounded px-1 py-0.5"
+                    >Word timed</span
+                  >
+                  <span
+                    v-else-if="result.lyrics.syncedLyrics"
                     class="text-white font-bold text-[0.65rem] bg-hoa-1100 rounded px-1 py-0.5"
                     >Synced</span
                   >
@@ -148,7 +158,11 @@
           </div>
 
           <div v-else class="flex justify-center items-center h-full text-sm text-neutral-400">
-            There is no lyrics record that matches your search
+            {{
+              wordTimedOnly && normalizedSearchResult.length
+                ? 'No word-timed lyrics in these results. Uncheck the filter to see ordinary lyrics.'
+                : 'There is no lyrics record that matches your search'
+            }}
           </div>
         </div>
       </div>
@@ -169,7 +183,7 @@ import { countLines } from '@/utils/count-lines.js'
 import { normalizeLrclibLyrics } from '@/utils/lyricsfile.js'
 
 const toast = useToast()
-const props = defineProps(['searchingTrack'])
+const props = defineProps({ searchingTrack: { type: Object, required: true } })
 const emit = defineEmits(['close'])
 
 const loading = ref(true)
@@ -181,6 +195,7 @@ const title = ref('')
 const albumName = ref('')
 const artistName = ref('')
 const showLineCount = ref(true)
+const wordTimedOnly = ref(false)
 
 const { open: openPreviewModal, close: closePreviewModal } = useModal({
   component: Preview,
@@ -207,6 +222,11 @@ const normalizedSearchResult = computed(() => {
     lyrics: normalizeLrclibLyrics(item),
   }))
 })
+const visibleSearchResults = computed(() =>
+  wordTimedOnly.value
+    ? normalizedSearchResult.value.filter(result => result.lyrics.hasWordSync)
+    : normalizedSearchResult.value
+)
 
 const humanDuration = seconds => {
   return new Date(seconds * 1000).toISOString().slice(14, 19)
@@ -214,6 +234,7 @@ const humanDuration = seconds => {
 
 const doSearchLyrics = async () => {
   loading.value = true
+  searchResult.value = null
   try {
     searchResult.value = await invoke('search_lyrics', {
       title: title.value,
@@ -253,17 +274,26 @@ const initialize = async () => {
     return
   }
 
-  const config = await invoke('get_config')
+  try {
+    const config = await invoke('get_config')
+    showLineCount.value = config.show_line_count
+  } catch (error) {
+    console.error(error)
+    toast.error('Could not load search settings; using defaults')
+  }
   searchResult.value = null
   loading.value = true
 
   title.value = props.searchingTrack.title
   albumName.value = props.searchingTrack.album_name
   artistName.value = props.searchingTrack.artist_name
-  showLineCount.value = config.show_line_count
 }
 
 onMounted(async () => {
+  if (!props.searchingTrack) {
+    loading.value = false
+    return
+  }
   await initialize()
   doSearchLyrics()
 })

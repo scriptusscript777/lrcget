@@ -1,4 +1,4 @@
-# Build from source — 2.2.6+local.8
+# Build from source — 2.2.6+local.9
 
 The source ZIP/tar.gz contains the application, locked dependencies, license,
 documentation, screenshots and packaging scripts. Build products, dependencies,

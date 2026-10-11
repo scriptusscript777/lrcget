@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.8. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.9. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -173,7 +173,7 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.6-local.8.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.6-local.9.md).
 Current images use demonstration fixtures, not personal recordings. New help/settings
 captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
@@ -188,7 +188,7 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The 2.2.6 local.8 frontend run passed 442 tests and scoped ESLint. Browser checks cover
+The 2.2.6 local.9 frontend run passed 459 tests and scoped ESLint. Browser checks cover
 independent marker confirmation, cancel baselines, live highlighting, zoom,
 untimed text and overlap opt-out. The current Linux native run passed 73 tests (two optional fixture tests
 ignored). Saved hover-help checks remain documented in the 2.2.4 review.
@@ -253,8 +253,9 @@ The final inline tag marks the word end; the empty timestamped line clears the
 sentence. Existing rules avoid unnecessary sentence clear cues for gaps under
 250 ms. TXT remains plain text, and standard LRC remains line-timed.
 
-Keep the local saved lyric document to reopen and edit word timing. ELRC file
-import/scanning is not added by this update. Karaoke display depends on the
+Keep the local saved lyric document to reopen and edit word timing. The editor
+can also import TXT, LRC and ELRC with the file picker; explicit word ends and
+gaps are retained. Automatic library scanning for .elrc sidecars is not added. Karaoke display depends on the
 player. Jellyfin 10.11's server parser supports word cues, but this update does not add
 word highlighting to Jellyfin's web player. Keep standard LRC for line playback.
 Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.0/MediaBrowser.Providers/Lyric/LrcLyricParser.cs),

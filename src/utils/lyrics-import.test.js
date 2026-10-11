@@ -40,7 +40,6 @@ describe('lyrics file import', () => {
     ['[00:01.00]good\n[00:02.xx]bad', 'song.txt'],
     ['[00:01.00]', 'song.lrc'],
     ['[offset:500]\n[00:01.00]word', 'song.lrc'],
-    ['[00:01.00]<00:01.00>word', 'song.lrc'],
   ])(
     'rejects unsupported or incomplete timed content without dropping words (%s)',
     (text, path) => {
