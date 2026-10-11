@@ -9,29 +9,67 @@
       class="flex min-w-0 flex-wrap items-center justify-between gap-2 text-xs text-neutral-600 dark:text-neutral-400"
     >
       <span class="min-w-0 truncate tabular-nums" data-testid="waveform-window">
+        View
         {{
           waveform
             ? `${formatTime(viewport.start)} - ${formatTime(viewport.start + viewport.span)}`
             : 'Waveform'
         }}
       </span>
-      <output
-        v-tooltip="editorTooltip('Playhead position: minutes, seconds and milliseconds')"
-        class="min-w-[9ch] font-mono tabular-nums text-neutral-900 dark:text-neutral-100"
-        aria-label="Playback position"
-        data-testid="waveform-playback-time"
-        >{{
-          formatMarkerTime(
-            Number.isFinite(displayProgress) ? Math.round(displayProgress * 1000) : null
-          )
-        }}</output
+      <span class="whitespace-nowrap">
+        Position
+        <output
+          v-tooltip="editorTooltip('Playhead position: minutes, seconds and milliseconds')"
+          class="min-w-[9ch] font-mono tabular-nums text-neutral-900 dark:text-neutral-100"
+          aria-label="Playback position"
+          data-testid="waveform-playback-time"
+          >{{
+            formatMarkerTime(
+              Number.isFinite(displayProgress) ? Math.round(displayProgress * 1000) : null
+            )
+          }}</output
+        >
+      </span>
+      <div
+        v-if="markerBounds"
+        class="flex flex-wrap items-center gap-x-3 gap-y-1 tabular-nums"
+        data-testid="waveform-marker-preview"
       >
+        <span v-if="hasDraft" class="text-neutral-600 dark:text-neutral-400">Preview</span>
+        <span class="whitespace-nowrap">
+          Start
+          <output
+            aria-label="Start marker time"
+            class="font-mono text-neutral-900 dark:text-neutral-100"
+            data-testid="waveform-marker-start-time"
+            >{{ formatMarkerTime(previewTimes.startMs) }}</output
+          >
+        </span>
+        <span
+          v-tooltip="
+            editorTooltip(
+              Number.isFinite(props.selectedLine?.end_ms)
+                ? 'Selected lyric end marker'
+                : 'Inferred end: next lyric or recording end; set end to confirm'
+            )
+          "
+          class="whitespace-nowrap"
+        >
+          End
+          <output
+            :aria-label="
+              Number.isFinite(props.selectedLine?.end_ms)
+                ? 'End marker time'
+                : 'End marker time (inferred)'
+            "
+            class="font-mono text-neutral-900 dark:text-neutral-100"
+            data-testid="waveform-marker-end-time"
+            >{{ formatMarkerTime(previewTimes.endMs) }}</output
+          >
+        </span>
+      </div>
       <div class="flex min-w-0 flex-wrap items-center gap-1">
         <template v-if="hasDraft">
-          <span class="tabular-nums" data-testid="waveform-marker-preview">
-            {{ formatMarkerTime(previewTimes.startMs) }} -
-            {{ formatMarkerTime(previewTimes.endMs) }}
-          </span>
           <button
             v-tooltip="
               editorTooltip('Confirm the previewed start/end markers as one undoable timing edit')

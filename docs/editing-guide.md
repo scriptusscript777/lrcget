@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.0+local.22`.
+Rick Lidgett's enhanced LRCGET build, `2.2.1+local.1`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -333,8 +333,9 @@ timestamps. Apply Markers confirms both; Cancel restores the original pair.
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Screenshots were recaptured from .20 using temporary fixture lyrics and mocked waveform data, not private
-music. A waveform shows the full mix; it is not proof of exact singer alignment.
+Marker-time and preview screenshots are native 2.2.1 captures using demonstration
+lyrics and generated silent audio. Unchanged tools retain earlier fixture images.
+A waveform shows the full mix; it is not proof of exact singer alignment.
 
 ### Waveform Playhead Continuity (.22)
 
@@ -345,3 +346,15 @@ the playhead visible during zoomed playback unless explicitly turned off.
 
 ![Click-to-play waveform in light mode](screenshots/current/waveform-click-play-light.png)
 ![Click-to-play waveform in dark mode](screenshots/current/waveform-click-play-dark.png)
+
+### Start and End Marker Times (2.2.1)
+
+Select a timed lyric in Synced to see **Start** and **End** above the waveform.
+The values use `mm:ss.mmm` and remain visible when a marker is outside the zoomed
+view. Dragging or nudging updates the values immediately. **Preview** identifies
+unconfirmed changes; Apply Markers commits them, and Cancel restores saved times.
+For a lyric without an explicit end, hover End to see its inferred-end explanation.
+Untimed or invalid selections do not display a marker pair.
+
+![Start and End in light mode](screenshots/current/waveform-marker-times-light.png)
+![Start and End in dark mode](screenshots/current/waveform-marker-times-dark.png)

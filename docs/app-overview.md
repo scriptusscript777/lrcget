@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.0+local.22. **Editing developer:** Rick Lidgett
+**Version:** 2.2.1+local.1. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -68,9 +68,14 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
 - **Follow waveform playback** keeps the playhead visible at the selected zoom,
   with Loop on or off. Zoom preserves Follow. Manual panning holds the inspected
   region; pause/play or the Follow button resumes automatic navigation.
+- **Start / End** show exact marker times with milliseconds above the waveform,
+  including off-screen markers. Moving a handle updates the row; **Preview**
+  identifies unconfirmed timing edits. Cancel restores the saved pair.
 - An explicit Follow-off choice remains off across zoom and playback restarts.
 - The clock displays `mm:ss.mmm`, but player updates are approximately every
   40 ms. Display precision is not a promise of millisecond playback accuracy.
+- Time labels distinguish **Elapsed / Total** recording clocks, the precise
+  **Position** playhead, the **View** range, and selected lyric **Start / End**.
 - Start/end handles each use one vertical guide and separate upper/lower hit
   areas, so close markers remain selectable.
 - Dragging/nudging creates a preview, not a saved edit. **Apply Markers** commits
@@ -79,6 +84,8 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
 ![Zoomed playback following without requiring a loop](screenshots/current/waveform-follow-dark.png)
 
 ![Preview timestamps with Apply Markers and Cancel](screenshots/current/marker-preview-light.png)
+
+![Persistent Start and End times](screenshots/current/waveform-marker-times-dark.png)
 
 ## Loops and Playback
 
@@ -158,9 +165,9 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.0-local.22.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.1-local.1.md).
 Screenshots use demonstration fixtures, not personal recordings. Waveform playback
-images were captured from .22; unchanged tools retain .20 images.
+and marker images were captured from 2.2.1; unchanged tools retain earlier images.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 

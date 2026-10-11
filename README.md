@@ -8,13 +8,13 @@ Editing enhancements and local maintenance by **Rick Lidgett**
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 The original LRCGET project and its authors retain their existing credits.
 
-**Version 2.2.0+local.22** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.1+local.1** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release.
 
-[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.0-local.22/LRCGET_2.2.0%2Blocal.22_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.22)
-| [Waveform click playback and playhead continuity](docs/releases/2.2.0-local.22.md)
+[Download the Linux amd64 installer](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.1-local.1/LRCGET_2.2.1%2Blocal.1_amd64.deb)
+| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.1-local.1)
+| [Visible start/end marker times](docs/releases/2.2.1-local.1.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -27,6 +27,9 @@ official upstream release.
 - Single clicks play from the selected point; Play resumes without restarting.
   Double-click/button zoom preserves audio position, with smooth playhead movement.
 - Double-click a waveform point repeatedly to magnify it for marker editing.
+- Always-visible Start/End marker times include milliseconds and follow previews.
+- Labeled Elapsed, Total, Position and View clocks distinguish recording time,
+  playhead position and the zoomed range.
 - Wheel/trackpad panning at any playback state, without follow snapping back;
   zoom preserves the visible phrase marker for precise editing.
 - Zoom, including double-click zoom, keeps playback follow enabled with Loop off
@@ -85,8 +88,8 @@ current defaults.
 Download the installer and checksum from the release, close LRCGET, then run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.22_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.22_amd64.deb
+sha256sum -c LRCGET_2.2.1+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.1+local.1_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.

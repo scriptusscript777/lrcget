@@ -148,6 +148,32 @@ async function mount(initial = {}) {
 }
 
 describe('waveform controls and states', () => {
+  it('keeps labeled marker times visible before edits and restores them on cancel', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 12350, end_ms: 15820 },
+      selectedLineIndex: 0,
+    })
+    const startTime = () => state.text(state.byId('waveform-marker-start-time'))
+    const endTime = () => state.text(state.byId('waveform-marker-end-time'))
+    expect(startTime()).toBe('00:12.350')
+    expect(endTime()).toBe('00:15.820')
+    expect(state.text(state.byId('waveform-marker-preview'))).not.toContain('Preview')
+    expect(state.byId('waveform-apply-markers')).toBeUndefined()
+    state.byId('waveform-marker-start').props.onKeydown({
+      key: 'ArrowRight',
+      preventDefault: vi.fn(),
+    })
+    await nextTick()
+    expect(startTime()).toBe('00:12.450')
+    expect(endTime()).toBe('00:15.820')
+    expect(state.text(state.byId('waveform-marker-preview'))).toContain('Preview')
+    expect(state.props.selectedLine.start_ms).toBe(12350)
+    state.byId('waveform-cancel-markers').props.onClick()
+    await nextTick()
+    expect(startTime()).toBe('00:12.350')
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
+
   it('keeps close markers separately reachable with one guide each', async () => {
     const state = await mount({
       selectedLine: { start_ms: 1000, end_ms: 1100 },
@@ -190,6 +216,8 @@ describe('waveform controls and states', () => {
     state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
     await nextTick()
     expect(state.byId('waveform-marker-start')).toBeUndefined()
+    expect(state.text(state.byId('waveform-marker-start-time'))).toBe('00:01.000')
+    expect(state.text(state.byId('waveform-marker-end-time'))).toBe('00:03.000')
     state.props.selectedLine.start_ms = 1200
     await nextTick()
     expect(state.byId('waveform-marker-start')).toBeDefined()
@@ -203,10 +231,13 @@ describe('waveform controls and states', () => {
     })
     expect(state.byId('waveform-marker-start')).toBeUndefined()
     expect(state.byId('waveform-marker-end')).toBeUndefined()
+    expect(state.byId('waveform-marker-preview')).toBeUndefined()
     state.props.selectedLine.start_ms = 1000
     await nextTick()
     expect(state.byId('waveform-marker-start').props['aria-valuenow']).toBe(1000)
     expect(state.byId('waveform-marker-end').props.title).toContain('Inferred end')
+    expect(state.byId('waveform-marker-end-time').props['aria-label']).toContain('inferred')
+    expect(state.text(state.byId('waveform-marker-end-time'))).toBe('02:00.000')
     expect(state.props.selectedLine.end_ms).toBeNull()
     state.props.selectedLine.end_ms = 3000
     await nextTick()
@@ -477,6 +508,8 @@ describe('waveform controls and states', () => {
     marker.props.onPointerdown(event)
     marker.props.onPointermove({ ...event, clientX: 26 })
     await nextTick()
+    expect(state.text(state.byId('waveform-marker-start-time'))).toBe('00:01.600')
+    expect(state.text(state.byId('waveform-marker-end-time'))).toBe('00:03.000')
     expect(state.updateMarkers).not.toHaveBeenCalled()
     expect(state.props.selectedLine.start_ms).toBe(1000)
     marker.props.onPointerup({ ...event, clientX: 26 })
@@ -578,7 +611,8 @@ describe('waveform controls and states', () => {
       invoke.mockResolvedValue({ ...data, duration: seconds })
       const state = await mount({ progress: seconds })
       expect(state.byId('waveform-seek').props['aria-valuetext']).toBe(expected)
-      expect(state.text(state.byId('waveform-window'))).toBe(`0:00.0 - ${expected}`)
+      expect(state.text(state.byId('waveform-window'))).toContain(`0:00.0 - ${expected}`)
+      expect(state.text(state.byId('waveform-window'))).toContain('View')
       state.draw()
       expect(state.context.fillText).toHaveBeenCalledWith(expected, 400, 106)
     }

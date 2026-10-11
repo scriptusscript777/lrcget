@@ -1,16 +1,16 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.0+local.22**.
+For Rick Lidgett's LRCGET **2.2.1+local.1**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.0-local.22).
+1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.1-local.1).
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.0+local.22_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.0+local.22_amd64.deb
+sha256sum -c LRCGET_2.2.1+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.1+local.1_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -94,17 +94,28 @@ automatically create missing words with Whisper or separate vocals with Demucs.
 
 ## Place Precise Markers and Preview Before Confirming
 
+The recording controls show **Elapsed** and **Total** in `hh:mm:ss`. The waveform
+shows **Position** (current playhead, `mm:ss.mmm`) and **View** (visible zoomed
+time range). **Start / End** belong to the selected lyric; they do not show the
+recording duration. Moving the playhead does not change marker times.
+
 1. In Synced, select a timed lyric. Its start/end markers appear on the waveform.
+   Read **Start** and **End** above the waveform for their exact millisecond times;
+   both remain visible when a marker is outside the zoomed view.
 2. Pause and zoom around the boundary. Use the upper handle for start and lower
    handle for end; each has one vertical guide.
 3. Drag a handle, or focus it and nudge with Left/Right using the chosen timing
    step. Shift makes a marker nudge ten times larger.
 4. Replay or loop the preview. The preview clock changes, but the lyric row is
    unchanged until confirmation.
+   The time row is labeled **Preview** and updates while you drag or nudge.
 5. Click **Apply Markers** to commit both boundaries as one undoable edit.
    Click **Cancel** to retain the original pair.
 
 ![Preview before confirming timestamps](screenshots/current/marker-preview-light.png)
+
+![Start and End marker times in light mode](screenshots/current/waveform-marker-times-light.png)
+![Start and End marker times in dark mode](screenshots/current/waveform-marker-times-dark.png)
 
 Escape during dragging cancels that drag; otherwise it cancels the preview.
 Changing phrases or closing discards unconfirmed previews. Apply before Save/export.

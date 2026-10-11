@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.0+local.22`, based on upstream tag `2.2.0`.
+Local version: `2.2.1+local.1`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -365,3 +365,15 @@ positions. Play resumes an already active source instead of restarting it.
 During playback its CSS position interpolates over the existing 40ms player
 updates; reduced-motion preferences disable that interpolation. Follow retains
 its existing behavior and explicit off setting.
+
+## Persistent Marker Times (2.2.1+local.1)
+
+The compact waveform header now shows labeled Start and End times for a valid
+selected lyric, including off-screen markers. It reuses live drag/draft values
+and millisecond formatting rather than adding another timing state. Preview
+identifies unconfirmed changes; Cancel restores the saved pair. Inferred ends
+retain their tooltip/accessibility description. The old unlabeled preview pair
+is replaced, with no additional buttons. Package version advances to 2.2.1 while
+the local suffix continues to distinguish this fork from upstream.
+The transport clocks are labeled Elapsed and Total; the waveform labels Position
+for the precise playhead and View for its visible range.

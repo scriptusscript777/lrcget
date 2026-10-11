@@ -2,7 +2,9 @@
   <div class="flex gap-4 items-center px-4 py-2">
     <button
       v-if="status !== 'playing'"
-      v-tooltip="editorTooltip('Play or resume this recording; Loop repeats the marker range when enabled')"
+      v-tooltip="
+        editorTooltip('Play or resume this recording; Loop repeats the marker range when enabled')
+      "
       title="Play or resume this recording"
       aria-label="Play or resume this recording"
       class="button button-normal p-2 rounded-full text-xl"
@@ -20,12 +22,18 @@
     >
       <Pause />
     </button>
-    <div class="flex-none w-12 text-xs text-neutral-600 dark:text-neutral-400">
-      {{ humanDuration(progress) }}
+    <div class="flex-none w-16 text-xs text-neutral-600 dark:text-neutral-400">
+      <span class="block text-[10px]">Elapsed</span>
+      <output aria-label="Elapsed playback time" class="whitespace-nowrap tabular-nums">
+        {{ humanDuration(progress) }}
+      </output>
     </div>
     <Seek class="grow" :duration="duration" :progress="progress" @seek="emit('seek', $event)" />
-    <div class="flex-none w-12 text-xs text-neutral-600 dark:text-neutral-400">
-      {{ humanDuration(duration) }}
+    <div class="flex-none w-16 text-xs text-neutral-600 dark:text-neutral-400">
+      <span class="block text-[10px]">Total</span>
+      <output aria-label="Total recording duration" class="whitespace-nowrap tabular-nums">
+        {{ humanDuration(duration) }}
+      </output>
     </div>
 
     <PlaybackSpeedControl
