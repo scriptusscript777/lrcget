@@ -112,11 +112,11 @@ Module-level ref composables (singletons by design):
 
 The Download popup also drafts the three existing Configuration “Download lyrics for” choices above a separator and the auto-export controls. `utils/download-filter.js` matches Configuration’s skip-flag mapping (plain-flag precedence), and submission saves those existing flags with export preferences in one scoped update. Queue filters use the captured submission, not returned/re-read config. Configuration remains available and refreshes from `get_config` before opening. The popup contains controls and actionable errors without explanatory export copy.
 
-Shared fields are `export_txt`, `export_lrc`, and `export_embedded`. `auto_export_enabled` belongs only to Download. Download updates applicable format choices when enabled; turning it off preserves all formats. Manual Export does not update the toggle. Both popups show the embedded choice under the experimental `try_embed_lyrics` gate and preserve its remembered value when disabled. Defaults: auto-export off, LRC selected, TXT/embedded off. Automatic export accepts embed-only batches when the gate is enabled; at least one effective format is required.
+Shared fields are `export_txt`, `export_lrc`, `export_elrc`, and `export_embedded`. `auto_export_enabled` belongs only to Download. Download updates applicable format choices when enabled; turning it off preserves all formats. Manual Export does not update the toggle. Both popups show the embedded choice under the experimental `try_embed_lyrics` gate and preserve its remembered value when disabled. Defaults: auto-export off, LRC selected, TXT/embedded off. Automatic export accepts embed-only batches when the gate is enabled; at least one effective format is required.
 
-`downloader.js` queues `{ trackId, autoExport }` entries; `autoExport` is an immutable TXT/LRC/embedded snapshot or null. The album/artist row actions (`AlbumItem.vue`, `ArtistItem.vue`) and detail actions (`AlbumTrackList.vue`, `ArtistTrackList.vue`) use the same popup and snapshots as Download All. Scope queries use `get_album_track_ids` / `get_artist_track_ids` with the submitted skip flags; library-wide queries retain their existing presence filters. Single-track Download, Apply, and editor saves are unchanged. `export.js` queues `{ trackId, formats }` with immutable ordered TXT/LRC/embedded selections. Subsequent submissions cannot mutate queued batches.
+`downloader.js` queues `{ trackId, autoExport }` entries; `autoExport` is an immutable TXT/LRC/ELRC/embedded snapshot or null. The album/artist row actions (`AlbumItem.vue`, `ArtistItem.vue`) and detail actions (`AlbumTrackList.vue`, `ArtistTrackList.vue`) use the same popup and snapshots as Download All. Scope queries use `get_album_track_ids` / `get_artist_track_ids` with the submitted skip flags; library-wide queries retain their existing presence filters. Single-track Download, Apply, and editor saves are unchanged. `export.js` queues `{ trackId, formats }` with immutable ordered TXT/LRC/ELRC/embedded selections. Subsequent submissions cannot mutate queued batches.
 
-`download_lyrics` still returns a string. Post-save export failures are appended to that string and stay on the existing green success/FOUND log path in `DownloadViewer.vue`. No reporting UI or retry flow is added. The shared writers still overwrite targets and delete the opposite sidecar; format-operation success does not imply both files remain.
+`download_lyrics` still returns a string. Post-save export failures are appended to that string and stay on the existing green success/FOUND log path in `DownloadViewer.vue`. No reporting UI or retry flow is added. The shared writers atomically replace selected targets and retain the other sidecars; individual failures preserve their original destinations.
 
 ### Edit/Publish Details
 
@@ -288,3 +288,21 @@ persistence, LRC export or data-identifier changes are required.
 Pending start/end previews now change only the corresponding original Sync icon
 button color. Buttons retain their circular 24px layout and Equal icon. Timing
 handlers and cancellation remain unchanged. No backend behavior changes.
+
+### Optional Enhanced LRC export (2.2.6+local.5)
+
+Migration 21 adds `config_data.export_elrc`, false by default. Configuration/Common
+and scoped export preference updates preserve omitted values; combined updates
+use a transaction so rejected selections cannot change the ELRC preference.
+Editor, bulk and Download export add the `elrc` format. Queues snapshot the choice;
+legacy download payloads default `enhancedLrc` to false. Editor hydration seeds the
+saved default once per editor, preserving subsequent manual menu choices.
+
+`ParsedLyricsfile.enhanced_lyrics` stores an independent result. Shared line-event
+construction preserves the existing standard LRC output and gap policy. ELRC
+validates saved word text reconstruction, monotonic starts and valid end bounds;
+missing ends use the next word/sentence boundary when known. Only timed rows with
+saved word timing produce inline tags. Mixed line-only rows are retained. Missing
+word timing skips ELRC; invalid timing errors only that format. Atomic verified
+sidecar replacement preserves older files on skip/failure. No ELRC import or
+player change is included; the internal lyric document retains editable words.

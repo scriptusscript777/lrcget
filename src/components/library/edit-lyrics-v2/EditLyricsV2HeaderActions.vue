@@ -57,6 +57,16 @@
               </CheckboxButton>
             </label>
 
+            <label class="dropdown-item">
+              <CheckboxButton
+                id="export-enhanced-lrc"
+                v-model="exportEnhancedLrc"
+                name="export-enhanced-lrc"
+              >
+                <span class="dropdown-label">Word-timed lyrics (.elrc)</span>
+              </CheckboxButton>
+            </label>
+
             <label
               class="dropdown-item"
               :class="{ 'opacity-50 cursor-not-allowed': !tryEmbedLyrics }"
@@ -114,6 +124,7 @@ const emit = defineEmits(['save', 'save-and-publish', 'export', 'debug'])
 const exportPlainText = ref(false)
 // Editor exports are separate from bulk-download export preferences.
 const exportSyncedLrc = ref(true)
+const exportEnhancedLrc = ref(false)
 const embedIntoTrack = ref(false)
 const tryEmbedLyrics = ref(false)
 let exportPreferencesLoaded = false
@@ -122,6 +133,7 @@ const refreshEmbedConfig = async () => {
   const config = await invoke('get_config')
   tryEmbedLyrics.value = config.try_embed_lyrics
   if (!exportPreferencesLoaded) {
+    exportEnhancedLrc.value = config.export_elrc === true
     embedIntoTrack.value = config.try_embed_lyrics && config.export_embedded
     exportPreferencesLoaded = true
   }
@@ -131,7 +143,10 @@ onMounted(refreshEmbedConfig)
 
 const hasSelectedExportFormat = computed(
   () =>
-    exportPlainText.value || exportSyncedLrc.value || (embedIntoTrack.value && tryEmbedLyrics.value)
+    exportPlainText.value ||
+    exportSyncedLrc.value ||
+    exportEnhancedLrc.value ||
+    (embedIntoTrack.value && tryEmbedLyrics.value)
 )
 
 const handleExportClick = () => {
@@ -142,6 +157,7 @@ const handleExportClick = () => {
   emit('export', {
     plainText: exportPlainText.value,
     syncedLrc: exportSyncedLrc.value,
+    enhancedLrc: exportEnhancedLrc.value,
     embedIntoTrack: embedIntoTrack.value && tryEmbedLyrics.value,
   })
 }

@@ -167,6 +167,7 @@ pub fn get_config(db: &Connection) -> Result<PersistentConfig> {
         volume,
         auto_export_enabled,
         export_lrc,
+        export_elrc,
         export_txt,
         export_embedded
       FROM config_data
@@ -176,6 +177,7 @@ pub fn get_config(db: &Connection) -> Result<PersistentConfig> {
         Ok(PersistentConfig {
             auto_export_enabled: r.get("auto_export_enabled")?,
             export_lrc: r.get("export_lrc")?,
+            export_elrc: r.get("export_elrc")?,
             export_txt: r.get("export_txt")?,
             export_embedded: r.get("export_embedded")?,
             skip_tracks_with_synced_lyrics: r.get("skip_tracks_with_synced_lyrics")?,
@@ -237,6 +239,11 @@ pub fn set_lyric_overlap_prevention(enabled: bool, db: &Connection) -> Result<()
     Ok(())
 }
 
+pub fn set_enhanced_export_enabled(enabled: bool, db: &Connection) -> Result<()> {
+    db.execute("UPDATE config_data SET export_elrc = ? WHERE 1", [enabled])?;
+    Ok(())
+}
+
 // Omitted fields preserve hidden choices and preferences owned by the other popup.
 pub fn set_export_preferences(
     auto_export_enabled: Option<bool>,
@@ -250,8 +257,9 @@ pub fn set_export_preferences(
     let config = get_config(db)?;
     // A disabled experimental option cannot overwrite its remembered selection.
     let export_embedded = export_embedded.filter(|_| config.try_embed_lyrics);
-    let has_sidecar =
-        export_lrc.unwrap_or(config.export_lrc) || export_txt.unwrap_or(config.export_txt);
+    let has_sidecar = export_lrc.unwrap_or(config.export_lrc)
+        || export_txt.unwrap_or(config.export_txt)
+        || config.export_elrc;
     if auto_export_enabled != Some(false)
         && !has_sidecar
         && !(export_embedded.unwrap_or(config.export_embedded) && config.try_embed_lyrics)
@@ -2253,5 +2261,58 @@ mod overlap_preference_tests {
         assert_eq!(after.prevent_lyric_overlaps, before.prevent_lyric_overlaps);
         assert_eq!(after.show_hover_help, before.show_hover_help);
         assert_eq!(after.theme_mode, before.theme_mode);
+    }
+}
+
+#[cfg(test)]
+mod enhanced_preference_tests {
+    use super::*;
+
+    #[test]
+    fn upgrade_defaults_off_and_saved_choice_survives_unrelated_writes_and_restart() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("preferences.sqlite");
+        {
+            let mut db = Connection::open(&path).unwrap();
+            let migrations = Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
+            migrations.to_version(&mut db, 20).unwrap();
+            set_hover_help_enabled(true, &db).unwrap();
+            db.execute(
+                "INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: preserved')",
+                [],
+            )
+            .unwrap();
+            migrations.to_latest(&mut db).unwrap();
+            assert!(get_config(&db).unwrap().show_hover_help);
+            let lyrics: String = db
+                .query_row("SELECT lyricsfile FROM lyricsfiles LIMIT 1", [], |row| {
+                    row.get(0)
+                })
+                .unwrap();
+            assert_eq!(lyrics, "plain: preserved");
+            assert!(!get_config(&db).unwrap().export_elrc);
+            set_enhanced_export_enabled(true, &db).unwrap();
+            set_export_preferences(Some(true), Some(false), Some(false), None, None, None, &db)
+                .unwrap();
+            assert!(get_config(&db).unwrap().export_elrc);
+        }
+        let db = Connection::open(&path).unwrap();
+        assert!(get_config(&db).unwrap().export_elrc);
+        {
+            let tx = db.unchecked_transaction().unwrap();
+            set_enhanced_export_enabled(false, &tx).unwrap();
+            assert!(set_export_preferences(
+                Some(true),
+                Some(false),
+                Some(false),
+                None,
+                None,
+                None,
+                &tx
+            )
+            .is_err());
+            // A rejected preference update rolls back the newly staged choice.
+        }
+        assert!(get_config(&db).unwrap().export_elrc);
     }
 }

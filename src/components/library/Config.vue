@@ -119,6 +119,30 @@
           >
         </div>
 
+        <div class="flex flex-col mb-4">
+          <label
+            for="enhanced-lrc-default"
+            class="inline-flex cursor-pointer items-center gap-2 child-label"
+          >
+            <input
+              id="enhanced-lrc-default"
+              v-model="editingExportElrc"
+              type="checkbox"
+              class="h-4 w-4 accent-hoa-1500"
+              aria-describedby="enhanced-lrc-instructions"
+              :disabled="isSaving || !isConfigLoaded"
+            />
+            Export Enhanced LRC by default
+          </label>
+          <span
+            id="enhanced-lrc-instructions"
+            class="mt-1 text-xs text-neutral-600 dark:text-neutral-400"
+          >
+            Off by default. Adds word-timed .elrc files when saved word timing exists. Standard .lrc
+            stays available.
+          </span>
+        </div>
+
         <div class="flex flex-col">
           <label class="block mb-2 child-label" for="lrclib-instance">LRCLIB instance</label>
           <input
@@ -197,6 +221,7 @@ const tryEmbedLyrics = ref(false)
 const editingThemeMode = ref('auto')
 const editingShowHoverHelp = ref(false)
 const editingPreventOverlaps = ref(true)
+const editingExportElrc = ref(false)
 const editingLrclibInstance = ref('')
 const isSaving = ref(false)
 const isConfigLoaded = ref(false)
@@ -216,6 +241,7 @@ const save = async () => {
     volume: volume.value,
     showHoverHelp: editingShowHoverHelp.value,
     preventLyricOverlaps: editingPreventOverlaps.value,
+    exportElrc: editingExportElrc.value,
   }
   try {
     await invoke('set_config', submitted)
@@ -273,6 +299,7 @@ const beforeOpenHandler = async () => {
   tryEmbedLyrics.value = config.try_embed_lyrics
   editingShowHoverHelp.value = config.show_hover_help === true
   editingPreventOverlaps.value = config.prevent_lyric_overlaps !== false
+  editingExportElrc.value = config.export_elrc === true
   editingThemeMode.value = config.theme_mode
   editingLrclibInstance.value = config.lrclib_instance
   isConfigLoaded.value = true

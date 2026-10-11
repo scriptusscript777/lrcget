@@ -54,6 +54,7 @@ struct FlagLyricsProgress {
 enum ExportLyricsFormat {
     Txt,
     Lrc,
+    Elrc,
     Embedded,
 }
 
@@ -63,6 +64,8 @@ enum ExportLyricsFormat {
 struct AutoExportOptions {
     plain_text: bool,
     synced_lrc: bool,
+    #[serde(default)]
+    enhanced_lrc: bool,
     #[serde(default)]
     embed_into_track: bool,
 }
@@ -75,6 +78,9 @@ impl AutoExportOptions {
         }
         if self.synced_lrc {
             formats.push(export::ExportFormat::Lrc);
+        }
+        if self.enhanced_lrc {
+            formats.push(export::ExportFormat::Elrc);
         }
         if self.embed_into_track {
             formats.push(export::ExportFormat::Embedded);
@@ -122,6 +128,7 @@ impl From<ExportLyricsFormat> for export::ExportFormat {
         match value {
             ExportLyricsFormat::Txt => export::ExportFormat::Txt,
             ExportLyricsFormat::Lrc => export::ExportFormat::Lrc,
+            ExportLyricsFormat::Elrc => export::ExportFormat::Elrc,
             ExportLyricsFormat::Embedded => export::ExportFormat::Embedded,
         }
     }
@@ -234,6 +241,7 @@ async fn set_config(
     volume: f64,
     show_hover_help: Option<bool>,
     prevent_lyric_overlaps: Option<bool>,
+    export_elrc: Option<bool>,
     app_state: State<'_, AppState>,
 ) -> Result<(), String> {
     let conn_guard = app_state.db.lock().unwrap();
@@ -257,6 +265,9 @@ async fn set_config(
     if let Some(enabled) = prevent_lyric_overlaps {
         db::set_lyric_overlap_prevention(enabled, &tx).map_err(|err| err.to_string())?;
     }
+    if let Some(enabled) = export_elrc {
+        db::set_enhanced_export_enabled(enabled, &tx).map_err(|err| err.to_string())?;
+    }
     tx.commit().map_err(|err| err.to_string())?;
 
     Ok(())
@@ -266,6 +277,7 @@ async fn set_config(
 async fn set_export_preferences(
     auto_export_enabled: Option<bool>,
     export_lrc: Option<bool>,
+    export_elrc: Option<bool>,
     export_txt: Option<bool>,
     export_embedded: Option<bool>,
     skip_tracks_with_synced_lyrics: Option<bool>,
@@ -274,6 +286,10 @@ async fn set_export_preferences(
 ) -> Result<PersistentConfig, String> {
     let conn_guard = app_state.db.lock().unwrap();
     let conn = conn_guard.as_ref().unwrap();
+    let tx = conn.unchecked_transaction().map_err(|err| err.to_string())?;
+    if let Some(enabled) = export_elrc {
+        db::set_enhanced_export_enabled(enabled, &tx).map_err(|err| err.to_string())?;
+    }
     db::set_export_preferences(
         auto_export_enabled,
         export_lrc,
@@ -281,9 +297,10 @@ async fn set_export_preferences(
         export_embedded,
         skip_tracks_with_synced_lyrics,
         skip_tracks_with_plain_lyrics,
-        conn,
+        &tx,
     )
     .map_err(|err| err.to_string())?;
+    tx.commit().map_err(|err| err.to_string())?;
     db::get_config(conn).map_err(|err| err.to_string())
 }
 
@@ -757,6 +774,7 @@ fn download_export_message(
         let format = match result.format {
             export::ExportFormat::Txt => "TXT",
             export::ExportFormat::Lrc => "LRC",
+            export::ExportFormat::Elrc => "ELRC",
             export::ExportFormat::Embedded => "Embedded",
         };
         let outcome = match result.status {
@@ -1879,6 +1897,7 @@ mod auto_export_tests {
             AutoExportOptions {
                 plain_text: false,
                 synced_lrc: false,
+                enhanced_lrc: false,
                 embed_into_track: true,
             }
             .formats()
@@ -1888,6 +1907,7 @@ mod auto_export_tests {
         assert!(AutoExportOptions {
             plain_text: false,
             synced_lrc: false,
+            enhanced_lrc: false,
             embed_into_track: false,
         }
         .formats()
@@ -1896,6 +1916,7 @@ mod auto_export_tests {
             AutoExportOptions {
                 plain_text: true,
                 synced_lrc: true,
+                enhanced_lrc: false,
                 embed_into_track: true,
             }
             .formats()
@@ -1905,6 +1926,37 @@ mod auto_export_tests {
                 export::ExportFormat::Lrc,
                 export::ExportFormat::Embedded
             ],
+        );
+    }
+
+    #[test]
+    fn enhanced_only_and_legacy_download_options_are_supported() {
+        let legacy: AutoExportOptions =
+            serde_json::from_str(r#"{"plainText":true,"syncedLrc":true}"#).unwrap();
+        assert!(!legacy.enhanced_lrc);
+        assert_eq!(
+            legacy.formats().unwrap(),
+            vec![export::ExportFormat::Txt, export::ExportFormat::Lrc]
+        );
+        let enhanced: AutoExportOptions =
+            serde_json::from_str(r#"{"plainText":false,"syncedLrc":false,"enhancedLrc":true}"#)
+                .unwrap();
+        assert_eq!(
+            enhanced.formats().unwrap(),
+            vec![export::ExportFormat::Elrc]
+        );
+        let all: AutoExportOptions = serde_json::from_str(
+            r#"{"plainText":true,"syncedLrc":true,"enhancedLrc":true,"embedIntoTrack":true}"#,
+        )
+        .unwrap();
+        assert_eq!(
+            all.formats().unwrap(),
+            vec![
+                export::ExportFormat::Txt,
+                export::ExportFormat::Lrc,
+                export::ExportFormat::Elrc,
+                export::ExportFormat::Embedded
+            ]
         );
     }
 

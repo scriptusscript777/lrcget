@@ -11,6 +11,7 @@ const emptyDraft = () => ({
   autoExportEnabled: false,
   plainText: false,
   syncedLrc: true,
+  enhancedLrc: false,
   embedIntoTrack: false,
 })
 const downloadDraft = ref(emptyDraft())
@@ -30,6 +31,7 @@ const canDownload = computed(
     (!downloadDraft.value.autoExportEnabled ||
       downloadDraft.value.plainText ||
       downloadDraft.value.syncedLrc ||
+      downloadDraft.value.enhancedLrc ||
       (downloadDraft.value.embedIntoTrack && tryEmbedLyrics.value))
 )
 
@@ -64,6 +66,7 @@ const open = async (target, anchor) => {
       autoExportEnabled: config.auto_export_enabled,
       plainText: config.export_txt,
       syncedLrc: config.export_lrc,
+      enhancedLrc: config.export_elrc === true,
       embedIntoTrack: config.export_embedded,
     }
     tryEmbedLyrics.value = config.try_embed_lyrics
@@ -89,6 +92,7 @@ const downloadAllLyrics = async () => {
         ? {
             exportTxt: draft.plainText,
             exportLrc: draft.syncedLrc,
+            exportElrc: draft.enhancedLrc,
             ...(embedEnabled ? { exportEmbedded: draft.embedIntoTrack } : {}),
           }
         : {}),
@@ -117,6 +121,7 @@ const downloadAllLyrics = async () => {
         ? {
             plainText: draft.plainText,
             syncedLrc: draft.syncedLrc,
+            enhancedLrc: draft.enhancedLrc,
             embedIntoTrack: draft.embedIntoTrack && embedEnabled,
           }
         : null

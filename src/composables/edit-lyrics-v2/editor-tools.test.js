@@ -1008,3 +1008,24 @@ it('rejects bulk overlaps atomically and reports failed individual nudges', () =
   expect(state.syncedLines.value[1].start_ms).toBe(2100)
   scope.stop()
 })
+
+it('exports Enhanced LRC as an additional sidecar alongside TXT and standard LRC', async () => {
+  const toast = { success: vi.fn(), error: vi.fn(), warning: vi.fn() }
+  invoke.mockResolvedValue(
+    ['txt', 'lrc', 'elrc'].map(format => ({ format, status: { type: 'success' } }))
+  )
+  const state = useEditLyricsV2Export({
+    audioSource: ref({ type: 'library', id: 7 }),
+    saveLyrics: vi.fn().mockResolvedValue(true),
+    serializedLyricsfile: ref('saved word document'),
+    toast,
+  })
+  expect(await state.exportLyrics({ plainText: true, syncedLrc: true, enhancedLrc: true })).toBe(
+    true
+  )
+  expect(invoke).toHaveBeenCalledWith('export_lyrics', {
+    trackId: 7,
+    formats: ['txt', 'lrc', 'elrc'],
+    lyricsfile: 'saved word document',
+  })
+})

@@ -528,3 +528,21 @@ persistence, LRC export or data-identifier changes are required.
 Pending start/end previews now change only the corresponding original Sync icon
 button color. Buttons retain their circular 24px layout and Equal icon. Timing
 handlers and cancellation remain unchanged. No backend behavior changes.
+
+### Optional Enhanced LRC export (2.2.6+local.5)
+
+Migration 21 adds `config_data.export_elrc`, false by default. Configuration/Common
+and scoped export preference updates preserve omitted values; combined updates
+use a transaction so rejected selections cannot change the ELRC preference.
+Editor, bulk and Download export add the `elrc` format. Queues snapshot the choice;
+legacy download payloads default `enhancedLrc` to false. Editor hydration seeds the
+saved default once per editor, preserving subsequent manual menu choices.
+
+`ParsedLyricsfile.enhanced_lyrics` stores an independent result. Shared line-event
+construction preserves the existing standard LRC output and gap policy. ELRC
+validates saved word text reconstruction, monotonic starts and valid end bounds;
+missing ends use the next word/sentence boundary when known. Only timed rows with
+saved word timing produce inline tags. Mixed line-only rows are retained. Missing
+word timing skips ELRC; invalid timing errors only that format. Atomic verified
+sidecar replacement preserves older files on skip/failure. No ELRC import or
+player change is included; the internal lyric document retains editable words.

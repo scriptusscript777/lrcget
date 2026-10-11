@@ -47,6 +47,7 @@ impl LyricsfileTrackMetadata {
 pub struct ParsedLyricsfile {
     pub plain_lyrics: Option<String>,
     pub synced_lyrics: Option<String>,
+    pub enhanced_lyrics: Result<Option<String>, String>,
     pub is_instrumental: bool,
 }
 
@@ -185,6 +186,11 @@ pub fn parse_lyricsfile(lyricsfile: &str) -> Result<ParsedLyricsfile> {
     Ok(ParsedLyricsfile {
         plain_lyrics,
         synced_lyrics,
+        enhanced_lyrics: if is_instrumental {
+            Ok(None)
+        } else {
+            lines_to_enhanced_lrc(&document.lines)
+        },
         is_instrumental,
     })
 }
@@ -258,6 +264,14 @@ fn parse_lrc_lines(synced_lyrics: &str) -> Vec<LyricsfileLine> {
 const MIN_LRC_GAP_MS: i64 = 250;
 
 fn lines_to_lrc(lines: &[LyricsfileLine]) -> Option<String> {
+    lines_to_lrc_with_text(lines, |line| {
+        if line.words.is_empty() { line.text.clone() } else {
+            line.words.iter().map(|word| word.text.as_str()).collect()
+        }
+    })
+}
+
+fn lines_to_lrc_with_text(lines: &[LyricsfileLine], text_for_line: impl Fn(&LyricsfileLine) -> String) -> Option<String> {
     let mut timed: Vec<_> = lines
         .iter()
         .filter_map(|line| {
@@ -270,11 +284,7 @@ fn lines_to_lrc(lines: &[LyricsfileLine]) -> Option<String> {
     let mut events: Vec<(i64, String)> = timed
         .iter()
         .map(|(start, line)| {
-            let text = if !line.words.is_empty() {
-                line.words.iter().map(|word| word.text.as_str()).collect()
-            } else {
-                line.text.clone()
-            };
+            let text = text_for_line(line);
             (*start, text)
         })
         .collect();
@@ -325,6 +335,89 @@ fn lines_to_lrc(lines: &[LyricsfileLine]) -> Option<String> {
         })
         .collect::<String>();
     normalize_non_empty(Some(output.as_str()))
+}
+
+// Enhanced LRC retains the standard line/gap cues and adds inline word timestamps.
+// Only saved, valid word timing is exported; never synthesize karaoke timing.
+fn lines_to_enhanced_lrc(lines: &[LyricsfileLine]) -> Result<Option<String>, String> {
+    static RESERVED_TAG: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"<\d+:\d+(?:[.:]\d+)?>").unwrap());
+    let mut enhanced = std::collections::HashMap::new();
+    for (index, line) in lines.iter().enumerate() {
+        let Some(start) = line.start_ms else { continue };
+        let fail = || format!("Invalid saved word timing on lyric {}", index + 1);
+        // Literal inline timestamps cannot be escaped reliably across ELRC players.
+        if start < 0 || line.text.contains(['\n', '\r']) || RESERVED_TAG.is_match(&line.text) {
+            return Err(fail());
+        }
+        if line.words.is_empty() {
+            continue;
+        }
+        let text: String = line.words.iter().map(|word| word.text.as_str()).collect();
+        if text != line.text || text.contains(['\n', '\r']) {
+            return Err(fail());
+        }
+        let line_end = match line.end_ms {
+            Some(end) if end > start => Some(end),
+            Some(_) => return Err(fail()),
+            None => lines
+                .iter()
+                .filter_map(|other| other.start_ms)
+                .filter(|other| *other > start)
+                .min(),
+        };
+        let mut output = String::new();
+        let mut previous_start = None;
+        for (word_index, word) in line.words.iter().enumerate() {
+            let word_start = word.start_ms.ok_or_else(fail)?;
+            if word_start < start
+                || previous_start.is_some_and(|prev| word_start <= prev)
+                || line_end.is_some_and(|end| word_start >= end)
+            {
+                return Err(fail());
+            }
+            let next_start = line
+                .words
+                .get(word_index + 1)
+                .and_then(|next| next.start_ms);
+            let word_end = word.end_ms.or(next_start).or(line_end);
+            if let Some(end) = word_end {
+                if end <= word_start
+                    || next_start.is_some_and(|next| end > next)
+                    || line_end.is_some_and(|limit| end > limit)
+                {
+                    return Err(fail());
+                }
+            }
+            output.push_str(&format!("<{}>{}", inline_timestamp(word_start), word.text));
+            // A trailing end tag preserves silence, including gaps within a sentence.
+            if let Some(end) = word_end {
+                if next_start != Some(end) {
+                    output.push_str(&format!("<{}>", inline_timestamp(end)));
+                }
+            }
+            previous_start = Some(word_start);
+        }
+        enhanced.insert(line as *const LyricsfileLine, output);
+    }
+    if enhanced.is_empty() {
+        return Ok(None);
+    }
+    Ok(lines_to_lrc_with_text(lines, |line| {
+        enhanced
+            .get(&(line as *const LyricsfileLine))
+            .cloned()
+            .unwrap_or_else(|| line.text.clone())
+    }))
+}
+
+fn inline_timestamp(time: i64) -> String {
+    format!(
+        "{:02}:{:02}.{:03}",
+        time / 60_000,
+        (time % 60_000) / 1_000,
+        time % 1_000
+    )
 }
 
 fn duration_to_ms(duration: f64) -> Option<i64> {
@@ -400,5 +493,84 @@ mod gap_export_tests {
         assert!(presence.has_plain_lyrics);
         assert!(!presence.has_synced_lyrics);
         assert!(!presence.has_word_synced_lyrics);
+    }
+}
+
+#[cfg(test)]
+mod enhanced_export_tests {
+    use super::*;
+
+    const DOCUMENT: &str = "metadata: {}\nlines:\n  - text: 'Hello world'\n    start_ms: 1001\n    end_ms: 2001\n    words:\n      - text: 'Hello '\n        start_ms: 1001\n        end_ms: 1501\n      - text: world\n        start_ms: 1751\n        end_ms: 2001\n  - text: Next\n    start_ms: 3001\n    end_ms: 4001\n";
+
+    #[test]
+    fn preserves_word_silence_sentence_gaps_and_standard_lrc() {
+        let parsed = parse_lyricsfile(DOCUMENT).unwrap();
+        assert_eq!(parsed.enhanced_lyrics.unwrap().unwrap(),
+            "[00:01.001]<00:01.001>Hello <00:01.501><00:01.751>world<00:02.001>\n[00:02.001]\n[00:03.001]Next\n[00:04.001]\n");
+        assert_eq!(
+            parsed.synced_lyrics.unwrap(),
+            "[00:01.001]Hello world\n[00:02.001]\n[00:03.001]Next\n[00:04.001]\n"
+        );
+        assert_eq!(parsed.plain_lyrics.unwrap(), "Hello world\nNext\n");
+    }
+
+    #[test]
+    fn does_not_invent_word_timing_for_plain_line_timed_or_instrumental_lyrics() {
+        for doc in [
+            "metadata: {}\nplain: hello\n",
+            "metadata: {}\nlines:\n  - text: hello\n    start_ms: 1000\n",
+            "metadata: {instrumental: true}\n",
+        ] {
+            assert!(parse_lyricsfile(doc)
+                .unwrap()
+                .enhanced_lyrics
+                .unwrap()
+                .is_none());
+        }
+    }
+
+    #[test]
+    fn invalid_words_do_not_block_standard_exports() {
+        for replacement in ["start_ms: 999", "start_ms: 2001"] {
+            let broken = DOCUMENT.replace("start_ms: 1751", replacement);
+            let parsed = parse_lyricsfile(&broken).unwrap();
+            assert!(parsed.enhanced_lyrics.is_err());
+            assert!(parsed.synced_lyrics.unwrap().contains("Hello world"));
+        }
+        for broken in [
+            DOCUMENT.replace("end_ms: 1501", "end_ms: 1801"),
+            DOCUMENT.replace(
+                "      - text: world\n        start_ms: 1751",
+                "      - text: world",
+            ),
+            DOCUMENT.replace("text: 'Hello world'", "text: 'Different text'"),
+        ] {
+            assert!(parse_lyricsfile(&broken).unwrap().enhanced_lyrics.is_err());
+        }
+    }
+
+    #[test]
+    fn rejects_negative_sentence_times_and_reserved_inline_tags() {
+        for doc in [
+            DOCUMENT.replace("start_ms: 1001", "start_ms: -1"),
+            DOCUMENT.replace("Hello world", "<00:01.000>Hello world"),
+        ] {
+            let parsed = parse_lyricsfile(&doc).unwrap();
+            assert!(parsed.enhanced_lyrics.is_err());
+            assert!(parsed.synced_lyrics.is_some());
+        }
+    }
+
+    #[test]
+    fn uses_next_word_and_sentence_end_for_missing_word_ends() {
+        let doc = DOCUMENT
+            .replace("        end_ms: 1501\n", "")
+            .replace("        end_ms: 2001\n", "");
+        let enhanced = parse_lyricsfile(&doc)
+            .unwrap()
+            .enhanced_lyrics
+            .unwrap()
+            .unwrap();
+        assert!(enhanced.contains("<00:01.001>Hello <00:01.751>world<00:02.001>"));
     }
 }

@@ -4,7 +4,7 @@ import { ref } from 'vue'
 export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyricsfile, toast }) {
   const isExporting = ref(false)
 
-  const exportLyrics = async ({ plainText, syncedLrc, embedIntoTrack }) => {
+  const exportLyrics = async ({ plainText, syncedLrc, enhancedLrc, embedIntoTrack }) => {
     if (isExporting.value) return false
     const formats = []
 
@@ -15,6 +15,8 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
     if (syncedLrc) {
       formats.push('lrc')
     }
+
+    if (enhancedLrc) formats.push('elrc')
 
     if (embedIntoTrack) {
       formats.push('embedded')
@@ -28,7 +30,7 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
     isExporting.value = true
     const content = serializedLyricsfile.value
     try {
-      if (!await saveLyrics()) return false
+      if (!(await saveLyrics())) return false
       // Only library tracks can use embedIntoTrack
       const isLibraryTrack = audioSource.value?.type === 'library'
 
@@ -51,7 +53,9 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
       }
 
       if (succeeded.length > 0) {
-        toast.warning(`Export partially completed: ${failed.map(result => `${result.format}: ${result.status.message || result.status.type}`).join('; ')}`)
+        toast.warning(
+          `Export partially completed: ${failed.map(result => `${result.format}: ${result.status.message || result.status.type}`).join('; ')}`
+        )
         return false
       }
 

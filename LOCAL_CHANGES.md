@@ -4,7 +4,20 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.6+local.4`, based on upstream tag `2.2.0`.
+Local version: `2.2.6+local.5`, based on upstream tag `2.2.0`.
+
+## Optional Enhanced LRC export (2.2.6+local.5)
+
+- Export TXT, standard LRC and Enhanced LRC together without deleting another format.
+- ELRC is optional/off by default; Configuration/Common saves the default. Editor,
+  batch and Download auto-export offer the format. Queues capture submitted choices.
+- Preserve saved millisecond word starts, known ends, word silence and sentence gap
+  cues. Mixed line-only rows stay line-timed. Missing word timing skips ELRC;
+  invalid timing fails only ELRC, preserving existing files and other exports.
+- Migration 21 preserves existing settings and documents; preference writes are
+  transactional. Sidecars use staged verified replacement and existing safeguards.
+- Enhanced import and Jellyfin web karaoke display remain outside this export update.
+- GitHub publication remains paused. Update local install and both local Git backups.
 
 ## Saved Overlap Setting (2.2.6+local.2)
 

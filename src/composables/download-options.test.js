@@ -126,6 +126,7 @@ describe('shared Download targets', () => {
           autoExport: {
             plainText: false,
             syncedLrc: true,
+            enhancedLrc: false,
             embedIntoTrack: true,
           },
         },

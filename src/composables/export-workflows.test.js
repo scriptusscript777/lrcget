@@ -65,6 +65,7 @@ describe('submitted export choices', () => {
       autoExportEnabled: true,
       exportTxt: false,
       exportLrc: false,
+      exportElrc: false,
       exportEmbedded: true,
       skipTracksWithSyncedLyrics: true,
       skipTracksWithPlainLyrics: false,
@@ -73,6 +74,7 @@ describe('submitted export choices', () => {
     expect(downloader.downloadQueue.value[0].autoExport).toEqual({
       plainText: false,
       syncedLrc: false,
+      enhancedLrc: false,
       embedIntoTrack: true,
     })
     await state.openExportOptions()
@@ -179,9 +181,10 @@ describe('submitted export choices', () => {
         ? { id: args.trackId, title: 'Song', artist_name: 'Artist' }
         : { errors: 0, exported: 1, skipped: 0 }
     )
-    const choice = { plainText: true, syncedLrc: true, embedIntoTrack: true }
+    const choice = { plainText: true, syncedLrc: true, enhancedLrc: true, embedIntoTrack: true }
     exporter.addToQueue([1, 2], choice)
     choice.plainText = false
+    choice.enhancedLrc = false
     choice.embedIntoTrack = false
     exporter.addToQueue([3], choice)
     void exporter.exportNext()
@@ -189,10 +192,43 @@ describe('submitted export choices', () => {
     expect(
       invoke.mock.calls.filter(([name]) => name === 'export_track_lyrics').map(([, args]) => args)
     ).toEqual([
-      { trackId: 1, formats: ['txt', 'lrc', 'embedded'] },
-      { trackId: 2, formats: ['txt', 'lrc', 'embedded'] },
+      { trackId: 1, formats: ['txt', 'lrc', 'elrc', 'embedded'] },
+      { trackId: 2, formats: ['txt', 'lrc', 'elrc', 'embedded'] },
       { trackId: 3, formats: ['lrc'] },
     ])
+  })
+
+  it('accepts enhanced-only export and captures the download choice before later edits', async () => {
+    const state = await popupState()
+    const config = {
+      auto_export_enabled: true,
+      export_lrc: false,
+      export_txt: false,
+      export_elrc: true,
+      export_embedded: false,
+      try_embed_lyrics: false,
+      skip_tracks_with_synced_lyrics: false,
+      skip_tracks_with_plain_lyrics: false,
+    }
+    invoke.mockImplementation(async command => (command === 'get_track_ids' ? [7] : config))
+    await state.openExportOptions()
+    expect(state.canExport.value).toBe(true)
+    await state.openDownloadOptions()
+    expect(state.canDownload.value).toBe(true)
+    await state.downloadAllLyrics()
+    expect(invoke).toHaveBeenCalledWith(
+      'set_export_preferences',
+      expect.objectContaining({ exportElrc: true })
+    )
+    const queue = (await import('./downloader.js')).useDownloader().downloadQueue.value
+    expect(queue[0].autoExport).toEqual({
+      plainText: false,
+      syncedLrc: false,
+      enhancedLrc: true,
+      embedIntoTrack: false,
+    })
+    state.downloadDraft.value.enhancedLrc = false
+    expect(queue[0].autoExport.enhancedLrc).toBe(true)
   })
 
   it('shares only backend-confirmed preferences across consumers and preserves them on save error', async () => {

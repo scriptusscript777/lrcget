@@ -42,6 +42,8 @@ pub enum ExportFormat {
     Txt,
     /// Standard LRC format (.lrc)
     Lrc,
+    /// Enhanced LRC word timing (.elrc)
+    Elrc,
     /// Embedded in audio file metadata
     Embedded,
 }
@@ -176,6 +178,7 @@ pub fn export_track_format(
     match format {
         ExportFormat::Txt => export_txt(track, parsed),
         ExportFormat::Lrc => export_lrc(track, parsed),
+        ExportFormat::Elrc => export_elrc(track, parsed),
         ExportFormat::Embedded => export_embedded(track, parsed),
     }
 }
@@ -248,6 +251,38 @@ fn export_lrc(
     Ok(ExportResult {
         format: ExportFormat::Lrc,
         path: Some(lrc_path),
+        status: ExportStatus::Success,
+    })
+}
+
+fn export_elrc(
+    track: &PersistentTrack,
+    parsed: &ParsedLyricsfile,
+) -> Result<ExportResult, ExportError> {
+    let content = parsed
+        .enhanced_lyrics
+        .as_ref()
+        .map_err(|reason| ExportError::InvalidData(reason.clone()))?;
+    let Some(content) = content else {
+        return Ok(ExportResult {
+            format: ExportFormat::Elrc,
+            path: None,
+            status: ExportStatus::Skipped("no saved word timing available".into()),
+        });
+    };
+    let path = build_sidecar_path(&track.file_path, "elrc")?;
+    safe_replace(&path, |staged| {
+        fs::write(staged, content)?;
+        anyhow::ensure!(
+            fs::read(staged)? == content.as_bytes(),
+            "ELRC verification failed"
+        );
+        Ok(())
+    })
+    .map_err(|error| ExportError::WriteError(error.to_string()))?;
+    Ok(ExportResult {
+        format: ExportFormat::Elrc,
+        path: Some(path),
         status: ExportStatus::Success,
     })
 }
@@ -712,7 +747,7 @@ mod tests {
     }
 
     #[test]
-    fn txt_and_lrc_exports_coexist() {
+    fn txt_lrc_and_elrc_exports_coexist_and_preserve_existing_elrc_on_skip_or_error() {
         let directory = tempfile::tempdir().unwrap();
         let track = PersistentTrack {
             id: 1,
@@ -739,22 +774,38 @@ mod tests {
             duration: 10.0,
             instrumental: false,
         };
-        let parsed = ParsedLyricsfile {
-            plain_lyrics: Some("reference words".into()),
-            synced_lyrics: Some("[00:01.00]reference words".into()),
-            is_instrumental: false,
-        };
+        let parsed = crate::lyricsfile::parse_lyricsfile(
+            "metadata: {}\nplain: reference words\nlines:\n  - text: reference words\n    start_ms: 1000\n    end_ms: 2000\n    words:\n      - text: 'reference '\n        start_ms: 1000\n        end_ms: 1500\n      - text: words\n        start_ms: 1500\n        end_ms: 2000\n",
+        ).unwrap();
         export_txt(&track, &parsed).unwrap();
         export_lrc(&track, &parsed).unwrap();
+        export_elrc(&track, &parsed).unwrap();
+        let elrc = directory.path().join("song.elrc");
+        let expected = "[00:01.000]<00:01.000>reference <00:01.500>words<00:02.000>\n[00:02.000]\n";
+        assert_eq!(fs::read_to_string(&elrc).unwrap(), expected);
         assert_eq!(
             fs::read_to_string(directory.path().join("song.txt")).unwrap(),
             "reference words"
         );
-        export_txt(&track, &parsed).unwrap();
         assert_eq!(
             fs::read_to_string(directory.path().join("song.lrc")).unwrap(),
-            "[00:01.00]reference words"
+            "[00:01.000]reference words\n[00:02.000]\n"
         );
+        let mut unavailable = parsed;
+        unavailable.enhanced_lyrics = Ok(None);
+        assert!(matches!(
+            export_elrc(&track, &unavailable).unwrap().status,
+            ExportStatus::Skipped(_)
+        ));
+        assert_eq!(fs::read_to_string(&elrc).unwrap(), expected);
+        unavailable.enhanced_lyrics = Err("invalid timing".into());
+        assert!(matches!(
+            export_elrc(&track, &unavailable),
+            Err(ExportError::InvalidData(_))
+        ));
+        export_txt(&track, &unavailable).unwrap();
+        export_lrc(&track, &unavailable).unwrap();
+        assert_eq!(fs::read_to_string(&elrc).unwrap(), expected);
     }
 
     #[test]
@@ -815,6 +866,7 @@ mod tests {
     #[test]
     fn test_generate_txt_content() {
         let parsed = ParsedLyricsfile {
+            enhanced_lyrics: Ok(None),
             plain_lyrics: Some("Line 1\nLine 2".to_string()),
             synced_lyrics: None,
             is_instrumental: false,
@@ -825,6 +877,7 @@ mod tests {
 
         // Instrumental should return None
         let instrumental = ParsedLyricsfile {
+            enhanced_lyrics: Ok(None),
             plain_lyrics: None,
             synced_lyrics: None,
             is_instrumental: true,
@@ -835,6 +888,7 @@ mod tests {
     #[test]
     fn test_generate_lrc_content() {
         let parsed = ParsedLyricsfile {
+            enhanced_lyrics: Ok(None),
             plain_lyrics: None,
             synced_lyrics: Some("[00:12.00]Line 1".to_string()),
             is_instrumental: false,
@@ -845,6 +899,7 @@ mod tests {
 
         // Instrumental should return special marker
         let instrumental = ParsedLyricsfile {
+            enhanced_lyrics: Ok(None),
             plain_lyrics: None,
             synced_lyrics: None,
             is_instrumental: true,

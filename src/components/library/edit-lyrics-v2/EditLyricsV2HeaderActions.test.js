@@ -22,6 +22,7 @@ describe('editor export defaults', () => {
     const input = id => html.match(new RegExp(`<input[^>]*id="${id}"[^>]*>`))[0]
     expect(input('export-synced-lrc')).toContain('checked')
     expect(input('export-plain-text')).not.toContain('checked')
+    expect(input('export-enhanced-lrc')).not.toContain('checked')
     expect(input('embed-into-track')).not.toContain('checked')
     const { invoke } = await import('@tauri-apps/api/core')
     expect(invoke).not.toHaveBeenCalled()
@@ -49,6 +50,7 @@ describe('editor export defaults', () => {
     expect(emit).toHaveBeenCalledWith('export', {
       plainText: false,
       syncedLrc: true,
+      enhancedLrc: false,
       embedIntoTrack: true,
     })
     state.embedIntoTrack.value = false
@@ -80,9 +82,42 @@ describe('editor export defaults', () => {
     expect(emit).toHaveBeenCalledWith('export', {
       plainText: false,
       syncedLrc: true,
+      enhancedLrc: false,
       embedIntoTrack: false,
     })
     state.exportSyncedLrc.value = false
     expect(state.hasSelectedExportFormat.value).toBe(false)
   })
+})
+
+it('loads the optional enhanced default and permits ELRC-only export without resetting menu edits', async () => {
+  const { invoke } = await import('@tauri-apps/api/core')
+  invoke.mockResolvedValue({ export_elrc: true, try_embed_lyrics: false })
+  let state
+  const emit = vi.fn()
+  await renderToString(
+    createSSRApp({
+      setup() {
+        state = HeaderActions.setup(
+          { isDirty: false, isExporting: false },
+          { expose: vi.fn(), emit }
+        )
+        return () => null
+      },
+    })
+  )
+  await state.refreshEmbedConfig()
+  expect(state.exportEnhancedLrc.value).toBe(true)
+  state.exportSyncedLrc.value = false
+  expect(state.hasSelectedExportFormat.value).toBe(true)
+  state.handleExportClick()
+  expect(emit).toHaveBeenCalledWith('export', {
+    plainText: false,
+    syncedLrc: false,
+    enhancedLrc: true,
+    embedIntoTrack: false,
+  })
+  state.exportEnhancedLrc.value = false
+  await state.refreshEmbedConfig()
+  expect(state.exportEnhancedLrc.value).toBe(false)
 })

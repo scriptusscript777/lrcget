@@ -315,3 +315,44 @@ sentence in its header.
 
 ![Word Timing without duplicate header text, light](screenshots/current/marker-color-word-timing-light.png)
 ![Word Timing without duplicate header text, dark](screenshots/current/marker-color-word-timing-dark.png)
+
+
+## Export Word Timing as Enhanced LRC
+
+Enhanced LRC export is optional. Enable **Configuration → Common → Export Enhanced
+LRC by default**, or select **Word-timed lyrics (.elrc)** in the arrow menu beside
+Save. Select Plain TXT and Synced LRC too when you want all three files:
+`Song.txt`, `Song.lrc`, and `Song.elrc`, beside `Song.mp3` (or other audio).
+The same optional choice is available in batch Export and Download auto-export.
+Normal LRC stays separate and never receives inline word tags.
+
+Confirm your edits, including word timing, before exporting. ELRC uses the saved
+word starts and ends, with millisecond precision; it preserves known word silence
+and the existing sentence gap cues. Mixed documents keep line-only sentences as
+normal timed lines. It does not analyze the recording or create accurate karaoke
+timing automatically. No saved word timing means ELRC is skipped; invalid saved
+word timing reports an error. Both cases leave an older ELRC untouched, and the
+other selected formats still run. Check partial-export messages.
+
+Example of a saved word-timed line:
+
+```text
+[00:01.000]<00:01.000>Hello <00:01.500>world<00:02.000>
+[00:02.000]
+```
+
+The final inline tag marks the word end; the empty timestamped line clears the
+sentence. Existing rules avoid unnecessary sentence clear cues for gaps under
+250 ms. TXT remains plain text, and standard LRC remains line-timed.
+
+Keep the local saved lyric document to reopen and edit word timing. ELRC file
+import/scanning is not added by this update. Karaoke display depends on the
+player. Jellyfin 10.11's server parser supports word cues, but this update does not add
+word highlighting to Jellyfin's web player. Keep standard LRC for line playback.
+Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.0/MediaBrowser.Providers/Lyric/LrcLyricParser.cs),
+[Jellyfin web lyric player](https://github.com/jellyfin/jellyfin-web/blob/v10.11.0/src/controllers/lyrics.js).
+
+![TXT, LRC and Enhanced LRC exports, light](screenshots/current/enhanced-lrc-export-light.png)
+![TXT, LRC and Enhanced LRC exports, dark](screenshots/current/enhanced-lrc-export-dark.png)
+![Optional Enhanced LRC default, light](screenshots/current/enhanced-lrc-settings-light.png)
+![Optional Enhanced LRC default, dark](screenshots/current/enhanced-lrc-settings-dark.png)
