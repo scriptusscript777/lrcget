@@ -181,7 +181,9 @@ guide images from historical release-note screenshots.
 
 ## Scope and Verification
 
-This fork's distributed/tested package is Linux amd64. Historical upstream
+This fork's current packages are Linux amd64 Debian/AppImage; see
+[package instructions](packages.md). The Windows MSI build is prepared and awaits
+a Windows builder. Historical upstream
 Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.

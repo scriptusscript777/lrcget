@@ -36,3 +36,5 @@ perfect synchronization or lyric display on every player.
 Screenshots were recaptured from .20 with temporary fixture lyrics and waveform data.
 The guides describe the current build; historical release notes describe their
 own versions, including behavior since changed.
+
+See [local package instructions](packages.md) for Debian/AppImage use and the Windows MSI build prerequisites.

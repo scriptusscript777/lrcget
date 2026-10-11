@@ -109,8 +109,10 @@ sudo apt install ./LRCGET_2.2.6+local.8_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
-Only Linux amd64 is built/tested for this fork release; Windows/macOS installers
-below belong to upstream and do not include these enhancements.
+The current Linux amd64 Debian package and AppImage include these enhancements.
+[Package instructions](docs/packages.md) cover the AppImage and the prepared Windows
+MSI build. A Windows builder is still required; upstream Windows/macOS links
+below do not include these enhancements.
 No additional WAV conversion, Whisper or Demucs installation is needed.
 
 ### Current Interface

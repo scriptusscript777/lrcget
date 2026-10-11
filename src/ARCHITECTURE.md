@@ -360,3 +360,14 @@ Saved targets survive collapse/reopen; labels use horizontal CSS sticky position
 for zoomed readability. Reset submits an empty word array instead of undefined.
 No backend or lyric export format changes; the existing 40 ms player updates
 drive auditions. Saved timestamp precision is independent of audition latency.
+
+### Additional local packages (2.2.6+local.8)
+
+AppImage uses the existing Linux bundle configuration and unchanged identifier.
+Windows MSI tooling under packaging/windows is platform-gated, generates a
+temporary Windows config overlay, uses locked frontend dependencies and the
+x86_64-pc-windows-msvc target, checks each command and delivers one installer plus
+SHA256. The default x64 UpgradeCode is pinned; patch*1000+local maps the app
+revision into the MSI's third version field. It embeds WebView2's downloader,
+not the whole offline runtime. Windows execution requires a Windows builder.
+No app UI/schema/export changes are required by this packaging update.

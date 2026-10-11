@@ -1,3 +1,9 @@
+## Additional 2.2.6+local.8 packages
+
+Linux AppImage plus Windows 11 MSI build tooling/source archive. MSI build awaits
+a Windows builder; no Windows installer or Windows validation is claimed.
+Upgrade identity and numeric MSI version mapping preserve future local upgrades.
+
 ## 2.2.6+local.8
 
 Exclusive phrase/word loops, selected-word precision controls, saved gap handling,
