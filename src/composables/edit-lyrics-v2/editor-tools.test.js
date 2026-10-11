@@ -505,6 +505,30 @@ const player = () => {
 }
 
 describe('phrase loop', () => {
+  it('loops a final lyric to the recording end when its end is inferred', async () => {
+    const { state, controls, scope } = player()
+    controls.selectedLineIndex.value = 1
+    controls.syncedLines.value[1].end_ms = null
+    expect(state.loopRange.value).toEqual({ start: 4, end: 10 })
+    await state.toggleLoop()
+    expect(state.loopEnabled.value).toBe(true)
+    expect(controls.seek).toHaveBeenLastCalledWith(4)
+    controls.status.value = 'playing'
+    controls.progress.value = 10
+    await nextTick()
+    expect(controls.seek).toHaveBeenLastCalledWith(4)
+    scope.stop()
+  })
+  it('keeps an inferred final loop unavailable until duration is known', () => {
+    const { state, controls, scope } = player()
+    controls.selectedLineIndex.value = 1
+    controls.syncedLines.value[1].end_ms = null
+    controls.duration.value = 0
+    expect(state.loopRange.value).toBeNull()
+    controls.duration.value = 10
+    expect(state.loopRange.value).toEqual({ start: 4, end: 10 })
+    scope.stop()
+  })
   it.each(['paused', 'playing'])(
     'continues from the current point when Play sees %s',
     async status => {

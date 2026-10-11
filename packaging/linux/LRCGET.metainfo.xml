@@ -14,31 +14,41 @@
   <description>
     <p>Mass-download LRC synced lyrics for your offline music library.</p>
     <p>LRCGET will scan all files in your chosen directory for music files, download lyrics as LRC files with matching names, and save them alongside your music files.</p>
-    <p>LRCGET is the official client of the LRCLIB service.</p>
+    <p>This independently maintained fork adds waveform and timed-lyric editing improvements by Rick Lidgett. The original LRCGET project and authors retain their credits and license.</p>
   </description>
   <screenshots>
     <screenshot type="default">
-      <image>https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/01.png</image>
-      <caption>Music playing with synced lyrics</caption>
+      <image>https://raw.githubusercontent.com/scriptusscript777/lrcget/local/editor-lrc-default/docs/screenshots/current/editor-default-light.png</image>
+      <caption>Timed lyrics with precise marker and playback clocks</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/02.png</image>
-      <caption>Music playing with expanded synced lyrics viewer and export options dropdown</caption>
+      <image>https://raw.githubusercontent.com/scriptusscript777/lrcget/local/editor-lrc-default/docs/screenshots/current/editor-follow-dark.png</image>
+      <caption>Expanded word timing in dark mode</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/03.png</image>
-      <caption>Downloading lyrics</caption>
+      <image>https://raw.githubusercontent.com/scriptusscript777/lrcget/local/editor-lrc-default/docs/screenshots/current/marker-overlap-light.png</image>
+      <caption>Live warning before crossing another lyric boundary</caption>
     </screenshot>
     <screenshot>
-      <image>https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/04.png</image>
-      <caption>Editing lyrics</caption>
+      <image>https://raw.githubusercontent.com/scriptusscript777/lrcget/local/editor-lrc-default/docs/screenshots/current/export-options-light.png</image>
+      <caption>Remembered lyric export choices</caption>
     </screenshot>
   </screenshots>
-  <url type="homepage">https://lrclib.net/</url>
-  <url type="vcs-browser">https://github.com/tranxuanthang/lrcget</url>
-  <url type="bugtracker">https://github.com/tranxuanthang/lrcget/issues</url>
+  <url type="homepage">https://github.com/scriptusscript777/lrcget</url>
+  <url type="vcs-browser">https://github.com/scriptusscript777/lrcget</url>
+  <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.2+local.1" date="2026-10-11">
+      <description>
+        <ul>
+          <li>Added live neighboring-lyric boundary warnings while preserving intentional overlaps.</li>
+          <li>Fixed looping a final lyric with an inferred recording-end boundary.</li>
+          <li>Includes labeled marker/playback clocks, range highlighting, click playback and zoom continuity.</li>
+          <li>Updated illustrated features and editing guides for this independent fork.</li>
+        </ul>
+      </description>
+    </release>
     <release version="2.2.0" date="2026-09-06">
       <description>
         <ul>

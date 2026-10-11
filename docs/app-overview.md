@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.1+local.1. **Editing developer:** Rick Lidgett
+**Version:** 2.2.2+local.1. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -82,6 +82,9 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
   previews, and clips at the viewport edges without blocking clicks or handles.
 - Dragging/nudging creates a preview, not a saved edit. **Apply Markers** commits
   both boundaries as one undoable edit. **Cancel** discards the preview.
+- Crossing a neighboring lyric boundary shows a warning with the distance in
+  seconds, including zoomed/off-screen previews. Intentional overlaps are allowed;
+  applying a marker edit never moves neighboring lyrics automatically.
 
 ![Zoomed playback following without requiring a loop](screenshots/current/waveform-follow-dark.png)
 
@@ -167,9 +170,9 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.1-local.1.md).
-Screenshots use demonstration fixtures, not personal recordings. Waveform playback
-and marker images were captured from 2.2.1; unchanged tools retain earlier images.
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.2-local.1.md).
+All current screenshots were freshly captured from 2.2.2 using demonstration
+fixtures, not personal recordings.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 
@@ -180,10 +183,11 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The .20 code run passed 369 frontend and 52 Rust tests, with one optional fixture
-test ignored, plus browser and isolated native checks. ESLint had no errors and
-74 existing warnings; Ruff reported 11 existing findings in the unchanged Python
-test-data generator. Those are test results, not guarantees of perfect lyrics.
+The 2.2.2 code run passed 389 frontend tests, scoped ESLint/Prettier, Cargo check
+and Debian packaging, plus browser and isolated native checks. The earlier .20
+Rust run passed 52 tests with one optional fixture test ignored; Rust implementation
+was unchanged in this update. Ruff reported 11 existing findings in the unchanged
+Python test-data generator. These results do not guarantee perfect lyrics.
 
 ## Automatic External LRC Detection
 

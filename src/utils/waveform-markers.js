@@ -1,3 +1,25 @@
+// Warn about crossed neighboring boundaries without forbidding intentional overlaps.
+export function waveformNeighborWarnings(times, previousLine, selectedStartMs, nextStartMs) {
+  if (!Number.isFinite(times?.startMs) || !Number.isFinite(times?.endMs)) return []
+  const warnings = []
+  const previousEnd = previousLine?.end_ms ?? selectedStartMs
+  if (
+    Number.isFinite(previousLine?.start_ms) &&
+    previousLine.start_ms >= 0 &&
+    Number.isFinite(previousEnd) &&
+    previousEnd > previousLine.start_ms &&
+    times.startMs < previousEnd
+  )
+    warnings.push(
+      `Start passes previous lyric end by ${((previousEnd - times.startMs) / 1000).toFixed(3)} s`
+    )
+  if (Number.isFinite(nextStartMs) && nextStartMs >= 0 && times.endMs > nextStartMs)
+    warnings.push(
+      `End passes next lyric start by ${((times.endMs - nextStartMs) / 1000).toFixed(3)} s`
+    )
+  return warnings
+}
+
 // Start edits translate words, not neighboring lines; end edits never truncate words.
 export function waveformMarkerBounds(line, endMs, durationMs) {
   if (

@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.1+local.1`, based on upstream tag `2.2.0`.
+Local version: `2.2.2+local.1`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -382,3 +382,14 @@ The selected marker interval has a 10% accent tint behind the waveform. It follo
 live previews, clips to the viewport, hides invalid/off-screen ranges and ignores
 pointer input. Standing maintenance/version/upgrade requirements are recorded in
 AGENTS.md for future updates.
+
+## Neighboring Lyric Warnings and Loop Consistency (2.2.2+local.1)
+
+The live waveform marker pair warns when its start passes the previous lyric end
+or its end passes the next lyric start. Warnings use crossed-boundary distances,
+skip untimed/malformed neighbors, and use the saved current start for an inferred
+previous end. They survive zoom/pan and update with drags/nudges; intentional
+overlaps remain allowed. Apply never moves adjacent lyrics; Cancel and selection
+changes retain existing draft reset behavior. The final lyric's inferred Loop end
+now falls back to known recording duration, matching the waveform. Actionable
+recommendations are implemented rather than left as future ideas.

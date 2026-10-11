@@ -148,6 +148,69 @@ async function mount(initial = {}) {
 }
 
 describe('waveform controls and states', () => {
+  it('warns during a crossing preview through zoom/pan and allows Apply without changing neighbors', async () => {
+    const previous = { start_ms: 500, end_ms: 1000 }
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 1,
+      previousLine: previous,
+      nextLineStartMs: 3000,
+    })
+    const key = (boundary, value) =>
+      state
+        .byId(`waveform-marker-${boundary}`)
+        .props.onKeydown({ key: value, preventDefault: vi.fn() })
+    expect(state.byId('waveform-marker-warning')).toBeUndefined()
+    key('start', 'ArrowLeft')
+    key('end', 'ArrowRight')
+    await nextTick()
+    expect(state.text(state.byId('waveform-marker-warning'))).toContain(
+      'previous lyric end by 0.100 s'
+    )
+    expect(state.text(state.byId('waveform-marker-warning'))).toContain(
+      'next lyric start by 0.100 s'
+    )
+    state.byLabel('Zoom in waveform').props.onClick()
+    await nextTick()
+    state.byId('waveform-pan').props.onInput({ target: { value: 60 } })
+    await nextTick()
+    expect(state.text(state.byId('waveform-marker-warning'))).toContain('next lyric start')
+    expect(state.props.selectedLine.end_ms).toBe(3000)
+    state.byId('waveform-apply-markers').props.onClick()
+    expect(state.updateMarkers).toHaveBeenCalledWith(
+      expect.objectContaining({ startMs: 900, endMs: 3100 })
+    )
+    expect(state.props.previousLine).toEqual(previous)
+    expect(state.props.nextLineStartMs).toBe(3000)
+    await nextTick()
+    expect(state.byId('waveform-marker-warning')).toBeUndefined()
+  })
+
+  it('clears an overlap warning on cancel and when switching to an untimed selection', async () => {
+    const state = await mount({
+      selectedLine: { start_ms: 1000, end_ms: 3000 },
+      selectedLineIndex: 0,
+      nextLineStartMs: 3000,
+    })
+    const nudge = () =>
+      state
+        .byId('waveform-marker-end')
+        .props.onKeydown({ key: 'ArrowRight', preventDefault: vi.fn() })
+    nudge()
+    await nextTick()
+    expect(state.byId('waveform-marker-warning')).toBeDefined()
+    state.byId('waveform-cancel-markers').props.onClick()
+    await nextTick()
+    expect(state.byId('waveform-marker-warning')).toBeUndefined()
+    nudge()
+    await nextTick()
+    state.props.selectedLine = { start_ms: null, end_ms: null }
+    state.props.selectedLineIndex = 1
+    await nextTick()
+    expect(state.byId('waveform-marker-warning')).toBeUndefined()
+    expect(state.updateMarkers).not.toHaveBeenCalled()
+  })
+
   it('clips marker shading to the viewport and clears it for off-screen or untimed selections', async () => {
     const state = await mount({
       selectedLine: { start_ms: 20000, end_ms: 90000 },

@@ -47,7 +47,8 @@ export function useEditLyricsV2Playback({
       ? preview.endMs
       : Number.isFinite(line.end_ms)
         ? line.end_ms
-        : syncedLines.value[index + 1]?.start_ms
+        : (syncedLines.value[index + 1]?.start_ms ??
+          (Number.isFinite(duration?.value) && duration.value > 0 ? duration.value * 1000 : null))
     if (!Number.isFinite(startMs) || startMs < 0 || !Number.isFinite(endMs) || endMs <= startMs)
       return null
     const start = Math.max(0, startMs / 1000 - boundedContext(loopLeadSeconds.value))

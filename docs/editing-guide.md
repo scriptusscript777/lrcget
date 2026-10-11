@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.1+local.1`.
+Rick Lidgett's enhanced LRCGET build, `2.2.2+local.1`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -333,8 +333,8 @@ timestamps. Apply Markers confirms both; Cancel restores the original pair.
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Marker-time and preview screenshots are native 2.2.1 captures using demonstration
-lyrics and generated silent audio. Unchanged tools retain earlier fixture images.
+All current screenshots were refreshed for 2.2.2. Native marker/playback captures
+use demonstration lyrics and generated silent audio; other tools use browser fixtures.
 A waveform shows the full mix; it is not proof of exact singer alignment.
 
 ### Waveform Playhead Continuity (.22)
@@ -359,6 +359,25 @@ Untimed or invalid selections do not display a marker pair.
 A faint shaded range joins the two markers. It follows their preview positions
 and clips to the visible view; it disappears for an entirely off-screen phrase
 or invalid/untimed selection. The overlay does not intercept clicks or drags.
+
+### Neighboring Lyrics and Final-Line Loops (2.2.2)
+
+A warning appears when Start passes the previous lyric's end or End passes the
+next lyric's start. It updates during drag/nudge previews and remains visible
+through zooming/panning. Exact adjoining boundaries show no warning. Untimed
+neighbors are skipped; a previous lyric without an explicit end uses the saved
+current start as its inferred end. Distances describe crossed boundaries, not
+the duration of every possible overlapping phrase. Correct accidental crossings
+before Apply, or keep intentional overlaps. Neighboring lyrics are never moved
+automatically. Cancel restores the saved pair and its warning state.
+
+For the last lyric without an explicit end, Loop uses the known recording end,
+matching the waveform's inferred-end behavior. Without a known duration, that
+loop stays unavailable until loading completes.
+
+![Next lyric crossing in light mode](screenshots/current/marker-overlap-light.png)
+![Next lyric crossing in dark mode](screenshots/current/marker-overlap-dark.png)
+![Previous lyric crossing](screenshots/current/marker-previous-overlap-dark.png)
 
 ![Start and End in light mode](screenshots/current/waveform-marker-times-light.png)
 ![Start and End in dark mode](screenshots/current/waveform-marker-times-dark.png)

@@ -141,6 +141,13 @@
         </button>
       </div>
     </div>
+    <p
+      v-if="neighborWarnings.length"
+      class="py-1 text-xs text-amber-800 dark:text-amber-300"
+      data-testid="waveform-marker-warning"
+    >
+      {{ neighborWarnings.join(' · ') }}. Intentional overlap is allowed.
+    </p>
     <div ref="plot" class="relative h-[110px] min-w-0" @wheel="panAtWheel">
       <span
         v-if="markerHighlight"
@@ -266,7 +273,7 @@ import {
   syncedEditorShortcutBindings,
   wordTimingShortcutBindings,
 } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
-import { waveformMarkerBounds } from '@/utils/waveform-markers.js'
+import { waveformMarkerBounds, waveformNeighborWarnings } from '@/utils/waveform-markers.js'
 import { useAudioWaveform } from '@/composables/edit-lyrics-v2/useAudioWaveform.js'
 import {
   aggregatePeaks,
@@ -287,6 +294,7 @@ const props = defineProps({
   selectedLine: { type: Object, default: null },
   selectedLineIndex: { type: Number, default: -1 },
   nextLineStartMs: { type: Number, default: null },
+  previousLine: { type: Object, default: null },
   timingStepMs: { type: Number, default: 100 },
 })
 const emit = defineEmits(['seek', 'update-markers', 'preview-markers', 'marker-editing-change'])
@@ -379,6 +387,16 @@ const boundsForTimes = times => {
   return waveformMarkerBounds(line, times.endMs, waveform.value.duration * 1000)
 }
 const markerBounds = computed(() => boundsForTimes(previewTimes.value))
+const neighborWarnings = computed(() =>
+  markerBounds.value
+    ? waveformNeighborWarnings(
+        previewTimes.value,
+        props.previousLine,
+        props.selectedLine?.start_ms,
+        props.nextLineStartMs
+      )
+    : []
+)
 const markerHighlight = computed(() => {
   if (!markerBounds.value || viewport.value.span <= 0) return null
   const left = Math.max(0, timeToPixel(previewTimes.value.startMs / 1000, viewport.value, 100))

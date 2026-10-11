@@ -62,3 +62,9 @@ so it upgrades in place. Publish the installer/checksum and link the illustrated
 guides in the creator notification. Report existing check findings separately
 from new ones, and never claim a blocked server backup, install or upstream PR
 was completed.
+
+When Rick asks for recommendations/improvements in the active task, implement
+actionable improvements within its scope and verify them rather than leaving
+them as a list of future suggestions. Keep the result focused on lyric editing,
+clear controls and realistic user flows; report dependencies that cannot be
+completed without external access or a broader upstream port.

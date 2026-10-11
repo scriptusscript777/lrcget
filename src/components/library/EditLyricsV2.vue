@@ -92,6 +92,7 @@
           "
           :selected-line-index="selectedSyncedLineIndex"
           :next-line-start-ms="syncedLines[selectedSyncedLineIndex + 1]?.start_ms"
+          :previous-line="syncedLines[selectedSyncedLineIndex - 1]"
           :timing-step-ms="timingStepMs"
           @update-markers="updateWaveformMarkers"
           @preview-markers="markerPreview = $event"

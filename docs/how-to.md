@@ -1,16 +1,16 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.1+local.1**.
+For Rick Lidgett's LRCGET **2.2.2+local.1**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.1-local.1).
+1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.2-local.1).
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.1+local.1_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.1+local.1_amd64.deb
+sha256sum -c LRCGET_2.2.2+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.2+local.1_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -111,6 +111,9 @@ recording duration. Moving the playhead does not change marker times.
    unchanged until confirmation.
    The time row is labeled **Preview** and updates while you drag or nudge.
    The highlight follows the preview and clips to the visible waveform.
+   If a boundary crosses the previous lyric's end or next lyric's start, a
+   warning shows the distance in seconds. Correct an accidental crossing with
+   a nudge/drag or Cancel; intentional overlaps may still be applied.
 5. Click **Apply Markers** to commit both boundaries as one undoable edit.
    Click **Cancel** to retain the original pair.
 
@@ -118,6 +121,9 @@ recording duration. Moving the playhead does not change marker times.
 
 ![Start and End marker times in light mode](screenshots/current/waveform-marker-times-light.png)
 ![Start and End marker times in dark mode](screenshots/current/waveform-marker-times-dark.png)
+
+![Warning before extending into the next lyric](screenshots/current/marker-overlap-light.png)
+![Warning before moving into the previous lyric](screenshots/current/marker-previous-overlap-dark.png)
 
 Escape during dragging cancels that drag; otherwise it cancels the preview.
 Changing phrases or closing discards unconfirmed previews. Apply before Save/export.
