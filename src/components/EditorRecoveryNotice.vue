@@ -1,10 +1,10 @@
 <template>
   <div
     v-if="drafts.length"
-    class="shrink-0 flex flex-wrap items-center gap-2 bg-amber-100 px-3 py-1 text-xs text-amber-900 dark:bg-amber-950 dark:text-yellow-300"
+    class="min-w-0 shrink-0 flex flex-wrap items-center gap-2 bg-amber-100 pl-10 pr-3 py-1 text-xs text-amber-900 dark:bg-amber-950 dark:text-yellow-300"
     role="status"
   >
-    <span
+    <span class="min-w-0 max-w-full break-words"
       >Unfinished lyrics: {{ current?.source?.audioSource?.title || 'lyrics draft'
       }}{{ drafts.length > 1 ? ` (+${drafts.length - 1} more)` : '' }}</span
     >

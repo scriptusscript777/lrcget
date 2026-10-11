@@ -346,3 +346,6 @@ A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
 Synced mode opens a warning and choices to return to the last save or clear
 all timing while keeping text. Cancel keeps work; confirmation affects only
 this song. See the [illustrated reset guide](docs/master-reset.md).
+
+Word preview matches live sentence-row highlighting; the recovery notice leaves
+space beside the main debug icon. See the [editing guide](docs/editing-guide.md).

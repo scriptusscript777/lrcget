@@ -59,7 +59,8 @@
       :line="selectedLine"
       :all-lines="modelValue"
       :line-index="selectedLineIndex"
-      :progress-ms="playbackTimeMs"
+      :progress-ms="progressMs"
+      :preview-range="markerPreview?.line === selectedLine && markerPreview?.lineIndex === selectedLineIndex ? markerPreview : null"
       :playing="waveformPlaying"
     />
     <SyncedWordTimingLane

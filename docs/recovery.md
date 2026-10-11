@@ -61,3 +61,9 @@ last accepted word timing.
 
 ![Recovered unfinished editing — light](screenshots/current/editor-recovery-restored-light.png)
 ![Recovered unfinished editing — dark](screenshots/current/editor-recovery-restored-dark.png)
+
+The main-window unfinished-lyrics notice starts to the right of the debug icon;
+long song names wrap within the available width.
+
+![Recovery notice spacing](screenshots/current/recovery-notice-aligned-light.png)
+![Recovery notice in dark mode](screenshots/current/recovery-notice-aligned-dark.png)

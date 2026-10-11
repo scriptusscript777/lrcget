@@ -508,7 +508,9 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 
 1. In **Synced**, select a sentence and enable **Word preview** beside Word timing.
 2. Press Play. The readable text highlights one word at a time using the current
-   word boundaries. Boxes can stay collapsed; resizing is unnecessary.
+   word starts and the same playback clock as the sentence timeline. Live word
+   timing edits update both views immediately; no Sync or Save is needed to see
+   an accepted boundary adjustment. Boxes can stay collapsed; resizing is unnecessary.
 3. **Follow Lyrics** is enabled when you turn on the preview. It follows the playing
    sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
    when you want to continue through the song.
@@ -518,8 +520,13 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 5. Turn off Word preview to hide it. No timestamps change and nothing is saved or
    exported by this toggle. Preview state lasts for this editor session.
 
-Explicit word ends clear the highlight during gaps. If no word timing is saved,
-the preview labels its evenly spaced estimate; it cannot infer actual singing.
+Like the sentence timeline, Word preview holds the current word highlight until
+the next timed word starts, then clears at the sentence end (including waveform
+marker previews). Word end values remain unchanged for timing edits, looping and
+export. Actual word starts are used even when the sentence end is inferred from
+the next sentence. Partial timing keeps existing starts; untimed words stay
+unhighlighted. With no word timing, preview labels its evenly spaced estimate;
+it cannot infer actual singing.
 To create accurate word timing, expand Word timing and use Sync word against
 playback, then save. The readable preview remains independent of box size/zoom.
 
@@ -613,3 +620,6 @@ this song. See the [illustrated reset guide](master-reset.md).
 
 ![Word timing with Sentence loop selected](screenshots/current/selected-sentence-loop-light.png)
 ![Sentence loop in dark mode](screenshots/current/selected-sentence-loop-dark.png)
+
+![Word preview follows live timing edits](screenshots/current/word-preview-live-edit-light.png)
+![Live word preview in dark mode](screenshots/current/word-preview-live-edit-dark.png)

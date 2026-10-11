@@ -326,7 +326,8 @@ Vorbis lyric comments; it does not use ID3 frame types.
 
 `WordPlaybackPreview.vue` is independent of timeline box geometry. The Synced
 editor's Word preview toggle enables Follow Lyrics; existing editing/Loop guards
-hold selection. The preview reads word timing and respects explicit ends/gaps,
+hold selection. The editor preview shares `utils/word-playback.js` with sentence rows: highlights
+follow word starts through the next timed word, within sentence/preview bounds,
 wraps long text, and scrolls only its own text container while playing. Unsaved
 word timing is shown as an evenly spaced estimate. Preview emits no edits or
 seeks, and Loop keeps its existing playback/selection behavior.
@@ -455,3 +456,11 @@ props and toggle-sentence-loop flow through SyncedLyricsEditor to the existing
 phrase playback toggle. Both phrase/sentence buttons share the same state and
 availability; the playback composable keeps modes exclusive. No new persistence
 or export behavior is introduced.
+
+Editor Word preview and sentence rows receive the same rounded source-matching
+playback clock and share active-word/line rules. Live word edits remain reactive.
+The preview reads real starts directly, supports inferred sentence ends and
+preserves partial timing rather than redistributing edited starts. Completely
+untimed words use labeled estimates. End data still controls loops/export.
+The main recovery notice reserves left space for the fixed debug icon and wraps
+long titles; it does not change recovery storage or Resume behavior.

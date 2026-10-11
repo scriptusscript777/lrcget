@@ -573,3 +573,9 @@ Recovery maintenance: removed the routine protected-work status text at Rick's r
 
 Word timing: added Loop sentence beside Loop word, reusing existing phrase
 loop state/range and keeping the two modes exclusive. Version remains 2.2.7.
+
+Maintenance: Word preview and sentence rows share word-start highlight rules
+and the same playback clock. Live edits, inferred sentence ends, partial timing
+and waveform marker bounds are handled consistently. Word end values remain
+unchanged for editing, loops and exports. Main recovery notice clears the debug
+icon and wraps long titles. Version remains 2.2.7.

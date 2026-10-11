@@ -126,3 +126,9 @@ graying using safe temporary fixtures. See docs/master-reset.md.
 Sentence-loop maintenance captures: `selected-sentence-loop-{light,dark}.png`
 show the adjacent word/sentence controls and active sentence mode. Current word,
 reset and recovery screenshots were refreshed using isolated browser fixtures.
+
+`word-preview-live-edit-{light,dark}.png` shows preview/row parity after a live
+word start adjustment without Sync/Save. `recovery-notice-aligned-{light,dark}.png`
+uses the actual recovery notice with a fixture debug-icon footprint; normal and
+320px layouts were checked. Fixtures use mocked native playback and isolated
+browser storage. They do not edit personal music or the installed app profile.

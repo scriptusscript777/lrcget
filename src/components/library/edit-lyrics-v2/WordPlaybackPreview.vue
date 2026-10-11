@@ -25,17 +25,25 @@
       >
     </div>
     <p
-      v-if="previewWords.length && !hasSavedTiming"
+      v-if="previewWords.length && !hasSavedTiming && !hasPartialTiming"
       class="text-xs text-neutral-600 dark:text-neutral-400"
     >
       Evenly spaced preview. Sync words to match the recording before exporting word timing.
+    </p>
+    <p v-if="hasPartialTiming" class="text-xs text-neutral-600 dark:text-neutral-400">
+      Partial word timing. Untimed words stay unhighlighted until synced.
     </p>
   </div>
 </template>
 
 <script setup>
 import { computed, nextTick, ref, watch } from 'vue'
-import { ensureLineWords, hasValidWords } from '@/utils/word-tokenizer.js'
+import {
+  distributeWordTimings,
+  generateWordsFromLine,
+  hasValidWords,
+} from '@/utils/word-tokenizer.js'
+import { activeWordIndex } from '@/utils/word-playback.js'
 
 const props = defineProps({
   line: { type: Object, default: null },
@@ -43,29 +51,45 @@ const props = defineProps({
   lineIndex: { type: Number, default: -1 },
   progressMs: { type: Number, default: 0 },
   playing: { type: Boolean, default: false },
+  previewRange: { type: Object, default: null },
 })
-const hasSavedTiming = computed(() => hasValidWords(props.line))
-const previewWords = computed(() => {
-  if (!props.line || !Number.isFinite(props.line.start_ms) || !Number.isFinite(props.line.end_ms))
-    return []
-  const words = ensureLineWords(props.line, props.allLines, props.lineIndex).words || []
-  return words.map((word, index) => {
-    const next = words[index + 1]?.start_ms ?? props.line.end_ms
-    const end = Math.min(Number.isFinite(word.end_ms) ? word.end_ms : next, next, props.line.end_ms)
-    return {
-      text: word.text,
-      active:
-        Number.isFinite(props.progressMs) &&
-        props.progressMs >= word.start_ms &&
-        props.progressMs < end,
-    }
+const hasSavedTiming = computed(
+  () => hasValidWords(props.line) && props.line.words.every(word => Number.isFinite(word.start_ms))
+)
+const hasPartialTiming = computed(
+  () =>
+    hasValidWords(props.line) &&
+    !hasSavedTiming.value &&
+    props.line.words.some(word => Number.isFinite(word.start_ms))
+)
+const inferredEndMs = computed(() => props.allLines[props.lineIndex + 1]?.start_ms)
+const previewLine = computed(() => {
+  const line = props.line
+  if (!line) return null
+  // Use live edited word data directly, even while only some words have timings.
+  if (hasSavedTiming.value || hasPartialTiming.value) return line
+  const endMs = line.end_ms ?? inferredEndMs.value
+  if (!Number.isFinite(line.start_ms) || !Number.isFinite(endMs) || endMs <= line.start_ms)
+    return null
+  const words = hasValidWords(line) ? line.words : generateWordsFromLine(line)
+  return { ...line, words: distributeWordTimings(words, line.start_ms, endMs) }
+})
+const activeIndex = computed(() =>
+  activeWordIndex(previewLine.value, props.progressMs, {
+    previewRange: props.previewRange,
+    inferredEndMs: inferredEndMs.value,
   })
-})
+)
+const previewWords = computed(() =>
+  (previewLine.value?.words ?? []).map((word, index) => ({
+    text: word.text,
+    active: index === activeIndex.value,
+  }))
+)
 // The text view wraps independently of timeline zoom; never changes word boundaries.
 const textContainer = ref(null)
-const activeIndex = computed(() => previewWords.value.findIndex(word => word.active))
 watch(
-  activeIndex,
+  [activeIndex, () => props.line, () => props.playing],
   async () => {
     if (!props.playing) return
     await nextTick()
@@ -78,6 +102,6 @@ watch(
       container.scrollTop = top + active.offsetHeight - container.clientHeight
     }
   },
-  { flush: 'post' }
+  { flush: 'post', immediate: true }
 )
 </script>
