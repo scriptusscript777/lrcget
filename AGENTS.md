@@ -39,7 +39,8 @@ driver.quit()                                       # always end the session
 For every code update, review control flow and bugs, fix introduced issues,
 and run checks appropriate to the language (including Ruff for Python and
 cargo check/tests for Rust). Distinguish existing findings from new ones.
-Update current documentation and release versions; capture current screenshots
+Update current documentation; change the version only when Rick explicitly
+requests it. Capture current screenshots
 for visible behavior changes. Preserve historical release notes.
 Commit completed work locally and publish to Rick's GitHub fork and configured
 local Git server without rewriting history. Never push local releases to upstream.
@@ -48,12 +49,17 @@ linking the fork/release and a focused upstream pull request. Keep unrelated
 existing PRs unchanged, and avoid duplicate notifications. Report actual outcomes
 and any blocked installation or publication steps.
 
-For future application updates, advance the main version number rather than
-incrementing a `+local.xx` suffix. Rick explicitly requested this on 2026-10-11;
-use plain release versions such as `2.2.7` for the next application update.
+Do not change application/release version numbers unless Rick explicitly asks.
+Rick requested this freeze on 2026-10-11, superseding automatic version increments.
+Continue the remaining maintenance steps for each code update: logic/bug review,
+appropriate checks, documentation/screenshots, Debian builds and local Git/server
+backups. Existing GitHub, Windows and AppImage holds remain in effect.
+When Rick requests a version bump, advance the main version, not `+local.xx`.
 Rick prefers decimal carry: 2.2.1 through 2.2.9, then 2.3.0; 2.9.9 advances to
-3.0.0. Existing historical versions/artifacts retain their original names.
-Keep package/application identity unchanged so upgrades replace the installed app.
+3.0.0. Preserve existing historical artifact names and package/application identity.
+When rebuilding an unchanged version, preserve prior installer/source artifacts
+under dated backup names before replacing current artifacts. Use an explicit
+same-version reinstall when needed; do not invent a suffix to force an upgrade.
 
 Apply this maintenance workflow every time this app is modified. Update feature
 lists, how-tos and release notes together; capture fresh light/dark screenshots
