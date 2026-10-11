@@ -1,4 +1,4 @@
-# Complete feature index — 2.2.6+local.9
+# Complete feature index — 2.2.6+local.10
 
 This describes the current fork, including the original library/downloader and
 Rick's editor enhancements. See the [illustrated overview](app-overview.md),
@@ -14,7 +14,7 @@ Rick's editor enhancements. See the [illustrated overview](app-overview.md),
 | Waveform             | Cached peaks, click to seek/play, playhead position, point/button zoom, panning, playback following, visible time range                | [Waveform](how-to.md#zoom-and-follow-without-looping)                    |
 | Sentence markers     | Exact Start/End readouts, shaded range, provisional previews, separate Sync confirmation, Cancel, overlap warnings                     | [Markers](how-to.md#place-precise-markers-and-preview-before-confirming) |
 | Overlap prevention   | Enabled by default; saved Configuration setting; status shown when disabled; intentional overlap opt-out                               | [Reference](editing-guide.md)                                            |
-| Word editing         | Word selection, independent lane zoom, spelling edit, split/merge, drag boundaries, millisecond Start/End, manual sequential Sync word | [Word timing](how-to.md#edit-individual-words)                           |
+| Word editing         | Word selection, independent lane zoom, read-only wording, safe drag boundaries, millisecond Start/End, manual sequential Sync word | [Word timing](how-to.md#edit-individual-words)                           |
 | Single-word audition | Persistent Loop word, selected-word bounds, Lead-in/Tail, precise 10/25/50/100 ms editing, no advance while syncing a looped word      | [Word loops](how-to.md#loop-one-word-for-precise-timing)                 |
 | Readable playback    | Read-only word follow-along without resizing timing boxes; gaps respected; does not change the document or seek audio                  | [Preview](how-to.md#review-words-without-resizing-timing-boxes)          |
 | Phrase playback      | Selected-phrase loop, preview bounds, slower playback, volume, persistent loop mode across selection changes                           | [Loops](how-to.md#loop-between-the-markers)                              |

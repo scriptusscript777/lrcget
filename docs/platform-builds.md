@@ -1,4 +1,4 @@
-# All platform builds and limitations — 2.2.6+local.9
+# All platform builds and limitations — 2.2.6+local.10
 
 The same source supplies the platform targets below. Available Tauri targets are
 not equivalent to packages verified for this fork. Use [packages](packages.md)
@@ -7,7 +7,7 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 
 | Build                               | Build host and command                                                                   | Status and limitations                                                                                                                                                                                                                                                                        |
 | ----------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Debian x64                          | Linux: `npm run tauri -- build --bundles deb`                                            | Built on this Mint PC; earlier local.8 is installed. Installing local.9 requires local administrator authentication; package `lrcget` upgrades in place. Current build requires glibc 2.39+. Other Debian desktops are not all verified.                                                                                                                                      |
+| Debian x64                          | Linux: `npm run tauri -- build --bundles deb`                                            | Current Debian-only local.10 build on this Mint PC; see package/review installation status. Package `lrcget` upgrades in place. Current build requires glibc 2.39+. Other Debian desktops are not all verified.                                                                                                                                      |
 | AppImage x64                        | Linux: `npm run tauri -- build --bundles appimage`                                       | Built, checksum verified and native startup tested in a temporary profile. Linux x64, glibc 2.39+. FUSE 2 or extract-and-run required. Not a universal build for older Linux releases.                                                                                                        |
 | Windows MSI x64                     | Windows with MSVC/SDK: `./packaging/windows/build-msi.ps1`                               | Native build/test workflow provided. See package status for actual results. Fixed upgrade identity, three-field version mapping, unsigned package unless signing configured. WebView2 bootstrapper may download the runtime. Windows 11 desktop/older-version upgrade checks remain separate. |
 | Windows NSIS x64                    | Windows with MSVC/SDK: `npm run tauri -- build --bundles nsis`                           | Alternative `.exe` installer target; not built/tested for this release. Do not assume its upgrade/version behavior equals the reviewed MSI overlay.                                                                                                                                           |
@@ -15,6 +15,9 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 | macOS DMG/bundle                    | macOS: `npm run tauri -- build --target aarch64-apple-darwin` (or `x86_64-apple-darwin`) | Upstream platform target; no current fork artifact/test. Needs Apple toolchain, target architecture, signing/notarization for distribution and native audio tests.                                                                                                                            |
 | Linux/Windows ARM or Windows 32-bit | Appropriate native/cross toolchain and explicit Rust target                              | Not provided or verified for this release. x64 installers do not establish native ARM/32-bit compatibility.                                                                                                                                                                                   |
 | Linux development                   | `npm run tauri dev`                                                                      | Native debug app; not a redistributable installer. `npm run dev` alone is only the frontend server.                                                                                                                                                                                           |
+
+AppImage and Windows changes/builds are deferred until Rick requests them.
+Older artifacts remain available but do not include local.10 fixes.
 
 ## MSI and Linux cross tools
 

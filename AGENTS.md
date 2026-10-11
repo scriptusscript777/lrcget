@@ -78,3 +78,13 @@ history/release tags, and `lrcget-installers/` with the installer/checksum. Upda
 `lrcget-backup-README.md`, commit only these paths and push/verify `main`. Preserve
 unrelated projects and older installers. A separate server `rick/lrcget` repository
 is not needed.
+
+### Current platform focus
+
+Rick explicitly deferred all AppImage and Windows builds/updates until he asks
+to resume them. Current fixes target the Debian package only. When Windows work
+resumes, include Defender definition/availability checks and scans of the MSI
+and payload, isolated installed-app launch checks, publisher/version/upgrade
+identity inspection and diagnostics. Signing and Windows 11 desktop validation
+remain distinct from a Windows Server CI run; do not claim SmartScreen reputation
+or Smart App Control compatibility from antivirus scans alone.

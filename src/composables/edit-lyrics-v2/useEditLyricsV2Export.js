@@ -29,13 +29,11 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
 
     isExporting.value = true
     const content = serializedLyricsfile.value
+    const targetTrackId = audioSource.value?.type === 'library' ? audioSource.value.id : null
     try {
       if (!(await saveLyrics())) return false
-      // Only library tracks can use embedIntoTrack
-      const isLibraryTrack = audioSource.value?.type === 'library'
-
       const results = await invoke('export_lyrics', {
-        trackId: isLibraryTrack ? audioSource.value.id : null,
+        trackId: targetTrackId,
         formats,
         lyricsfile: content,
       })

@@ -117,7 +117,8 @@ export const resetShortcutOverride = shortcutId => {
     return true
   }
 
-  const { [shortcutId]: _removed, ...nextOverrides } = shortcutOverrides
+  const nextOverrides = { ...shortcutOverrides }
+  delete nextOverrides[shortcutId]
   shortcutOverrides = nextOverrides
   persistShortcutOverrides(shortcutOverrides)
   return true
@@ -362,11 +363,6 @@ export const wordTimingShortcutBindings = [
     id: 'resetSeparatorCursor',
     defaultKeys: ['X'],
     description: 'Reset separator cursor to second divider',
-  }),
-  createShortcutBinding({
-    id: 'deleteSelectedSeparators',
-    defaultKeys: ['Delete'],
-    description: 'Delete selected separators to merge adjacent words',
   }),
 ]
 

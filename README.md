@@ -19,14 +19,14 @@ Read-only **Word preview** follows playback/Loop without resizing timing boxes.
 MP3 embedding supports standard USLT/SYLT plus optional ELRC text and word timing;
 see the [embedding and preview guide](docs/how-to.md#embed-standard-and-enhanced-lyrics-in-mp3).
 
-**Version 2.2.6+local.9 (local update)** adds waveform and lyric-editing tools, safer exports,
+**Version 2.2.6+local.10 (local update)** adds waveform and lyric-editing tools, safer exports,
 and startup/F5 library refresh. This is an independent fork release, not an
 official upstream release. GitHub publication of 2.2.6 is paused; its installer
 is available locally in Rick’s Downloads folder.
 
 [Download the last published Linux amd64 installer (2.2.5)](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.5-local.1/LRCGET_2.2.5%2Blocal.1_amd64.deb)
 | [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.5-local.1)
-| [Current marker/word/export update](docs/releases/2.2.6-local.9.md)
+| [Current marker/word/export update](docs/releases/2.2.6-local.10.md)
 | [Editing guide](docs/editing-guide.md)
 | [Illustrated overview](docs/app-overview.md)
 | [Step-by-step how-tos](docs/how-to.md)
@@ -65,8 +65,9 @@ is available locally in Rick’s Downloads folder.
   playback scrolling and readable highlighting in light/dark themes.
 - **Follow Lyrics** advances the word boxes during playback; selecting a line
   pins it for editing. Marker previews and loops keep the selected line fixed.
-- Correct a selected word using **Edit word**, F2 or right-click. Enter applies,
-  Escape cancels, and Undo restores it; spelling changes preserve timestamps.
+- Timing-only word boxes: drag dividers or use precise Start/End fields. Edit
+  wording in the sentence row. Sync preserves the next manually adjusted time;
+  unsafe playback stamps are rejected without collapsing neighboring words.
 - Cleaner word editing without the pink selection bubble; canceled drags do
   not commit timing edits, and keyboard shortcuts respect the active tool.
 - Synced LRC export selected by default, optional embedded lyrics, and safer
@@ -104,8 +105,8 @@ The 2.2.6 installer and checksum are in Rick’s local Downloads folder. Close
 LRCGET, then run there:
 
 ```bash
-sha256sum -c LRCGET_2.2.6+local.9_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.6+local.9_amd64.deb
+sha256sum -c LRCGET_2.2.6+local.10_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.6+local.10_amd64.deb
 ```
 
 The unsigned Debian package upgrades the existing app, not a second copy.
@@ -121,9 +122,9 @@ The main phrase editor stays uncluttered; **Word timing** opens the optional
 individual-word tools. Pending marker edits show **Apply Markers** and **Cancel**;
 the lyric-row timestamps stay unchanged until you apply the pair.
 
-![Follow Lyrics advances the word boxes during playback](docs/screenshots/current/follow-lyrics-light.png)
+![Follow Lyrics advances the word boxes during playback](docs/screenshots/current/editor-follow-light.png)
 
-![Correct one word without changing its timestamps](docs/screenshots/current/edit-word-light.png)
+![Timing-only word boxes with protected Sync](docs/screenshots/current/word-timing-protected-light.png)
 
 ![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/current/marker-preview-light.png)
 
@@ -136,9 +137,9 @@ the lyric-row timestamps stay unchanged until you apply the pair.
 <details>
 <summary>Dark theme and expanded word-timing tools</summary>
 
-![Dark theme: Follow Lyrics](docs/screenshots/current/follow-lyrics-dark.png)
+![Dark theme: Follow Lyrics](docs/screenshots/current/editor-follow-dark.png)
 
-![Dark theme: direct word correction](docs/screenshots/current/edit-word-dark.png)
+![Dark theme: safe word timing](docs/screenshots/current/word-timing-protected-dark.png)
 
 ![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/current/marker-preview-dark.png)
 

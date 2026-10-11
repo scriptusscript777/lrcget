@@ -1,237 +1,46 @@
 <template>
   <div
-    ref="segmentElement"
-    v-tooltip="editorTooltip(`${word.text}: ${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)}. F2 or right-click edits spelling; double-click splits the word.`)"
+    v-tooltip="
+      editorTooltip(
+        `${word.text}: ${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)}. Drag its divider to adjust timing; edit wording in the sentence row.`
+      )
+    "
     class="word-segment absolute flex items-center justify-center py-1 text-sm select-none h-full overflow-visible"
     :class="segmentClass"
     :style="segmentStyle"
-    :title="`${word.text} (${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)}) - F2 or right-click to edit word`"
+    :title="`${word.text} (${formatTimestampMs(startMs)} - ${formatTimestampMs(endMs)})`"
     tabindex="0"
     role="button"
-    :aria-label="`Word ${wordIndex + 1}: ${word.text.trim()}. Edit with F2`"
+    :aria-label="`Select word ${wordIndex + 1}: ${word.text.trim()}`"
     :aria-pressed="selected"
     @focus="emit('select-word', wordIndex)"
     @click.stop="emit('select-word', wordIndex)"
-    @contextmenu.prevent.stop="requestWordEdit"
-    @keydown.f2.prevent.stop="requestWordEdit"
-    @keydown.enter.prevent.stop="requestWordEdit"
-    @mouseenter="handleSegmentHover"
-    @mousemove="handleSegmentHover"
-    @mouseleave="handleSegmentLeave"
-    @dblclick.stop="handleSegmentDoubleClick"
+    @keydown.enter.prevent.stop="emit('select-word', wordIndex)"
+    @keydown.space.prevent.stop="emit('select-word', wordIndex)"
+    @dblclick.stop="emit('select-word', wordIndex)"
   >
-    <div
-      ref="previewContainerElement"
-      class="relative flex items-center justify-start w-full h-full min-w-0"
-    >
-      <span
-        ref="textElement"
-        class="sticky left-1 z-10 block max-w-full overflow-hidden whitespace-nowrap text-clip"
-      >
-        {{ word.text }}
-      </span>
-
-      <div
-        v-if="hoverPreview"
-        class="absolute inset-y-0 pointer-events-none z-20"
-        :style="{ left: `${hoverPreview.splitX}px` }"
-      >
-        <div
-          class="absolute top-0 bottom-0 w-[2px] -translate-x-1/2 bg-neutral-500/80 dark:bg-neutral-200/90 ring-1 ring-neutral-500/20"
-        />
-      </div>
-    </div>
-
+    <span class="sticky left-1 z-10 block max-w-full overflow-hidden whitespace-nowrap text-clip">{{
+      word.text
+    }}</span>
   </div>
 </template>
 
 <script setup>
 import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
-
-const emit = defineEmits(['split-at', 'select-word', 'edit-word'])
-
+const emit = defineEmits(['select-word'])
 const props = defineProps({
   selected: Boolean,
-  editing: Boolean,
-  word: {
-    type: Object,
-    required: true,
-  },
-  wordIndex: {
-    type: Number,
-    required: true,
-  },
-  startMs: {
-    type: Number,
-    default: 0,
-  },
-  endMs: {
-    type: Number,
-    default: 0,
-  },
-  lineStartMs: {
-    type: Number,
-    default: 0,
-  },
-  lineEndMs: {
-    type: Number,
-    default: 0,
-  },
-  timelineWidth: {
-    type: Number,
-    default: 0,
-  },
-  progressMs: {
-    type: Number,
-    default: 0,
-  },
+  word: { type: Object, required: true },
+  wordIndex: { type: Number, required: true },
+  startMs: { type: Number, default: 0 },
+  endMs: { type: Number, default: 0 },
+  lineStartMs: { type: Number, default: 0 },
+  lineEndMs: { type: Number, default: 0 },
+  timelineWidth: { type: Number, default: 0 },
+  progressMs: { type: Number, default: 0 },
 })
-
-const segmentElement = ref(null)
-const previewContainerElement = ref(null)
-const textElement = ref(null)
-const hoverPreview = ref(null)
-
-const splitTextByGrapheme = text => {
-  if (!text || typeof text !== 'string') {
-    return []
-  }
-
-  if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-    const segmenter = new Intl.Segmenter('und', { granularity: 'grapheme' })
-    return Array.from(segmenter.segment(text), item => item.segment)
-  }
-
-  return Array.from(text)
-}
-
-const measureTextWidth = (text, font) => {
-  if (typeof document === 'undefined') {
-    return 0
-  }
-
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-
-  if (!context) {
-    return 0
-  }
-
-  context.font = font
-  return context.measureText(text).width
-}
-
-const getSplitPreview = clientX => {
-  if (!segmentElement.value || !previewContainerElement.value || !textElement.value) {
-    return null
-  }
-
-  const text = props.word.text || ''
-  const graphemes = splitTextByGrapheme(text)
-  if (graphemes.length <= 1) {
-    return null
-  }
-
-  const segmentRect = segmentElement.value.getBoundingClientRect()
-  const previewContainerRect = previewContainerElement.value.getBoundingClientRect()
-  const textRect = textElement.value.getBoundingClientRect()
-  if (segmentRect.width <= 0 || previewContainerRect.width <= 0 || textRect.width <= 0) {
-    return null
-  }
-
-  const textNode = textElement.value.firstChild
-  if (textNode && textNode.nodeType === Node.TEXT_NODE) {
-    const pointerClientX = Math.max(textRect.left, Math.min(textRect.right, clientX))
-    const range = document.createRange()
-    const boundaries = []
-
-    for (let index = 1; index < graphemes.length; index++) {
-      const offset = graphemes.slice(0, index).join('').length
-
-      range.setStart(textNode, 0)
-      range.setEnd(textNode, offset)
-
-      const boundaryRect = range.getBoundingClientRect()
-      const boundaryClientX = boundaryRect.right
-
-      if (!Number.isFinite(boundaryClientX)) {
-        continue
-      }
-
-      boundaries.push({
-        splitIndex: index,
-        measuredWidth: Math.max(0, boundaryClientX - textRect.left),
-        splitX: boundaryClientX - previewContainerRect.left,
-      })
-    }
-
-    if (boundaries.length > 0) {
-      let nearestBoundary = boundaries[0]
-      let nearestDistance = Math.abs(pointerClientX - (previewContainerRect.left + nearestBoundary.splitX))
-
-      for (const boundary of boundaries.slice(1)) {
-        const distance = Math.abs(pointerClientX - (previewContainerRect.left + boundary.splitX))
-        if (distance < nearestDistance) {
-          nearestBoundary = boundary
-          nearestDistance = distance
-        }
-      }
-
-      const splitRatio = Math.max(0, Math.min(1, nearestBoundary.measuredWidth / textRect.width))
-
-      return {
-        splitIndex: nearestBoundary.splitIndex,
-        splitRatio,
-        splitX: nearestBoundary.splitX,
-      }
-    }
-  }
-
-  const font = getComputedStyle(textElement.value).font
-  const graphemeWidths = graphemes.map(grapheme => measureTextWidth(grapheme, font))
-  const totalMeasuredWidth = graphemeWidths.reduce((sum, width) => sum + width, 0)
-
-  if (totalMeasuredWidth <= 0) {
-    return null
-  }
-
-  const cumulativeBoundaries = []
-  let runningWidth = 0
-  for (let index = 0; index < graphemeWidths.length - 1; index++) {
-    runningWidth += graphemeWidths[index]
-    cumulativeBoundaries.push({
-      splitIndex: index + 1,
-      measuredWidth: runningWidth,
-    })
-  }
-
-  const pointerOffset = Math.max(0, Math.min(textRect.width, clientX - textRect.left))
-  const scaledOffset = (pointerOffset / textRect.width) * totalMeasuredWidth
-
-  let nearestBoundary = cumulativeBoundaries[0]
-  let nearestDistance = Math.abs(scaledOffset - nearestBoundary.measuredWidth)
-
-  for (const boundary of cumulativeBoundaries.slice(1)) {
-    const distance = Math.abs(scaledOffset - boundary.measuredWidth)
-    if (distance < nearestDistance) {
-      nearestBoundary = boundary
-      nearestDistance = distance
-    }
-  }
-
-  const splitX =
-    (nearestBoundary.measuredWidth / totalMeasuredWidth) * textRect.width +
-    (textRect.left - previewContainerRect.left)
-
-  return {
-    splitIndex: nearestBoundary.splitIndex,
-    splitRatio: nearestBoundary.measuredWidth / totalMeasuredWidth,
-    splitX,
-  }
-}
-
 const isPlaying = computed(() => {
   // The word is playing when: startMs <= currentTime < endMs
   return props.progressMs >= props.startMs && props.progressMs < props.endMs
@@ -254,7 +63,6 @@ const segmentClass = computed(() => {
     'border-neutral-300',
     'dark:border-neutral-600',
   ]
-
 })
 
 const segmentStyle = computed(() => {
@@ -276,42 +84,12 @@ const segmentStyle = computed(() => {
     transition: 'none',
   }
 })
-
-const handleSegmentDoubleClick = event => {
-  if (props.editing) return
-  const splitPreview = getSplitPreview(event.clientX)
-  if (!splitPreview) {
-    return
-  }
-
-  emit('split-at', {
-    wordIndex: props.wordIndex,
-    splitIndex: splitPreview.splitIndex,
-    splitRatio: splitPreview.splitRatio,
-  })
-}
-
-const handleSegmentHover = event => {
-  hoverPreview.value = props.editing ? null : getSplitPreview(event.clientX)
-}
-
-const requestWordEdit = () => {
-  emit('select-word', props.wordIndex)
-  emit('edit-word', props.wordIndex)
-}
-
-const handleSegmentLeave = () => {
-  hoverPreview.value = null
-}
-
 </script>
-
 <style scoped>
 .word-segment {
   user-select: none;
   touch-action: none;
 }
-
 .word-segment[aria-pressed='true'],
 .word-segment:focus-visible {
   outline: 2px solid currentColor;

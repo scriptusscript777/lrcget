@@ -10,7 +10,7 @@ afterEach(() => {
 })
 
 describe('optional word timing keyboard scope', () => {
-  it('routes Delete to words only when expanded and cleans up hidden word shortcuts', () => {
+  it('does not delete word boundaries while timing is expanded and cleans up hidden shortcuts', () => {
     setShortcutOverride('deleteSelectedLine', ['Delete'])
     const listeners = { document: new Set(), window: new Set() }
     for (const owner of ['document', 'window'])
@@ -57,7 +57,7 @@ describe('optional word timing keyboard scope', () => {
       listeners.window.forEach(handler => handler(event))
     }
     send('Delete')
-    expect(deleteWords).toHaveBeenCalledOnce()
+    expect(deleteWords).not.toHaveBeenCalled()
     expect(deleteLine).not.toHaveBeenCalled()
     send('z')
     expect(syncWord).toHaveBeenCalledOnce()
@@ -69,7 +69,7 @@ describe('optional word timing keyboard scope', () => {
     expect(syncWord).toHaveBeenCalledOnce()
     send('Delete')
     expect(deleteLine).toHaveBeenCalledOnce()
-    expect(deleteWords).toHaveBeenCalledOnce()
+    expect(deleteWords).not.toHaveBeenCalled()
     synced.unbindSyncedHotkeys()
     expect(listeners.window.size).toBe(0)
     expect(listeners.document.size).toBe(0)

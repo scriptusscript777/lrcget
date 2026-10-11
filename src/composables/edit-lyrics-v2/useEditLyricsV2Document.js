@@ -393,12 +393,27 @@ export function useEditLyricsV2Document({
     return Math.round(progress.value * 1000)
   }
 
-  const updateLineWords = ({ lineIndex, words, lineStartMs }) => {
+  const applyLineWords = ({ lineIndex, words, lineStartMs }) => {
     const line = syncedLines.value[lineIndex]
     if (!Number.isInteger(lineIndex) || !line || !Array.isArray(words)) return false
     if (
       words.some(word => !word || typeof word.text !== 'string') ||
       (words.length && words.map(word => word.text).join('') !== line.text)
+    )
+      return false
+    if (
+      words.some((word, index) => {
+        const previous = words[index - 1]
+        const next = words[index + 1]
+        return (
+          !Number.isFinite(word.start_ms) ||
+          (previous && word.start_ms <= previous.start_ms) ||
+          (word.end_ms != null &&
+            (!Number.isFinite(word.end_ms) ||
+              word.end_ms <= word.start_ms ||
+              (next && word.end_ms > next.start_ms)))
+        )
+      })
     )
       return false
     const nextLine = {
@@ -409,6 +424,12 @@ export function useEditLyricsV2Document({
     if (!validTimingChange(lineIndex, nextLine)) return false
     withUpdatedLine(lineIndex, () => nextLine)
     return true
+  }
+
+  const updateLineWords = payload => {
+    const accepted = applyLineWords(payload)
+    if (typeof payload.onResult === 'function') payload.onResult(accepted)
+    return accepted
   }
 
   const syncLineToCurrentProgress = (lineIndex, markerMs) => {
@@ -664,9 +685,6 @@ export function useEditLyricsV2Document({
         audioSource.value?.duration ??
         null,
     }
-
-    console.log(lyricsfileDocument.value)
-    console.log(trackData)
 
     return (
       serializeLyricsfile({

@@ -83,8 +83,6 @@
       @play-line-at-offset="handlePlayLineAtOffset"
       @select-next-line="selectLine(selectedLineIndex + 1)"
       @editing-change="wordEditing = $event"
-      @word-text-editing-start="followLyrics = false"
-      @edit-word-text="emit('edit-word-text', $event)"
     />
 
     <div
@@ -291,7 +289,6 @@ const emit = defineEmits([
   'editing-state-change',
   'update:words',
   'word-timing-edited',
-  'edit-word-text',
   'update-line-text',
   'mark-as-instrumental',
 ])
@@ -576,8 +573,8 @@ const handleEditingTextUpdate = value => {
   editingText.value = value
 }
 
-const handleWordsUpdate = ({ lineIndex, words, lineStartMs }) => {
-  emit('update:words', { lineIndex, words, lineStartMs })
+const handleWordsUpdate = payload => {
+  emit('update:words', payload)
 }
 
 const handleWordTimingEdited = ({ lineIndex, startMs }) => {

@@ -80,3 +80,20 @@ frontend opens without touching the live lyrics database; no music is configured
 `appimage-startup.png` was refreshed using the native local.9 AppImage and a
 separate temporary XDG profile. Production frontend rendering and database startup
 passed. Both native startup checks left the installed local.8 profile unchanged.
+
+## Debian 2.2.6+local.10 captures
+
+`word-timing-protected-*` shows timing-only word boxes and an explained unsafe
+Sync refusal. `selected-word-loop-*` shows precise fields, independent lane zoom
+and word-loop controls with no inline spelling editor. `enhanced-import-*` was
+recaptured after real Vue ELRC replacement confirmation. Both themes use mocked
+native commands and temporary lyric fixtures, with no personal music writes.
+`debian-startup.png` is refreshed from the actual Debian local.10 executable with
+an isolated XDG profile. Earlier unchanged screenshots retain their provenance;
+AppImage/Windows artifacts and captures were not updated for local.10.
+
+The broader 18 editor/word zoom/navigation/import/export/untimed light/dark guide
+views were also refreshed from local.10. `word-preview-loop-zoom-*` was refreshed
+with the read-only follow-along and current timing-only lane. The older standalone
+`edit-word-*` captures illustrate a retired control and are kept for historical
+notes; current guides use protected word timing images instead.

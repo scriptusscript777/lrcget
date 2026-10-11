@@ -13,7 +13,7 @@ function setup() {
     },
     removeEventListener: (name, handler) => listeners.get(name)?.delete(handler),
   })
-  const update = vi.fn()
+  const update = vi.fn(payload => payload.onResult?.(true))
   const replay = vi.fn()
   const words = ref([
     { text: 'first ', start_ms: 1000 },
@@ -44,14 +44,14 @@ function setup() {
 }
 
 describe('word boundary pointer lifecycle', () => {
-  it('does not overwrite sentence lead-in when syncing a later word', () => {
+  it('keeps sentence markers fixed when syncing any word', () => {
     const fixture = setup()
     fixture.state.selectedBoundaryIndex.value = 1
     expect(fixture.state.syncSelectedBoundary(2200)).toBe(true)
     expect(fixture.update.mock.calls[0][0].lineStartMs).toBeUndefined()
     fixture.state.selectedBoundaryIndex.value = 0
     expect(fixture.state.syncSelectedBoundary(1200)).toBe(true)
-    expect(fixture.update.mock.calls[1][0].lineStartMs).toBe(1200)
+    expect(fixture.update.mock.calls[1][0].lineStartMs).toBeUndefined()
   })
   it.each([null, NaN, Infinity, -1, undefined])(
     'rejects unavailable playback %s without advancing or changing words',
@@ -106,7 +106,6 @@ describe('word boundary pointer lifecycle', () => {
   })
 })
 
-
 it('dragging preserves explicit neighboring word ends and silence gaps', () => {
   const fixture = setup()
   fixture.words.value[0].end_ms = 1800
@@ -119,4 +118,81 @@ it('dragging preserves explicit neighboring word ends and silence gaps', () => {
   fixture.send('pointermove', { clientX: 150 })
   fixture.send('pointerup', { clientX: 150 })
   expect(fixture.update.mock.calls[1][0].words[1].start_ms).toBe(2299)
+})
+
+it('does not squeeze or move neighboring words when playback lies outside a selected word', () => {
+  const f = setup()
+  f.state.selectedBoundaryIndex.value = 1
+  expect(f.state.syncSelectedBoundary(1000)).toBe(false)
+  expect(f.update).not.toHaveBeenCalled()
+  expect(f.words.value.map(word => word.start_ms)).toEqual([1000, 2000])
+  expect(f.state.selectedBoundaryIndex.value).toBe(1)
+})
+it('selects a dragged divider and keeps its accepted time on the next Sync instead of stamping stale playback', () => {
+  const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
+  f.start()
+  expect(f.state.selectedBoundaryIndex.value).toBe(1)
+  f.send('pointermove', { clientX: 120 })
+  f.send('pointerup')
+  expect(f.words.value[1].start_ms).toBe(2200)
+  expect(f.state.syncSelectedBoundary(1000)).toBe(true)
+  expect(f.words.value[1].start_ms).toBe(2200)
+  expect(f.update).toHaveBeenCalledOnce()
+})
+it('does not advance or replay a rejected document update', () => {
+  const f = setup()
+  f.update.mockImplementation(payload => payload.onResult(false))
+  expect(f.state.syncSelectedBoundary(1200)).toBe(false)
+  expect(f.state.selectedBoundaryIndex.value).toBe(0)
+  f.start()
+  f.send('pointermove', { clientX: 120 })
+  f.send('pointerup')
+  expect(f.replay).not.toHaveBeenCalled()
+})
+
+it('blocks sync and navigation during a pending or active drag', () => {
+  const f = setup()
+  f.start()
+  expect(f.state.syncSelectedBoundary(2200)).toBe(false)
+  expect(f.state.selectPreviousBoundary()).toBe(false)
+  f.send('pointermove', { clientX: 120 })
+  expect(f.state.syncSelectedBoundary(2200)).toBe(false)
+  expect(f.state.selectPreviousBoundary()).toBe(false)
+  f.state.resetBoundarySelection()
+  expect(f.state.selectedBoundaryIndex.value).toBe(1)
+  expect(f.update).not.toHaveBeenCalled()
+})
+
+it('distinguishes its accepted document refresh from an external edit', () => {
+  const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    expect(f.state.consumeOwnWordUpdate(f.words.value)).toBe(true)
+    payload.onResult(true)
+  })
+  f.start()
+  f.send('pointermove', { clientX: 120 })
+  f.send('pointerup')
+  expect(f.state.isDraggingBoundary.value).toBe(true)
+  f.state.selectBoundary(0)
+  expect(f.state.selectedBoundaryIndex.value).toBe(1)
+  expect(f.state.consumeOwnWordUpdate([{ text: 'changed', start_ms: 1000 }])).toBe(false)
+})
+
+it('keeps an accepted numeric edit on Sync and invalidates it after Undo', () => {
+  const f = setup()
+  f.words.value[0].start_ms = 1200
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.syncSelectedBoundary(1800)).toBe(true)
+  expect(f.update).not.toHaveBeenCalled()
+  expect(f.state.selectedBoundaryIndex.value).toBe(0)
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  f.words.value[0].start_ms = 1000
+  expect(f.state.hasAdjustedBoundary.value).toBe(false)
+  expect(f.state.syncSelectedBoundary(1500)).toBe(true)
+  expect(f.update.mock.calls[0][0].words[0].start_ms).toBe(1500)
 })

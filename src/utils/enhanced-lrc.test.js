@@ -38,6 +38,37 @@ describe('enhanced lyrics integration', () => {
     expect(restored.syncedLines[0].end_ms).toBe(2500)
     expect(normalizeLrclibLyrics({ lyricsfile: saved, hasWordSync: false }).hasWordSync).toBe(true)
   })
+  it('reimports native TXT/LRC/ELRC outputs without inventing or losing their supported timing', () => {
+    const txt = parseImportedLyrics('reference words', 'song.txt')
+    const lrc = parseImportedLyrics('[00:01.000]reference words\n[00:02.000]\n', 'song.lrc')
+    const elrc = parseImportedLyrics(
+      '[00:01.000]<00:01.000>reference <00:01.500>words<00:02.000>\n[00:02.000]\n',
+      'song.elrc'
+    )
+    expect(txt.kind).toBe('plain')
+    expect(lrc.lines[0]).toEqual({
+      text: 'reference words',
+      start_ms: 1000,
+      end_ms: 2000,
+      words: [],
+    })
+    expect(elrc.lines[0].words).toEqual([
+      { text: 'reference ', start_ms: 1000, end_ms: 1500 },
+      { text: 'words', start_ms: 1500, end_ms: 2000 },
+    ])
+    for (const imported of [lrc, elrc]) {
+      const restored = parseLyricsfile(
+        serializeLyricsfile({
+          plainLyrics: imported.plain,
+          syncedLines: imported.lines,
+          track: { duration: 10 },
+        })
+      )
+      expect(restored.plainLyrics).toBe('reference words')
+      expect(restored.syncedLines).toEqual(imported.lines)
+    }
+  })
+
   it('uses ordinary LRC/plain fallback without trusting a word-sync flag', () => {
     expect(
       normalizeLrclibLyrics({ syncedLyrics: '[00:01.00]line', hasWordSync: true }).hasWordSync

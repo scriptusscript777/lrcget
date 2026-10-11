@@ -1,4 +1,4 @@
-# Code and maintenance guide — 2.2.6+local.9
+# Code and maintenance guide — 2.2.6+local.10
 
 Start with [build instructions](build-from-source.md),
 [platform matrix](platform-builds.md), [frontend architecture](../src/ARCHITECTURE.md)
@@ -42,12 +42,18 @@ to the last confirmed baseline. Settings control neighboring-sentence overlap
 prevention; the editor displays its status. Precision word fields have their own
 ordering/gap constraints rather than using the sentence overlap setting.
 
-`useEditLyricsV2WordBoundaryDrag` implements normal boundary dragging/stamping
-and advance. `SyncedWordTimingLane` coordinates selected words, precision inputs,
-split/merge and loop targets. `word-loop-range.js` validates selected intervals
-and clamps precision edits against sentence and neighbor bounds. First-word
-precision edits preserve sentence start; normal first-boundary stamping can move it.
-Reset submits an empty word list, restoring estimates rather than keeping custom times.
+`useEditLyricsV2WordBoundaryDrag` implements boundary dragging and guarded
+playback stamping. Drag selects its divider; submission carries a synchronous
+`onResult` acknowledgement through the editor/document, and own refreshes do not
+cancel pointer-up click suppression. The next Sync consumes a matching accepted
+manual adjustment instead of stamping stale playback. Navigation/Sync/Reset are
+blocked during active/pending drags. Sentence markers remain fixed.
+`SyncedWordTimingLane` coordinates read-only words, precision fields and loops.
+`word-loop-range.js` clamps precision edits against sentence/neighbor bounds.
+Document validation rejects text reconstruction changes, unordered starts,
+zero-duration words and explicit ends overlapping subsequent words. Reset
+submits an empty list, restoring estimates. Export snapshots content and target
+before awaiting Save so navigation cannot redirect lyrics to another track.
 
 `useEditLyricsV2Playback` is the single phrase/word loop controller. Its mode
 prevents competing loop engines. Selection, async playback requests, pause, tabs,

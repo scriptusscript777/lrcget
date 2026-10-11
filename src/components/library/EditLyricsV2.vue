@@ -182,7 +182,6 @@
         @update:words="updateLineWords"
         @word-timing-edited="handleWordTimingEdited"
         @update-line-text="handleUpdateLineText"
-        @edit-word-text="handleEditWordText"
         @mark-as-instrumental="setInstrumental(true)"
       />
     </div>
@@ -331,7 +330,6 @@ const {
   saveLyrics,
   ensureSelectedSyncedLine,
   updateLineText,
-  updateWordText,
   setInstrumental,
 } = useEditLyricsV2Document({
   audioSource: audioSourceRef,
@@ -422,11 +420,6 @@ const forwardLineBy100 = lineIndex => {
 const handleUpdateLineText = (lineIndex, newText) => {
   updateLineText(lineIndex, newText)
 }
-const handleEditWordText = payload => {
-  if (!updateWordText(payload))
-    toast.error('Word edit not applied: the lyric or timing changed. Reopen the word editor.')
-}
-
 const handleUpdateSelectedLineIndices = payload => {
   if (payload?.clear) {
     clearSyncedLineSelection()

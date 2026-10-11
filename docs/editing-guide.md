@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.6+local.9`.
+Rick Lidgett's enhanced LRCGET build, `2.2.6+local.10`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -188,10 +188,10 @@ Synced does not invent timestamps or overwrite your original text file.
 - Sentence start sync sets the start marker to playback and keeps the end fixed.
 - Sentence shift arrows move the entire sentence, its words and both markers.
 - End sync/arrows change only the sentence end and its end marker.
-- With word looping off, Sync word changes the selected boundary and advances.
-  If the first word moves, the sentence start follows it. With Loop word on,
-  Sync word refines the selected word start without advancing or shifting the
-  sentence start. The precision Start/End fields also leave sentence markers fixed.
+- Word timing leaves sentence markers fixed, including the first word. The next
+  Sync word after a manual drag/precision edit preserves that accepted timing and
+  selection. Other Sync actions stamp valid playback and advance when Loop word
+  is off; Loop word keeps selection. Out-of-range stamps are rejected.
 - Timing step chooses the nudge amount; choosing a step does not move anything.
 - Follow Lyrics moves marker selection during playback, not saved timestamps.
   Manual selection, marker previews, word/text editing and loops hold the target.
@@ -261,19 +261,17 @@ scrolling; changing it does not zoom the waveform. **Reset** resets that line's
 word timing, so use it only when you intend to rebuild those boundaries.
 Collapse the word lane when you only need line-level timing.
 
-To correct spelling, select a word box and click **Edit word**, press F2 or
-right-click it. Edit the labeled field, then press Enter or the check button.
-Escape or the cancel button discards the draft. This replaces one word while
-preserving whitespace and timestamps; use explicit split/merge for structural
-changes. Undo/Redo includes word corrections. Double-click still splits a word.
-Plain and Synced are separate working versions: a synced correction does not
-overwrite your Plain text or imported source file. Save and Export are explicit.
+Word boxes are read-only text. Edit wording in the sentence row; double-click
+selects a word without splitting it. F2/right-click no longer edit word spelling,
+and Delete cannot remove a sentence while Word timing is expanded. Collapse the
+lane before using sentence-delete shortcuts. Every released timing drag is one
+Undo/Redo action. The next Sync word preserves manual drag/precision edits;
+otherwise it stamps playback within the selected word's safe bounds. A rejected
+stamp reports why and never shifts neighbors or advances selection.
 
-![Light theme: following the current lyric](screenshots/current/follow-lyrics-light.png)
+![Dark theme: word timing with safe Sync](screenshots/current/word-timing-protected-dark.png)
 
-![Dark theme: correcting one word](screenshots/current/edit-word-dark.png)
-
-![Expanded word timing and independent lane zoom](screenshots/current/word-timing-zoom-light.png)
+![Precise word timing and independent lane zoom](screenshots/current/selected-word-loop-light.png)
 
 ## Save, Export and Publish
 
@@ -348,7 +346,7 @@ timestamps. Sync Start/End confirms each boundary; Cancel restores the last conf
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Current word-loop and embedding screenshots were refreshed for 2.2.6+local.9.
+Current word-timing and word-loop screenshots were refreshed for 2.2.6+local.10. Earlier unchanged feature captures remain labeled by their behavior.
 Unchanged native marker/playback captures use demonstration lyrics and generated
 silent audio; the screenshot index records each group’s version and provenance.
 A waveform shows the full mix; it is not proof of exact singer alignment.

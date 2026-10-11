@@ -1,4 +1,4 @@
-# Local packages — 2.2.6+local.9
+# Local packages — 2.2.6+local.10
 
 All current features are from the reviewed local version. Final GitHub publishing
 and creator notification follow validation and the local backup. Historical upstream Windows/macOS links
@@ -6,10 +6,14 @@ are different releases and do not include Rick's local changes.
 
 ## Linux Debian package
 
-`LRCGET_2.2.6+local.9_amd64.deb` and its `.sha256` file are in Downloads. It upgrades
-the existing `lrcget` package and retains `net.lrclib.lrcget` data. Automatic
-installation on this PC could not obtain administrator authentication; run the
-installation command in the guide locally. The installed version remains local.8.
+`LRCGET_2.2.6+local.10_amd64.deb` and its `.sha256` file are in Downloads.
+It upgrades the existing `lrcget` amd64 package and retains `net.lrclib.lrcget`
+data. Installed version remains local.9 because automatic installation requires
+administrator authentication. Close the app before upgrading; see the command in the
+[local.10 review](reviews/2.2.6-local.10.md).
+
+AppImage and Windows updates are deferred at Rick's request. The packages below
+are older local.9/local.8 artifacts and do not contain local.10's word-timing fixes.
 
 ## Linux AppImage
 
@@ -41,7 +45,7 @@ An earlier local.8 native Windows MSI was built by the manual workflow. Backend 
 a missing FFmpeg test dependency and a Linux-specific test assertion; these are
 corrected locally and await Windows revalidation. The supported build instructions
 and version/upgrade logic are in [packaging/windows](../packaging/windows/README.md).
-`LRCGET_2.2.6+local.9_windows-source.zip` supplies this exact source plus the build
+`LRCGET_2.2.6+local.9_windows-source.zip` supplies the older local.9 source plus the build
 script; it is a source archive, not an installer.
 
 The first MSI is a diagnostic artifact, not a validated release download. Windows

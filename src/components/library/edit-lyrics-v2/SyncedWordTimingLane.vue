@@ -59,21 +59,6 @@
           >
             <Repeat class="w-3.5 h-3.5" />Loop word
           </button>
-          <button
-            v-if="!wordTextEdit"
-            v-tooltip="
-              editorTooltip(
-                'Edit the selected word without changing its timestamps (F2 or right-click)'
-              )
-            "
-            type="button"
-            class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
-            title="Edit selected word (F2 or right-click a word box)"
-            :disabled="!words[selectedWordIndex] || !!dragState || !!dragStartPos"
-            @click="startWordTextEdit(selectedWordIndex)"
-          >
-            <Pencil class="w-3.5 h-3.5" /><span>Edit word</span>
-          </button>
           <label class="inline-flex items-center gap-1" title="Word timing zoom">
             <span class="sr-only">Word timing zoom</span>
             <Magnify class="h-3.5 w-3.5" />
@@ -93,7 +78,7 @@
             v-tooltip="editorTooltip(playLineTitle)"
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="playLineTitle"
-            :disabled="!isWordSyncAvailable || !!wordTextEdit"
+            :disabled="!isWordSyncAvailable"
             @click="handlePlayLine"
           >
             <Play class="w-3.5 h-3.5" />
@@ -103,7 +88,7 @@
             v-tooltip="editorTooltip(syncWordTitle)"
             class="button button-primary text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="syncWordTitle"
-            :disabled="!!wordTextEdit"
+            :disabled="!!dragState || !!dragStartPos"
             @click="handleSyncWord"
           >
             <Equal class="w-3.5 h-3.5" />
@@ -117,7 +102,7 @@
             "
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             title="Reset word timings to default state"
-            :disabled="!!wordTextEdit"
+            :disabled="!!dragState || !!dragStartPos"
             @click="handleResetWords"
           >
             <Close class="w-3.5 h-3.5" />
@@ -144,7 +129,7 @@
             :step="timingStepMs / 1000"
             :value="(selectedWordLoopRange.startMs / 1000).toFixed(3)"
             aria-label="Selected word start seconds"
-            :disabled="!!dragState || !!dragStartPos || !!wordTextEdit"
+            :disabled="!!dragState || !!dragStartPos"
             @change="editSelectedBoundary('start', $event)"
           />s
         </label>
@@ -158,7 +143,7 @@
             :step="timingStepMs / 1000"
             :value="(selectedWordLoopRange.endMs / 1000).toFixed(3)"
             aria-label="Selected word end seconds"
-            :disabled="!!dragState || !!dragStartPos || !!wordTextEdit"
+            :disabled="!!dragState || !!dragStartPos"
             @change="editSelectedBoundary('end', $event)"
           />s
         </label>
@@ -170,41 +155,13 @@
         Word loop is on; select a word with valid timing to repeat.
       </p>
 
-      <form
-        v-if="wordTextEdit"
-        class="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-xs"
-        @submit.prevent="applyWordTextEdit"
-        @keydown.esc.prevent.stop="cancelWordTextEdit"
+      <p
+        v-if="timingMessage"
+        role="status"
+        class="mt-2 text-xs text-neutral-700 dark:text-neutral-300"
       >
-        <label for="word-text-edit-input" class="shrink-0">Edit word</label>
-        <input
-          id="word-text-edit-input"
-          ref="wordTextInput"
-          v-model="wordText"
-          class="input min-w-0 w-48 max-w-full rounded px-2 py-1 text-sm"
-          type="text"
-          autocomplete="off"
-          :aria-invalid="!canApplyWordText"
-        />
-        <button
-          type="submit"
-          class="button rounded bg-hoa-1500 p-1.5 text-white hover:bg-hoa-1400 dark:bg-hoa-1500 dark:text-white dark:hover:bg-hoa-1400 disabled:opacity-40"
-          title="Apply word edit (Enter)"
-          aria-label="Apply word edit"
-          :disabled="!canApplyWordText"
-        >
-          <Check class="h-4 w-4" />
-        </button>
-        <button
-          type="button"
-          class="button button-normal rounded p-1.5"
-          title="Cancel word edit (Escape)"
-          aria-label="Cancel word edit"
-          @click="cancelWordTextEdit"
-        >
-          <Close class="h-4 w-4" />
-        </button>
-      </form>
+        {{ timingMessage }}
+      </p>
 
       <!-- Timeline with word segments -->
       <div
@@ -244,10 +201,7 @@
             :timeline-width="timelineWidth"
             :progress-ms="progressMs"
             :selected="selectedWordIndex === index"
-            :editing="!!wordTextEdit"
-            @split-at="handleSegmentSplitAt"
             @select-word="selectWord"
-            @edit-word="startWordTextEdit"
           />
 
           <button
@@ -314,7 +268,7 @@
 
 <script setup>
 import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
-import { computed, onMounted, onUnmounted, ref, shallowRef, watch, nextTick } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import Repeat from '~icons/mdi/repeat'
 import { selectedWordRange, editWordBoundary } from '@/utils/word-loop-range.js'
@@ -322,8 +276,6 @@ import Equal from '~icons/mdi/equal'
 import Play from '~icons/mdi/play'
 import Close from '~icons/mdi/close'
 import Magnify from '~icons/mdi/magnify-plus-outline'
-import Pencil from '~icons/mdi/pencil-outline'
-import Check from '~icons/mdi/check'
 import { scrollToTimelineTime } from '@/utils/word-timing-viewport.js'
 import SyncedWordTimingSegment from '@/components/library/edit-lyrics-v2/SyncedWordTimingSegment.vue'
 import { useEditLyricsV2WordBoundaryDrag } from '@/composables/edit-lyrics-v2/useEditLyricsV2WordBoundaryDrag.js'
@@ -369,8 +321,6 @@ const emit = defineEmits([
   'play-line',
   'select-next-line',
   'editing-change',
-  'word-text-editing-start',
-  'edit-word-text',
   'word-loop-target',
   'toggle-word-loop',
 ])
@@ -391,10 +341,7 @@ const selectedWordIndex = ref(
     ? props.initialWordIndex
     : 0
 )
-const wordTextEdit = shallowRef(null)
-const wordText = ref('')
-const wordTextInput = ref(null)
-const canApplyWordText = computed(() => wordText.value.length > 0 && !/\s/u.test(wordText.value))
+const timingMessage = ref('')
 
 const playLineTitle = withShortcutTitle(
   'Play line; keep Loop on when enabled, otherwise continue forward',
@@ -403,7 +350,7 @@ const playLineTitle = withShortcutTitle(
 )
 
 const syncWordTitle = withShortcutTitle(
-  'Sync selected word boundary to playback; moving the first word also updates the sentence start marker',
+  'Keep a manually adjusted divider; otherwise sync the selected word start to playback within its neighbors. Sentence markers stay fixed.',
   wordTimingShortcutBindings,
   'syncSelectedSeparatorAndAdvance'
 )
@@ -487,6 +434,9 @@ const words = computed(() => {
 })
 
 const {
+  hasAdjustedBoundary,
+  rememberAdjustedBoundary,
+  consumeOwnWordUpdate,
   dragState,
   dragStartPos,
   displayedWords,
@@ -498,7 +448,6 @@ const {
   selectPreviousBoundary,
   selectNextBoundary,
   syncSelectedBoundary,
-  deleteSelectedBoundaries,
   resetBoundarySelection,
   cancelBoundaryInteraction,
 } = useEditLyricsV2WordBoundaryDrag({
@@ -509,82 +458,19 @@ const {
   timelineEndMs: laneEndMs,
   selectedLineIndex: computed(() => props.selectedLineIndex),
   onUpdateWords: payload => emit('update:words', payload),
-  onWordTimingEdited: payload => emit('word-timing-edited', payload),
+  onWordTimingEdited: payload => {
+    timingMessage.value = ''
+    emit('word-timing-edited', payload)
+  },
+  onTimingError: message => {
+    timingMessage.value = message
+  },
 })
 
 watch(
-  () => Boolean(dragState.value || dragStartPos.value || wordTextEdit.value),
+  () => Boolean(dragState.value || dragStartPos.value),
   editing => emit('editing-change', editing),
   { flush: 'sync' }
-)
-
-const cancelWordTextEdit = () => {
-  wordTextEdit.value = null
-  wordText.value = ''
-}
-
-const startWordTextEdit = async index => {
-  if (
-    !isWordSyncAvailable.value ||
-    dragState.value ||
-    dragStartPos.value ||
-    !Number.isInteger(index) ||
-    !words.value[index]
-  )
-    return
-  selectedWordIndex.value = index
-  selectBoundary(index)
-  wordTextEdit.value = {
-    line: props.selectedLine,
-    lineIndex: props.selectedLineIndex,
-    lineText: props.selectedLine.text,
-    wordIndex: index,
-    words: words.value,
-    snapshot: words.value.map(word => ({ ...word })),
-  }
-  wordText.value = words.value[index].text.trim()
-  emit('word-text-editing-start')
-  await nextTick()
-  if (!wordTextEdit.value) return
-  wordTextInput.value?.focus()
-  wordTextInput.value?.select()
-}
-
-const applyWordTextEdit = () => {
-  const edit = wordTextEdit.value
-  if (!edit || !canApplyWordText.value) return
-  // Recheck the source at submission as well as watching it during the edit.
-  if (
-    edit.line !== props.selectedLine ||
-    edit.lineIndex !== props.selectedLineIndex ||
-    edit.lineText !== props.selectedLine?.text ||
-    edit.words !== words.value ||
-    edit.snapshot.length !== words.value.length ||
-    edit.snapshot.some(
-      (word, index) =>
-        word.text !== words.value[index].text ||
-        word.start_ms !== words.value[index].start_ms ||
-        word.end_ms !== words.value[index].end_ms
-    )
-  ) {
-    cancelWordTextEdit()
-    return
-  }
-  const text = wordText.value
-  cancelWordTextEdit()
-  emit('edit-word-text', {
-    lineIndex: edit.lineIndex,
-    line: edit.line,
-    wordIndex: edit.wordIndex,
-    text,
-    words: edit.words,
-  })
-}
-
-watch(
-  [() => props.selectedLine, () => props.selectedLineIndex, () => props.allLines, words],
-  () => cancelWordTextEdit(),
-  { deep: true, flush: 'sync' }
 )
 
 const selectedWordLoopRange = computed(() =>
@@ -615,7 +501,8 @@ watch(
 )
 
 const editSelectedBoundary = (boundary, event) => {
-  if (dragState.value || dragStartPos.value || wordTextEdit.value) return
+  if (dragState.value || dragStartPos.value) return
+  timingMessage.value = ''
   const timeMs = event.target.value.trim() === '' ? NaN : Number(event.target.value) * 1000
   const updatedWords = editWordBoundary(
     words.value,
@@ -630,6 +517,12 @@ const editSelectedBoundary = (boundary, event) => {
       lineIndex: props.selectedLineIndex,
       words: updatedWords,
       lineStartMs: undefined,
+      onResult: accepted => {
+        if (accepted) rememberAdjustedBoundary(selectedWordIndex.value, updatedWords)
+        else
+          timingMessage.value =
+            'Word timing was not applied; its sentence or overlap bounds changed.'
+      },
     })
   // Reflect the actual accepted/clamped document after parent validation.
   nextTick(() => {
@@ -708,13 +601,7 @@ const getWordEndMs = index =>
   selectedWordRange(displayedWords.value, index, laneEndMs.value)?.endMs ?? laneEndMs.value
 
 const selectWord = index => {
-  if (
-    !Number.isInteger(index) ||
-    !words.value[index] ||
-    dragState.value ||
-    dragStartPos.value ||
-    wordTextEdit.value
-  )
+  if (!Number.isInteger(index) || !words.value[index] || dragState.value || dragStartPos.value)
     return
   selectedWordIndex.value = index
   selectBoundary(index)
@@ -726,7 +613,6 @@ watch(words, current => {
 })
 
 const handleBoundaryPointerDown = (rightWordIndex, event) => {
-  if (wordTextEdit.value) return
   const rect = timelineElement.value?.getBoundingClientRect()
   if (!rect?.width) return
   const initialTime = words.value[rightWordIndex]?.start_ms
@@ -756,16 +642,15 @@ const getBoundaryLineClass = index => {
 }
 
 const handleSyncWord = () => {
-  if (wordTextEdit.value) return
-  if (props.wordLoopEnabled) {
-    editSelectedBoundary('start', { target: { value: String(props.progressMs / 1000) } })
-    return
-  }
+  timingMessage.value = ''
+  const keptDrag = hasAdjustedBoundary.value
   const selectedBoundaryBeforeSync = selectedBoundaryIndex.value
-  const synced = syncSelectedBoundary(props.progressMs)
+  const synced = syncSelectedBoundary(props.progressMs, { advance: !props.wordLoopEnabled })
 
   if (
     synced &&
+    !props.wordLoopEnabled &&
+    !keptDrag &&
     selectedBoundaryBeforeSync === words.value.length - 1 &&
     props.selectedLineIndex < props.allLines.length - 1
   ) {
@@ -774,102 +659,13 @@ const handleSyncWord = () => {
 }
 
 const handleSyncWordNoAdvance = () => {
-  if (wordTextEdit.value) return
-  if (props.wordLoopEnabled) {
-    editSelectedBoundary('start', { target: { value: String(props.progressMs / 1000) } })
-    return
-  }
+  timingMessage.value = ''
   syncSelectedBoundary(props.progressMs, { advance: false })
 }
 
 const handlePlayLine = () => {
   if (!isWordSyncAvailable.value) return
   emit('play-line', props.selectedLineIndex)
-}
-
-const splitTextByGrapheme = text => {
-  if (!text || typeof text !== 'string') {
-    return []
-  }
-
-  if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-    const segmenter = new Intl.Segmenter('und', { granularity: 'grapheme' })
-    return Array.from(segmenter.segment(text), item => item.segment)
-  }
-
-  return Array.from(text)
-}
-
-const getWordEndMsFromList = (wordsList, index) =>
-  selectedWordRange(wordsList, index, laneEndMs.value)?.endMs ?? laneEndMs.value
-
-const handleDeleteSelectedBoundaries = () => {
-  if (wordTextEdit.value) return
-  if (!isWordSyncAvailable.value) return
-  deleteSelectedBoundaries()
-}
-
-const handleSegmentSplitAt = ({ wordIndex, splitIndex, splitRatio }) => {
-  if (wordTextEdit.value) return
-  if (!isWordSyncAvailable.value) {
-    return
-  }
-
-  if (!Number.isInteger(wordIndex) || wordIndex < 0 || wordIndex >= displayedWords.value.length) {
-    return
-  }
-
-  const currentWord = displayedWords.value[wordIndex]
-  const graphemes = splitTextByGrapheme(currentWord?.text || '')
-  if (graphemes.length <= 1) {
-    return
-  }
-
-  const fallbackSplitIndex = Math.max(
-    1,
-    Math.min(graphemes.length - 1, Math.floor(graphemes.length / 2))
-  )
-  const normalizedSplitIndex = Number.isInteger(splitIndex)
-    ? Math.max(1, Math.min(graphemes.length - 1, splitIndex))
-    : fallbackSplitIndex
-
-  const leftText = graphemes.slice(0, normalizedSplitIndex).join('')
-  const rightText = graphemes.slice(normalizedSplitIndex).join('')
-
-  const wordStartMs = Number.isFinite(currentWord?.start_ms)
-    ? currentWord.start_ms
-    : laneStartMs.value
-  const wordEndMs = getWordEndMsFromList(displayedWords.value, wordIndex)
-  if (wordEndMs - wordStartMs < 2) return
-  const normalizedSplitRatio = Number.isFinite(splitRatio)
-    ? Math.max(0, Math.min(1, splitRatio))
-    : normalizedSplitIndex / graphemes.length
-  const splitTimeMs = Math.max(
-    wordStartMs + 1,
-    Math.min(
-      wordEndMs - 1,
-      Math.round(wordStartMs + (wordEndMs - wordStartMs) * normalizedSplitRatio)
-    )
-  )
-
-  const updatedWords = [
-    ...displayedWords.value.slice(0, wordIndex),
-    { text: leftText, start_ms: wordStartMs },
-    {
-      text: rightText,
-      start_ms: splitTimeMs,
-      ...(Number.isFinite(currentWord.end_ms) ? { end_ms: currentWord.end_ms } : {}),
-    },
-    ...displayedWords.value.slice(wordIndex + 1),
-  ]
-
-  emit('update:words', {
-    lineIndex: props.selectedLineIndex,
-    words: updatedWords,
-    lineStartMs: laneStartMs.value,
-  })
-
-  selectBoundary(Math.min(updatedWords.length - 1, wordIndex + 1))
 }
 
 const loadDefaultSegmentation = async ({ force = false } = {}) => {
@@ -925,7 +721,6 @@ const { bindWordTimingHotkeys, unbindWordTimingHotkeys } = useEditLyricsV2WordTi
   selectPreviousBoundary: () => selectPreviousBoundary(),
   selectNextBoundary: () => selectNextBoundary(),
   resetBoundarySelection: () => resetBoundarySelection(),
-  deleteSelectedBoundaries: () => handleDeleteSelectedBoundaries(),
 })
 
 watch(
@@ -956,8 +751,7 @@ watch(
 )
 
 const handleResetWords = async () => {
-  if (wordTextEdit.value) return
-  if (!isWordSyncAvailable.value) return
+  if (dragState.value || dragStartPos.value || !isWordSyncAvailable.value) return
 
   // Clear the words object entirely - this removes persisted word timings.
   emit('update:words', {
@@ -1026,6 +820,7 @@ watch(
 watch(
   [lineStartMs, actualLineEndMs],
   () => {
+    if (dragState.value || dragStartPos.value) cancelBoundaryInteraction()
     if (!props.hasSelectedLine || !props.selectedLine) {
       return
     }
@@ -1037,18 +832,9 @@ watch(
 )
 
 watch(
-  () => props.allLines,
-  () => {
-    if (dragState.value || dragStartPos.value) {
-      cancelBoundaryInteraction()
-    }
-  },
-  { deep: true, flush: 'sync' }
-)
-
-watch(
   words,
-  () => {
+  current => {
+    if (consumeOwnWordUpdate(current)) return
     if (dragState.value || dragStartPos.value) cancelBoundaryInteraction()
   },
   { flush: 'sync' }

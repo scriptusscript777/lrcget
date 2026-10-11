@@ -1,3 +1,13 @@
+## 2.2.6+local.10 — Debian word timing repairs
+
+Timing-only word boxes; wording is edited through sentence rows. Released drags
+keep sentence markers fixed and select their own divider. Sync preserves the next
+accepted manual adjustment, rejects unsafe playback without collapsing neighbors,
+and advances only after accepted updates. Drag refresh/click, active shortcuts,
+Delete, numeric edits and document range validation are guarded. Export freezes
+target identity across asynchronous Save; malformed standard-LRC seconds fail
+before import replacement. Debian-only update; AppImage/Windows remain deferred.
+
 ## Additional 2.2.6+local.8 packages
 
 Linux AppImage plus Windows 11 MSI build tooling/source archive. MSI build awaits

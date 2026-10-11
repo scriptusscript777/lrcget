@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.9. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.10. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -116,15 +116,13 @@ is labeled **Inferred end** until you confirm one.
 lyric/word boxes and marker targets, without rewriting timestamps. Manual
 selection, loops, word editing and marker previews hold the selected target.
 
-Word tools support separate lane zoom, boundary dragging, synchronization to
-playback, and spelling correction through **Edit word**, F2 or right-click.
-Spelling edits preserve timing/whitespace; structural split/merge is explicit.
-Moving the first word's start can move its sentence start; later words do not
-automatically shift an unchanged sentence start.
+Word tools provide separate lane zoom, divider dragging, safe playback Sync and
+precise Start/End fields. Word text is read-only: edit wording in the sentence
+row. Released drags apply directly and leave both sentence markers fixed. The
+next Sync word retains a manual adjustment; other Sync actions reject playback
+outside neighboring-word bounds instead of compressing or moving other words.
 
-![Word boxes following the active lyric](screenshots/current/follow-lyrics-light.png)
-
-![Correcting a word without changing its timestamps](screenshots/current/edit-word-dark.png)
+![Timing-only boxes and explained out-of-range Sync](screenshots/current/word-timing-protected-dark.png)
 
 ## Save, Export and Publish
 
@@ -165,7 +163,7 @@ successfully exported; inspect the result before retrying.
 | Timing editor       | Line/word tools, steps, contextual playback, keyboard handling and session undo                   | [Editing reference](editing-guide.md#edit-lines-and-text)                      |
 | Waveform navigation | Cached peaks, seek, zoom, pan and playback following                                              | [Waveform how-to](how-to.md#zoom-and-follow-without-looping)                   |
 | Marker confirmation | Live preview, sentence Sync confirmation, Cancel and exact saved ends                             | [Marker how-to](how-to.md#place-precise-markers-and-preview-before-confirming) |
-| Word editing        | Follow Lyrics, spelling edits, split/merge and independent lane zoom                              | [Word how-to](how-to.md#edit-individual-words)                                 |
+| Word editing        | Follow Lyrics, read-only words, safe timing edits and independent lane zoom                              | [Word how-to](how-to.md#edit-individual-words)                                 |
 | Looping             | Selected-range loops, preview bounds, cancellation and explicit forward playback                  | [Loop how-to](how-to.md#loop-between-the-markers)                              |
 | Help and themes     | Saved hover-help toggle defaults off; F1 help expires after two seconds                           | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
 | Refresh             | Startup scanning and F5 with unavailable-directory safeguards                                     | [Library reference](editing-guide.md#library-search-and-refresh)               |
@@ -173,7 +171,7 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.6-local.9.md).
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.6-local.10.md).
 Current images use demonstration fixtures, not personal recordings. New help/settings
 captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
@@ -188,12 +186,11 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The 2.2.6 local.9 frontend run passed 459 tests and scoped ESLint. Browser checks cover
-independent marker confirmation, cancel baselines, live highlighting, zoom,
-untimed text and overlap opt-out. The current Linux native run passed 73 tests (two optional fixture tests
-ignored). Saved hover-help checks remain documented in the 2.2.4 review.
-Ruff reports 11 existing findings in the unchanged Python test-data generator.
-These results do not guarantee perfect lyrics.
+Current checks are recorded in the [local.10 review](reviews/2.2.6-local.10.md).
+Browser checks cover timing drags, fixed sentence markers, zoom, Undo/Redo,
+read-only wording, protected Sync, precision inputs and word loops. Native export
+checks use temporary files, preserving personal music and the live database.
+These checks do not guarantee perfect lyric alignment.
 
 ## Automatic External LRC Detection
 

@@ -36,6 +36,8 @@ describe('lyrics file import', () => {
     ['', 'song.txt'],
     ['words only', 'song.lrc'],
     ['[00:01.xx]bad', 'song.txt'],
+    ['[00:60.00]invalid seconds', 'song.lrc'],
+    ['[00:99.00]invalid seconds', 'song.txt'],
     ['[00:01.00]good\nmissing timestamp', 'song.lrc'],
     ['[00:01.00]good\n[00:02.xx]bad', 'song.txt'],
     ['[00:01.00]', 'song.lrc'],

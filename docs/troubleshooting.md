@@ -1,4 +1,4 @@
-# Troubleshooting — 2.2.6+local.9
+# Troubleshooting — 2.2.6+local.10
 
 ## A short word is difficult to see in its box
 
@@ -66,3 +66,23 @@ for MSVC/Windows SDK, WiX/VBScript and WebView2 requirements. MinGW alone does n
 build this Tauri Windows target. Include installer logs and the exact app/Windows
 version in a bug report. Installation checks on Windows Server CI do not establish
 all Windows 11 playback behavior.
+
+## Sync Word did not change timing
+
+After a divider drag or precise Start/End edit, the next Sync Word keeps that
+accepted adjustment rather than replacing it with playback. Other Sync actions
+reject playback outside this word's sentence/neighbor interval and show a message.
+Seek inside that interval or refine adjacent dividers/fields before retrying.
+Words should not disappear or shift neighboring starts; Undo restores each edit.
+Word boxes edit timing only. Change wording in the sentence row; that clears its
+word timing for retiming, and Undo restores the previous text and timings.
+
+## Choosing TXT, LRC or ELRC
+
+Each Save menu checkbox selects only that target. Save alone retains the internal
+document, including word timing; export writes only selected formats. TXT carries
+text, standard LRC carries sentence timestamps and applicable blank gap cues,
+and ELRC carries saved word timestamps/ends. LRC-only import cannot reconstruct
+word timing. Missing/invalid ELRC timing skips/errors that format and preserves
+an existing ELRC. Failed local Save stops export. Review partial-export messages
+rather than assuming all targets succeeded.

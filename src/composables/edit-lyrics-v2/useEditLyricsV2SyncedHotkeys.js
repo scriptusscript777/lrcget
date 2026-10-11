@@ -153,6 +153,16 @@ export function useEditLyricsV2SyncedHotkeys({
       return
     }
 
+    if (
+      wordTimingExpanded?.value &&
+      (event.key === 'Delete' ||
+        syncedEditorShortcutBindings.some(
+          binding => binding.id === 'deleteSelectedLine' && binding.matches(event)
+        ))
+    ) {
+      event.preventDefault()
+      return
+    }
     // Expanded word shortcuts take precedence over colliding phrase actions (notably Delete).
     if (
       wordTimingExpanded?.value &&

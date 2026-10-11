@@ -96,6 +96,39 @@ describe('synced editing history and timing steps', () => {
     scope.stop()
   })
 
+  it.each([
+    [
+      { text: 'first ', start_ms: 2000 },
+      { text: 'second', start_ms: 1500 },
+    ],
+    [
+      { text: 'first ', start_ms: 1000 },
+      { text: 'second', start_ms: 1000 },
+    ],
+    [
+      { text: 'first ', start_ms: 1000, end_ms: 1000 },
+      { text: 'second', start_ms: 2000 },
+    ],
+    [
+      { text: 'first ', start_ms: 1000, end_ms: 2100 },
+      { text: 'second', start_ms: 2000 },
+    ],
+  ])(
+    'rejects collapsed, reversed or overlapping words without adding history: %j',
+    (...entries) => {
+      const { state, scope } = document()
+      const initial = { text: 'first second', start_ms: 1000, end_ms: 3000, words: [] }
+      state.updateSyncedLines([initial])
+      const callback = vi.fn()
+      expect(state.updateLineWords({ lineIndex: 0, words: entries, onResult: callback })).toBe(
+        false
+      )
+      expect(callback).toHaveBeenCalledWith(false)
+      expect(state.syncedLines.value[0]).toEqual(initial)
+      scope.stop()
+    }
+  )
+
   it('syncs sentence boundaries from playback with one undoable update and fixed opposite marker', () => {
     const progress = ref(1.2)
     const { state, scope } = document(progress)
@@ -305,9 +338,7 @@ describe('synced editing history and timing steps', () => {
         progressMs: 1500,
       })
     )
-    expect(html).toContain(
-      'title="phrase (00:01.000 - 00:02.000) - F2 or right-click to edit word"'
-    )
+    expect(html).toContain('title="phrase (00:01.000 - 00:02.000)"')
     expect(html).toContain('font-bold')
     expect(html).toContain('bg-hoa-1500 dark:bg-hoa-1500')
     expect(html).not.toContain('bg-neutral-200')
@@ -905,6 +936,7 @@ describe('editor exports', () => {
   it('captures submitted content and blocks duplicate exports during the save', async () => {
     let finish
     const content = ref('submitted document')
+    const source = ref({ type: 'library', id: 1 })
     const save = vi.fn(
       () =>
         new Promise(resolve => {
@@ -913,7 +945,7 @@ describe('editor exports', () => {
     )
     const toast = { success: vi.fn(), error: vi.fn(), warning: vi.fn() }
     const state = useEditLyricsV2Export({
-      audioSource: ref({ type: 'library', id: 1 }),
+      audioSource: source,
       saveLyrics: save,
       serializedLyricsfile: content,
       toast,
@@ -922,6 +954,7 @@ describe('editor exports', () => {
     const exporting = state.exportLyrics({ syncedLrc: true })
     expect(await state.exportLyrics({ syncedLrc: true })).toBe(false)
     content.value = 'new unsaved edits'
+    source.value = { type: 'library', id: 99 }
     finish(true)
     expect(await exporting).toBe(true)
     expect(invoke).toHaveBeenCalledWith('export_lyrics', {
@@ -930,6 +963,38 @@ describe('editor exports', () => {
       lyricsfile: 'submitted document',
     })
     expect(save).toHaveBeenCalledOnce()
+    expect(state.isExporting.value).toBe(false)
+  })
+
+  it.each([
+    [{ plainText: true }, ['txt']],
+    [{ syncedLrc: true }, ['lrc']],
+    [{ enhancedLrc: true }, ['elrc']],
+    [{ embedIntoTrack: true }, ['embedded']],
+    [{ plainText: true, syncedLrc: true, enhancedLrc: true }, ['txt', 'lrc', 'elrc']],
+  ])('writes only selected formats %j', async (selection, formats) => {
+    const state = useEditLyricsV2Export({
+      audioSource: ref({ type: 'library', id: 1 }),
+      saveLyrics: vi.fn().mockResolvedValue(true),
+      serializedLyricsfile: ref('word document'),
+      toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+    })
+    invoke.mockResolvedValue(formats.map(format => ({ format, status: { type: 'success' } })))
+    expect(await state.exportLyrics(selection)).toBe(true)
+    expect(invoke.mock.calls[0][1].formats).toEqual(formats)
+  })
+
+  it('does not export any format when saving fails', async () => {
+    const state = useEditLyricsV2Export({
+      audioSource: ref({ type: 'library', id: 1 }),
+      saveLyrics: vi.fn().mockResolvedValue(false),
+      serializedLyricsfile: ref('word document'),
+      toast: { success: vi.fn(), error: vi.fn(), warning: vi.fn() },
+    })
+    expect(await state.exportLyrics({ plainText: true, syncedLrc: true, enhancedLrc: true })).toBe(
+      false
+    )
+    expect(invoke).not.toHaveBeenCalled()
     expect(state.isExporting.value).toBe(false)
   })
 
@@ -1032,12 +1097,14 @@ it('exports Enhanced LRC as an additional sidecar alongside TXT and standard LRC
   })
 })
 
-
 describe('selected word loop', () => {
   const select = (controls, wordIndex = 0, startMs = 1500, endMs = 1800) => {
     controls.wordLoopTarget.value = {
       line: controls.syncedLines.value[controls.selectedLineIndex.value],
-      lineIndex: controls.selectedLineIndex.value, wordIndex, startMs, endMs,
+      lineIndex: controls.selectedLineIndex.value,
+      wordIndex,
+      startMs,
+      endMs,
     }
   }
   it('repeats a single word, preserves gaps and switches back to phrase looping', async () => {
@@ -1114,7 +1181,12 @@ describe('selected word loop', () => {
     const { state, controls, scope } = player()
     select(controls)
     let finish
-    controls.resume.mockImplementation(() => new Promise(resolve => { finish = resolve }))
+    controls.resume.mockImplementation(
+      () =>
+        new Promise(resolve => {
+          finish = resolve
+        })
+    )
     const pending = state.toggleLoop('word')
     select(controls, 1, 1800, 2000)
     finish()

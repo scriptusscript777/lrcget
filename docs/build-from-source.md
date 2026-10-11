@@ -1,4 +1,4 @@
-# Build from source — 2.2.6+local.9
+# Build from source — 2.2.6+local.10
 
 The source ZIP/tar.gz contains the application, locked dependencies, license,
 documentation, screenshots and packaging scripts. Build products, dependencies,
@@ -22,11 +22,10 @@ From the extracted source directory:
 ```bash
 npm ci
 npm test
-node --test packaging/windows/msi-config.checks.mjs
 cd src-tauri
 cargo test --locked
 cd ..
-npm run tauri -- build --bundles deb,appimage
+npm run tauri -- build --bundles deb
 ```
 
 Packages are written beneath `src-tauri/target/release/bundle/`. Build/checksum
@@ -43,6 +42,9 @@ For development, use `npm run tauri dev`; `npm run dev` alone serves the fronten
 and does not supply the native backend. Never use a real music profile for
 destructive automated testing. See the architecture documents and `AGENTS.md`
 for repository conventions.
+
+AppImage and Windows updates/builds are deferred at Rick’s request. The current
+local.10 artifact is Debian only; older platform packages do not contain these fixes.
 
 ## Windows x64
 

@@ -7,7 +7,6 @@ export function useEditLyricsV2WordTimingHotkeys({
   selectPreviousBoundary,
   selectNextBoundary,
   resetBoundarySelection,
-  deleteSelectedBoundaries,
 }) {
   const handleWordTimingKeyDown = event => {
     if (!isWordSyncAvailable.value || event.defaultPrevented) {
@@ -40,9 +39,6 @@ export function useEditLyricsV2WordTimingHotkeys({
           return
         case 'resetSeparatorCursor':
           resetBoundarySelection()
-          return
-        case 'deleteSelectedSeparators':
-          deleteSelectedBoundaries()
           return
       }
     }

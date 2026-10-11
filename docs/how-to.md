@@ -1,18 +1,18 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.6+local.9**.
+For Rick Lidgett's LRCGET **2.2.6+local.10**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Use the current `.deb` and checksum in Downloads. The local.9 GitHub release
+1. Use the current `.deb` and checksum in Downloads. The local.10 GitHub release
    remains unpublished until validation and the backup are complete.
    See [all package and source instructions](packages.md) for AppImage and Windows.
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.6+local.9_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.6+local.9_amd64.deb
+sha256sum -c LRCGET_2.2.6+local.10_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.6+local.10_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -176,17 +176,24 @@ it. Changing recordings, closing the editor or a playback failure resets Loop.
 
 1. Select a timed row and expand **Word timing**.
 2. Use its separate zoom/scrolling to inspect individual word boundaries.
-3. Select a word/separator, use **Sync word** at playback or drag its divider,
-   then listen again. The lane's zoom does not change waveform zoom.
-4. To correct spelling, select its box and use **Edit word**, F2 or right-click.
-5. Press Enter/check to apply or Escape/cancel to discard the wording draft.
+3. Select a word, drag its left divider, or enter precise Start/End seconds.
+   Releasing a drag applies one undoable timing edit; sentence markers stay fixed.
+4. The next **Sync word** keeps that manual adjustment and selection. Otherwise
+   Sync stamps playback only inside the word's available sentence/neighbor bounds,
+   then advances when Loop word is off. An unsafe stamp shows a message and keeps
+   the words and selection unchanged. Loop word keeps the selected target.
+5. Edit wording through the sentence row, not the word boxes. Double-click selects;
+   F2/right-click do not open word editing and Delete cannot delete the sentence
+   while the word lane is open. Collapse it before using sentence-delete shortcuts.
 
-![Direct spelling correction in a word box](screenshots/current/edit-word-light.png)
+![Timing-only word boxes and protected Sync](screenshots/current/word-timing-protected-light.png)
 
-Spelling changes retain whitespace/timing. Use explicit split/merge for structure.
-Double-click splits a word. Reset deliberately rebuilds that line's word timing;
-do not use it merely to close the tools. Undo/Redo restores synced edits within
-the session. Moving the first word start may also move the sentence start.
+Changing sentence wording clears that sentence’s saved word timing so stale
+word labels cannot survive; retime the new words, or Undo to restore both.
+
+**Reset** deliberately clears saved word timings and rebuilds estimates; use
+**Undo** to restore an accidental reset. Undo/Redo includes each released drag and
+numeric timing edit. Lane zoom never changes waveform zoom or saved timestamps.
 
 ## Save and Export for Playback
 
@@ -457,7 +464,9 @@ one-click sentence alignment mode has been added.
 4. Use **Sync word** as each word starts. It stamps playback time and advances
    to the next boundary. After the final boundary it may select the next sentence.
    Use the keyboard menu to check the current word timing shortcut; do not
-   invoke shortcuts while typing in a time or spelling field.
+   invoke shortcuts while typing in a time or sentence field. If playback lies
+   outside that word’s available interval, Sync explains why and keeps timing
+   unchanged; refine adjacent dividers or the precise fields before retrying.
 5. Pause and inspect the result. Use Undo for a mistaken stamp. Do not use Reset
    to undo a single mistake: Reset replaces the sentence's word timings with estimates.
 6. Select uncertain words and turn **Loop word** on for refinement. In that mode,

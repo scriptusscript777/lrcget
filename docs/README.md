@@ -1,6 +1,6 @@
 # LRCGET Documentation
 
-Rick Lidgett's enhanced LRCGET, **2.2.6+local.9**.
+Rick Lidgett's enhanced LRCGET, **2.2.6+local.10**.
 An independent fork of the original project; original authors and license remain credited.
 
 ## Choose a Guide
@@ -11,12 +11,12 @@ An independent fork of the original project; original authors and license remain
 | Start with a recording and plain lyrics          | [Step-by-step how-tos](how-to.md#create-timed-lyrics-from-a-text-file)                                 |
 | Edit an existing LRC or timestamped TXT          | [Edit existing lyrics](how-to.md#edit-an-existing-lrc-or-timed-text-file)                              |
 | Zoom, place markers and preview a phrase         | [Waveform and marker workflow](how-to.md#place-precise-markers-and-preview-before-confirming)          |
-| Edit individual words                            | [Word timing and spelling](how-to.md#edit-individual-words)                                            |
+| Edit individual words                            | [Word timing and safe synchronization](how-to.md#edit-individual-words)                                            |
 | Save, export, embed or publish                   | [Output workflows](how-to.md#save-and-export-for-playback)                                             |
 | Find keyboard shortcuts and detailed behavior    | [Complete editing reference](editing-guide.md)                                                         |
 | See what Rick changed in the source              | [Modification overview](app-overview.md#modification-map) and [technical history](../LOCAL_CHANGES.md) |
 | Install the current Linux build                  | [Installation](how-to.md#install-or-upgrade)                                                           |
-| Understand the latest fixes and test results     | [Release notes](releases/2.2.6-local.9.md)                                                             |
+| Understand the latest fixes and test results     | [Release notes](releases/2.2.6-local.10.md)                                                             |
 
 See [Enhanced LRC export](how-to.md#export-word-timing-as-enhanced-lrc) for the new optional word-timed sidecar.
 

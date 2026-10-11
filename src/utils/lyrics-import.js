@@ -32,6 +32,9 @@ export function parseImportedLyrics(content, filePath = '') {
     // Never silently drop malformed/mixed rows or treat word timestamps as literal lyric text.
     if (parsed.type !== LineType.TIME || /<\s*\d+\s*:/.test(parsed.content))
       throw new Error('Use line-level [mm:ss.xx] timestamps on every lyric line')
+    const tags = [...raw.matchAll(/\[(\d+):(\d{1,2})(?:[.:](\d{1,3}))?\]/g)]
+    if (tags.length !== parsed.timestamps.length || tags.some(tag => Number(tag[2]) >= 60))
+      throw new Error('The lyrics file contains an invalid timestamp')
     for (const timestamp of parsed.timestamps) {
       if (
         !Number.isFinite(timestamp) ||
