@@ -73,7 +73,7 @@
       :all-lines="modelValue"
       :selected-line-index="selectedLineIndex"
       :word-loop-enabled="loopEnabled && loopMode === 'word'"
-      :initial-word-index="wordLoopTarget?.lineIndex === selectedLineIndex ? wordLoopTarget.wordIndex : 0"
+      :initial-word-index="wordLoopTarget?.lineIndex === selectedLineIndex ? wordLoopTarget.wordIndex : recoveryWordSelection?.lineIndex === selectedLineIndex ? recoveryWordSelection.wordIndex : 0"
       :timing-step-ms="timingStepMs"
       @toggle-word-loop="emit('toggle-word-loop')"
       @word-loop-target="emit('word-loop-target', $event)"
@@ -223,6 +223,8 @@ import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
 const props = defineProps({
+  wordTimingExpanded: Boolean,
+  recoveryWordSelection: { type: Object, default: null },
   waveformPlaying: Boolean,
   waveformProgress: { type: Number, default: null },
   canUndo: Boolean,
@@ -260,6 +262,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
+  'recovery-edit-state',
   'word-timing-expanded-change',
   'undo',
   'redo',
@@ -303,7 +306,8 @@ const toggleWordPreview = () => {
   wordPreviewExpanded.value = !wordPreviewExpanded.value
   if (wordPreviewExpanded.value) followLyrics.value = true
 }
-const wordTimingExpanded = ref(false)
+const wordTimingExpanded = ref(props.wordTimingExpanded)
+watch(() => props.wordTimingExpanded, expanded => { wordTimingExpanded.value = expanded }, { flush: 'sync' })
 const followLyrics = ref(true)
 const wordEditing = ref(false)
 const playbackTimeMs = computed(() => Number.isFinite(props.waveformProgress) ? props.waveformProgress * 1000 : -1)
@@ -424,6 +428,13 @@ const {
   selectLine: index => selectLine(index),
   updateLineText: handleUpdateLineText,
 })
+
+watch([editingLineIndex, editingText], () => {
+  const lineIndex = editingLineIndex.value
+  emit('recovery-edit-state', lineIndex == null ? null : {
+    lineIndex, text: editingText.value, originalText: modelValue.value[lineIndex]?.text,
+  })
+}, { flush: 'sync' })
 
 useLyricsFollow({
   lines: modelValue,

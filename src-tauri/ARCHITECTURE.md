@@ -10,8 +10,8 @@ missing-track cleanup until a complete successful scan. Refresh never writes
 sidecars or audio tags. Each successfully processed track also checks matching
 sidecars inside its batch transaction. A valid LRC with nonempty timed words
 (or the instrumental marker) upgrades plain/missing lyrics, taking precedence
-over TXT; TXT only fills missing lyrics. Saved synced/instrumental records are
-protected. This also applies to unchanged audio and reattached orphaned lyrics.
+over TXT; TXT only fills missing lyrics. Explicit editor saves, including untimed/reset work, and synced/instrumental
+records are protected. This also applies to unchanged audio and reattached orphaned lyrics.
 No external import sets an explicit editor-save date.
 TXT/LRC exports coexist. A shared writer lock serializes destination changes;
 `tempfile` stages sidecar/audio replacements on the destination filesystem.
@@ -640,3 +640,15 @@ untimed rows. Ambiguous/malformed input errors before editor replacement. Existi
 replace confirmation, undo and dirty/session guards remain in effect. TXT/LRC/ELRC
 export selections are independent. Publishing already sends serialized YAML with
 word timing to compatible LRCLIB servers; it does not upload ELRC sidecar files.
+
+### Recovery and Master reset maintenance (2.2.7, version unchanged)
+
+Drafts live in the frontend webview profile and do not call native Save/export.
+Master reset affects only the working document until explicit Save. Existing
+`save_lyrics` writes `lyricsfiles.edited_at`. `import_matching_sidecar` now also
+protects any record with non-null `edited_at`, so clearing and saving timing
+cannot be reversed by a stale sidecar during startup/F5. This needs no schema
+migration and does not delete sidecars. Automatic imported/downloaded Plain or
+missing records still prefer matching LRC; explicit Import can replace saved
+work. Native regression covers untimed/empty editor saves with a matching old
+LRC under both hash and metadata scanning, preserving content/date/sidecars.

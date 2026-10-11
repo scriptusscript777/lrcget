@@ -9,12 +9,14 @@
   >
     <template #titleLeft>
       <EditLyricsV2HeaderActions
-        :is-dirty="isDirty"
+        :is-dirty="isDirty || hasUnsavedDocument"
         :is-exporting="isExporting || isSaving"
+        :can-master-reset="activeTab === 'synced' && !isInstrumental && !isImporting"
         @save="saveLyrics"
         @save-and-publish="saveAndPublish"
         @export="exportLyrics"
         @debug="openDebugModal"
+        @master-reset="openProjectReset"
       />
     </template>
 
@@ -70,6 +72,22 @@
 
     <div class="grow flex flex-col gap-2 h-full">
       <div
+        v-if="recoveryStatus"
+        class="flex flex-wrap items-center gap-2 text-xs px-2 py-1 text-amber-800 dark:text-yellow-300"
+        role="status"
+      >
+        <span>{{ recoveryStatus }}</span>
+        <button v-if="recoveryBlocked" class="button button-normal rounded px-2 py-1" @click="discardRecovery">Discard unreadable recovery</button>
+        <template v-if="recoveryConflict">
+          <button class="button button-normal rounded px-2 py-1" @click="restoreRecoveryAndContext">
+            Restore draft
+          </button>
+          <button class="button button-normal rounded px-2 py-1" @click="discardRecovery">
+            Keep saved lyrics
+          </button>
+        </template>
+      </div>
+      <div
         class="toolbar bg-neutral-100 dark:bg-neutral-800 rounded-lg border border-neutral-200 dark:border-neutral-700"
       >
         <EditLyricsV2PlayerBar
@@ -84,6 +102,8 @@
         />
         <EditLyricsV2Waveform
           ref="waveformEditor"
+          :key="editorRevision"
+          :recovery-markers="recoveryMarkerRequest"
           :prevent-overlaps="preventOverlaps"
           :audio-source="audioSource"
           :progress="waveformProgress"
@@ -96,7 +116,7 @@
           :next-line-start-ms="syncedLines[selectedSyncedLineIndex + 1]?.start_ms"
           :previous-line="syncedLines[selectedSyncedLineIndex - 1]"
           :timing-step-ms="timingStepMs"
-          @preview-markers="markerPreview = $event"
+          @preview-markers="handleMarkerPreview"
           @marker-editing-change="markerEditing = $event"
           @seek="handleWaveformSeek"
         />
@@ -134,6 +154,7 @@
 
       <SyncedLyricsEditor
         v-else
+        :key="editorRevision"
         v-model:timing-step-ms="timingStepMs"
         v-model:loop-lead-seconds="loopLeadSeconds"
         v-model:loop-tail-seconds="loopTailSeconds"
@@ -150,6 +171,8 @@
         :can-redo="canRedo"
         :loop-enabled="loopEnabled"
         :loop-mode="loopMode"
+        :word-timing-expanded="wordTimingExpanded"
+        :recovery-word-selection="recoveryContext.wordSelection"
         :word-loop-target="wordLoopTarget"
         :can-loop="canPhraseLoop"
         :marker-editing="markerEditing"
@@ -158,7 +181,8 @@
         @redo="redo"
         @toggle-loop="toggleLoop('phrase')"
         @toggle-word-loop="toggleLoop('word')"
-        @word-loop-target="wordLoopTarget = $event"
+        @word-loop-target="handleWordLoopTarget"
+        @recovery-edit-state="updatePendingSentence"
         @update:model-value="updateSyncedLines"
         @update:selected-line-index="selectSyncedLine"
         @update:selected-line-indices="handleUpdateSelectedLineIndices"
@@ -204,6 +228,7 @@ import PlainLyricsCodeEditor from '@/components/library/edit-lyrics-v2/PlainLyri
 import SyncedLyricsEditor from '@/components/library/edit-lyrics-v2/SyncedLyricsEditor.vue'
 import KeyboardShortcutsModal from '@/components/library/edit-lyrics-v2/KeyboardShortcutsModal.vue'
 import Keyboard from '~icons/mdi/keyboard'
+import ResetLyricsProjectModal from '@/components/library/edit-lyrics-v2/ResetLyricsProjectModal.vue'
 import FileImport from '~icons/mdi/file-import-outline'
 import { useEditLyricsV2Document } from '@/composables/edit-lyrics-v2/useEditLyricsV2Document.js'
 import { useEditLyricsV2Hotkeys } from '@/composables/edit-lyrics-v2/useEditLyricsV2Hotkeys.js'
@@ -246,7 +271,7 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const { disableHotkey, enableHotkey, preventOverlaps: overlapPreference } = useGlobalState()
+const { disableHotkey, enableHotkey, lrclibInstance, preventOverlaps: overlapPreference } = useGlobalState()
 const {
   status,
   duration,
@@ -290,6 +315,18 @@ const progressMs = computed(() =>
 const activeTab = ref('plain')
 const wordTimingExpanded = ref(false)
 const {
+  recoveryBlocked,
+  recoveryStatus,
+  recoveryConflict,
+  recoveryContext,
+  hasUnsavedDocument,
+  hasRecoveryWork,
+  flushRecovery,
+  restoreRecovery,
+  discardRecovery,
+  resetLyricsProject,
+  updateRecoveryContext,
+  updatePendingSentence,
   undo,
   redo,
   canUndo,
@@ -339,6 +376,7 @@ const {
   trackId: trackIdRef,
   progress: waveformProgress,
   overlapPreference,
+  recoveryInstance: lrclibInstance.value,
   playbackDuration: computed(() =>
     Number.isFinite(waveformProgress.value) ? duration.value : null
   ),
@@ -364,14 +402,29 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
 })
 
 const waveformEditor = ref(null)
+const editorRevision = ref(0)
+const recoveryMarkerRequest = ref(null)
 const markerPreview = ref(null)
+const handleMarkerPreview = preview => {
+  const hadPreview = !!markerPreview.value
+  markerPreview.value = preview
+  if (preview || hadPreview) updateRecoveryContext({ markerPreview: preview ? {
+    lineIndex: preview.lineIndex, lineText: preview.line?.text,
+    startMs: preview.startMs, endMs: preview.endMs,
+  } : null })
+}
 const confirmSentenceBoundary = (boundary, lineIndex) => {
   const commit = markerMs => {
     const action = boundary === 'start' ? syncStartAt : syncEndAt
     return action(lineIndex, markerMs) === true ? { line: syncedLines.value[lineIndex] } : false
   }
   return lineIndex === selectedSyncedLineIndex.value && waveformEditor.value
-    ? waveformEditor.value.confirmBoundary(boundary, commit, syncedLines.value[lineIndex], lineIndex)
+    ? waveformEditor.value.confirmBoundary(
+        boundary,
+        commit,
+        syncedLines.value[lineIndex],
+        lineIndex
+      )
     : !!commit(undefined)
 }
 const syncLineToCurrentProgress = lineIndex => confirmSentenceBoundary('start', lineIndex)
@@ -643,11 +696,13 @@ const { open: openConfirmModal, close: closeConfirmModal } = useModal({
   component: ConfirmModal,
   attrs: {
     title: 'Unsaved Changes',
-    message: 'You have unsaved changes. Are you sure you want to close?',
+    message:
+      'Recovery could not protect your unfinished work. Stay here and Save before closing, or discard these changes.',
     confirmText: 'Discard Changes',
     cancelText: 'Cancel',
     onConfirm() {
       closeConfirmModal()
+      discardRecovery(true)
       emit('close')
     },
     onCancel() {
@@ -656,14 +711,72 @@ const { open: openConfirmModal, close: closeConfirmModal } = useModal({
   },
 })
 
+let projectResetContext = null
+const { open: openProjectResetModal, close: closeProjectResetModal } = useModal({
+  component: ResetLyricsProjectModal,
+  attrs: {
+    onCancel: () => { projectResetContext = null; closeProjectResetModal() },
+    onReset: ({ mode, onResult }) => {
+      if (!projectResetContext || !isCurrentImport(projectResetContext) || isImporting.value || activeTab.value !== 'synced' || isInstrumental.value) {
+        onResult(false, 'This lyrics project changed or is busy. Cancel and reopen Master reset.')
+        return
+      }
+      const success = resetLyricsProject(mode)
+      onResult(success)
+      if (!success) return
+      invalidateImport()
+      loopEnabled.value = false
+      wordLoopTarget.value = null
+      recoveryMarkerRequest.value = null
+      markerPreview.value = null
+      wordTimingExpanded.value = false
+      editorRevision.value++
+      closeProjectResetModal()
+    },
+  },
+})
+const openProjectReset = () => {
+  if (activeTab.value !== 'synced' || isInstrumental.value || isSaving.value || isExporting.value || isImporting.value) return
+  projectResetContext = importContext()
+  openProjectResetModal()
+}
+
 const handleClose = () => {
+  if (isSaving.value || isExporting.value) {
+    toast.info('Wait for the current save or export to finish before closing the editor.')
+    return
+  }
   invalidateImport()
-  if (isDirty.value) {
+  if ((isDirty.value || hasRecoveryWork.value) && !flushRecovery()) {
     openConfirmModal()
   } else {
     emit('close')
   }
 }
+
+const handleWordLoopTarget = target => {
+  wordLoopTarget.value = target
+  if (target) updateRecoveryContext({ wordSelection: { lineIndex: target.lineIndex, wordIndex: target.wordIndex } })
+}
+
+const applyRecoveryContext = () => {
+  const context = recoveryContext.value
+  recoveryMarkerRequest.value = context.markerPreview ?? null
+  if (context.activeTab === 'synced' || context.activeTab === 'plain') activeTab.value = context.activeTab
+  wordTimingExpanded.value = context.wordTimingExpanded === true
+}
+const restoreRecoveryAndContext = () => {
+  restoreRecovery()
+  applyRecoveryContext()
+}
+
+watch([activeTab, selectedSyncedLineIndex, wordTimingExpanded], () => {
+  updateRecoveryContext({
+    activeTab: activeTab.value,
+    selectedLineIndex: selectedSyncedLineIndex.value,
+    wordTimingExpanded: wordTimingExpanded.value,
+  })
+})
 
 const modalTitle = computed(() => {
   const title =
@@ -686,6 +799,7 @@ onMounted(() => {
 
   // Initialize lyrics from props
   initializeLyrics()
+  applyRecoveryContext()
 
   // Handle playback - ensure correct audio source is loaded
   void initializeAudio()

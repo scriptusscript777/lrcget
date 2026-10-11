@@ -51,3 +51,18 @@ See the [all-platform build matrix and limitations](platform-builds.md) and
 [complete code/maintenance guide](developer-guide.md).
 
 See [word-timed downloads and TXT/LRC/ELRC import](how-to.md#download-and-reopen-word-timed-lyrics) for automatic server fallback and independent format workflows.
+
+## Automatic unfinished-work recovery
+
+Unfinished lyrics are protected separately from normal saves and exports.
+Reopen the song or use Resume editing to recover it. Successful Save cleans
+only that project's completed draft; newer edits and pending markers remain.
+Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
+for restoration, conflicts, cleanup and limitations.
+
+## Master reset for the current lyrics project
+
+A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
+Synced mode opens a warning and choices to return to the last save or clear
+all timing while keeping text. Cancel keeps work; confirmation affects only
+this song. See the [illustrated reset guide](master-reset.md).

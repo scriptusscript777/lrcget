@@ -275,15 +275,15 @@ fn process_batch(
 }
 
 /// Refresh external lyrics even when the audio fingerprint has not changed.
-/// Saved synced/instrumental lyrics and existing plain edits remain protected,
-/// except that a valid matching LRC can upgrade a plain record to synced.
+/// Explicit editor saves (including reset/untimed work) are protected.
+/// A valid matching LRC can still upgrade automatically imported plain lyrics.
 fn import_matching_sidecar(path: &std::path::Path, tx: &rusqlite::Transaction) -> Result<()> {
     let Some(info) = db::find_track_by_path_tx(&path.to_string_lossy(), tx)? else {
         return Ok(());
     };
     let (protected, has_plain): (bool, bool) = tx.query_row(
         "SELECT EXISTS(SELECT 1 FROM lyricsfiles WHERE track_id = ?1
-         AND (has_synced_lyrics = 1 OR instrumental = 1)),
+         AND (has_synced_lyrics = 1 OR instrumental = 1 OR edited_at IS NOT NULL)),
          EXISTS(SELECT 1 FROM lyricsfiles WHERE track_id = ?1 AND has_plain_lyrics = 1)",
         [info.id],
         |row| Ok((row.get(0)?, row.get(1)?)),
@@ -522,6 +522,40 @@ mod refresh_tests {
             let protected = db::get_track_by_id(original.id, &conn).unwrap();
             assert_eq!(protected.lyricsfile.as_deref(), Some(saved.as_str()));
             assert_eq!(protected.lyrics_modified_at, edited_at);
+        }
+    }
+
+    #[test]
+    fn manually_saved_untimed_reset_is_not_replaced_by_old_sidecars() {
+        for method in [DetectionMethod::Hash, DetectionMethod::Metadata] {
+            let directory = tempfile::tempdir().unwrap();
+            let path = directory.path().join("song.mp3");
+            std::fs::write(&path, include_bytes!("../../tests/fixtures/embedding.mp3")).unwrap();
+            add_metadata(&path, "song");
+            std::fs::write(path.with_extension("lrc"), "[00:01.00]old timed words\n").unwrap();
+            let directories = vec![directory.path().to_string_lossy().into_owned()];
+            let mut conn = test_database();
+            scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+            let track = db::get_tracks(&conn).unwrap().remove(0);
+            for plain in [Some("reset words"), None] {
+                let saved = build_lyricsfile(
+                    &LyricsfileTrackMetadata::from_persistent_track(&track),
+                    plain,
+                    None,
+                )
+                .unwrap_or_else(|| "version: \"1.0\"\nmetadata: {}\nplain: \"\"\nlines: []\n".into());
+                db::save_edited_lyricsfile_for_track(&track, &saved, &conn).unwrap();
+                let before = db::get_track_by_id(track.id, &conn).unwrap();
+                assert!(before.lyrics_modified_at.is_some());
+                scan_library(&directories, &mut conn, &|_| {}, method).unwrap();
+                let after = db::get_track_by_id(track.id, &conn).unwrap();
+                assert_eq!(after.lyricsfile.as_deref(), Some(saved.as_str()));
+                assert_eq!(after.lyrics_modified_at, before.lyrics_modified_at);
+                assert_eq!(
+                    std::fs::read_to_string(path.with_extension("lrc")).unwrap(),
+                    "[00:01.00]old timed words\n"
+                );
+            }
         }
     }
 

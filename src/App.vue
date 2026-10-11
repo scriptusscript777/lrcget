@@ -8,6 +8,7 @@
         <Bug />
       </div>
     </div>
+    <EditorRecoveryNotice v-if="!loading" />
     <div v-if="!loading" class="grow overflow-hidden bg-white dark:bg-neutral-950">
       <ChooseDirectory
         v-if="!init"
@@ -28,6 +29,7 @@
 </template>
 
 <script setup>
+import EditorRecoveryNotice from './components/EditorRecoveryNotice.vue'
 import Bug from '~icons/mdi/bug'
 import WindowMinimize from '~icons/mdi/window-minimize'
 import WindowMaximize from '~icons/mdi/window-maximize'

@@ -290,6 +290,7 @@ import {
 
 const props = defineProps({
   audioSource: { type: Object, required: true },
+  recoveryMarkers: { type: Object, default: null },
   progress: { type: Number, default: null },
   playing: { type: Boolean, default: false },
   loopRange: { type: Object, default: null },
@@ -501,6 +502,18 @@ const confirmBoundary = (
   })
   return true
 }
+let restoredRecoveryMarkers = null
+watch([() => props.recoveryMarkers, waveform, () => props.selectedLine], () => {
+  const markers = props.recoveryMarkers
+  if (!markers || markers === restoredRecoveryMarkers || !waveform.value || !props.selectedLine) return
+  if (markers.lineIndex !== props.selectedLineIndex || markers.lineText !== props.selectedLine.text) return
+  if (!Number.isFinite(markers.startMs) || !Number.isFinite(markers.endMs)) return
+  const times = { startMs: markers.startMs, endMs: markers.endMs }
+  if (boundsForTimes(times)) {
+    restoredRecoveryMarkers = markers
+    draft.value = times
+  }
+}, { flush: 'post' })
 defineExpose({ confirmBoundary })
 const startMarkerDrag = (marker, event) => {
   if (event.button !== 0 || drag.value) return

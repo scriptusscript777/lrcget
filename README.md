@@ -75,8 +75,8 @@ is available locally in Rick’s Downloads folder.
 - Synced LRC export selected by default, optional embedded lyrics, and safer
   sidecar/audio exports without leftover backups. Saving and publishing are explicit.
 - Incremental library scanning on opening and F5 refresh without reloading.
-- Matching external LRC automatically upgrades Plain/missing lyrics to Synced;
-  TXT fills missing lyrics when no valid LRC exists. Saved synced edits stay protected.
+- Matching external LRC automatically upgrades imported/downloaded Plain or missing lyrics to Synced;
+  TXT fills missing lyrics when no valid LRC exists. Manually saved edits, including untimed work, stay protected.
 - Green **Modified** date/time column, retained through embedding and restarts.
 
 ### Documentation and How-Tos
@@ -330,3 +330,18 @@ See the [loop how-to](docs/how-to.md#loop-between-the-markers).
 See the [complete feature index](docs/features.md), [troubleshooting](docs/troubleshooting.md),
 and [package/source guide](docs/packages.md). The manual Windows MSI build is in
 [Windows packaging](packaging/windows/README.md).
+
+## Automatic unfinished-work recovery
+
+Unfinished lyrics are protected separately from normal saves and exports.
+Reopen the song or use Resume editing to recover it. Successful Save cleans
+only that project's completed draft; newer edits and pending markers remain.
+Word timing warnings now use yellow text. See the [recovery guide](docs/recovery.md)
+for restoration, conflicts, cleanup and limitations.
+
+## Master reset for the current lyrics project
+
+A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
+Synced mode opens a warning and choices to return to the last save or clear
+all timing while keeping text. Cancel keeps work; confirmation affects only
+this song. See the [illustrated reset guide](docs/master-reset.md).

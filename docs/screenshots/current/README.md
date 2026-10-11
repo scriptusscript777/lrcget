@@ -107,3 +107,18 @@ Browser checks also exercised pause/resume without seeks or lyric mutations whil
 word Loop stayed on. The broader guide images and enhanced import were refreshed
 with mocked native commands and temporary fixtures. Debian startup uses the actual
 packaged executable and an isolated temporary profile.
+
+## Recovery maintenance — Debian 2.2.7, version unchanged
+
+`editor-recovery-protected-{light,dark}.png` and
+`editor-recovery-restored-{light,dark}.png` show durable unfinished word timing,
+selected editor context and an unconfirmed waveform preview. Real Vue components
+run against isolated mocked native fixtures; the user's music/library are untouched.
+Word timing warning screenshots were refreshed with yellow warning text.
+Browser checks also verify the main-window notice and Resume action and a page
+reload that does not invoke the old editor's shutdown hooks.
+
+Master reset captures: `master-reset-saved-warning-*`,
+`master-reset-timing-warning-*`, `master-reset-cleared-*` and
+`master-reset-plain-*`. Both themes show the current icon/warning and Plain-mode
+graying using safe temporary fixtures. See docs/master-reset.md.

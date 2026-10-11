@@ -1,5 +1,12 @@
 import { invoke } from '@tauri-apps/api/core'
-import { computed, ref, watch } from 'vue'
+import { computed, onScopeDispose, ref, watch } from 'vue'
+import {
+  recoveryStorage,
+  recoveryTarget,
+  readRecovery,
+  writeRecovery,
+  removeRecovery,
+} from '@/utils/editor-recovery.js'
 import { useLyricHistory } from './useLyricHistory.js'
 import { waveformMarkerBounds, waveformNeighborWarnings } from '@/utils/waveform-markers.js'
 import {
@@ -22,6 +29,8 @@ export function useEditLyricsV2Document({
   playbackDuration,
   overlapPreference,
   toast,
+  recoveryStore = recoveryStorage(),
+  recoveryInstance = '',
 }) {
   const plainLyrics = ref('')
   const syncedLines = ref([])
@@ -42,7 +51,131 @@ export function useEditLyricsV2Document({
       synced: syncedLines.value,
       instrumental: isInstrumental.value,
     })
-  let savedSnapshot = ''
+  const savedSnapshot = ref('')
+  const recoveryStatus = ref('')
+  const recoveryConflict = ref(null)
+  const recoveryContext = ref({})
+  const pendingSentence = ref(null)
+  let recoveryKey = null
+  let recoverySource = null
+  let recoveryReady = false
+  const recoveryBlocked = ref(false)
+  const workingDocument = () => {
+    const doc = JSON.parse(documentSnapshot())
+    const pending = pendingSentence.value
+    const line = doc.synced[pending?.lineIndex]
+    if (
+      line &&
+      pending.originalText === line.text &&
+      typeof pending.text === 'string' &&
+      pending.text !== line.text
+    ) {
+      line.text = pending.text
+      line.words = []
+    }
+    return doc
+  }
+  const hasUnsavedDocument = computed(() => JSON.stringify(workingDocument()) !== savedSnapshot.value)
+  const hasRecoveryWork = computed(() => hasUnsavedDocument.value || !!recoveryContext.value.markerPreview)
+  const flushRecovery = () => {
+    if (!recoveryReady) return true
+    if (recoveryBlocked.value || recoveryConflict.value) return false
+    try {
+      if (!hasRecoveryWork.value) {
+        removeRecovery(recoveryStore, recoveryKey)
+        recoveryStatus.value = ''
+      } else {
+        writeRecovery(recoveryStore, recoveryKey, {
+          baseline: savedSnapshot.value,
+          document: workingDocument(),
+          context: recoveryContext.value,
+          source: recoverySource,
+        })
+        recoveryStatus.value = 'Unfinished work protected by recovery'
+      }
+      return true
+    } catch (error) {
+      recoveryStatus.value = `Recovery unavailable: ${error.message}`
+      return false
+    }
+  }
+  const restoreRecovery = () => {
+    const record = recoveryConflict.value
+    if (!record) return
+    recoveryReady = false
+    plainLyrics.value = record.document.plain
+    syncedLines.value = record.document.synced
+    isInstrumental.value = record.document.instrumental
+    recoveryContext.value =
+      record.context && typeof record.context === 'object' ? record.context : {}
+    if (Number.isInteger(recoveryContext.value.selectedLineIndex))
+      selectedSyncedLineIndex.value = recoveryContext.value.selectedLineIndex
+    ensureSelectedSyncedLine()
+    recoveryConflict.value = null
+    isDirty.value = documentSnapshot() !== savedSnapshot.value
+    history.reset()
+    recoveryReady = true
+    recoveryStatus.value = 'Recovered unfinished work'
+    // Keep the draft durable; adopt the current saved baseline after explicit conflict restore.
+    flushRecovery()
+    recoveryStatus.value = 'Recovered unfinished work'
+  }
+  const discardRecovery = (abandon = false) => {
+    try {
+      removeRecovery(recoveryStore, recoveryKey)
+      recoveryConflict.value = null
+      recoveryBlocked.value = false
+      recoveryStatus.value = ''
+      if (abandon === true) recoveryReady = false
+      return true
+    } catch (error) {
+      recoveryStatus.value = `Recovery unavailable: ${error.message}`
+      return false
+    }
+  }
+  const resetLyricsProject = mode => {
+    if (isSaving.value || !['saved', 'timing'].includes(mode)) return false
+    const working = workingDocument()
+    try {
+      // Delete only this target; if removal fails, preserve the current editor.
+      if (recoveryStore && recoveryKey) removeRecovery(recoveryStore, recoveryKey)
+    } catch (error) {
+      recoveryStatus.value = `Recovery unavailable: ${error.message}`
+      return false
+    }
+    const doc = mode === 'saved' ? JSON.parse(savedSnapshot.value) : working
+    recoveryReady = false
+    pendingSentence.value = null
+    recoveryConflict.value = null
+    recoveryBlocked.value = false
+    recoveryContext.value = {}
+    recoveryStatus.value = ''
+    plainLyrics.value = doc.plain
+    syncedLines.value = mode === 'saved' ? doc.synced :
+      (doc.synced.length ? doc.synced : createSyncedLinesFromPlain(doc.plain, [])).map(line => ({ text: line.text, words: [] }))
+    isInstrumental.value = mode === 'saved' ? doc.instrumental : false
+    selectedSyncedLineIndex.value = -1
+    clearSyncedLineSelection()
+    ensureSelectedSyncedLine()
+    isSyncedLineEditing.value = false
+    isDirty.value = documentSnapshot() !== savedSnapshot.value
+    history.reset()
+    recoveryReady = true
+    flushRecovery()
+    return true
+  }
+  const updateRecoveryContext = context => {
+    recoveryContext.value = { ...recoveryContext.value, ...context }
+  }
+  const updatePendingSentence = pending => {
+    pendingSentence.value = pending
+  }
+  watch(
+    [plainLyrics, syncedLines, isInstrumental, pendingSentence, recoveryContext],
+    flushRecovery,
+    { deep: true, flush: 'sync' }
+  )
+  onScopeDispose(flushRecovery)
   const history = useLyricHistory(
     () => ({ lines: syncedLines.value, instrumental: isInstrumental.value }),
     state => {
@@ -50,7 +183,7 @@ export function useEditLyricsV2Document({
       isInstrumental.value = state.instrumental
       clearSyncedLineSelection()
       ensureSelectedSyncedLine()
-      isDirty.value = documentSnapshot() !== savedSnapshot
+      isDirty.value = documentSnapshot() !== savedSnapshot.value
     }
   )
 
@@ -128,11 +261,11 @@ export function useEditLyricsV2Document({
   }
 
   const initializeLyrics = () => {
+    recoveryReady = false
     history.clear()
     // Get lyrics content from lyricsfile prop, or empty string if none
     const lyricsfileContent = lyricsfile.value?.content ?? ''
 
-    console.log(lyricsfileContent)
     const parsed = parseLyricsfile(lyricsfileContent)
 
     plainLyrics.value = parsed.plainLyrics
@@ -142,12 +275,44 @@ export function useEditLyricsV2Document({
     isInstrumental.value = parsed.isInstrumental
 
     lyricsfileDocument.value = parsed.document
-    console.log(lyricsfileDocument.value)
     isDirty.value = false
     isSyncedLineEditing.value = false
     ensureSelectedSyncedLine()
-    savedSnapshot = documentSnapshot()
+    savedSnapshot.value = documentSnapshot()
     history.reset()
+    recoveryKey = recoveryTarget(
+      audioSource.value,
+      lyricsfile.value,
+      trackId?.value,
+      recoveryInstance
+    )
+    recoverySource = JSON.parse(
+      JSON.stringify({
+        audioSource: audioSource.value,
+        trackId: trackId?.value ?? null,
+        lyricsfileId: lyricsfile.value?.id ?? null,
+      })
+    )
+    recoveryReady = false
+    recoveryBlocked.value = false
+    recoveryConflict.value = null
+    pendingSentence.value = null
+    recoveryContext.value = {}
+    recoveryStatus.value = ''
+    try {
+      const record = readRecovery(recoveryStore, recoveryKey)
+      if (record) {
+        recoveryConflict.value = record
+        if (record.baseline === savedSnapshot.value) restoreRecovery()
+        else
+          recoveryStatus.value =
+            'Saved lyrics changed since this recovery draft. Choose which work to keep.'
+      }
+    } catch (error) {
+      recoveryBlocked.value = true
+      recoveryStatus.value = `Recovery unavailable: ${error.message}`
+    }
+    recoveryReady = true
   }
 
   const updatePlainLyrics = lyrics => {
@@ -617,6 +782,15 @@ export function useEditLyricsV2Document({
 
   const saveLyrics = async () => {
     if (isSaving.value) return false
+    if (recoveryConflict.value || recoveryBlocked.value) {
+      toast.error('Resolve the recovery draft before saving these lyrics.')
+      return false
+    }
+    const pending = pendingSentence.value
+    if (pending && syncedLines.value[pending.lineIndex]?.text === pending.originalText && typeof pending.text === 'string') {
+      updateLineText(pending.lineIndex, pending.text)
+      pendingSentence.value = null
+    }
     if (!isDirty.value) {
       return true
     }
@@ -654,8 +828,9 @@ export function useEditLyricsV2Document({
 
       // A save must not replace edits made while the backend was writing.
       lyricsfileDocument.value = parseLyricsfile(serializedContent).document
-      savedSnapshot = savingSnapshot
-      isDirty.value = documentSnapshot() !== savedSnapshot
+      savedSnapshot.value = savingSnapshot
+      isDirty.value = documentSnapshot() !== savedSnapshot.value
+      flushRecovery()
       return true
     } catch (error) {
       console.error(error)
@@ -670,6 +845,7 @@ export function useEditLyricsV2Document({
 
   // Compute serialized lyricsfile content for export, publish, and debug
   const serializedLyricsfile = computed(() => {
+    const working = workingDocument()
     // Build track data for serialization
     // Prefer existing lyricsfile metadata first, then fall back to audioSource/track data
     const trackData = {
@@ -689,8 +865,8 @@ export function useEditLyricsV2Document({
     return (
       serializeLyricsfile({
         track: trackData,
-        plainLyrics: plainLyrics.value,
-        syncedLines: syncedLines.value,
+        plainLyrics: working.plain,
+        syncedLines: working.synced,
         baseDocument: lyricsfileDocument.value,
         isInstrumental: isInstrumental.value,
       }) || ''
@@ -713,6 +889,18 @@ export function useEditLyricsV2Document({
   )
 
   return {
+    recoveryBlocked,
+    recoveryStatus,
+    recoveryConflict,
+    recoveryContext,
+    hasUnsavedDocument,
+    hasRecoveryWork,
+    flushRecovery,
+    restoreRecovery,
+    discardRecovery,
+    resetLyricsProject,
+    updateRecoveryContext,
+    updatePendingSentence,
     timingStepMs,
     preventOverlaps,
     updateWaveformMarkers,

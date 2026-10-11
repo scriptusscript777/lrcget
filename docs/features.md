@@ -9,7 +9,7 @@ Rick's editor enhancements. See the [illustrated overview](app-overview.md),
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Library              | Configured music directories, scanning, artist/album/track views, search, lyrics status, Modified date, incremental startup/F5 refresh | [Library](editing-guide.md#library-search-and-refresh)                   |
 | Finding lyrics       | LRCLIB search/download with validated word timing and automatic LRC/plain fallback, recording metadata/duration comparison, bulk download and configured server                                | [Search](how-to.md#find-lyrics-online)                                   |
-| Local inputs         | Plain TXT, timestamped TXT, LRC and ELRC import; matching LRC preference for Plain/missing records; explicit replacement confirmation        | [Import](how-to.md#create-timed-lyrics-from-a-text-file)                 |
+| Local inputs         | Plain TXT, timestamped TXT, LRC and ELRC import; matching LRC preference for imported Plain/missing records; manual-save protection; explicit replacement confirmation        | [Import](how-to.md#create-timed-lyrics-from-a-text-file)                 |
 | Sentence timing      | Start/end stamps, row insertion/deletion, timing steps, shifts, session Undo/Redo, configurable shortcuts                              | [Sentence editing](editing-guide.md#edit-lines-and-text)                 |
 | Waveform             | Cached peaks, click to seek/play, playhead position, point/button zoom, panning, playback following, visible time range                | [Waveform](how-to.md#zoom-and-follow-without-looping)                    |
 | Sentence markers     | Exact Start/End readouts, shaded range, provisional previews, separate Sync confirmation, Cancel, overlap warnings                     | [Markers](how-to.md#place-precise-markers-and-preview-before-confirming) |
@@ -42,3 +42,18 @@ Keep your own backups. Session Undo is not a permanent file history.
 See [troubleshooting](troubleshooting.md) for short/missing word labels, Reset,
 loop behavior and package compatibility. The proposed one-click automatic word
 alignment feature is not implemented.
+
+## Automatic unfinished-work recovery
+
+Unfinished lyrics are protected separately from normal saves and exports.
+Reopen the song or use Resume editing to recover it. Successful Save cleans
+only that project's completed draft; newer edits and pending markers remain.
+Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
+for restoration, conflicts, cleanup and limitations.
+
+## Master reset for the current lyrics project
+
+A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
+Synced mode opens a warning and choices to return to the last save or clear
+all timing while keeping text. Cancel keeps work; confirmation affects only
+this song. See the [illustrated reset guide](master-reset.md).

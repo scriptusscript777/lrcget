@@ -2,7 +2,7 @@
 
 ## Architecture Overview
 
-Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Session state only; persistence in Rust/SQLite.
+Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Saved lyrics persist in Rust/SQLite; unfinished editor recovery uses the webview profile.
 
 Local build 2.2.0+local.13: the lyrics editor defaults to synced LRC export
 selected and loads the saved embedding preference when optional embedding
@@ -423,3 +423,29 @@ playback/selection/document states return false silently to prevent another adva
 The added word-lane Pause/Resume emits through SyncedLyricsEditor to existing pause
 and resumeOrPlay functions. Play retains sentence replay; pause/resume retains
 position and loop state without lyric edits or explicit seeks.
+
+## Editor recovery drafts
+
+`utils/editor-recovery.js` stores versioned per-target working documents in the
+existing webview profile's localStorage. This is an exception to backend-owned
+persistence: drafts never call Save or export commands. The document composable
+writes synchronously on edits, validates loaded drafts, compares the saved
+baseline before restoring and preserves newer edits during Save. Save clears
+only a completed target; pending sentence buffers and waveform previews remain
+recoverable. `EditorRecoveryNotice.vue` lists the latest unfinished song and
+resolves the current native library record before opening it. Identity includes
+file path/title/artist to guard reused IDs; standalone keys include the server
+namespace and lyricsfile ID. The editor retains tab/line/word/lane context and
+waveform preview boundaries; browser storage errors are visible and unreadable
+records require an explicit discard. History and live pointer drags remain
+session-only. No scan, library status, modified date or sidecar changes occur
+until the normal Save/export commands. See docs/recovery.md for limits.
+
+`ResetLyricsProjectModal.vue` provides warning/choice/Cancel and stops bubbling
+editor shortcuts. The persistent header reset icon enables only Synced editing;
+parent busy/source/document guards reject stale confirmations. The document
+reset API removes only the current draft, clears buffers/context/history and
+restores the exact saved snapshot or clears sentence/word timing while retaining
+text. Cleared working copies remain recoverable. Editor revisions remount word
+and waveform children to discard stale local buffers/previews and stop Loop.
+No file/database commands run on reset. See docs/master-reset.md.

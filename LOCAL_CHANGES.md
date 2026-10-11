@@ -552,3 +552,19 @@ See [release notes](docs/releases/2.2.6-local.9.md) and
 [download/import guide](docs/how-to.md#download-and-reopen-word-timed-lyrics).
 Server word timing is retained, ordinary LRC/plain data falls back automatically,
 and explicit enhanced files can be reopened without losing word ends or gaps.
+
+## 2026-10-11 — Debian recovery maintenance (version unchanged: 2.2.7)
+
+Automatic per-song recovery for unfinished lyrics, sentence/word timing and
+staged waveform previews; main-window Resume editing; conflict/error handling;
+successful-Save cleanup limited to the current project; selected editor context
+restoration; yellow word timing warnings. Internal saves, sidecar selection and
+library status/date behavior stay explicit. See docs/recovery.md and
+ docs/reviews/2.2.7.md for checks and limitations. GitHub/AppImage/Windows held.
+
+Master reset adds a persistent header icon beside YAML debug, disabled outside
+Synced editing, with warning/Cancel and return-to-save/clear-all-timing choices.
+It supports TXT/LRC/ELRC and preserves current text/other projects/files.
+Manual saved untimed/empty lyrics are now protected against stale LRC scan
+imports; imported Plain records still upgrade from matching LRC. See the reset
+guide and maintenance review. Version remains 2.2.7.

@@ -57,3 +57,11 @@ locked builds, tests and application identity.
 
 See the [all-platform build matrix and limitations](platform-builds.md) and
 [complete code/maintenance guide](developer-guide.md).
+
+## Same-version Debian maintenance build
+
+The recovery changes keep version 2.2.7 at Rick's request. Prior Downloads
+artifacts are preserved under dated backup names before replacing the current
+installer and source archives. Use `sudo apt install --reinstall` with the current
+Debian file to replace an already-installed 2.2.7. AppImage and Windows artifacts
+remain older builds and do not contain recovery. See [recovery](recovery.md).

@@ -194,3 +194,13 @@ it('blocks export during preference writes and ignores stale configuration reads
   state.handleExportClick()
   expect(emit).toHaveBeenCalledWith('export', expect.objectContaining({ enhancedLrc: true }))
 })
+
+
+it.each([false, true])('keeps Master reset visible and enables it only with Synced eligibility (%s)', async eligible => {
+  const app = createSSRApp(HeaderActions, { isDirty: false, isExporting: false, canMasterReset: eligible })
+  app.component('VDropdown', popup)
+  app.directive('close-popper', {})
+  const html = await renderToString(app)
+  const button = html.match(/<button[^>]*aria-label="Master reset current lyrics project"[^>]*>/)[0]
+  expect(/\sdisabled(?:=|\s|>)/.test(button)).toBe(!eligible)
+})

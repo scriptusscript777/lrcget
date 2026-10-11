@@ -12,7 +12,7 @@ For Rick Lidgett's LRCGET **2.2.7**.
 
 ```bash
 sha256sum -c LRCGET_2.2.7_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.7_amd64.deb
+sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -28,10 +28,10 @@ do not contain these enhancements.
 3. After adding/removing recordings, close editing dialogs and press **F5**,
    or choose **Refresh library (F5)** in the library menu.
 
-Refresh does not export or publish. When a recording has Plain or missing
+Refresh does not export or publish. When a recording has automatically imported/downloaded Plain or missing
 lyrics, a valid matching LRC created by another application is picked up on
 startup or F5. Its words take precedence over matching TXT; TXT fills missing
-lyrics when no valid LRC exists. Already synced/instrumental lyrics are protected
+lyrics when no valid LRC exists. Manually saved and synced/instrumental lyrics are protected
 and require explicit import to replace the working document.
 
 Before: the matching TXT has been imported as Plain.
@@ -260,7 +260,7 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 | Row playback unavailable for TXT      | Provisional markers do not assign timing; confirm its start first                                                                                   |
 | End says Inferred end                 | Set end at playback or confirm the intended pair with Sync Sentence Start/End                                                                       |
 | Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                        |
-| An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Already synced lyrics require explicit import to protect saved edits. |
+| An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Manually saved/synced lyrics require explicit import to protect edits. |
 | Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                                                                                 |
 | Embedded option is disabled           | Saved embedding setting and supported file type                                                                                                     |
 | Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry                                                       |
@@ -518,3 +518,18 @@ may offer only ordinary LRC or text. See [LRCLIB API documentation](https://lrcl
 
 ![Enhanced import, light](screenshots/current/enhanced-import-light.png)
 ![Enhanced import, dark](screenshots/current/enhanced-import-dark.png)
+
+## Automatic unfinished-work recovery
+
+Unfinished lyrics are protected separately from normal saves and exports.
+Reopen the song or use Resume editing to recover it. Successful Save cleans
+only that project's completed draft; newer edits and pending markers remain.
+Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
+for restoration, conflicts, cleanup and limitations.
+
+## Master reset for the current lyrics project
+
+A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
+Synced mode opens a warning and choices to return to the last save or clear
+all timing while keeping text. Cancel keeps work; confirmation affects only
+this song. See the [illustrated reset guide](master-reset.md).

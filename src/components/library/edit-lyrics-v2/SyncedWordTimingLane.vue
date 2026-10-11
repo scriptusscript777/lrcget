@@ -176,7 +176,7 @@
       <p
         v-if="timingMessage"
         role="status"
-        class="mt-2 text-xs text-neutral-700 dark:text-neutral-300"
+        class="mt-2 rounded bg-neutral-900 px-2 py-1 text-xs text-yellow-300 dark:bg-amber-950 dark:text-yellow-300"
       >
         {{ timingMessage }}
       </p>
@@ -552,6 +552,7 @@ const editSelectedBoundary = (boundary, event) => {
             'Word timing was not applied; its sentence or overlap bounds changed.'
       },
     })
+  else timingMessage.value = 'Word timing was not changed: keep its start before its end and inside its neighboring words.'
   // Reflect the actual accepted/clamped document after parent validation.
   nextTick(() => {
     const range = selectedWordLoopRange.value

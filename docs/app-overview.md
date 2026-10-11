@@ -194,8 +194,8 @@ These checks do not guarantee perfect lyric alignment.
 
 ## Automatic External LRC Detection
 
-Startup and F5 prefer valid matching LRC for missing/Plain lyrics; TXT is the
-fallback for missing lyrics. Saved synced/instrumental records stay protected.
+Startup and F5 prefer valid matching LRC for missing/automatically imported Plain lyrics; TXT is the
+fallback for missing lyrics. Explicit editor saves (including untimed/reset work) and synced/instrumental records stay protected.
 See the [refresh workflow](how-to.md#add-music-and-refresh-the-library).
 
 ![Matching LRC automatically upgrades Plain to Synced](screenshots/current/automatic-lrc-after-light.png)
@@ -364,3 +364,18 @@ sentence. Neither pause nor resume changes lyrics or saved timing.
 
 ![Confirmed Word Sync, light](screenshots/current/word-sync-confirmed-light.png)
 ![Confirmed Word Sync, dark](screenshots/current/word-sync-confirmed-dark.png)
+
+## Automatic unfinished-work recovery
+
+Unfinished lyrics are protected separately from normal saves and exports.
+Reopen the song or use Resume editing to recover it. Successful Save cleans
+only that project's completed draft; newer edits and pending markers remain.
+Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
+for restoration, conflicts, cleanup and limitations.
+
+## Master reset for the current lyrics project
+
+A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
+Synced mode opens a warning and choices to return to the last save or clear
+all timing while keeping text. Cancel keeps work; confirmation affects only
+this song. See the [illustrated reset guide](master-reset.md).

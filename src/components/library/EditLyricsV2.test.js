@@ -19,7 +19,7 @@ vi.mock('vue-final-modal', () => ({
   },
 }))
 vi.mock('@/composables/global-state.js', () => ({
-  useGlobalState: () => ({ disableHotkey: vi.fn(), enableHotkey: vi.fn() }),
+  useGlobalState: () => ({ disableHotkey: vi.fn(), enableHotkey: vi.fn(), lrclibInstance: { value: 'https://lrclib.net' } }),
 }))
 vi.mock('@/composables/player.js', () => ({ usePlayer: () => ({ progress: { value: 0 } }) }))
 vi.mock('@/composables/edit-lyrics-v2/useEditLyricsV2Document.js', () => ({
@@ -67,6 +67,10 @@ beforeEach(() => {
   const syncedLines = ref([])
   const isInstrumental = ref(false)
   mocks.document = {
+    recoveryContext: ref({}), recoveryStatus: ref(''), recoveryConflict: ref(null),
+    hasRecoveryWork: ref(false), hasUnsavedDocument: ref(false), selectedSyncedLineIndex: ref(0),
+    updateRecoveryContext: vi.fn(), updatePendingSentence: vi.fn(),
+    resetLyricsProject: vi.fn(() => true), flushRecovery: vi.fn(() => true), discardRecovery: vi.fn(), restoreRecovery: vi.fn(),
     plainLyrics,
     syncedLines,
     isInstrumental,
@@ -315,6 +319,6 @@ describe('lyrics file import', () => {
     expect(header).toContain('title="Import lyrics file"')
     expect(header).toContain(':disabled="isSaving || isExporting || isImporting"')
     expect(header).toContain('@click="handleImportLrcFile"')
-    expect(source).toContain('waveformEditor.value.confirmBoundary(boundary, commit, syncedLines.value[lineIndex], lineIndex)')
+    expect(source).toMatch(/waveformEditor\.value\.confirmBoundary\(\s*boundary,\s*commit,\s*syncedLines\.value\[lineIndex\],\s*lineIndex\s*\)/)
   })
 })
