@@ -1063,12 +1063,12 @@ mod tests {
 
     #[test]
     fn test_build_sidecar_path() {
-        let track_path = "/music/artist/album/song.mp3";
-        let txt_path = build_sidecar_path(track_path, "txt").unwrap();
-        assert_eq!(txt_path.to_str().unwrap(), "/music/artist/album/song.txt");
-
-        let lrc_path = build_sidecar_path(track_path, "lrc").unwrap();
-        assert_eq!(lrc_path.to_str().unwrap(), "/music/artist/album/song.lrc");
+        let directory = tempfile::tempdir().unwrap();
+        let track_path = directory.path().join("artist").join("album").join("song.mp3");
+        for extension in ["txt", "lrc", "elrc"] {
+            let sidecar = build_sidecar_path(track_path.to_str().unwrap(), extension).unwrap();
+            assert_eq!(sidecar, track_path.with_extension(extension));
+        }
     }
 
     #[test]
