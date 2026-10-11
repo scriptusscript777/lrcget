@@ -39,6 +39,9 @@
   <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.6+local.4" date="2026-10-11">
+      <description><p>Pending waveform markers change only the original sentence Sync button color.</p></description>
+    </release>
     <release version="2.2.6+local.3" date="2026-10-11">
       <description><p>Clear Confirm controls for pending markers, visible Cancel, and reliable F1 help.</p></description>
     </release>

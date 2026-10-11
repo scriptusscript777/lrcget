@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.6+local.3`, based on upstream tag `2.2.0`.
+Local version: `2.2.6+local.4`, based on upstream tag `2.2.0`.
 
 ## Saved Overlap Setting (2.2.6+local.2)
 
@@ -462,3 +462,8 @@ resume/replay seeks and errors so navigation cannot jump back to a previous line
 - F1 supports disabled hovered controls and release-only desktop events; Undo/Redo help explains Cancel.
 - Word Timing no longer repeats sentence text next to its time range.
 - Local release only; GitHub publishing and creator notifications remain paused.
+
+## Pending marker colors (2.2.6+local.4)
+
+Pending markers now change only the original Sync button color to amber. No
+Confirm text or button resizing. Cancel and timing behavior remain unchanged.

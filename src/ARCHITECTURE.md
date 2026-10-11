@@ -282,3 +282,9 @@ Word Timing omits the duplicate header sentence. Timed hover help resolves point
 coordinates for disabled controls and has a keyup fallback for desktop F1 presses,
 with press/release deduplication and consumed-shortcut priority. No backend timing,
 persistence, LRC export or data-identifier changes are required.
+
+### Marker color indicator (2.2.6+local.4)
+
+Pending start/end previews now change only the corresponding original Sync icon
+button color. Buttons retain their circular 24px layout and Equal icon. Timing
+handlers and cancellation remain unchanged. No backend behavior changes.

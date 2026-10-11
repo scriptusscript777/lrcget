@@ -8,7 +8,7 @@
     @click="emit('select', index)"
     @mousedown="handleMouseDown"
   >
-    <div class="flex shrink-0 items-center gap-1 min-w-[3.5rem]">
+    <div class="flex items-center gap-1 w-[3.5rem]">
       <button
         v-tooltip="editorTooltip('Play from this sentence; keep Loop on when enabled, otherwise continue forward')"
         class="button p-1 rounded-full text-sm h-6 w-6"
@@ -23,15 +23,14 @@
       <button
         v-show="isLineControlsVisible || previewRange?.startChanged"
         v-tooltip="editorTooltip(syncLineTitle)"
-        class="button h-6"
-        :class="previewRange?.startChanged ? confirmButtonClass : 'button-primary p-1 rounded-full text-sm w-6'"
+        class="button p-1 rounded-full text-sm h-6 w-6"
+        :class="previewRange?.startChanged ? pendingMarkerButtonClass : 'button-primary'"
         data-testid="sentence-sync-start"
         :title="syncLineTitle"
         :aria-label="syncLineTitle"
         @click.stop="emit('sync-line', index)"
       >
-        <span v-if="previewRange?.startChanged">Confirm</span>
-        <Equal v-else />
+        <Equal />
       </button>
     </div>
 
@@ -142,19 +141,18 @@
         </button>
       </div>
 
-      <div class="h-6 min-w-[1.5rem] mr-4 shrink-0">
+      <div class="h-6 w-6 mr-4 shrink-0">
         <button
           v-show="isLineControlsVisible || previewRange?.endChanged"
           v-tooltip="editorTooltip(syncEndTitle)"
-          class="button h-6"
-          :class="previewRange?.endChanged ? confirmButtonClass : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-300 hover:dark:bg-neutral-600 p-1 rounded-full text-sm w-6'"
+          class="button p-1 rounded-full text-sm h-6 w-6"
+          :class="previewRange?.endChanged ? pendingMarkerButtonClass : 'bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-neutral-700 dark:text-neutral-300 hover:dark:bg-neutral-600'"
           data-testid="sentence-sync-end"
           :title="syncEndTitle"
           :aria-label="syncEndTitle"
           @click.stop="emit('sync-end', index)"
         >
-          <span v-if="previewRange?.endChanged">Confirm</span>
-          <Equal v-else />
+          <Equal />
         </button>
       </div>
     </div>
@@ -257,7 +255,7 @@ const emit = defineEmits([
   'forward-end',
 ])
 
-const confirmButtonClass = 'rounded px-2 text-xs bg-amber-200 text-amber-950 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700'
+const pendingMarkerButtonClass = 'bg-amber-200 text-amber-950 hover:bg-amber-300 dark:bg-amber-800 dark:text-amber-100 dark:hover:bg-amber-700'
 
 const rowElement = ref(null)
 
@@ -295,7 +293,7 @@ const editingTextProxy = computed({
 })
 
 const syncLineTitle = computed(() => withShortcutTitle(
-  props.previewRange?.startChanged ? 'Confirm previewed start marker; keep confirmed end fixed' : 'Sync sentence start to current playback; keep end fixed',
+  props.previewRange?.startChanged ? 'Apply previewed start marker; keep confirmed end fixed' : 'Sync sentence start to current playback; keep end fixed',
   syncedEditorShortcutBindings,
   'syncLineToPlayback'
 ))
@@ -309,7 +307,7 @@ const forwardLineTitle = computed(() => withShortcutTitle(
 ))
 
 const syncEndTitle = computed(() => withShortcutTitle(
-  props.previewRange?.endChanged ? 'Confirm previewed end marker; keep confirmed start fixed' : 'Sync sentence end to current playback; keep start fixed',
+  props.previewRange?.endChanged ? 'Apply previewed end marker; keep confirmed start fixed' : 'Sync sentence end to current playback; keep start fixed',
   syncedEditorShortcutBindings,
   'syncLineEndToPlayback'
 ))
