@@ -72,3 +72,11 @@ LRC and plain fixtures. Filtering, raw-data application, fallback and explicit
 word-end gaps were checked. `enhanced-import-*` show the editor after confirmed
 ELRC import with editable words and preserved ends. Both themes use temporary
 fixtures and a mocked backend; no personal files or online publication are used.
+
+`debian-startup.png` is the native local.9 executable extracted from the Debian
+package, opened with a fresh temporary profile under Xvfb. It verifies the bundled
+frontend opens without touching the live lyrics database; no music is configured.
+
+`appimage-startup.png` was refreshed using the native local.9 AppImage and a
+separate temporary XDG profile. Production frontend rendering and database startup
+passed. Both native startup checks left the installed local.8 profile unchanged.

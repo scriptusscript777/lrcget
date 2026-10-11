@@ -115,3 +115,18 @@ not prove timestamps are meaningful. The reported disappearing first word has
 not been reproduced on the actual recording. Client karaoke/embedded-frame
 support varies. Windows Server checks do not substitute for Windows 11 desktop
 playback, older-version upgrades, signing or multi-distribution Linux validation.
+
+## Word-timed server/import flow
+
+`word-timing-status.js` validates actual word arrays against sentence text and
+bounds; a server `hasWordSync` flag alone is insufficient. `lyricsfile.js` gives
+structured content priority over stale legacy fields. Search offers an optional
+client-side word-result filter without changing server requests. The preview
+uses the shared word-range helper to honor explicit ends and gaps.
+
+`lyrics-import.js` routes inline enhanced tags or .elrc files to `enhanced-lrc.js`.
+It retains absolute starts/end tags, clear cues and untimed rows. Validation
+precedes replacement confirmation, so an invalid file cannot erase the editor.
+Normal LRC imports retain line timing with empty word arrays; plain TXT remains
+untimed. Native payload resolution retains raw server YAML and falls back only
+when it is absent/empty. Publication already sends that structured format.

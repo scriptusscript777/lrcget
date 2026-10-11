@@ -37,7 +37,7 @@ distributions.
 
 ## Windows 11 MSI
 
-A native Windows MSI was built by the manual workflow. Backend validation found
+An earlier local.8 native Windows MSI was built by the manual workflow. Backend validation found
 a missing FFmpeg test dependency and a Linux-specific test assertion; these are
 corrected locally and await Windows revalidation. The supported build instructions
 and version/upgrade logic are in [packaging/windows](../packaging/windows/README.md).
