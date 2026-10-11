@@ -32,7 +32,15 @@
         @click="wordTimingExpanded = !wordTimingExpanded"
       ><ChevronDown v-if="wordTimingExpanded" /><ChevronRight v-else />Word timing</button>
       <button
-        v-if="wordTimingExpanded"
+        type="button"
+        class="button inline-flex items-center gap-1 rounded px-2 py-1 text-xs"
+        :class="wordPreviewExpanded ? 'button-primary' : 'button-normal'"
+        :aria-pressed="wordPreviewExpanded"
+        title="Read along with highlighted words without changing timing boxes"
+        @click="toggleWordPreview"
+      >Word preview</button>
+      <button
+        v-if="wordTimingExpanded || wordPreviewExpanded"
         v-tooltip="editorTooltip('Follow the playing sentence and its markers; editing and Loop hold the selected target')"
         type="button"
         class="button inline-flex items-center gap-1 rounded px-2 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
@@ -42,6 +50,14 @@
         @click="followLyrics = !followLyrics"
       ><Crosshairs class="h-3.5 w-3.5" />Follow Lyrics</button>
     </div>
+    <WordPlaybackPreview
+      v-if="wordPreviewExpanded"
+      :line="selectedLine"
+      :all-lines="modelValue"
+      :line-index="selectedLineIndex"
+      :progress-ms="playbackTimeMs"
+      :playing="waveformPlaying"
+    />
     <SyncedWordTimingLane
       v-if="wordTimingExpanded"
       id="word-timing-panel"
@@ -190,6 +206,7 @@ import Crosshairs from '~icons/mdi/crosshairs'
 import SyncedInsertButton from '@/components/library/edit-lyrics-v2/SyncedInsertButton.vue'
 import SyncedLyricsEmptyState from '@/components/library/edit-lyrics-v2/SyncedLyricsEmptyState.vue'
 import SyncedLyricsLineRow from '@/components/library/edit-lyrics-v2/SyncedLyricsLineRow.vue'
+import WordPlaybackPreview from '@/components/library/edit-lyrics-v2/WordPlaybackPreview.vue'
 import SyncedWordTimingLane from '@/components/library/edit-lyrics-v2/SyncedWordTimingLane.vue'
 import { useEditLyricsV2SyncedInlineEditing } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInlineEditing.js'
 import { useEditLyricsV2SyncedInsertHover } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInsertHover.js'
@@ -267,6 +284,11 @@ const emit = defineEmits([
 ])
 
 const hoveredLineIndex = ref(null)
+const wordPreviewExpanded = ref(false)
+const toggleWordPreview = () => {
+  wordPreviewExpanded.value = !wordPreviewExpanded.value
+  if (wordPreviewExpanded.value) followLyrics.value = true
+}
 const wordTimingExpanded = ref(false)
 const followLyrics = ref(true)
 const wordEditing = ref(false)
@@ -395,7 +417,7 @@ useLyricsFollow({
   playing: toRef(props, 'waveformPlaying'),
   enabled: followLyrics,
   blocked: computed(() =>
-    !wordTimingExpanded.value || props.loopEnabled || props.markerEditing ||
+    (!wordTimingExpanded.value && !wordPreviewExpanded.value) || props.loopEnabled || props.markerEditing ||
     editingLineIndex.value !== null || isDragging.value || hasMultiSelection.value || wordEditing.value
   ),
   selectedIndex: toRef(props, 'selectedLineIndex'),

@@ -249,7 +249,7 @@ pub struct ExportResult {
 - `export_track_format()` - Export to a specific format
 - `embed_lyrics()` - Embed lyrics into MP3 (ID3v2 USLT/SYLT) or FLAC (Vorbis comments)
 
-**Note:** Sidecar exports retain their existing semantics: overwrite the selected target and attempt to delete the opposite extension before writing available content. Unavailable formats skip before deletion. Bulk export runs TXT, LRC, then embedded, so both successful sidecar operations normally leave only LRC. Failures do not roll back filesystem changes. Embedded exports use the existing `lofty` MP3/FLAC writers. The shared format boundary reports unsupported extensions as `Skipped` before touching the file. Both manual commands and automatic export use `export_track_with_embed_gate`, reading current `try_embed_lyrics` immediately before each embedded operation (read failures deny embedding). A disabled gate produces a format-level skip, including embed-only batches whose gate was disabled after submission; successful internal downloads retain their success string. Preference submission rejects zero effective formats and ignores embedded-choice updates while the gate is disabled. Supported-writer edge cases remain unchanged: MP3 requires an existing primary tag; FLAC without Vorbis comments currently performs no tag update.
+**Note:** Sidecar exports retain their existing semantics: overwrite the selected target and attempt to delete the opposite extension before writing available content. Unavailable formats skip before deletion. Bulk export runs TXT, LRC, then embedded, so both successful sidecar operations normally leave only LRC. Failures do not roll back filesystem changes. Embedded exports use the existing `lofty` MP3/FLAC writers. The shared format boundary reports unsupported extensions as `Skipped` before touching the file. Both manual commands and automatic export use `export_track_with_embed_gate`, reading current `try_embed_lyrics` immediately before each embedded operation (read failures deny embedding). A disabled gate produces a format-level skip, including embed-only batches whose gate was disabled after submission; successful internal downloads retain their success string. Preference submission rejects zero effective formats and ignores embedded-choice updates while the gate is disabled. Supported-writer edge cases remain unchanged: MP3 creates a native ID3v2 tag when missing; FLAC without Vorbis comments currently performs no tag update.
 
 ### LRC Parser (`parser/lrc.rs`)
 
@@ -546,3 +546,27 @@ saved word timing produce inline tags. Mixed line-only rows are retained. Missin
 word timing skips ELRC; invalid timing errors only that format. Atomic verified
 sidecar replacement preserves older files on skip/failure. No ELRC import or
 player change is included; the internal lyric document retains editable words.
+
+### Native MP3 embedding and read-only word preview (2.2.6+local.6)
+
+Embedding edits `MpegFile`'s native ID3v2 tag, avoiding generic-tag conversions
+that lose frame descriptions/languages. Missing ID3v2 tags are created. Writes
+use UTF-8 ID3v2.4 USLT and SYLT (milliseconds, content type Lyrics, language XXX).
+SYLT carries whitespace before subsequent words/lines, includes known clear cues,
+and is reread and checked before atomic replacement. NUL text fails safely.
+
+Selecting both `elrc` and `embedded` opts into MP3 Enhanced LRC embedding: retain
+normal plain USLT, add a distinct `Enhanced LRC` USLT, store the same text in
+TXXX `LYRICS_ELRC`, and use inline word times as binary SYLT entries. The TXXX
+name is an app convention, not a universally recognized player field. Missing
+word timing falls back to normal embedding; invalid requested timing leaves the
+MP3 unchanged. Normal embedding removes only the owned custom ELRC field while
+preserving unrelated TXXX/comment/artwork metadata. FLAC uses its existing
+Vorbis lyric comments; it does not use ID3 frame types.
+
+`WordPlaybackPreview.vue` is independent of timeline box geometry. The Synced
+editor's Word preview toggle enables Follow Lyrics; existing editing/Loop guards
+hold selection. The preview reads word timing and respects explicit ends/gaps,
+wraps long text, and scrolls only its own text container while playing. Unsaved
+word timing is shown as an evenly spaced estimate. Preview emits no edits or
+seeks, and Loop keeps its existing playback/selection behavior.

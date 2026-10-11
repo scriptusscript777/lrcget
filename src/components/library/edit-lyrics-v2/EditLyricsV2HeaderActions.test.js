@@ -59,7 +59,7 @@ describe('editor export defaults', () => {
     expect(emit).toHaveBeenCalledTimes(1)
   })
 
-  it('does not submit embedding when the experimental setting is disabled', async () => {
+  it('does not submit embedding when the embedding setting is disabled', async () => {
     const { invoke } = await import('@tauri-apps/api/core')
     invoke.mockResolvedValue({ try_embed_lyrics: false, export_embedded: true })
     let state

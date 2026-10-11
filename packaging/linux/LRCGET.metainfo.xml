@@ -39,6 +39,9 @@
   <url type="bugtracker">https://github.com/scriptusscript777/lrcget/issues</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="2.2.6+local.6" date="2026-10-11">
+      <description><p>Native standard/enhanced MP3 lyric embedding and read-only word playback preview with Loop support.</p></description>
+    </release>
     <release version="2.2.6+local.5" date="2026-10-11">
       <description><p>Optional Enhanced LRC export alongside TXT and standard LRC, with saved word timestamps and a configurable default.</p></description>
     </release>

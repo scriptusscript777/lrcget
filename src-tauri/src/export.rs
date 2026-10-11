@@ -6,7 +6,7 @@ use lofty::config::WriteOptions;
 use lofty::file::AudioFile;
 use lofty::flac::FlacFile;
 use lofty::id3::v2::{
-    BinaryFrame, CommentFrame, Frame, FrameId, Id3v2Tag, SyncTextContentType,
+    BinaryFrame, Frame, FrameId, Id3v2Tag, SyncTextContentType,
     SynchronizedTextFrame, TimestampFormat, UnsynchronizedTextFrame,
 };
 use lofty::mpeg::MpegFile;
@@ -179,7 +179,7 @@ pub fn export_track_format(
         ExportFormat::Txt => export_txt(track, parsed),
         ExportFormat::Lrc => export_lrc(track, parsed),
         ExportFormat::Elrc => export_elrc(track, parsed),
-        ExportFormat::Embedded => export_embedded(track, parsed),
+        ExportFormat::Embedded => export_embedded(track, parsed, false),
     }
 }
 
@@ -291,6 +291,7 @@ fn export_elrc(
 fn export_embedded(
     track: &PersistentTrack,
     parsed: &ParsedLyricsfile,
+    enhanced_requested: bool,
 ) -> Result<ExportResult, ExportError> {
     let path_lower = track.file_path.to_lowercase();
     if !path_lower.ends_with(".mp3") && !path_lower.ends_with(".flac") {
@@ -307,7 +308,16 @@ fn export_embedded(
         parsed.synced_lyrics.clone().unwrap_or_default()
     };
 
-    embed_lyrics(&track.file_path, &plain_lyrics, &synced_lyrics)
+    let enhanced = if enhanced_requested {
+        parsed
+            .enhanced_lyrics
+            .as_ref()
+            .map_err(|reason| ExportError::InvalidData(reason.clone()))?
+            .as_deref()
+    } else {
+        None
+    };
+    embed_lyrics_with_enhanced(&track.file_path, &plain_lyrics, &synced_lyrics, enhanced)
         .map_err(|e| ExportError::EmbedError(e.to_string()))?;
 
     Ok(ExportResult {
@@ -326,7 +336,7 @@ pub fn export_track(
     export_track_with_embed_gate(track, parsed, formats, || true)
 }
 
-/// Consult the current experimental setting at each embedded operation, not at batch creation.
+/// Consult the current embedding setting at each embedded operation, not at batch creation.
 pub fn export_track_with_embed_gate(
     track: &PersistentTrack,
     parsed: &ParsedLyricsfile,
@@ -340,13 +350,16 @@ pub fn export_track_with_embed_gate(
             results.push(ExportResult {
                 format: *format,
                 path: None,
-                status: ExportStatus::Skipped(
-                    "experimental embedding disabled or unavailable".to_owned(),
-                ),
+                status: ExportStatus::Skipped("embedding disabled or unavailable".to_owned()),
             });
             continue;
         }
-        match export_track_format(track, parsed, *format) {
+        let result = if *format == ExportFormat::Embedded {
+            export_embedded(track, parsed, formats.contains(&ExportFormat::Elrc))
+        } else {
+            export_track_format(track, parsed, *format)
+        };
+        match result {
             Ok(result) => results.push(result),
             Err(e) => results.push(ExportResult {
                 format: *format,
@@ -361,6 +374,15 @@ pub fn export_track_with_embed_gate(
 
 /// Embed lyrics into audio file metadata (MP3/FLAC)
 pub fn embed_lyrics(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) -> Result<()> {
+    embed_lyrics_with_enhanced(track_path, plain_lyrics, synced_lyrics, None)
+}
+
+fn embed_lyrics_with_enhanced(
+    track_path: &str,
+    plain_lyrics: &str,
+    synced_lyrics: &str,
+    enhanced: Option<&str>,
+) -> Result<()> {
     let path_lower = track_path.to_lowercase();
 
     if !path_lower.ends_with(".mp3") && !path_lower.ends_with(".flac") {
@@ -370,7 +392,7 @@ pub fn embed_lyrics(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) -
         fs::copy(track_path, staged)?;
         let staged_path = staged.to_str().context("Invalid staged path")?;
         if path_lower.ends_with(".mp3") {
-            embed_lyrics_mp3(staged_path, plain_lyrics, synced_lyrics)?;
+            embed_lyrics_mp3_with_enhanced(staged_path, plain_lyrics, synced_lyrics, enhanced)?;
         } else {
             embed_lyrics_flac(staged_path, plain_lyrics, synced_lyrics)?;
         }
@@ -380,7 +402,6 @@ pub fn embed_lyrics(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) -
         Ok(())
     })
 }
-
 /// Embed lyrics into FLAC file using Vorbis comments
 fn embed_lyrics_flac(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) -> Result<()> {
     use lofty::config::ParseOptions;
@@ -422,50 +443,110 @@ fn embed_lyrics_flac(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) 
 }
 
 /// Embed lyrics into MP3 file using ID3v2 tags
+#[cfg(test)]
 fn embed_lyrics_mp3(track_path: &str, plain_lyrics: &str, synced_lyrics: &str) -> Result<()> {
-    use lofty::file::TaggedFileExt;
-    use lofty::id3::v2::Id3v2Tag;
-    use lofty::probe::Probe;
+    embed_lyrics_mp3_with_enhanced(track_path, plain_lyrics, synced_lyrics, None)
+}
 
-    let file_probe = Probe::open(track_path).context("Failed to open MP3 file")?;
-    let mut file = file_probe
-        .guess_file_type()
-        .context("Failed to guess file type")?
-        .read()
+const ELRC_USLT_DESCRIPTION: &str = "Enhanced LRC";
+const ELRC_TXXX_DESCRIPTION: &str = "LYRICS_ELRC";
+
+fn embed_lyrics_mp3_with_enhanced(
+    track_path: &str,
+    plain_lyrics: &str,
+    synced_lyrics: &str,
+    enhanced: Option<&str>,
+) -> Result<()> {
+    use lofty::config::ParseOptions;
+    use std::fs::File;
+
+    let mut source = File::open(track_path).context("Failed to open MP3 file")?;
+    // Preserve native frame descriptions, languages, artwork and custom fields.
+    let mut file = MpegFile::read_from(&mut source, ParseOptions::default())
         .context("Failed to read MP3 file")?;
-    let mut primary_tag = file
-        .remove(file.primary_tag_type())
-        .context("Failed to find ID3v2 tag")?;
-    let mut id3v2: Id3v2Tag = primary_tag.into();
-
-    // Fix malformed COMMENT frames: re-insert with valid language code
-    let removed_comments: Vec<_> = id3v2.remove(&FrameId::new("COMM")?).collect();
-    for frame in removed_comments {
-        if let Frame::Comment(comment) = frame {
-            id3v2.insert(Frame::Comment(CommentFrame::new(
-                comment.encoding,
-                [b'X', b'X', b'X'],
-                comment.description,
-                comment.content,
-            )));
-        }
+    if file.id3v2().is_none() {
+        file.set_id3v2(Id3v2Tag::new());
     }
-
-    // Insert unsynchronized lyrics (USLT)
-    insert_uslt_frame(&mut id3v2, plain_lyrics).context("Failed to insert USLT frame")?;
-    // Insert synchronized lyrics (SYLT)
-    insert_sylt_frame(&mut id3v2, synced_lyrics).context("Failed to insert SYLT frame")?;
-
-    primary_tag = id3v2.into();
-    file.insert_tag(primary_tag);
+    let id3v2 = file.id3v2_mut().context("Failed to create ID3v2 tag")?;
+    insert_uslt_frame(id3v2, plain_lyrics).context("Failed to insert USLT frame")?;
+    insert_sylt_content(
+        id3v2,
+        if let Some(elrc) = enhanced {
+            enhanced_lyrics_to_sylt_vec(elrc)?
+        } else {
+            synced_lyrics_to_sylt_vec(synced_lyrics)?
+        },
+    )?;
+    let _ = id3v2.remove_user_text(ELRC_TXXX_DESCRIPTION);
+    if let Some(elrc) = enhanced {
+        id3v2.insert(Frame::UnsynchronizedText(UnsynchronizedTextFrame::new(
+            TextEncoding::UTF8,
+            *b"XXX",
+            ELRC_USLT_DESCRIPTION.to_string(),
+            elrc.to_string(),
+        )));
+        id3v2.insert_user_text(ELRC_TXXX_DESCRIPTION.to_string(), elrc.to_string());
+    }
     file.save_to_path(track_path, WriteOptions::default())
         .context("Failed to save MP3 file")?;
+    let mut verified_source = File::open(track_path)?;
+    let verified = MpegFile::read_from(&mut verified_source, ParseOptions::default())?;
+    let tag = verified
+        .id3v2()
+        .context("Embedded ID3v2 tag missing after write")?;
+    let expected = if let Some(elrc) = enhanced {
+        enhanced_lyrics_to_sylt_vec(elrc)?
+    } else {
+        synced_lyrics_to_sylt_vec(synced_lyrics)?
+    };
+    match tag.get(&FrameId::new("SYLT")?) {
+        Some(Frame::Binary(frame)) => {
+            let actual = SynchronizedTextFrame::parse(&frame.data, frame.flags())?;
+            anyhow::ensure!(
+                actual.content == expected
+                    && actual.encoding == TextEncoding::UTF8
+                    && actual.timestamp_format == TimestampFormat::MS
+                    && actual.content_type == SyncTextContentType::Lyrics,
+                "Embedded SYLT verification failed"
+            );
+        }
+        None if expected.is_empty() => {}
+        _ => anyhow::bail!("Embedded SYLT verification failed"),
+    }
+    let uslt: Vec<_> = tag
+        .into_iter()
+        .filter_map(|frame| match frame {
+            Frame::UnsynchronizedText(value) => Some(value),
+            _ => None,
+        })
+        .collect();
+    anyhow::ensure!(
+        uslt.iter()
+            .any(|value| value.description.is_empty() && value.content == plain_lyrics)
+            || plain_lyrics.is_empty(),
+        "Embedded USLT verification failed"
+    );
+    if let Some(elrc) = enhanced {
+        anyhow::ensure!(
+            uslt.iter()
+                .any(|value| value.description == ELRC_USLT_DESCRIPTION && value.content == elrc),
+            "Embedded ELRC USLT verification failed"
+        );
+        anyhow::ensure!(
+            tag.get_user_text(ELRC_TXXX_DESCRIPTION) == Some(elrc),
+            "Embedded ELRC TXXX verification failed"
+        );
+    }
 
     Ok(())
 }
 
 /// Insert USLT (unsynchronized lyrics) frame into ID3v2 tag
 fn insert_uslt_frame(id3v2: &mut Id3v2Tag, plain_lyrics: &str) -> Result<()> {
+    anyhow::ensure!(
+        !plain_lyrics.contains('\0'),
+        "Lyrics must not contain NUL characters"
+    );
     // Players may select an older language/description variant over the new lyrics.
     let _ = id3v2.remove(&FrameId::new("USLT")?);
     if !plain_lyrics.is_empty() {
@@ -482,50 +563,136 @@ fn insert_uslt_frame(id3v2: &mut Id3v2Tag, plain_lyrics: &str) -> Result<()> {
 }
 
 /// Insert SYLT (synchronized lyrics) frame into ID3v2 tag
+#[cfg(test)]
 fn insert_sylt_frame(id3v2: &mut Id3v2Tag, synced_lyrics: &str) -> Result<()> {
-    if !synced_lyrics.is_empty() {
-        let synced_lyrics_vec = synced_lyrics_to_sylt_vec(synced_lyrics)?;
+    insert_sylt_content(id3v2, synced_lyrics_to_sylt_vec(synced_lyrics)?)
+}
 
-        let sylt_frame = SynchronizedTextFrame::new(
-            TextEncoding::UTF8,
-            [b'X', b'X', b'X'],
-            TimestampFormat::MS,
-            SyncTextContentType::Lyrics,
-            None,
-            synced_lyrics_vec,
-        );
-
-        let sylt_frame_byte = sylt_frame.as_bytes(WriteOptions::default())?;
-        let sylt_frame_id = FrameId::new("SYLT")?;
-        // Prepare the replacement before removing every old language variant.
-        let _ = id3v2.remove(&sylt_frame_id);
-        id3v2.insert(Frame::Binary(BinaryFrame::new(
-            sylt_frame_id,
-            sylt_frame_byte,
-        )));
-    } else {
+fn insert_sylt_content(id3v2: &mut Id3v2Tag, content: Vec<(u32, String)>) -> Result<()> {
+    anyhow::ensure!(
+        content.iter().all(|(_, text)| !text.contains('\0')),
+        "Lyrics must not contain NUL characters"
+    );
+    if content.is_empty() {
         let _ = id3v2.remove(&FrameId::new("SYLT")?);
+        return Ok(());
     }
-
+    let frame = SynchronizedTextFrame::new(
+        TextEncoding::UTF8,
+        *b"XXX",
+        TimestampFormat::MS,
+        SyncTextContentType::Lyrics,
+        None,
+        content,
+    );
+    let bytes = frame.as_bytes(WriteOptions::default())?;
+    let id = FrameId::new("SYLT")?;
+    let _ = id3v2.remove(&id);
+    id3v2.insert(Frame::Binary(BinaryFrame::new(id, bytes)));
     Ok(())
 }
 
-/// Convert synced LRC lyrics to SYLT vector format
+/// Standard line timing retains whitespace before each subsequent line (ID3 §4.9).
 fn synced_lyrics_to_sylt_vec(synced_lyrics: &str) -> Result<Vec<(u32, String)>> {
-    let parsed = parse_lrc(synced_lyrics);
-
-    let converted_lyrics: Vec<(u32, String)> = parsed
+    let mut seen_line = false;
+    parse_lrc(synced_lyrics)
         .timed_lines
         .iter()
-        .map(|timed_line| (timed_line.timestamp_ms as u32, timed_line.text.clone()))
-        .collect();
+        .map(|line| {
+            let time = u32::try_from(line.timestamp_ms).context("SYLT timestamp out of range")?;
+            let text = if !line.text.is_empty() {
+                let prefix = if seen_line { "\n" } else { "" };
+                seen_line = true;
+                format!("{prefix}{}", line.text)
+            } else {
+                String::new()
+            };
+            Ok((time, text))
+        })
+        .collect()
+}
 
-    Ok(converted_lyrics)
+/// Translate validated ELRC word boundaries to standard timestamped SYLT strings.
+fn enhanced_lyrics_to_sylt_vec(enhanced: &str) -> Result<Vec<(u32, String)>> {
+    static WORD_TAG: std::sync::LazyLock<regex::Regex> =
+        std::sync::LazyLock::new(|| regex::Regex::new(r"<(\d+):(\d{2})\.(\d{3})>").unwrap());
+    let mut events = Vec::new();
+    let mut seen_line = false;
+    for line in parse_lrc(enhanced).timed_lines {
+        let tags: Vec<_> = WORD_TAG.captures_iter(&line.text).collect();
+        let mut line_prefix = if seen_line && !line.text.is_empty() {
+            "\n".to_string()
+        } else {
+            String::new()
+        };
+        seen_line |= !line.text.is_empty();
+        if tags.is_empty() {
+            events.push((
+                u32::try_from(line.timestamp_ms)?,
+                format!("{line_prefix}{}", line.text),
+            ));
+            continue;
+        }
+        let mut whitespace = String::new();
+        for (index, tag) in tags.iter().enumerate() {
+            let time = tag[1]
+                .parse::<u64>()?
+                .checked_mul(60_000)
+                .and_then(|v| v.checked_add(tag[2].parse::<u64>().ok()? * 1000))
+                .and_then(|v| v.checked_add(tag[3].parse::<u64>().ok()?))
+                .context("SYLT timestamp out of range")?;
+            let begin = tag.get(0).unwrap().end();
+            let end = tags
+                .get(index + 1)
+                .map(|next| next.get(0).unwrap().start())
+                .unwrap_or(line.text.len());
+            let raw = &line.text[begin..end];
+            let text = raw.trim_end_matches(char::is_whitespace);
+            let content = if text.is_empty() {
+                String::new()
+            } else {
+                let content = format!("{line_prefix}{whitespace}{text}");
+                line_prefix.clear();
+                whitespace.clear();
+                content
+            };
+            if !raw.is_empty() {
+                whitespace.push_str(&raw[text.len()..]);
+            }
+            events.push((u32::try_from(time)?, content));
+        }
+    }
+    events.sort_by_key(|(time, _)| *time);
+    events.dedup();
+    Ok(events)
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn track_for(path: &Path) -> PersistentTrack {
+        PersistentTrack {
+            id: 1,
+            file_path: path.to_str().unwrap().to_string(),
+            file_name: "song.mp3".into(),
+            title: "song".into(),
+            album_name: "album".into(),
+            album_artist_name: None,
+            album_id: 1,
+            artist_name: "artist".into(),
+            artist_id: 1,
+            image_path: None,
+            track_number: None,
+            txt_lyrics: None,
+            lrc_lyrics: None,
+            lyricsfile: None,
+            lyricsfile_id: None,
+            lyrics_modified_at: None,
+            duration: 10.0,
+            instrumental: false,
+        }
+    }
 
     fn count_frames(tag: &Id3v2Tag, name: &str) -> usize {
         let id = FrameId::new(name).unwrap();
@@ -599,6 +766,195 @@ mod tests {
             insert_sylt_frame(&mut tag, "[00:15.25]new words").unwrap();
             assert_replacement(&tag);
         }
+    }
+
+    const ENHANCED_SAMPLE: &str = "[00:01.001]<00:01.001>Hello <00:01.501><00:01.751>world<00:02.001>\n[00:02.001]\n[00:03.001]Next\n[00:04.001]\n";
+
+    #[test]
+    fn sylt_preserves_word_gaps_leading_whitespace_and_new_lines() {
+        assert_eq!(
+            enhanced_lyrics_to_sylt_vec(ENHANCED_SAMPLE).unwrap(),
+            vec![
+                (1001, "Hello".into()),
+                (1501, "".into()),
+                (1751, " world".into()),
+                (2001, "".into()),
+                (3001, "\nNext".into()),
+                (4001, "".into()),
+            ]
+        );
+        assert_eq!(
+            synced_lyrics_to_sylt_vec("[00:01.001]Hello world\n[00:02.001]\n[00:03.001]Next").unwrap(),
+            vec![
+                (1001, "Hello world".into()),
+                (2001, "".into()),
+                (3001, "\nNext".into())
+            ]
+        );
+    }
+
+    #[test]
+    fn enhanced_id3_roundtrip_preserves_native_metadata_and_cleans_only_owned_custom_field() {
+        use lofty::config::ParseOptions;
+        use lofty::id3::v2::CommentFrame;
+        use lofty::tag::TagExt;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("generated.mp3");
+        fs::write(&path, include_bytes!("../tests/fixtures/embedding.mp3")).unwrap();
+        let mut tag = tag_with_old_lyrics();
+        let comment = Frame::Comment(CommentFrame::new(
+            TextEncoding::UTF8,
+            *b"eng",
+            "note",
+            "Keep my language",
+        ));
+        tag.insert(comment.clone());
+        tag.insert_user_text("MY_CUSTOM_FIELD".into(), "keep me".into());
+        tag.save_to_path(&path, WriteOptions::default()).unwrap();
+        let audio = decoded_fixture_audio(&path);
+        let track = track_for(&path);
+        let parsed = ParsedLyricsfile {
+            plain_lyrics: Some("Hello world\nNext".into()),
+            synced_lyrics: Some("[00:01.001]Hello world".into()),
+            enhanced_lyrics: Ok(Some(ENHANCED_SAMPLE.into())),
+            is_instrumental: false,
+        };
+        for _ in 0..2 {
+            let results = export_track(
+                &track,
+                &parsed,
+                &[ExportFormat::Elrc, ExportFormat::Embedded],
+            );
+            assert!(results
+                .iter()
+                .all(|result| matches!(result.status, ExportStatus::Success)));
+            let mut source = fs::File::open(&path).unwrap();
+            let read = MpegFile::read_from(&mut source, ParseOptions::default()).unwrap();
+            let tag = read.id3v2().unwrap();
+            assert_eq!(count_frames(tag, "USLT"), 2);
+            assert_eq!(count_frames(tag, "SYLT"), 1);
+            assert_eq!(
+                tag.get_user_text(ELRC_TXXX_DESCRIPTION),
+                Some(ENHANCED_SAMPLE)
+            );
+            assert_eq!(tag.get_user_text("MY_CUSTOM_FIELD"), Some("keep me"));
+            assert_eq!(
+                tag.into_iter()
+                    .find(|frame| matches!(frame, Frame::Comment(_))),
+                Some(&comment)
+            );
+            assert_eq!(decoded_fixture_audio(&path), audio);
+        }
+        let before = fs::read(&path).unwrap();
+        let mut invalid = ParsedLyricsfile {
+            plain_lyrics: Some("changed".into()),
+            synced_lyrics: None,
+            enhanced_lyrics: Err("invalid word timing".into()),
+            is_instrumental: false,
+        };
+        let rejected = export_track(
+            &track,
+            &invalid,
+            &[ExportFormat::Elrc, ExportFormat::Embedded],
+        );
+        assert!(rejected
+            .iter()
+            .all(|result| matches!(result.status, ExportStatus::Error(_))));
+        assert_eq!(fs::read(&path).unwrap(), before);
+        invalid.enhanced_lyrics = Ok(None);
+        let fallback = export_track(
+            &track,
+            &invalid,
+            &[ExportFormat::Elrc, ExportFormat::Embedded],
+        );
+        assert!(matches!(fallback[0].status, ExportStatus::Skipped(_)));
+        assert!(matches!(fallback[1].status, ExportStatus::Success));
+        let standard = export_track(&track, &parsed, &[ExportFormat::Embedded]);
+        assert!(matches!(standard[0].status, ExportStatus::Success));
+        assert!(path.with_extension("elrc").exists());
+        let mut source = fs::File::open(&path).unwrap();
+        let read = MpegFile::read_from(&mut source, ParseOptions::default()).unwrap();
+        assert_eq!(count_frames(read.id3v2().unwrap(), "USLT"), 1);
+        assert_eq!(
+            read.id3v2().unwrap().get_user_text(ELRC_TXXX_DESCRIPTION),
+            None
+        );
+        assert_eq!(
+            read.id3v2().unwrap().get_user_text("MY_CUSTOM_FIELD"),
+            Some("keep me")
+        );
+    }
+
+    #[test]
+    #[ignore = "requires copies and saved lyric documents via LRCGET_EMBED_AUDIT_DIR"]
+    fn real_mp3_copies_verify_standard_and_enhanced_embedding() {
+        let directory = PathBuf::from(std::env::var("LRCGET_EMBED_AUDIT_DIR").unwrap());
+        let mut count = 0;
+        let sources: Vec<_> = fs::read_dir(&directory)
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .filter(|path| {
+                path.extension().is_some_and(|ext| ext == "mp3")
+                    && !path
+                        .file_stem()
+                        .unwrap()
+                        .to_string_lossy()
+                        .ends_with("-enhanced")
+            })
+            .collect();
+        for path in sources {
+            let doc = fs::read_to_string(path.with_extension("lyricsfile")).unwrap();
+            let parsed = crate::lyricsfile::parse_lyricsfile(&doc).unwrap();
+            let before = decoded_fixture_audio(&path);
+            embed_lyrics_with_enhanced(
+                path.to_str().unwrap(),
+                parsed.plain_lyrics.as_deref().unwrap_or(""),
+                parsed.synced_lyrics.as_deref().unwrap_or(""),
+                None,
+            )
+            .unwrap();
+            assert_eq!(decoded_fixture_audio(&path), before);
+            // Synthetic timings on copies validate the optional format without inventing song timing.
+            let enhanced = path.with_file_name(format!(
+                "{}-enhanced.mp3",
+                path.file_stem().unwrap().to_str().unwrap()
+            ));
+            fs::copy(&path, &enhanced).unwrap();
+            embed_lyrics_with_enhanced(
+                enhanced.to_str().unwrap(),
+                "Hello world\nNext",
+                "[00:01.001]Hello world",
+                Some(ENHANCED_SAMPLE),
+            )
+            .unwrap();
+            assert_eq!(decoded_fixture_audio(&enhanced), before);
+            count += 1;
+        }
+        assert_eq!(count, 2);
+    }
+
+    #[test]
+    fn tagless_mp3_gets_a_valid_lyrics_tag_and_nul_input_preserves_the_file() {
+        use lofty::config::ParseOptions;
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("tagless.mp3");
+        let bytes = include_bytes!("../tests/fixtures/embedding.mp3");
+        let offset = if bytes.starts_with(b"ID3") {
+            10 + bytes[6..10]
+                .iter()
+                .fold(0usize, |size, byte| (size << 7) | usize::from(*byte))
+        } else {
+            0
+        };
+        fs::write(&path, &bytes[offset..]).unwrap();
+        embed_lyrics(path.to_str().unwrap(), "words", "[00:01.001]words").unwrap();
+        let mut file = fs::File::open(&path).unwrap();
+        let tagged = MpegFile::read_from(&mut file, ParseOptions::default()).unwrap();
+        assert_eq!(count_frames(tagged.id3v2().unwrap(), "USLT"), 1);
+        assert_eq!(count_frames(tagged.id3v2().unwrap(), "SYLT"), 1);
+        let before = fs::read(&path).unwrap();
+        assert!(embed_lyrics(path.to_str().unwrap(), "bad\0text", "[00:01.001]words").is_err());
+        assert_eq!(fs::read(&path).unwrap(), before);
     }
 
     #[test]

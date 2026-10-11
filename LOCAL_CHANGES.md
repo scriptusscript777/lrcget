@@ -4,7 +4,21 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.6+local.5`, based on upstream tag `2.2.0`.
+Local version: `2.2.6+local.6`, based on upstream tag `2.2.0`.
+
+## MP3 format verification and word preview (2.2.6+local.6)
+
+- Remove experimental/corruption wording from Configuration; keep saved embedding opt-in.
+- Native ID3v2.4 embedding preserves comment languages, custom fields and artwork,
+  creates missing tags, validates lyric frames before atomic replacement, and rejects NUL text.
+- SYLT supports line/word milliseconds, leading word/line whitespace and clear cues.
+- Selecting ELRC + Embed adds a distinct ELRC USLT and TXXX LYRICS_ELRC while retaining
+  normal USLT. Word timing is used by SYLT; missing timing falls back to line timing.
+- Read-only Word preview works with boxes collapsed, Follow Lyrics, gaps, Loop and
+  zoom; generated estimates are labeled and never silently saved.
+- Actual Kiss Me Goodbye/Joseph originals inspected; writes tested on copies with
+  independent Mutagen and compressed-audio hashes. Originals remain unchanged.
+- GitHub publication/creator notification remain paused; refresh local install/backups.
 
 ## Optional Enhanced LRC export (2.2.6+local.5)
 

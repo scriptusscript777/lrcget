@@ -1863,7 +1863,7 @@ mod auto_export_tests {
             &[Embedded],
             || false,
         );
-        assert!(result.starts_with("Plain lyrics downloaded; Embedded export skipped: experimental"));
+        assert!(result.starts_with("Plain lyrics downloaded; Embedded export skipped: embedding"));
         assert_eq!(std::fs::read(&track.file_path).unwrap(), before);
         std::fs::remove_dir_all(directory).unwrap();
     }

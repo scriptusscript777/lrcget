@@ -5,7 +5,7 @@
 Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Session state only; persistence in Rust/SQLite.
 
 Local build 2.2.0+local.13: the lyrics editor defaults to synced LRC export
-selected and loads the saved embedding preference when experimental embedding
+selected and loads the saved embedding preference when optional embedding
 is enabled. Disabled embedding cannot be submitted, and publishing still requires confirmation.
 The library performs an incremental quick-hash scan on every opening. F5 invokes the same
 refresh action, captures native webview reload, ignores held/repeated keys while
@@ -112,7 +112,7 @@ Module-level ref composables (singletons by design):
 
 The Download popup also drafts the three existing Configuration “Download lyrics for” choices above a separator and the auto-export controls. `utils/download-filter.js` matches Configuration’s skip-flag mapping (plain-flag precedence), and submission saves those existing flags with export preferences in one scoped update. Queue filters use the captured submission, not returned/re-read config. Configuration remains available and refreshes from `get_config` before opening. The popup contains controls and actionable errors without explanatory export copy.
 
-Shared fields are `export_txt`, `export_lrc`, `export_elrc`, and `export_embedded`. `auto_export_enabled` belongs only to Download. Download updates applicable format choices when enabled; turning it off preserves all formats. Manual Export does not update the toggle. Both popups show the embedded choice under the experimental `try_embed_lyrics` gate and preserve its remembered value when disabled. Defaults: auto-export off, LRC selected, TXT/embedded off. Automatic export accepts embed-only batches when the gate is enabled; at least one effective format is required.
+Shared fields are `export_txt`, `export_lrc`, `export_elrc`, and `export_embedded`. `auto_export_enabled` belongs only to Download. Download updates applicable format choices when enabled; turning it off preserves all formats. Manual Export does not update the toggle. Both popups show the embedded choice under the saved `try_embed_lyrics` gate and preserve its remembered value when disabled. Defaults: auto-export off, LRC selected, TXT/embedded off. Automatic export accepts embed-only batches when the gate is enabled; at least one effective format is required.
 
 `downloader.js` queues `{ trackId, autoExport }` entries; `autoExport` is an immutable TXT/LRC/ELRC/embedded snapshot or null. The album/artist row actions (`AlbumItem.vue`, `ArtistItem.vue`) and detail actions (`AlbumTrackList.vue`, `ArtistTrackList.vue`) use the same popup and snapshots as Download All. Scope queries use `get_album_track_ids` / `get_artist_track_ids` with the submitted skip flags; library-wide queries retain their existing presence filters. Single-track Download, Apply, and editor saves are unchanged. `export.js` queues `{ trackId, formats }` with immutable ordered TXT/LRC/ELRC/embedded selections. Subsequent submissions cannot mutate queued batches.
 
@@ -306,3 +306,27 @@ saved word timing produce inline tags. Mixed line-only rows are retained. Missin
 word timing skips ELRC; invalid timing errors only that format. Atomic verified
 sidecar replacement preserves older files on skip/failure. No ELRC import or
 player change is included; the internal lyric document retains editable words.
+
+### Native MP3 embedding and read-only word preview (2.2.6+local.6)
+
+Embedding edits `MpegFile`'s native ID3v2 tag, avoiding generic-tag conversions
+that lose frame descriptions/languages. Missing ID3v2 tags are created. Writes
+use UTF-8 ID3v2.4 USLT and SYLT (milliseconds, content type Lyrics, language XXX).
+SYLT carries whitespace before subsequent words/lines, includes known clear cues,
+and is reread and checked before atomic replacement. NUL text fails safely.
+
+Selecting both `elrc` and `embedded` opts into MP3 Enhanced LRC embedding: retain
+normal plain USLT, add a distinct `Enhanced LRC` USLT, store the same text in
+TXXX `LYRICS_ELRC`, and use inline word times as binary SYLT entries. The TXXX
+name is an app convention, not a universally recognized player field. Missing
+word timing falls back to normal embedding; invalid requested timing leaves the
+MP3 unchanged. Normal embedding removes only the owned custom ELRC field while
+preserving unrelated TXXX/comment/artwork metadata. FLAC uses its existing
+Vorbis lyric comments; it does not use ID3 frame types.
+
+`WordPlaybackPreview.vue` is independent of timeline box geometry. The Synced
+editor's Word preview toggle enables Follow Lyrics; existing editing/Loop guards
+hold selection. The preview reads word timing and respects explicit ends/gaps,
+wraps long text, and scrolls only its own text container while playing. Unsaved
+word timing is shown as an evenly spaced estimate. Preview emits no edits or
+seeks, and Loop keeps its existing playback/selection behavior.

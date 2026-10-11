@@ -156,15 +156,15 @@
       </div>
 
       <div>
-        <label class="group-label mb-4">Experimental</label>
+        <label class="group-label mb-4">Embedded lyrics</label>
 
         <div class="flex items-start">
           <CheckboxButton id="try-embed-lyrics" v-model="tryEmbedLyrics" name="try-embed-lyrics">
             <div class="flex flex-col">
-              <span class="mb-0.5">Enable embed lyrics option</span>
-              <span class="text-xs text-yellow-700 dark:text-yellow-400"
-                >This option could corrupt your track files. Make sure to backup your library before
-                enabling it.</span
+              <span class="mb-0.5">Enable embedded lyrics</span>
+              <span class="text-xs text-neutral-600 dark:text-neutral-400"
+                >MP3 uses ID3v2.4 USLT and SYLT. Select Word-timed lyrics with Embed into track to
+                include ELRC text and word timestamps. FLAC stores lyric comments.</span
               >
             </div>
           </CheckboxButton>

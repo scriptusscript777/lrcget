@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.6+local.5. **Editing developer:** Rick Lidgett
+**Version:** 2.2.6+local.6. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -137,7 +137,7 @@ automatically shift an unchanged sentence start.
 | Save and export: Embed | Supported MP3/FLAC metadata                    | No             |
 | Save and Publish       | Configured LRCLIB instance, after confirmation | Yes            |
 
-LRC export is initially selected in the editor. Embedding requires the experimental
+LRC export is initially selected in the editor. Embedding requires the saved
 setting and a supported file. MP3 output uses ID3v2.4 UTF-8 USLT/SYLT; timed
 entries use milliseconds. Audio is not re-encoded. FLAC uses its metadata fields.
 Embedding is not guaranteed to display in older cars, Windows players or every
@@ -154,7 +154,7 @@ removal is permitted. Unrelated backups are untouched. Keep separate backups
 if you need version history. Failure for one target can leave other targets
 successfully exported; inspect the result before retrying.
 
-![Explicit sidecar and embedding choices](screenshots/current/export-options-dark.png)
+![Explicit sidecar and embedding choices](screenshots/current/embedded-word-export-dark.png)
 
 ## Modification Map
 
@@ -263,5 +263,59 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 
 ![TXT, LRC and Enhanced LRC exports, light](screenshots/current/enhanced-lrc-export-light.png)
 ![TXT, LRC and Enhanced LRC exports, dark](screenshots/current/enhanced-lrc-export-dark.png)
-![Optional Enhanced LRC default, light](screenshots/current/enhanced-lrc-settings-light.png)
-![Optional Enhanced LRC default, dark](screenshots/current/enhanced-lrc-settings-dark.png)
+![Optional Enhanced LRC default, light](screenshots/current/embedded-lyrics-settings-light.png)
+![Optional Enhanced LRC default, dark](screenshots/current/embedded-lyrics-settings-dark.png)
+
+
+## Review Words Without Resizing Timing Boxes
+
+1. In **Synced**, select a sentence and enable **Word preview** beside Word timing.
+2. Press Play. The readable text highlights one word at a time using the current
+   word boundaries. Boxes can stay collapsed; resizing is unnecessary.
+3. **Follow Lyrics** is enabled when you turn on the preview. It follows the playing
+   sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
+   when you want to continue through the song.
+4. Turn on **Loop selected phrase** to repeat that phrase. The preview follows
+   every rewind, and Loop remains enabled until you turn it off. Lead-in, tail,
+   waveform zoom and word-timeline zoom retain their existing behavior.
+5. Turn off Word preview to hide it. No timestamps change and nothing is saved or
+   exported by this toggle. Preview state lasts for this editor session.
+
+Explicit word ends clear the highlight during gaps. If no word timing is saved,
+the preview labels its evenly spaced estimate; it cannot infer actual singing.
+To create accurate word timing, expand Word timing and use Sync word against
+playback, then save. The readable preview remains independent of box size/zoom.
+
+![Read-only word playback preview, light](screenshots/current/word-playback-preview-light.png)
+![Read-only word playback preview, dark](screenshots/current/word-playback-preview-dark.png)
+![Loop and zoom with the readable preview](screenshots/current/word-preview-loop-zoom-light.png)
+
+## Embed Standard and Enhanced Lyrics in MP3
+
+Configuration now calls the section **Embedded lyrics**, with **Enable embedded
+lyrics** as the saved opt-in. It remains an optional, saved setting.
+
+| Frame | This build writes | Meaning |
+| --- | --- | --- |
+| USLT | Plain lyrics in the ordinary frame | Unsynchronized UTF-8 text |
+| USLT, description `Enhanced LRC` | Optional complete ELRC text | Text storage; this frame itself is unsynchronized |
+| SYLT | Line timing normally; word timing with Enhanced LRC selected | Binary synchronized strings with millisecond timestamps |
+| TXXX, description `LYRICS_ELRC` | Optional complete ELRC text | Custom text field; name is this app's convention |
+
+For Enhanced MP3 embedding, select **Word-timed lyrics (.elrc)** and **Embed into
+track** together, then Save and export. Normal plain USLT remains available while
+ELRC has its own description. Missing saved word timing skips the ELRC sidecar
+and uses normal line embedding; invalid requested word timing stops MP3 embedding
+and leaves the old file intact. Ordinary embedding replaces old lyric variants
+and removes the app's stale custom ELRC field, preserving unrelated metadata.
+
+TXT, standard LRC and ELRC sidecars remain independent and can all be selected.
+The app creates staged copies, verifies written lyric frames and atomically
+replaces the selected audio file. It does not re-encode audio. Player support for
+SYLT, ELRC text and custom fields varies; storing valid frames does not add karaoke
+to every player. FLAC continues to use Vorbis lyric comments rather than ID3.
+See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
+[encoding/language rules](https://id3.org/id3v2.4.0-structure).
+
+![Embedded lyrics configuration, light](screenshots/current/embedded-lyrics-settings-light.png)
+![Embedded lyrics configuration, dark](screenshots/current/embedded-lyrics-settings-dark.png)
