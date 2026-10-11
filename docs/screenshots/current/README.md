@@ -24,7 +24,9 @@ were settled after theme/zoom updates. Verification did not change user music,
 sidecars or the live lyrics database. Native hover help is not forced open.
 Historical screenshots outside this directory remain for old release notes.
 
-`timed-hover-help-light.png` and `timed-hover-help-dark.png` are new 2.2.3 browser
-captures of the actual editor and shared hover-help controller using generated
-fixture data. Checks keep the pointer stationary until help expires, then verify
-re-entry, Escape/click/scroll/leave, dynamic controls, literal text and cleanup.
+`timed-hover-help-*` and `hover-help-settings-*` are fresh 2.2.4 browser captures
+of the actual editor/Configuration and shared controller using generated fixture
+data. Hover remains quiet by default; F1 explicitly opens the depicted help.
+Checks cover saved on/off choice, keyboard access, Cancel/failed Save, restart,
+pending timer cancellation, timeout, dynamic controls and disposal. Other unchanged
+views retain the 2.2.2 captures described above.

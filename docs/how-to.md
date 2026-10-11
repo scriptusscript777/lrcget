@@ -1,16 +1,16 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.3+local.1**.
+For Rick Lidgett's LRCGET **2.2.4+local.1**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
 
-1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.3-local.1).
+1. Download the `.deb` and checksum from the [current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.4-local.1).
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.3+local.1_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.3+local.1_amd64.deb
+sha256sum -c LRCGET_2.2.4+local.1_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.4+local.1_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
@@ -228,20 +228,20 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 
 ## Troubleshooting
 
-| Symptom                               | What to Check                                                                                   |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Playhead leaves the zoomed view       | Enable waveform Follow; manual panning holds inspection; double-click zoom now preserves Follow |
-| Markers do not advance with sentences | Enable Follow Lyrics; manual selection, edits and loops pin the target                          |
-| Audio stops/repeats at a marker       | Turn Loop off; sentence Play starts forward playback                                            |
-| No markers or row playback for TXT    | Assign its start first; untimed text has no real timestamps yet                                 |
-| End says Inferred end                 | Set end at playback or confirm the intended pair with Apply Markers                             |
-| Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                    |
+| Symptom                               | What to Check                                                                                                                                       |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Playhead leaves the zoomed view       | Enable waveform Follow; manual panning holds inspection; double-click zoom now preserves Follow                                                     |
+| Markers do not advance with sentences | Enable Follow Lyrics; manual selection, edits and loops pin the target                                                                              |
+| Audio stops/repeats at a marker       | Turn Loop off; sentence Play starts forward playback                                                                                                |
+| No markers or row playback for TXT    | Assign its start first; untimed text has no real timestamps yet                                                                                     |
+| End says Inferred end                 | Set end at playback or confirm the intended pair with Apply Markers                                                                                 |
+| Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                        |
 | An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Already synced lyrics require explicit import to protect saved edits. |
-| Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                             |
-| Embedded option is disabled           | Experimental embedding setting and supported file type                                          |
-| Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry   |
-| Waveform is unavailable               | Use Retry; text editing/basic playback remain separate from waveform availability               |
-| Hover help seems delayed              | Help appears after 350 ms and closes after two seconds; leave/re-enter to read again                                |
+| Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                                                                                 |
+| Embedded option is disabled           | Experimental embedding setting and supported file type                                                                                              |
+| Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry                                                       |
+| Waveform is unavailable               | Use Retry; text editing/basic playback remain separate from waveform availability                                                                   |
+| Hover help seems delayed              | Off by default. Enable Show hover help in Configuration and Save, or press F1 over a control                                                        |
 
 Screenshots use temporary demonstration fixtures. Detailed keyboard bindings,
 format limits and safety behavior are in the [editing reference](editing-guide.md).
@@ -251,3 +251,13 @@ environment. This amd64 installer requires glibc 2.39 or newer, GTK 3 and
 WebKitGTK 4.1 (such as Ubuntu 24.04 / Mint 22 or compatible newer systems).
 Older Debian-based releases and ARM need a build for their platform; a `.deb`
 extension alone does not guarantee binary compatibility.
+
+## Turn Hover Help On or Off
+
+Open **Configuration**, change **Show hover help**, then **Save**. It defaults off
+and remembers your choice between launches. With it on, help appears after a
+one-second hover and closes after two seconds. With it off, use F1 over a control
+or while that control has keyboard focus. Closing Configuration without Save
+discards the change. Menus and marker warnings are unaffected.
+
+![Hover help setting](screenshots/current/hover-help-settings-light.png)

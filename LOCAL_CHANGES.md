@@ -4,7 +4,7 @@ Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.
 
-Local version: `2.2.3+local.1`, based on upstream tag `2.2.0`.
+Local version: `2.2.4+local.1`, based on upstream tag `2.2.0`.
 
 ## Documentation
 
@@ -403,3 +403,18 @@ Leaving, clicking, scrolling, Escape, resizing, losing window focus or removing
 the control dismisses help; pending delays and app/HMR listeners are cleaned up.
 Descriptions remain accessible, text is literal, and help never captures input.
 This shared frontend behavior is independent of Linux desktop environment.
+
+## Saved Hover-Help Preference (2.2.4+local.1)
+
+Configuration now has a keyboard-accessible Show hover help checkbox, default off.
+Migration 19 adds a disabled-by-default saved preference without changing music
+or lyrics. Settings saves the preference atomically with the other submitted
+fields; omitted values from older callers preserve it. Save uses a snapshot,
+prevents duplicate submissions and leaves runtime/saved choices unchanged on
+failure. Cancel discards the draft. Startup restores the choice.
+
+F1 requests help for a hovered/focused control even with automatic help off.
+Configured shortcuts have priority; held/repeated or modified F1 is ignored.
+Opt-in automatic help waits one second, expires after two seconds and hides on
+leave/click/scroll/Escape/blur/resize/removal. Turning it off cancels pending help.
+Other Linux package formats are paused at Rick's request.

@@ -471,3 +471,13 @@ The current amd64 binary links GLIBC_2.39 symbols on Mint 22 / Ubuntu 24.04.
 The Debian bundle explicitly declares `libc6 (>= 2.39)` in addition to generated
 GTK/WebKit dependencies so older hosts fail dependency resolution rather than
 installing an incompatible executable. The application identifier is unchanged.
+
+### Hover-help preference (schema v19)
+
+Migration 19 adds `config_data.show_hover_help` as a non-null checked boolean,
+default false, without modifying music or lyrics. `get_config` returns it in
+PersistentConfig. `set_config` accepts an optional value and commits ordinary
+settings plus the preference in one transaction; omission preserves the choice
+for old callers. The scoped database setter leaves unrelated fields untouched.
+Tests cover upgrade preservation, default, connection restart, unrelated writes
+and transaction rollback.

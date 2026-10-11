@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.3+local.1`.
+Rick Lidgett's enhanced LRCGET build, `2.2.4+local.1`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -102,20 +102,20 @@ after you confirm. It is not a merge of two lyric versions. Keep your original
 TXT when importing a separate LRC; neither source is rewritten by import.
 Exporting TXT or LRC can replace an existing destination of that same type.
 
-| Default Key | Synced Editor Action |
-| --- | --- |
-| Up / Down | Select previous / next line |
-| Space | Set selected line start at playback position |
-| Shift+Space | Set selected line end at playback position |
-| N | Set end and advance to next line |
-| Enter | Set start, set previous line end and advance |
-| Shift+Enter | Set start and advance without changing previous end |
-| Left / Right | Shift line by the chosen timing step and replay |
-| Shift+Left / Shift+Right | Adjust line end by the chosen timing step |
-| P / Shift+P | Replay selected / previous line |
-| Backspace | Delete selected line |
-| Ctrl+Z / Ctrl+Shift+Z | Undo / redo synced edits |
-| Ctrl+S | Save the editor document |
+| Default Key              | Synced Editor Action                                |
+| ------------------------ | --------------------------------------------------- |
+| Up / Down                | Select previous / next line                         |
+| Space                    | Set selected line start at playback position        |
+| Shift+Space              | Set selected line end at playback position          |
+| N                        | Set end and advance to next line                    |
+| Enter                    | Set start, set previous line end and advance        |
+| Shift+Enter              | Set start and advance without changing previous end |
+| Left / Right             | Shift line by the chosen timing step and replay     |
+| Shift+Left / Shift+Right | Adjust line end by the chosen timing step           |
+| P / Shift+P              | Replay selected / previous line                     |
+| Backspace                | Delete selected line                                |
+| Ctrl+Z / Ctrl+Shift+Z    | Undo / redo synced edits                            |
+| Ctrl+S                   | Save the editor document                            |
 
 Marker focus uses Left/Right to nudge that marker instead of shifting a lyric
 row. Text input and active tools have their own keyboard behavior. Open the
@@ -142,10 +142,12 @@ marker preview is not a save, and changing markers does not rewrite lyric words.
 
 ## Zoom and Precision
 
-Hover a control to see brief help after a 350 ms delay. It closes two seconds
-after appearing, even if the mouse stays still. Move away and return to read it
-again. Moving away, clicking, scrolling or pressing Escape closes help immediately.
-The bubble never blocks clicks; accessible descriptions remain available.
+Automatic hover help is **off by default**. In Configuration, turn **Show hover
+help** on/off and Save; the choice survives restarting. When on, descriptions
+appear after a one-second deliberate hover and close two seconds later. F1 over
+a control (or with keyboard focus) shows its help even when automatic help is off.
+Moving away, clicking, scrolling or Escape closes help immediately. The bubble
+never blocks input; accessible descriptions remain available.
 The waveform shows
 the playhead position as `mm:ss.mmm`; the player reports updates every 40 ms,
 so three decimal places do not imply 1 ms playback accuracy.
@@ -273,13 +275,13 @@ Embedding/exporting writes the track or sidecar; waveform navigation does not.
 **Publish** sends lyrics to LRCLIB, with confirmation. Local saving/exporting
 does not itself publish your lyrics. Player support for lyric display varies.
 
-| Action | Result |
-| --- | --- |
-| Save | Retains edits in LRCGET's lyric document; does not itself export sidecars |
-| Save and export: TXT | Writes plain lyrics beside the track |
-| Save and export: LRC | Writes timed lyrics beside the track; selected initially |
-| Save and export: Embed | Writes lyrics into supported audio metadata |
-| Save and Publish | Uploads lyrics to the configured LRCLIB instance after confirmation |
+| Action                 | Result                                                                    |
+| ---------------------- | ------------------------------------------------------------------------- |
+| Save                   | Retains edits in LRCGET's lyric document; does not itself export sidecars |
+| Save and export: TXT   | Writes plain lyrics beside the track                                      |
+| Save and export: LRC   | Writes timed lyrics beside the track; selected initially                  |
+| Save and export: Embed | Writes lyrics into supported audio metadata                               |
+| Save and Publish       | Uploads lyrics to the configured LRCLIB instance after confirmation       |
 
 TXT and LRC export coexist; exporting one does not delete the other. A chosen
 format can replace its existing destination, so leave TXT unchecked to avoid
@@ -355,7 +357,7 @@ Select a timed lyric in Synced to see **Start** and **End** above the waveform.
 The values use `mm:ss.mmm` and remain visible when a marker is outside the zoomed
 view. Dragging or nudging updates the values immediately. **Preview** identifies
 unconfirmed changes; Apply Markers commits them, and Cancel restores saved times.
-For a lyric without an explicit end, hover End to see its inferred-end explanation.
+For a lyric without an explicit end, hover End and press F1 to read its inferred-end explanation.
 Untimed or invalid selections do not display a marker pair.
 
 A faint shaded range joins the two markers. It follows their preview positions
@@ -384,11 +386,15 @@ loop stays unavailable until loading completes.
 ![Start and End in light mode](screenshots/current/waveform-marker-times-light.png)
 ![Start and End in dark mode](screenshots/current/waveform-marker-times-dark.png)
 
-### Brief Hover Help (2.2.3)
+### Optional Hover Help (2.2.4)
 
-Hover descriptions are shared across titled app controls and editor tools. They
-close automatically instead of staying over your work. Menus, dialogs and marker
-warnings are separate: their normal behavior is unchanged.
+Open Configuration and find **Show hover help** under Common. The default is off
+so tool descriptions do not appear over your work. Save applies and remembers
+your choice; closing without Save discards the draft. A failed save keeps the
+previous preference and shows a retry message. F1 always provides help on demand.
+Existing configured shortcuts have priority over F1 help.
 
-![Timed hover help in light mode](screenshots/current/timed-hover-help-light.png)
-![Timed hover help in dark mode](screenshots/current/timed-hover-help-dark.png)
+![Hover help setting in light mode](screenshots/current/hover-help-settings-light.png)
+![Hover help setting in dark mode](screenshots/current/hover-help-settings-dark.png)
+![On-demand help in light mode](screenshots/current/timed-hover-help-light.png)
+![On-demand help in dark mode](screenshots/current/timed-hover-help-dark.png)

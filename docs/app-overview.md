@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.3+local.1. **Editing developer:** Rick Lidgett
+**Version:** 2.2.4+local.1. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The original project retains its credits and license.
@@ -164,15 +164,15 @@ successfully exported; inspect the result before retrying.
 | Marker confirmation | Preview, audition, Apply/Cancel and fixed saved timestamps                                        | [Marker how-to](how-to.md#place-precise-markers-and-preview-before-confirming) |
 | Word editing        | Follow Lyrics, spelling edits, split/merge and independent lane zoom                              | [Word how-to](how-to.md#edit-individual-words)                                 |
 | Looping             | Selected-range loops, preview bounds, cancellation and explicit forward playback                  | [Loop how-to](how-to.md#loop-between-the-markers)                              |
-| Help and themes     | Help closes after two seconds, never intercepts input; light/dark controls                      | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
+| Help and themes     | Saved hover-help toggle defaults off; F1 help expires after two seconds                           | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
 | Refresh             | Startup scanning and F5 with unavailable-directory safeguards                                     | [Library reference](editing-guide.md#library-search-and-refresh)               |
 | Modified column     | Explicit save date, responsive columns, persisted track identity                                  | [Modified column](editing-guide.md#modified-column)                            |
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.3-local.1.md).
-Current images use demonstration fixtures, not personal recordings. New timed
-help captures show 2.2.3; unchanged views retain the freshly captured 2.2.2 images.
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.4-local.1.md).
+Current images use demonstration fixtures, not personal recordings. New help/settings
+captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 
@@ -183,11 +183,12 @@ Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, Whisper, WhisperX or Demucs pipelines.
 
-The 2.2.2 code run passed 389 frontend tests, scoped ESLint/Prettier, Cargo check
-and Debian packaging, plus browser and isolated native checks. The earlier .20
-Rust run passed 52 tests with one optional fixture test ignored; Rust implementation
-was unchanged in this update. Ruff reported 11 existing findings in the unchanged
-Python test-data generator. These results do not guarantee perfect lyrics.
+The 2.2.4 code run passed 389 frontend tests and 57 Rust tests (one optional
+fixture test ignored), scoped ESLint/Prettier and Cargo check. Browser checks
+cover the saved help switch, keyboard use, Cancel/failed Save, timing and restart;
+isolated native checks verify real SQLite persistence and reload restoration.
+Ruff reports 11 existing findings in the unchanged Python test-data generator.
+These results do not guarantee perfect lyrics.
 
 ## Automatic External LRC Detection
 
