@@ -230,6 +230,7 @@ import KeyboardShortcutsModal from '@/components/library/edit-lyrics-v2/Keyboard
 import Keyboard from '~icons/mdi/keyboard'
 import ResetLyricsProjectModal from '@/components/library/edit-lyrics-v2/ResetLyricsProjectModal.vue'
 import FileImport from '~icons/mdi/file-import-outline'
+import { useNativePlaybackLoop } from '@/composables/edit-lyrics-v2/useNativePlaybackLoop.js'
 import { useEditLyricsV2Document } from '@/composables/edit-lyrics-v2/useEditLyricsV2Document.js'
 import { useEditLyricsV2Hotkeys } from '@/composables/edit-lyrics-v2/useEditLyricsV2Hotkeys.js'
 import { useEditLyricsV2Publish } from '@/composables/edit-lyrics-v2/useEditLyricsV2Publish.js'
@@ -431,6 +432,7 @@ const syncLineToCurrentProgress = lineIndex => confirmSentenceBoundary('start', 
 const syncEndToCurrentProgress = lineIndex => confirmSentenceBoundary('end', lineIndex)
 const markerEditing = ref(false)
 const wordLoopTarget = ref(null)
+const { setLoopRange } = useNativePlaybackLoop()
 const {
   playLine,
   playLineAtOffset,
@@ -457,6 +459,7 @@ const {
   wordLoopTarget,
   wordLoopAvailable: wordTimingExpanded,
   loopAvailable: computed(() => activeTab.value === 'synced' && !isInstrumental.value),
+  setLoopRange,
   onError: error => toast.error(`Loop playback failed: ${error?.message || error}`),
 })
 

@@ -18,10 +18,57 @@ pub enum PlayerStatus {
     Stopped,
 }
 
+#[derive(Default)]
+struct EditorLoopState {
+    session: u64,
+    revision: u64,
+    range: Option<(f64, f64)>,
+}
+
+impl EditorLoopState {
+    fn begin(&mut self) -> Result<u64> {
+        self.session = self
+            .session
+            .checked_add(1)
+            .ok_or_else(|| anyhow::anyhow!("Loop session limit reached"))?;
+        self.revision = 0;
+        self.range = None;
+        Ok(self.session)
+    }
+
+    fn accepts(&self, session: u64, revision: u64) -> bool {
+        session == self.session && session != 0 && revision > self.revision
+    }
+
+    fn validate_range(
+        start: Option<f64>,
+        end: Option<f64>,
+        duration: f64,
+    ) -> Result<Option<(f64, f64)>> {
+        match (start, end) {
+            (None, None) => Ok(None),
+            (Some(start), Some(end))
+                if start.is_finite()
+                    && end.is_finite()
+                    && start >= 0.0
+                    && end > start
+                    && end <= duration =>
+            {
+                Ok(Some((start, end)))
+            }
+            _ => Err(anyhow::anyhow!(
+                "Loop boundaries must be finite, ordered and inside the recording"
+            )),
+        }
+    }
+}
+
 #[derive(Serialize)]
 pub struct Player {
     #[serde(skip)]
     manager: AudioManager,
+    #[serde(skip)]
+    editor_loop: EditorLoopState,
     #[serde(skip)]
     sound_handle: Option<StreamingSoundHandle<FromFileError>>,
     #[serde(skip)]
@@ -39,6 +86,7 @@ impl Player {
 
         Ok(Player {
             manager,
+            editor_loop: EditorLoopState::default(),
             sound_handle: None,
             track: None,
             status: PlayerStatus::Stopped,
@@ -47,6 +95,59 @@ impl Player {
             volume: initial_volume,
             playback_speed: 1.0,
         })
+    }
+
+    pub fn begin_loop_session(&mut self) -> Result<u64> {
+        let session = self.editor_loop.begin()?;
+        if let Some(handle) = &mut self.sound_handle {
+            handle.set_loop_region(None);
+        }
+        Ok(session)
+    }
+
+    pub fn set_editor_loop(
+        &mut self,
+        session: u64,
+        revision: u64,
+        track_id: Option<i64>,
+        file_path: Option<&str>,
+        start: Option<f64>,
+        end: Option<f64>,
+    ) -> Result<bool> {
+        // A late change/cleanup from an older editor must never alter a new loop.
+        if !self.editor_loop.accepts(session, revision) {
+            return Ok(false);
+        }
+        let range = EditorLoopState::validate_range(start, end, self.duration)?;
+        if range.is_some() {
+            let matches = self.track.as_ref().is_some_and(|track| match track_id {
+                Some(id) => track.id == Some(id),
+                None => file_path.is_some_and(|path| track.file_path == path),
+            });
+            if !matches || self.sound_handle.is_none() {
+                return Err(anyhow::anyhow!("Loop recording changed or is unavailable"));
+            }
+        }
+        self.editor_loop.revision = revision;
+        self.editor_loop.range = range;
+        if let Some(handle) = &mut self.sound_handle {
+            match range {
+                Some((start, end)) => {
+                    handle.set_loop_region(start..end);
+                    // Apply changed boundaries without unpausing or awaiting GUI telemetry.
+                    let position = handle.position();
+                    if position < start || position >= end {
+                        handle.seek_to(start);
+                    }
+                }
+                None => handle.set_loop_region(None),
+            }
+        }
+        Ok(true)
+    }
+
+    pub fn has_editor_loop(&self) -> bool {
+        self.editor_loop.range.is_some()
     }
 
     pub fn renew_state(&mut self) {
@@ -128,6 +229,7 @@ impl Player {
     }
 
     pub fn stop(&mut self) {
+        self.editor_loop.range = None;
         if let Some(ref mut sound_handle) = self.sound_handle {
             sound_handle.stop(Tween::default());
             self.sound_handle = None;
@@ -188,6 +290,47 @@ mod tests {
         assert!(!Player::resume_after_seek(PlaybackState::Playing, true));
         assert!(Player::resume_after_seek(PlaybackState::Stopped, true));
     }
+    #[test]
+    fn editor_loop_rejects_old_sessions_and_revisions() {
+        let mut state = super::EditorLoopState::default();
+        let first = state.begin().unwrap();
+        assert!(state.accepts(first, 1));
+        state.revision = 2;
+        assert!(!state.accepts(first, 1));
+        assert!(!state.accepts(first, 2));
+        assert!(state.accepts(first, 3));
+        state.range = Some((1.0, 2.0));
+        let second = state.begin().unwrap();
+        assert_ne!(first, second);
+        assert!(state.range.is_none());
+        assert!(!state.accepts(first, 100));
+        assert!(state.accepts(second, 1));
+    }
+
+    #[test]
+    fn editor_loop_validates_real_recording_bounds() {
+        use super::EditorLoopState;
+        assert_eq!(
+            EditorLoopState::validate_range(Some(1.0), Some(1.001), 10.0).unwrap(),
+            Some((1.0, 1.001))
+        );
+        assert_eq!(
+            EditorLoopState::validate_range(None, None, 0.0).unwrap(),
+            None
+        );
+        for (start, end) in [
+            (Some(f64::NAN), Some(2.0)),
+            (Some(1.0), Some(f64::INFINITY)),
+            (Some(-1.0), Some(2.0)),
+            (Some(2.0), Some(2.0)),
+            (Some(3.0), Some(2.0)),
+            (Some(1.0), Some(11.0)),
+            (Some(1.0), None),
+        ] {
+            assert!(EditorLoopState::validate_range(start, end, 10.0).is_err());
+        }
+    }
+
     use kira::Decibels;
 
     #[test]

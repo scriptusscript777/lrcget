@@ -33,7 +33,7 @@ precision fields display seconds with three decimal places.
 
 ## Loop does not sound perfectly sample accurate
 
-Loops follow the audio player's approximately 40 ms notification cadence. Use
+Loops repeat inside the native audio engine, with approximately 10 ms cursor updates. Use
 Lead-in/Tail for context and listen at a lower playback speed; these are audition
 settings, not saved time offsets. Collapsing Word timing suspends word audition
 while retaining the mode; Stop word loop or reopening the lane makes this clear.

@@ -27,8 +27,9 @@ Rick's editor enhancements. See the [illustrated overview](app-overview.md),
 ## Boundaries and data protection
 
 Timing is manual; estimated word boxes are not automatic speech alignment.
-Audio notifications occur about every 40 ms; saved times have millisecond
-resolution, while audible looping is not sample accurate. Player support for
+Native audio-engine ranges repeat without a GUI seek per cycle. Active-loop
+position updates arrive about every 10 ms; normal playback stays at 40 ms.
+Saved times have millisecond resolution; display/device latency still applies. Player support for
 word-timed sidecars/embedded lyrics varies. Standard LRC remains available.
 
 Import, refresh and preview do not rewrite music or source sidecars. Save keeps

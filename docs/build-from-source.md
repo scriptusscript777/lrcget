@@ -67,3 +67,11 @@ for behavior and [technical history](../LOCAL_CHANGES.md) for the fork's changes
 
 See the [all-platform build matrix and limitations](platform-builds.md) and
 [complete code/maintenance guide](developer-guide.md).
+
+## Read-only native loop diagnostic
+
+From src-tauri, run `cargo run --example verify_editor_loop -- /path/to/copied.mp3 12.0 12.08`.
+Use a valid short range inside the recording. This renders streaming audio
+without a physical device, database or lyric writes; it checks repeated bounds,
+live paused changes, resume and clearing the loop. It complements interface tests
+and does not measure audible output/device latency.

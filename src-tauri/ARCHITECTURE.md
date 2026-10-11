@@ -652,3 +652,16 @@ migration and does not delete sidecars. Automatic imported/downloaded Plain or
 missing records still prefer matching LRC; explicit Import can replace saved
 work. Native regression covers untimed/empty editor saves with a matching old
 LRC under both hash and metadata scanning, preserving content/date/sidecars.
+
+### Native editor loops (2.2.7 maintenance)
+
+begin_playback_loop_session issues a monotonic player lease. set_playback_loop
+checks lease/revision, recording identity and finite ordered bounds within actual
+duration, then updates StreamingSoundHandle::set_loop_region. Changed ranges
+seek inward if needed without resuming paused audio. Stop clears the range.
+Old leases/revisions return false so delayed cleanup cannot cancel a newer editor.
+Active-loop telemetry emits every 10 ms; ordinary playback remains at 40 ms.
+Native repeats avoid per-wrap GUI IPC; decoded read-ahead and output latency
+remain relevant when applying a new range. No persisted schema/format change.
+The read-only examples/verify_editor_loop.rs renders a copied recording through
+Kira MockBackend to verify repeats, paused live changes, resume and loop disable.

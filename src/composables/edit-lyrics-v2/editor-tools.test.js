@@ -518,7 +518,7 @@ describe('synced editing history and timing steps', () => {
   })
 })
 
-const player = () => {
+const player = ({ native = false } = {}) => {
   const scope = effectScope()
   const controls = {
     audioSource: ref({ type: 'library', id: 1 }),
@@ -535,6 +535,7 @@ const player = () => {
     playTrack: vi.fn(),
     resume: vi.fn(),
     seek: vi.fn(),
+    ...(native && { setLoopRange: vi.fn().mockResolvedValue(true) }),
   }
   return { scope, controls, state: scope.run(() => useEditLyricsV2Playback(controls)) }
 }
@@ -1193,6 +1194,93 @@ describe('selected word loop', () => {
     await pending
     expect(controls.seek).not.toHaveBeenCalled()
     expect(state.loopEnabled.value).toBe(true)
+    scope.stop()
+  })
+})
+
+describe('native editor loop playback', () => {
+  it('sets the engine range once and does not seek for every word-loop repeat', async () => {
+    const { state, controls, scope } = player({ native: true })
+    controls.wordLoopTarget.value = {
+      line: controls.syncedLines.value[0],
+      lineIndex: 0,
+      wordIndex: 0,
+      startMs: 1500,
+      endMs: 1800,
+    }
+    await state.toggleLoop('word')
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(
+      { start: 1.5, end: 1.8 },
+      controls.audioSource.value
+    )
+    expect(controls.seek).toHaveBeenCalledTimes(1)
+    controls.status.value = 'playing'
+    controls.progress.value = 1.9
+    await nextTick()
+    expect(controls.seek).toHaveBeenCalledTimes(1)
+    controls.progress.value = 1.49998
+    await nextTick()
+    expect(controls.seek).toHaveBeenCalledTimes(1) // Native sample rounding is not a user seek.
+    controls.wordLoopTarget.value = { ...controls.wordLoopTarget.value, startMs: 1510, endMs: 1750 }
+    await nextTick()
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(
+      { start: 1.51, end: 1.75 },
+      controls.audioSource.value
+    )
+    await state.toggleLoop('word')
+    await nextTick()
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(null, controls.audioSource.value)
+    scope.stop()
+  })
+  it('follows waveform marker ranges, context and pause without changing document times', async () => {
+    const { state, controls, scope } = player({ native: true })
+    const snapshot = JSON.stringify(controls.syncedLines.value)
+    await state.toggleLoop('phrase')
+    controls.markerPreview.value = {
+      line: controls.syncedLines.value[0],
+      lineIndex: 0,
+      startMs: 1100,
+      endMs: 1900,
+    }
+    state.loopLeadSeconds.value = 0.1
+    state.loopTailSeconds.value = 0.1
+    await nextTick()
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(
+      { start: 1, end: 2 },
+      controls.audioSource.value
+    )
+    const resumed = controls.resume.mock.calls.length
+    controls.status.value = 'paused'
+    controls.markerPreview.value = { ...controls.markerPreview.value, endMs: 1800 }
+    await nextTick()
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(
+      { start: 1, end: 1.9000000000000001 },
+      controls.audioSource.value
+    )
+    expect(controls.resume).toHaveBeenCalledTimes(resumed)
+    expect(JSON.stringify(controls.syncedLines.value)).toBe(snapshot)
+    scope.stop()
+  })
+  it('clears engine looping while a word lane is suspended and reapplies on reopening', async () => {
+    const { state, controls, scope } = player({ native: true })
+    controls.wordLoopTarget.value = {
+      line: controls.syncedLines.value[0],
+      lineIndex: 0,
+      wordIndex: 0,
+      startMs: 1500,
+      endMs: 1800,
+    }
+    await state.toggleLoop('word')
+    controls.wordLoopAvailable.value = false
+    await nextTick()
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(null, controls.audioSource.value)
+    expect(state.loopEnabled.value).toBe(true)
+    controls.wordLoopAvailable.value = true
+    await nextTick()
+    expect(controls.setLoopRange).toHaveBeenLastCalledWith(
+      { start: 1.5, end: 1.8 },
+      controls.audioSource.value
+    )
     scope.stop()
   })
 })

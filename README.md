@@ -349,3 +349,9 @@ this song. See the [illustrated reset guide](docs/master-reset.md).
 
 Word preview matches live sentence-row highlighting; the recovery notice leaves
 space beside the main debug icon. See the [editing guide](docs/editing-guide.md).
+
+Native-loop maintenance (version unchanged): word/sentence repeats run inside
+the audio engine with approximately 10 ms cursor updates during loops. Live
+waveform preview ranges, word edits, Pause/Resume and context remain supported.
+Ordered backend sessions reject stale commands/cleanup from older editors.
+See [editing guide](docs/editing-guide.md) for listening and latency details.

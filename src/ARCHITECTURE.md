@@ -464,3 +464,11 @@ preserves partial timing rather than redistributing edited starts. Completely
 untimed words use labeled estimates. End data still controls loops/export.
 The main recovery notice reserves left space for the fixed debug icon and wraps
 long titles; it does not change recovery storage or Resume behavior.
+
+Native editor loops use useNativePlaybackLoop's backend-issued lease and ordered
+revisions. Source/range arguments are snapshotted before awaits; newer revisions
+suppress older pending requests. Scope cleanup clears only its owned lease.
+useEditLyricsV2Playback synchronizes active word/phrase/preview ranges after
+initial play/resume completes, clears suspended loops and uses engine repetition.
+The legacy callback-free path remains for existing callers. Native start guards
+tolerate sub-millisecond sample rounding rather than seeking again each wrap.

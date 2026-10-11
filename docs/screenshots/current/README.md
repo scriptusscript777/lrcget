@@ -132,3 +132,7 @@ word start adjustment without Sync/Save. `recovery-notice-aligned-{light,dark}.p
 uses the actual recovery notice with a fixture debug-icon footprint; normal and
 320px layouts were checked. Fixtures use mocked native playback and isolated
 browser storage. They do not edit personal music or the installed app profile.
+
+Native-loop maintenance: refreshed light/dark sentence-loop screenshots show
+the existing controls after verifying pending waveform bounds and Cancel. Native
+repeat precision changes do not add controls or alter export selections.

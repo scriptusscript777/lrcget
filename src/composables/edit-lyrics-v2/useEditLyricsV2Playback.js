@@ -17,6 +17,7 @@ export function useEditLyricsV2Playback({
   wordLoopAvailable = ref(false),
   loopAvailable = ref(true),
   onError = () => {},
+  setLoopRange = null,
 }) {
   const loopEnabled = ref(false)
   const loopMode = ref('phrase')
@@ -28,6 +29,8 @@ export function useEditLyricsV2Playback({
   let loopOperation = 0
   let playOperation = 0
   let disposed = false
+  let nativeLoopStartPending = 0
+  let nativeDesiredKey = 'off'
   const stopLoop = () => {
     loopOperation++
     loopEnabled.value = false
@@ -98,6 +101,24 @@ export function useEditLyricsV2Playback({
       : playingTrack.value.file_path === audioSource.value.file_path
   }
 
+  const nativeRangeKey = range =>
+    range ? JSON.stringify([waveformSourceKey(audioSource.value), range.start, range.end]) : 'off'
+  const syncNativeLoop = () => {
+    if (!setLoopRange || disposed) return
+    const range =
+      loopEnabled.value && loopAvailable.value && isPlayingCorrectTrack() ? loopRange.value : null
+    if (range && nativeLoopStartPending) return
+    const key = nativeRangeKey(range)
+    if (key === nativeDesiredKey) return
+    nativeDesiredKey = key
+    const operation = loopOperation
+    Promise.resolve(setLoopRange(range, audioSource.value)).catch(error => {
+      if (key !== nativeDesiredKey || disposed) return
+      if (range) failLoop(error, operation)
+      else onError(error)
+    })
+  }
+
   const playLineAtOffset = async (lineIndex, offsetMs = 0) => {
     const source = audioSource.value
     const line = syncedLines.value[lineIndex]
@@ -163,6 +184,7 @@ export function useEditLyricsV2Playback({
     const operation = ++loopOperation
     loopEnabled.value = true
     initializingLoop = true
+    if (setLoopRange) nativeLoopStartPending++
     awaitingLoopSeek = false
     try {
       if (!isPlayingCorrectTrack()) await playTrack(audioSource.value)
@@ -175,14 +197,29 @@ export function useEditLyricsV2Playback({
         !isPlayingCorrectTrack()
       )
         return
+      if (setLoopRange && loopRange.value) {
+        nativeDesiredKey = nativeRangeKey(loopRange.value)
+        await setLoopRange(loopRange.value, audioSource.value)
+        if (
+          disposed ||
+          operation !== loopOperation ||
+          !loopEnabled.value ||
+          !loopAvailable.value ||
+          !isPlayingCorrectTrack()
+        )
+          return
+      }
       if (loopRange.value) await seek(loopRange.value.start)
     } catch (error) {
       failLoop(error, operation)
     } finally {
+      if (setLoopRange) nativeLoopStartPending--
       if (operation === loopOperation) initializingLoop = false
+      syncNativeLoop()
     }
   }
 
+  watch([loopEnabled, loopRange, loopAvailable, playingTrack], syncNativeLoop, { flush: 'post' })
   watch(loopRange, () => {
     awaitingLoopSeek = false
   })
@@ -201,7 +238,11 @@ export function useEditLyricsV2Playback({
     if (status.value !== 'playing' && status.value !== 'stopped') return
     const { start, end } = loopRange.value
     if (progress.value >= start && progress.value < end) awaitingLoopSeek = false
-    if ((progress.value >= end || progress.value < start) && !awaitingLoopSeek) {
+    // Native looping wraps at the audio boundary; never issue one GUI seek per repeat.
+    // Keep the existing guard for an explicit seek before the selected range.
+    // Engine sample rounding can report a fraction of a millisecond before start.
+    const beforeStart = progress.value < start - (setLoopRange ? 0.001 : 0)
+    if (((!setLoopRange && progress.value >= end) || beforeStart) && !awaitingLoopSeek) {
       awaitingLoopSeek = true
       const operation = loopOperation
       // Both synchronous and asynchronous player failures stop the loop instead of retrying forever.

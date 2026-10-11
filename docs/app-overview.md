@@ -73,7 +73,8 @@ line timestamps before file import. Mixed timed/untimed files are rejected.
   identifies unconfirmed timing edits. Cancel restores the saved pair.
 - An explicit Follow-off choice remains off across zoom and playback restarts.
 - The clock displays `mm:ss.mmm`, but player updates are approximately every
-  40 ms. Display precision is not a promise of millisecond playback accuracy.
+  10 ms during native loops and 40 ms otherwise. Display precision is not a
+  promise of millisecond playback accuracy.
 - Time labels distinguish **Elapsed / Total** recording clocks, the precise
   **Position** playhead, the **View** range, and selected lyric **Start / End**.
 - Start/end handles each use one vertical guide and separate upper/lower hit
@@ -351,8 +352,10 @@ Editing estimated word boundaries saves word timing in the lyric document.
 Collapsing Word timing suspends word repeats and preserves the target. Reopen to
 resume, or use **Stop word loop** without reopening. Inactive tabs and untimed
 sentences also suspend repeats; switching tracks or closing the editor ends the
-loop. Playback auditions use the existing player clock (40 ms updates), so loop
-playback is not sample-accurate; saved timestamps retain millisecond precision.
+loop. Repeats now run in the native audio engine rather than waiting for GUI
+seeks. Active-loop cursor updates arrive about every 10 ms (normal playback stays
+at 40 ms). Display/audio-device latency and streaming read-ahead still apply;
+saved timestamps retain millisecond precision.
 
 Save/export keeps the existing TXT, LRC, ELRC and MP3 embedded format choices.
 Loop selection, context and zoom are listening aids, not exported lyric events.
@@ -394,3 +397,18 @@ this song. See the [illustrated reset guide](master-reset.md).
 
 ![Word preview follows live timing edits](screenshots/current/word-preview-live-edit-light.png)
 ![Live word preview in dark mode](screenshots/current/word-preview-live-edit-dark.png)
+
+## More precise word and sentence repeats
+
+Word and sentence loops repeat in the audio engine, avoiding an interface seek
+on every repeat. Active-loop cursor updates run approximately every 10 ms.
+Sentence loops follow pending waveform marker bounds; Cancel restores confirmed
+bounds. Word loops use the selected word bounds. Lead-in/Tail remain optional
+listening context: set both to zero to hear only the exact selected range.
+Paused boundary changes do not resume playback. Zoom changes the view only.
+Closing the editor, switching recordings or suspending a range clears native
+looping; reopening a suspended word lane restores its chosen mode.
+
+The cursor is a rendered playback estimate, not a sample-accurate measurement.
+Audio-device latency and streaming read-ahead can delay a newly edited boundary
+or seek. Saved lyrics and TXT/LRC/ELRC export choices are unchanged.

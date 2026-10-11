@@ -1588,6 +1588,41 @@ fn seek_track(
 }
 
 #[tauri::command]
+fn begin_playback_loop_session(app_state: tauri::State<AppState>) -> Result<u64, String> {
+    let mut guard = app_state.player.lock().map_err(|e| e.to_string())?;
+    guard
+        .as_mut()
+        .ok_or_else(|| "Audio player unavailable".to_owned())?
+        .begin_loop_session()
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_playback_loop(
+    session_id: u64,
+    revision: u64,
+    track_id: Option<i64>,
+    file_path: Option<String>,
+    start: Option<f64>,
+    end: Option<f64>,
+    app_state: tauri::State<AppState>,
+) -> Result<bool, String> {
+    let mut guard = app_state.player.lock().map_err(|e| e.to_string())?;
+    guard
+        .as_mut()
+        .ok_or_else(|| "Audio player unavailable".to_owned())?
+        .set_editor_loop(
+            session_id,
+            revision,
+            track_id,
+            file_path.as_deref(),
+            start,
+            end,
+        )
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 fn stop_track(app_state: tauri::State<AppState>) -> Result<(), String> {
     let mut player_guard = app_state.player.lock().map_err(|e| e.to_string())?;
 
@@ -1716,6 +1751,8 @@ async fn main() {
             pause_track,
             resume_track,
             seek_track,
+            begin_playback_loop_session,
+            set_playback_loop,
             stop_track,
             set_volume,
             set_playback_speed,
@@ -1760,9 +1797,12 @@ async fn main() {
             let handle_clone = handle.clone();
 
             tokio::spawn(async move {
-                let mut interval = tokio::time::interval(std::time::Duration::from_millis(40));
+                let mut interval = tokio::time::interval(std::time::Duration::from_millis(10));
+                interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+                let mut telemetry_tick = 0_u8;
                 loop {
                     interval.tick().await;
+                    telemetry_tick = (telemetry_tick + 1) % 4;
                     {
                         let app_state: State<AppState> = handle_clone.state();
                         let player_guard = app_state.player.lock();
@@ -1770,6 +1810,10 @@ async fn main() {
                         match player_guard {
                             Ok(mut player_guard) => {
                                 if let Some(ref mut player) = *player_guard {
+                                    // Active editor loops get finer cursor updates; normal playback stays at 40 ms.
+                                    if !player.has_editor_loop() && telemetry_tick != 0 {
+                                        continue;
+                                    }
                                     player.renew_state();
 
                                     let emit_player_state =
