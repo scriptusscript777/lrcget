@@ -48,10 +48,12 @@ linking the fork/release and a focused upstream pull request. Keep unrelated
 existing PRs unchanged, and avoid duplicate notifications. Report actual outcomes
 and any blocked installation or publication steps.
 
-For significant published fork updates, advance the public version. Rick prefers
-decimal carry: 2.2.1 through 2.2.9, then 2.3.0; 2.9.9 advances to 3.0.0.
-Keep the local suffix to distinguish fork builds from official upstream releases.
-Combine changes made before a release is published into that same release.
+For future application updates, advance the main version number rather than
+incrementing a `+local.xx` suffix. Rick explicitly requested this on 2026-10-11;
+use plain release versions such as `2.2.7` for the next application update.
+Rick prefers decimal carry: 2.2.1 through 2.2.9, then 2.3.0; 2.9.9 advances to
+3.0.0. Existing historical versions/artifacts retain their original names.
+Keep package/application identity unchanged so upgrades replace the installed app.
 
 Apply this maintenance workflow every time this app is modified. Update feature
 lists, how-tos and release notes together; capture fresh light/dark screenshots
