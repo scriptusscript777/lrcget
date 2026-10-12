@@ -1,8 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { effectScope, ref } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
-import { parseImportedLyrics } from '@/utils/lyrics-import.js'
-import { serializeLyricsfile } from '@/utils/lyricsfile.js'
 import { useEditLyricsV2Document } from './useEditLyricsV2Document.js'
 import { listRecovery, recoveryTarget, RECOVERY_PREFIX } from '@/utils/editor-recovery.js'
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
@@ -150,63 +148,5 @@ describe('durable unfinished editor work', () => {
     expect(recoveryTarget({ file_path: '/old.mp3' }, null, 1)).not.toBe(recoveryTarget({ file_path: '/new.mp3' }, null, 1))
   })
 
-  it('returns to the last save and removes only this project recovery', async () => {
-    const storage = memoryStorage(); const a = editor(storage); const b = editor(storage, '', 2)
-    a.state.updateSyncedLines(lines); a.state.updatePlainLyrics('saved wording')
-    invoke.mockResolvedValue(null); await a.state.saveLyrics()
-    a.state.updatePlainLyrics('unfinished'); b.state.updatePlainLyrics('other song')
-    a.state.updateRecoveryContext({ markerPreview: { startMs: 1200, endMs: 3000 } })
-    expect(a.state.resetLyricsProject('saved')).toBe(true)
-    expect(a.state.plainLyrics.value).toBe('saved wording')
-    expect(a.state.syncedLines.value[0].words).toEqual(lines[0].words)
-    expect(a.state.isDirty.value).toBe(false)
-    expect(a.state.canUndo.value).toBe(false)
-    expect(a.state.recoveryContext.value).toEqual({})
-    expect(listRecovery(storage)).toHaveLength(1)
-    expect(listRecovery(storage)[0].source.trackId).toBe(2)
-    a.scope.stop(); b.scope.stop()
-  })
-  it.each([
-    ['song.txt', 'First word\nSecond line'],
-    ['song.lrc', '[00:01.000]First word\n[00:03.000]Second line'],
-    ['song.elrc', '[00:01.000]<00:01.100>First <00:02.000>word<00:02.500>\n[00:03.000]Second line'],
-  ])('clears timing for %s, retaining text and protecting the fresh reset draft', (path, content) => {
-    const imported = parseImportedLyrics(content, path)
-    const saved = serializeLyricsfile({ track: { title: 'Song' }, plainLyrics: imported.plain, syncedLines: imported.lines })
-    const storage = memoryStorage(); const a = editor(storage, saved)
-    expect(a.state.resetLyricsProject('timing')).toBe(true)
-    expect(a.state.plainLyrics.value).toBe(imported.plain)
-    expect(a.state.syncedLines.value.map(line => line.text)).toEqual(['First word', 'Second line'])
-    expect(a.state.syncedLines.value.every(line => line.start_ms == null && line.end_ms == null && line.words.length === 0)).toBe(true)
-    expect(a.state.serializedLyricsfile.value).not.toContain('start_ms:')
-    if (path !== 'song.txt') {
-      expect(listRecovery(storage)).toHaveLength(1)
-      const restored = editor(storage, saved)
-      expect(restored.state.syncedLines.value[0].start_ms).toBeUndefined()
-      restored.scope.stop()
-    }
-    a.scope.stop()
-  })
-  it('keeps unfinished sentence wording when clearing its timing', () => {
-    const storage = memoryStorage(); const a = editor(storage)
-    a.state.updateSyncedLines(lines)
-    a.state.updatePendingSentence({ lineIndex: 0, originalText: 'first word', text: 'new words' })
-    a.state.resetLyricsProject('timing')
-    expect(a.state.syncedLines.value[0]).toEqual({ text: 'new words', words: [] })
-    a.scope.stop()
-  })
-  it('rejects busy/unknown resets and keeps the editor intact if cleanup fails', () => {
-    const storage = memoryStorage(); const a = editor(storage)
-    a.state.updateSyncedLines(lines)
-    a.state.isSaving.value = true
-    expect(a.state.resetLyricsProject('timing')).toBe(false)
-    a.state.isSaving.value = false
-    expect(a.state.resetLyricsProject('unknown')).toBe(false)
-    storage.removeItem = () => { throw new Error('cannot remove draft') }
-    expect(a.state.resetLyricsProject('saved')).toBe(false)
-    expect(a.state.syncedLines.value[0].words).toEqual(lines[0].words)
-    expect(listRecovery(storage)).toHaveLength(1)
-    a.scope.stop()
-  })
 
 })

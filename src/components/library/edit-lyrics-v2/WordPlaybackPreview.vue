@@ -51,6 +51,7 @@ const props = defineProps({
   lineIndex: { type: Number, default: -1 },
   progressMs: { type: Number, default: 0 },
   playing: { type: Boolean, default: false },
+  followLyrics: { type: Boolean, default: true },
   previewRange: { type: Object, default: null },
 })
 const hasSavedTiming = computed(
@@ -89,10 +90,11 @@ const previewWords = computed(() =>
 // The text view wraps independently of timeline zoom; never changes word boundaries.
 const textContainer = ref(null)
 watch(
-  [activeIndex, () => props.line, () => props.playing],
+  [activeIndex, () => props.line, () => props.playing, () => props.followLyrics],
   async () => {
-    if (!props.playing) return
+    if (!props.playing || !props.followLyrics) return
     await nextTick()
+    if (!props.playing || !props.followLyrics) return
     const container = textContainer.value
     const active = container?.querySelector('[data-active="true"]')
     if (!active) return

@@ -196,11 +196,12 @@ it('blocks export during preference writes and ignores stale configuration reads
 })
 
 
-it.each([false, true])('keeps Master reset visible and enables it only with Synced eligibility (%s)', async eligible => {
-  const app = createSSRApp(HeaderActions, { isDirty: false, isExporting: false, canMasterReset: eligible })
+it('omits the removed Master reset control while retaining debug and Save', async () => {
+  const app = createSSRApp(HeaderActions, { isDirty: false, isExporting: false })
   app.component('VDropdown', popup)
   app.directive('close-popper', {})
   const html = await renderToString(app)
-  const button = html.match(/<button[^>]*aria-label="Master reset current lyrics project"[^>]*>/)[0]
-  expect(/\sdisabled(?:=|\s|>)/.test(button)).toBe(!eligible)
+  expect(html).not.toContain('Master reset')
+  expect(html).toContain('View YAML debug')
+  expect(html).toContain('Save')
 })

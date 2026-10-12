@@ -442,15 +442,6 @@ records require an explicit discard. History and live pointer drags remain
 session-only. No scan, library status, modified date or sidecar changes occur
 until the normal Save/export commands. See docs/recovery.md for limits.
 
-`ResetLyricsProjectModal.vue` provides warning/choice/Cancel and stops bubbling
-editor shortcuts. The persistent header reset icon enables only Synced editing;
-parent busy/source/document guards reject stale confirmations. The document
-reset API removes only the current draft, clears buffers/context/history and
-restores the exact saved snapshot or clears sentence/word timing while retaining
-text. Cleared working copies remain recoverable. Editor revisions remount word
-and waveform children to discard stale local buffers/previews and stop Loop.
-No file/database commands run on reset. See docs/master-reset.md.
-
 Word timing exposes adjacent Loop word/Loop sentence buttons. Sentence mode
 props and toggle-sentence-loop flow through SyncedLyricsEditor to the existing
 phrase playback toggle. Both phrase/sentence buttons share the same state and
@@ -472,3 +463,16 @@ useEditLyricsV2Playback synchronizes active word/phrase/preview ranges after
 initial play/resume completes, clears suspended loops and uses engine repetition.
 The legacy callback-free path remains for existing callers. Native start guards
 tolerate sub-millisecond sample rounding rather than seeking again each wrap.
+
+### Word editing maintenance and Master reset removal
+
+Master reset UI/modal/document action were removed; recovery/discard and saved
+untimed sidecar protection remain. Follow Lyrics is passed to word lane/preview
+to gate automatic scrolling, with async preview callbacks rechecking it after
+nextTick. Playback navigation and Preview expansion preserve Follow off.
+Boundary pending/confirmed maps are scoped by sentence and word, fingerprinting
+text, recording bounds and that word’s own range. Shared implicit ends register
+both affected words. Other word edits do not invalidate unrelated confirmations;
+Reset words clears only current sentence records after document acceptance.
+Non-advancing successful Sync locks its word. Async segmentation rejects stale
+text/requests or an already accepted word list. No persisted format changes.

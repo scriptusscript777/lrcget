@@ -120,14 +120,6 @@
     >
       <Bug class="text-base" />
     </button>
-    <button
-      type="button"
-      class="button button-normal h-8 w-8 rounded-full p-1.5 text-sm disabled:opacity-40 disabled:cursor-not-allowed"
-      :title="canMasterReset ? 'Master reset current lyrics project — opens a warning and reset choices' : 'Master reset is available in Synced editing mode'"
-      aria-label="Master reset current lyrics project"
-      :disabled="!canMasterReset || isExporting"
-      @click="emit('master-reset')"
-    ><RestartAlert class="text-base" /></button>
   </div>
 </template>
 
@@ -135,12 +127,11 @@
 import { computed, ref, onMounted } from 'vue'
 import ChevronDown from '~icons/mdi/chevron-down'
 import ContentSave from '~icons/mdi/content-save'
-import RestartAlert from '~icons/mdi/restart-alert'
 import Bug from '~icons/mdi/bug'
 import CheckboxButton from '@/components/common/CheckboxButton.vue'
 import { invoke } from '@tauri-apps/api/core'
 
-const emit = defineEmits(['save', 'save-and-publish', 'export', 'debug', 'master-reset'])
+const emit = defineEmits(['save', 'save-and-publish', 'export', 'debug'])
 
 const exportPlainText = ref(false)
 // Editor exports are separate from bulk-download export preferences.
@@ -212,7 +203,6 @@ const handleExportClick = () => {
 }
 
 defineProps({
-  canMasterReset: Boolean,
   isDirty: {
     type: Boolean,
     required: true,

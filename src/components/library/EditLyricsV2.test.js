@@ -70,7 +70,7 @@ beforeEach(() => {
     recoveryContext: ref({}), recoveryStatus: ref(''), recoveryConflict: ref(null),
     hasRecoveryWork: ref(false), hasUnsavedDocument: ref(false), selectedSyncedLineIndex: ref(0),
     updateRecoveryContext: vi.fn(), updatePendingSentence: vi.fn(),
-    resetLyricsProject: vi.fn(() => true), flushRecovery: vi.fn(() => true), discardRecovery: vi.fn(), restoreRecovery: vi.fn(),
+    flushRecovery: vi.fn(() => true), discardRecovery: vi.fn(), restoreRecovery: vi.fn(),
     plainLyrics,
     syncedLines,
     isInstrumental,

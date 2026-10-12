@@ -88,7 +88,7 @@
             ? 'bg-emerald-500 border-emerald-500 dark:bg-emerald-400 dark:border-emerald-400'
             : 'bg-neutral-300 border-neutral-400 dark:bg-neutral-600 dark:border-neutral-500'
         "
-        :title="hasWordSync ? 'Word synced' : 'Word not synced'"
+        :title="hasWordSync ? 'Word timing present. Review timing by listening; Save/export writes it to a file.' : 'No valid word timing yet'"
         :aria-label="hasWordSync ? 'Word synced' : 'Word not synced'"
       />
 

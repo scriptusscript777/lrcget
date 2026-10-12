@@ -60,9 +60,8 @@ only that project's completed draft; newer edits and pending markers remain.
 Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
 for restoration, conflicts, cleanup and limitations.
 
-## Master reset for the current lyrics project
+## Restart one sentence’s word timing
 
-A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
-Synced mode opens a warning and choices to return to the last save or clear
-all timing while keeping text. Cancel keeps work; confirmation affects only
-this song. See the [illustrated reset guide](master-reset.md).
+Use **Reset words** to clear only the selected sentence’s word timing and
+regenerate evenly spaced estimates. Text and sentence markers stay in place;
+Undo restores the prior word timings. Master reset has been removed.

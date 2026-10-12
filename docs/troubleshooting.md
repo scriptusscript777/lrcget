@@ -96,9 +96,8 @@ only that project's completed draft; newer edits and pending markers remain.
 Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
 for restoration, conflicts, cleanup and limitations.
 
-## Master reset for the current lyrics project
+## Restarting word timing
 
-A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
-Synced mode opens a warning and choices to return to the last save or clear
-all timing while keeping text. Cancel keeps work; confirmation affects only
-this song. See the [illustrated reset guide](master-reset.md).
+Use **Reset words** to rebuild only the selected sentence’s word timing estimates;
+Undo restores the previous timing. Master reset has been removed. For external
+TXT/LRC/ELRC replacement, use Import and its existing confirmation.

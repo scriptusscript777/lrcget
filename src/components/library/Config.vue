@@ -106,11 +106,11 @@
               id="prevent-lyric-overlaps"
               v-model="editingPreventOverlaps"
               type="checkbox"
-              class="h-4 w-4 accent-hoa-1500"
+              class="h-4 w-4 accent-green-600"
               aria-describedby="overlap-instructions"
               :disabled="isSaving || !isConfigLoaded"
             />
-            Prevent overlapping lyrics
+            <span :class="editingPreventOverlaps ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'">Prevent overlapping lyrics</span>
           </label>
           <span
             id="overlap-instructions"

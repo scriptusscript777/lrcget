@@ -198,7 +198,7 @@ and resumes there, retaining word Loop. **Play** keeps its existing replay behav
 Changing sentence wording clears that sentence’s saved word timing so stale
 word labels cannot survive; retime the new words, or Undo to restore both.
 
-**Reset** deliberately clears saved word timings and rebuilds estimates; use
+**Reset words** deliberately clears saved word timings and rebuilds estimates; use
 **Undo** to restore an accidental reset. Undo/Redo includes each released drag and
 numeric timing edit. Lane zoom never changes waveform zoom or saved timestamps.
 
@@ -454,7 +454,7 @@ See [ID3v2.4 frame definitions](https://id3.org/id3v2.4.0-frames) and
 Explicit word ends preserve silence gaps; missing ends use the next word start
 or sentence end. Estimated timing is labeled and is not saved merely by looping.
 Editing estimated word boundaries saves word timing in the lyric document.
-**Undo** restores timing edits. **Reset** returns word timings to estimates.
+**Undo** restores timing edits. **Reset words** returns word timings to estimates.
 
 Collapsing Word timing suspends word repeats and preserves the target. Reopen to
 resume, or use **Stop word loop** without reopening. Inactive tabs and untimed
@@ -538,12 +538,11 @@ only that project's completed draft; newer edits and pending markers remain.
 Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
 for restoration, conflicts, cleanup and limitations.
 
-## Master reset for the current lyrics project
+## Restart one sentence’s word timing
 
-A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
-Synced mode opens a warning and choices to return to the last save or clear
-all timing while keeping text. Cancel keeps work; confirmation affects only
-this song. See the [illustrated reset guide](master-reset.md).
+Use **Reset words** to clear only the selected sentence’s word timing and
+regenerate evenly spaced estimates. Text and sentence markers stay in place;
+Undo restores the prior word timings. Master reset has been removed.
 
 ![Word timing with Sentence loop selected](screenshots/current/selected-sentence-loop-light.png)
 ![Sentence loop in dark mode](screenshots/current/selected-sentence-loop-dark.png)
@@ -565,3 +564,34 @@ looping; reopening a suspended word lane restores its chosen mode.
 The cursor is a rendered playback estimate, not a sample-accurate measurement.
 Audio-device latency and streaming read-ahead can delay a newly edited boundary
 or seek. Saved lyrics and TXT/LRC/ELRC export choices are unchanged.
+
+## Word editing follow and confirmation
+
+**Follow Lyrics** now controls automatic sentence selection, scrolling of the
+word timeline, and scrolling of the Word preview. Turn it off to hold the view
+while playback, highlights and loops continue. Play/Pause/Resume and opening
+Word preview preserve the choice. Selecting a word or changing zoom can still
+reveal that chosen word intentionally.
+
+Manual changes are tracked independently for each word and sentence. Adjusting
+a later divider does not discard an earlier word’s manual edit. Sync word
+retains those times and turns gray/disabled for that word until its timing changes.
+A shared divider also changes the preceding word’s implicit end. Ordinary live
+sync advances to the next word; a non-advancing sync locks the current word.
+Undo/Redo, changed wording and sentence boundaries reevaluate confirmations.
+
+The green sentence dot means valid word timing is present, including any estimated
+values retained while editing. Listen to verify accuracy; it does not mean all
+words were manually synced or exported. **Reset words** clears only this sentence’s
+word timings and regenerates estimates, keeping its wording and sentence markers.
+Use Undo to restore the preceding word timing. Failed validation leaves timing
+in place and explains the failure. Master reset is removed from the top bar.
+
+Overlap prevention shows **On** in green and **Off** in red in both themes.
+Settings uses matching colors. The text remains visible so status is clear
+without relying on color.
+
+![Manual confirmation with Follow off](screenshots/current/word-follow-off-confirmed-light.png)
+![Follow off in dark mode](screenshots/current/word-follow-off-confirmed-dark.png)
+![Overlap prevention off](screenshots/current/word-overlap-off-light.png)
+![Overlap prevention off in dark mode](screenshots/current/word-overlap-off-dark.png)

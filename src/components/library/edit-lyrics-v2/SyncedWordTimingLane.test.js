@@ -69,7 +69,7 @@ function mount(component) {
   return { app, root }
 }
 
-function setupLane({ generated = false, initialWordIndex = 0 } = {}) {
+function setupLane({ generated = false, initialWordIndex = 0, applyUpdates = false } = {}) {
   const line = {
     text: generated ? 'I sing ' : ' I sing ',
     start_ms: 1000,
@@ -91,7 +91,12 @@ function setupLane({ generated = false, initialWordIndex = 0 } = {}) {
     playing: true,
   })
   let state
-  const emit = vi.fn()
+  const emit = vi.fn((event, payload) => {
+    if (!applyUpdates || event !== 'update:words') return
+    props.selectedLine = { ...props.selectedLine, words: payload.words }
+    props.allLines = [props.selectedLine]
+    payload.onResult?.(true)
+  })
   const mounted = mount({
     setup() {
       state = Lane.setup(props, { expose: vi.fn(), emit })
@@ -201,9 +206,12 @@ it('restores the selected word when the word lane is reopened', async () => {
 })
 
 it('Reset submits an empty word list that the document handler accepts', async () => {
-  const { state, emit } = setupLane()
+  const { state, emit } = setupLane({ applyUpdates: true })
   await state.handleResetWords()
-  expect(emit).toHaveBeenCalledWith('update:words', { lineIndex: 0, words: [] })
+  expect(emit).toHaveBeenCalledWith(
+    'update:words',
+    expect.objectContaining({ lineIndex: 0, words: [] })
+  )
 })
 
 it('precise first-word edits do not move the sentence start or prevent tuning back', async () => {
@@ -219,4 +227,50 @@ it('precise first-word edits do not move the sentence start or prevent tuning ba
   expect(restored.words[0].start_ms).toBe(1000)
   expect(props.selectedLine.start_ms).toBe(1000)
   await nextTick()
+})
+
+it('keeps estimated words stable through multiple numeric adjustments and confirmation', async () => {
+  const { state, props } = setupLane({ generated: true, applyUpdates: true })
+  await nextTick()
+  state.selectWord(0)
+  state.editSelectedBoundary('start', { target: { value: '1.100' } })
+  await nextTick()
+  state.selectWord(1)
+  state.editSelectedBoundary('start', { target: { value: '2.400' } })
+  await nextTick()
+  const before = JSON.stringify(props.selectedLine.words)
+  state.selectWord(0)
+  props.progressMs = 2399
+  state.handleSyncWord()
+  await nextTick()
+  expect(JSON.stringify(props.selectedLine.words)).toBe(before)
+  expect(state.isManualTimingConfirmed.value).toBe(true)
+  state.handleSyncWord()
+  expect(JSON.stringify(props.selectedLine.words)).toBe(before)
+})
+it('Follow off holds a zoomed word timeline through progress and pause/resume', async () => {
+  const { state, props } = setupLane()
+  await nextTick()
+  state.scrollElement.value = { clientWidth: 200, scrollLeft: 0 }
+  state.timelineWidth.value = 1000
+  props.followLyrics = false
+  props.progressMs = 2800
+  await nextTick()
+  expect(state.scrollElement.value.scrollLeft).toBe(0)
+  props.playing = false
+  await nextTick()
+  props.playing = true
+  await nextTick()
+  expect(state.scrollElement.value.scrollLeft).toBe(0)
+  props.followLyrics = true
+  await nextTick()
+  expect(state.scrollElement.value.scrollLeft).toBeGreaterThan(0)
+})
+
+it('rejected Reset keeps the word document and confirmation intact', async () => {
+  const { state, props } = setupLane()
+  const snapshot = JSON.stringify(props.selectedLine)
+  await state.handleResetWords()
+  expect(JSON.stringify(props.selectedLine)).toBe(snapshot)
+  expect(state.timingMessage.value).toContain('not reset')
 })

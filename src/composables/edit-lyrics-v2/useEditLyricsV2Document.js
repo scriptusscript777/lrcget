@@ -133,37 +133,6 @@ export function useEditLyricsV2Document({
       return false
     }
   }
-  const resetLyricsProject = mode => {
-    if (isSaving.value || !['saved', 'timing'].includes(mode)) return false
-    const working = workingDocument()
-    try {
-      // Delete only this target; if removal fails, preserve the current editor.
-      if (recoveryStore && recoveryKey) removeRecovery(recoveryStore, recoveryKey)
-    } catch (error) {
-      recoveryStatus.value = `Recovery unavailable: ${error.message}`
-      return false
-    }
-    const doc = mode === 'saved' ? JSON.parse(savedSnapshot.value) : working
-    recoveryReady = false
-    pendingSentence.value = null
-    recoveryConflict.value = null
-    recoveryBlocked.value = false
-    recoveryContext.value = {}
-    recoveryStatus.value = ''
-    plainLyrics.value = doc.plain
-    syncedLines.value = mode === 'saved' ? doc.synced :
-      (doc.synced.length ? doc.synced : createSyncedLinesFromPlain(doc.plain, [])).map(line => ({ text: line.text, words: [] }))
-    isInstrumental.value = mode === 'saved' ? doc.instrumental : false
-    selectedSyncedLineIndex.value = -1
-    clearSyncedLineSelection()
-    ensureSelectedSyncedLine()
-    isSyncedLineEditing.value = false
-    isDirty.value = documentSnapshot() !== savedSnapshot.value
-    history.reset()
-    recoveryReady = true
-    flushRecovery()
-    return true
-  }
   const updateRecoveryContext = context => {
     recoveryContext.value = { ...recoveryContext.value, ...context }
   }
@@ -898,7 +867,6 @@ export function useEditLyricsV2Document({
     flushRecovery,
     restoreRecovery,
     discardRecovery,
-    resetLyricsProject,
     updateRecoveryContext,
     updatePendingSentence,
     timingStepMs,

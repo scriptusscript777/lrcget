@@ -120,8 +120,8 @@ reload that does not invoke the old editor's shutdown hooks.
 
 Master reset captures: `master-reset-saved-warning-*`,
 `master-reset-timing-warning-*`, `master-reset-cleared-*` and
-`master-reset-plain-*`. Both themes show the current icon/warning and Plain-mode
-graying using safe temporary fixtures. See docs/master-reset.md.
+`master-reset-plain-*`. These captures show the historical icon/warning and Plain-mode
+graying from before the feature was removed. See docs/master-reset.md.
 
 Sentence-loop maintenance captures: `selected-sentence-loop-{light,dark}.png`
 show the adjacent word/sentence controls and active sentence mode. Current word,
@@ -136,3 +136,7 @@ browser storage. They do not edit personal music or the installed app profile.
 Native-loop maintenance: refreshed light/dark sentence-loop screenshots show
 the existing controls after verifying pending waveform bounds and Cancel. Native
 repeat precision changes do not add controls or alter export selections.
+
+Current word-follow maintenance: word-follow-off-confirmed-* and word-overlap-off-*
+show independent confirmation, Follow off, Reset words and green/red protection
+status. Master-reset-* captures are historical; that feature is removed.

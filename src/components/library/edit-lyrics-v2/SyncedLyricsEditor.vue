@@ -9,7 +9,7 @@
           <option v-for="step in [10, 25, 50, 100]" :key="step" :value="step">{{ step }} ms</option>
         </select>
       </label>
-      <span class="text-xs text-neutral-600 dark:text-neutral-300" data-testid="overlap-prevention-status" role="status">
+      <span class="text-xs font-semibold" :class="preventOverlaps ? 'text-green-700 dark:text-green-400' : 'text-red-600 dark:text-red-400'" data-testid="overlap-prevention-status" role="status">
         Overlap prevention: {{ preventOverlaps ? 'On' : 'Off' }}
       </span>
       <button v-tooltip="editorTooltip('Keep repeating the selected markers until Loop is turned off; selecting another lyric moves the loop')" class="button p-1.5 rounded" :class="loopEnabled && loopMode === 'phrase' ? 'button-primary' : 'button-normal'" :disabled="!canLoop && !loopEnabled" :aria-pressed="loopEnabled && loopMode === 'phrase'" title="Loop selected phrase" aria-label="Loop selected phrase" @click="emit('toggle-loop')"><Repeat /></button>
@@ -62,6 +62,7 @@
       :progress-ms="progressMs"
       :preview-range="markerPreview?.line === selectedLine && markerPreview?.lineIndex === selectedLineIndex ? markerPreview : null"
       :playing="waveformPlaying"
+      :follow-lyrics="followLyrics"
     />
     <SyncedWordTimingLane
       v-if="wordTimingExpanded"
@@ -71,6 +72,7 @@
       :has-selected-line="hasSelectedLine"
       :progress-ms="playbackTimeMs"
       :playing="waveformPlaying"
+      :follow-lyrics="followLyrics"
       :all-lines="modelValue"
       :selected-line-index="selectedLineIndex"
       :word-loop-enabled="loopEnabled && loopMode === 'word'"
@@ -308,7 +310,6 @@ const hoveredLineIndex = ref(null)
 const wordPreviewExpanded = ref(false)
 const toggleWordPreview = () => {
   wordPreviewExpanded.value = !wordPreviewExpanded.value
-  if (wordPreviewExpanded.value) followLyrics.value = true
 }
 const wordTimingExpanded = ref(props.wordTimingExpanded)
 watch(() => props.wordTimingExpanded, expanded => { wordTimingExpanded.value = expanded }, { flush: 'sync' })
@@ -529,14 +530,15 @@ const emitLineAction = (eventName, index, selectBefore = true) => {
 const navigatePlayback = async (index, event, payload) => {
   const line = props.modelValue[index]
   if (!line) return
-  // Play is navigation, not editing: select its markers and resume lyric following.
+  // Preserve an explicit Follow-off choice across Play/navigation.
+  const resumeFollowing = followLyrics.value
   followLyrics.value = false
   emit('update:selected-line-index', index)
   emit(event, payload)
   // Selection arrives through parent props; its manual-selection watcher must settle first.
   await nextTick()
   if (props.selectedLineIndex === index && props.modelValue[index] === line)
-    followLyrics.value = true
+    followLyrics.value = resumeFollowing
 }
 
 const handlePlayLine = index => navigatePlayback(index, 'play-line', index)

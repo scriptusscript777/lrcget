@@ -13,8 +13,8 @@ export function useEditLyricsV2WordBoundaryDrag({
   onWordTimingEdited,
   onTimingError = () => {},
 }) {
-  const adjustedBoundary = ref(null)
-  const confirmedBoundary = ref(null)
+  const adjustedBoundaries = ref(new Map())
+  const confirmedBoundaries = ref(new Map())
   let ownUpdate = null
   let lastSync = null
   const dragState = ref(null)
@@ -23,25 +23,39 @@ export function useEditLyricsV2WordBoundaryDrag({
   const isDraggingBoundary = ref(false)
   const dragStartPos = ref(null)
 
-  const hasAdjustedBoundary = computed(() =>
-    Boolean(
-      adjustedBoundary.value &&
-      adjustedBoundary.value.index === selectedBoundaryIndex.value &&
-      adjustedBoundary.value.lineIndex === selectedLineIndex.value &&
-      adjustedBoundary.value.signature === JSON.stringify(words.value)
-    )
+  // Keep each word's manual adjustment independently. Another divider edit
+  // must not turn an earlier adjustment into a playback stamp on Sync.
+  const boundaryKey = index => `${selectedLineIndex.value}:${index}`
+  const boundaryFingerprint = (currentWords, index) =>
+    JSON.stringify([
+      selectedLineIndex.value,
+      timelineStartMs.value,
+      timelineEndMs.value,
+      currentWords.map(word => word.text),
+      index,
+      currentWords[index]?.start_ms,
+      currentWords[index]?.end_ms ?? currentWords[index + 1]?.start_ms ?? timelineEndMs.value,
+    ])
+  const hasAdjustedBoundary = computed(
+    () =>
+      adjustedBoundaries.value.get(boundaryKey(selectedBoundaryIndex.value)) ===
+      boundaryFingerprint(words.value, selectedBoundaryIndex.value)
   )
-
-  const isManualTimingConfirmed = computed(() =>
-    Boolean(
-      confirmedBoundary.value &&
-      confirmedBoundary.value.index === selectedBoundaryIndex.value &&
-      confirmedBoundary.value.lineIndex === selectedLineIndex.value &&
-      confirmedBoundary.value.signature === JSON.stringify(words.value) &&
-      confirmedBoundary.value.startMs === timelineStartMs.value &&
-      confirmedBoundary.value.endMs === timelineEndMs.value
-    )
+  const isManualTimingConfirmed = computed(
+    () =>
+      confirmedBoundaries.value.get(boundaryKey(selectedBoundaryIndex.value)) ===
+      boundaryFingerprint(words.value, selectedBoundaryIndex.value)
   )
+  const clearManualTiming = () => {
+    const prefix = `${selectedLineIndex.value}:`
+    adjustedBoundaries.value = new Map(
+      [...adjustedBoundaries.value].filter(([key]) => !key.startsWith(prefix))
+    )
+    confirmedBoundaries.value = new Map(
+      [...confirmedBoundaries.value].filter(([key]) => !key.startsWith(prefix))
+    )
+    lastSync = null
+  }
 
   const displayedWords = computed(() => {
     const currentWords = words.value
@@ -123,20 +137,23 @@ export function useEditLyricsV2WordBoundaryDrag({
     }
   }
 
-  const rememberAdjustedBoundary = (index, updatedWords) => {
-    if (
-      confirmedBoundary.value?.index === index &&
-      confirmedBoundary.value.lineIndex === selectedLineIndex.value &&
-      confirmedBoundary.value.signature === JSON.stringify(updatedWords)
-    )
-      return
-    confirmedBoundary.value = null
-    lastSync = null
-    adjustedBoundary.value = {
-      index,
-      lineIndex: selectedLineIndex.value,
-      signature: JSON.stringify(updatedWords),
+  const rememberAdjustedBoundary = (index, updatedWords, { includePrevious = true } = {}) => {
+    const indices = [index]
+    // A shared divider changes the previous word's implicit end as well.
+    if (includePrevious && index > 0 && updatedWords[index - 1]?.end_ms == null)
+      indices.push(index - 1)
+    const pending = new Map(adjustedBoundaries.value)
+    const confirmed = new Map(confirmedBoundaries.value)
+    for (const affected of indices) {
+      const signature = boundaryFingerprint(updatedWords, affected)
+      const key = boundaryKey(affected)
+      if (confirmed.get(key) === signature) continue
+      confirmed.delete(key)
+      pending.set(key, signature)
     }
+    adjustedBoundaries.value = pending
+    confirmedBoundaries.value = confirmed
+    lastSync = null
   }
 
   const consumeOwnWordUpdate = currentWords => {
@@ -414,19 +431,14 @@ export function useEditLyricsV2WordBoundaryDrag({
       return false // Already handled this unchanged position; do not stamp or advance again.
     }
     let acceptedSignature = signature
-    const adjusted = adjustedBoundary.value
-    const keepDraggedTime =
-      adjusted &&
-      adjusted.index === rightWordIndex &&
-      adjusted.lineIndex === selectedLineIndex.value &&
-      adjusted.signature === JSON.stringify(words.value)
-    adjustedBoundary.value = null
+    const keepDraggedTime = hasAdjustedBoundary.value
     if (keepDraggedTime) {
-      confirmedBoundary.value = {
-        ...adjusted,
-        startMs: timelineStartMs.value,
-        endMs: timelineEndMs.value,
-      }
+      const confirmed = new Map(confirmedBoundaries.value)
+      confirmed.set(boundaryKey(rightWordIndex), boundaryFingerprint(words.value, rightWordIndex))
+      confirmedBoundaries.value = confirmed
+      const pending = new Map(adjustedBoundaries.value)
+      pending.delete(boundaryKey(rightWordIndex))
+      adjustedBoundaries.value = pending
     }
     if (!keepDraggedTime) {
       const { minStartMs, maxStartMs } = getBoundaryConstraint(rightWordIndex)
@@ -446,6 +458,14 @@ export function useEditLyricsV2WordBoundaryDrag({
       const updatedWords = buildUpdatedWords(rightWordIndex, startMs)
       if (!submitWords(updatedWords)) return false
       acceptedSignature = JSON.stringify(updatedWords)
+      if (!advance || rightWordIndex === words.value.length - 1) {
+        const confirmed = new Map(confirmedBoundaries.value)
+        confirmed.set(
+          boundaryKey(rightWordIndex),
+          boundaryFingerprint(updatedWords, rightWordIndex)
+        )
+        confirmedBoundaries.value = confirmed
+      }
     }
 
     if (advance && !keepDraggedTime) {
@@ -484,6 +504,7 @@ export function useEditLyricsV2WordBoundaryDrag({
   }
 
   return {
+    clearManualTiming,
     hasAdjustedBoundary,
     isManualTimingConfirmed,
     rememberAdjustedBoundary,

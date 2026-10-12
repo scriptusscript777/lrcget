@@ -49,7 +49,7 @@ describe('synced editor lyric follow integration', () => {
     else expect(play).not.toContain('disabled')
   })
 
-  it('selects a played sentence and restores following without editing timestamps', async () => {
+  it('selects a played sentence while preserving Follow off without editing timestamps', async () => {
     const { props, state, follow, emit } = await setupEditor()
     state.selectLine(0)
     expect(follow.enabled.value).toBe(false)
@@ -60,11 +60,11 @@ describe('synced editor lyric follow integration', () => {
       ['update:selected-line-index', 0],
       ['play-line', 0],
     ])
-    expect(follow.enabled.value).toBe(true)
+    expect(follow.enabled.value).toBe(false)
     expect(JSON.stringify(props.modelValue)).toBe(before)
   })
 
-  it('restores sentence following for offset playback and ignores missing targets', async () => {
+  it('preserves Follow off for offset playback and ignores missing targets', async () => {
     const { state, follow, emit } = await setupEditor()
     state.selectLine(0)
     emit.mockClear()
@@ -74,7 +74,7 @@ describe('synced editor lyric follow integration', () => {
       ['update:selected-line-index', 0],
       ['play-line-at-offset', payload],
     ])
-    expect(follow.enabled.value).toBe(true)
+    expect(follow.enabled.value).toBe(false)
     emit.mockClear()
     await state.handlePlayLine(9)
     await state.handlePlayLineAtOffset({ lineIndex: 9, offsetMs: 0 })
@@ -135,4 +135,14 @@ describe('synced editor lyric follow integration', () => {
     state.startDragSelection(0, { ctrlKey: true })
     expect(follow.enabled.value).toBe(false)
   })
+})
+
+it('opening word preview and playing preserve explicit Follow choices', async () => {
+  const { state, follow } = await setupEditor()
+  follow.enabled.value = false
+  state.toggleWordPreview()
+  expect(follow.enabled.value).toBe(false)
+  follow.enabled.value = true
+  await state.handlePlayLine(0)
+  expect(follow.enabled.value).toBe(true)
 })

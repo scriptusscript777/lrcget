@@ -52,14 +52,19 @@ only that project's completed draft; newer edits and pending markers remain.
 Word timing warnings now use yellow text. See the [recovery guide](recovery.md)
 for restoration, conflicts, cleanup and limitations.
 
-## Master reset for the current lyrics project
+## Restart one sentence’s word timing
 
-A reset icon beside YAML debug stays visible in both tabs and gray in Plain.
-Synced mode opens a warning and choices to return to the last save or clear
-all timing while keeping text. Cancel keeps work; confirmation affects only
-this song. See the [illustrated reset guide](master-reset.md).
+Use **Reset words** to clear only the selected sentence’s word timing and
+regenerate evenly spaced estimates. Text and sentence markers stay in place;
+Undo restores the prior word timings. Master reset has been removed.
 
 Word preview now matches sentence-row highlights during live word edits, using
 the same clock and word-start rules. The current word stays highlighted until
 the next word starts or sentence ends. Recovery notices clear the debug icon
 and wrap long song names.
+
+Word-editing maintenance (version remains 2.2.7): Follow Lyrics holds both word
+views when off, independent manual adjustments retain confirmed ranges on Sync,
+confirmed words stay gray until changed, and Reset words restarts one sentence’s
+word timing with Undo support. Overlap status is green On/red Off in both themes.
+Master reset is removed; recovery and TXT/LRC/ELRC Save/import/export remain.

@@ -11,12 +11,10 @@
       <EditLyricsV2HeaderActions
         :is-dirty="isDirty || hasUnsavedDocument"
         :is-exporting="isExporting || isSaving"
-        :can-master-reset="activeTab === 'synced' && !isInstrumental && !isImporting"
         @save="saveLyrics"
         @save-and-publish="saveAndPublish"
         @export="exportLyrics"
         @debug="openDebugModal"
-        @master-reset="openProjectReset"
       />
     </template>
 
@@ -102,7 +100,6 @@
         />
         <EditLyricsV2Waveform
           ref="waveformEditor"
-          :key="editorRevision"
           :recovery-markers="recoveryMarkerRequest"
           :prevent-overlaps="preventOverlaps"
           :audio-source="audioSource"
@@ -154,7 +151,6 @@
 
       <SyncedLyricsEditor
         v-else
-        :key="editorRevision"
         v-model:timing-step-ms="timingStepMs"
         v-model:loop-lead-seconds="loopLeadSeconds"
         v-model:loop-tail-seconds="loopTailSeconds"
@@ -228,7 +224,6 @@ import PlainLyricsCodeEditor from '@/components/library/edit-lyrics-v2/PlainLyri
 import SyncedLyricsEditor from '@/components/library/edit-lyrics-v2/SyncedLyricsEditor.vue'
 import KeyboardShortcutsModal from '@/components/library/edit-lyrics-v2/KeyboardShortcutsModal.vue'
 import Keyboard from '~icons/mdi/keyboard'
-import ResetLyricsProjectModal from '@/components/library/edit-lyrics-v2/ResetLyricsProjectModal.vue'
 import FileImport from '~icons/mdi/file-import-outline'
 import { useNativePlaybackLoop } from '@/composables/edit-lyrics-v2/useNativePlaybackLoop.js'
 import { useEditLyricsV2Document } from '@/composables/edit-lyrics-v2/useEditLyricsV2Document.js'
@@ -325,7 +320,6 @@ const {
   flushRecovery,
   restoreRecovery,
   discardRecovery,
-  resetLyricsProject,
   updateRecoveryContext,
   updatePendingSentence,
   undo,
@@ -403,7 +397,6 @@ const { exportLyrics, isExporting } = useEditLyricsV2Export({
 })
 
 const waveformEditor = ref(null)
-const editorRevision = ref(0)
 const recoveryMarkerRequest = ref(null)
 const markerPreview = ref(null)
 const handleMarkerPreview = preview => {
@@ -713,36 +706,6 @@ const { open: openConfirmModal, close: closeConfirmModal } = useModal({
     },
   },
 })
-
-let projectResetContext = null
-const { open: openProjectResetModal, close: closeProjectResetModal } = useModal({
-  component: ResetLyricsProjectModal,
-  attrs: {
-    onCancel: () => { projectResetContext = null; closeProjectResetModal() },
-    onReset: ({ mode, onResult }) => {
-      if (!projectResetContext || !isCurrentImport(projectResetContext) || isImporting.value || activeTab.value !== 'synced' || isInstrumental.value) {
-        onResult(false, 'This lyrics project changed or is busy. Cancel and reopen Master reset.')
-        return
-      }
-      const success = resetLyricsProject(mode)
-      onResult(success)
-      if (!success) return
-      invalidateImport()
-      loopEnabled.value = false
-      wordLoopTarget.value = null
-      recoveryMarkerRequest.value = null
-      markerPreview.value = null
-      wordTimingExpanded.value = false
-      editorRevision.value++
-      closeProjectResetModal()
-    },
-  },
-})
-const openProjectReset = () => {
-  if (activeTab.value !== 'synced' || isInstrumental.value || isSaving.value || isExporting.value || isImporting.value) return
-  projectResetContext = importContext()
-  openProjectResetModal()
-}
 
 const handleClose = () => {
   if (isSaving.value || isExporting.value) {

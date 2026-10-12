@@ -131,12 +131,12 @@
               )
             "
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
-            title="Reset word timings to default state"
+            title="Reset only this sentence’s word timing; keep its text and sentence markers. Undo restores the previous timing."
             :disabled="!!dragState || !!dragStartPos"
             @click="handleResetWords"
           >
             <Close class="w-3.5 h-3.5" />
-            <span>Reset</span>
+            <span>Reset words</span>
           </button>
         </div>
       </div>
@@ -321,6 +321,7 @@ import { ensureLineWords, distributeWordTimings, hasValidWords } from '@/utils/w
 
 const props = defineProps({
   playing: { type: Boolean, default: false },
+  followLyrics: { type: Boolean, default: true },
   wordLoopEnabled: { type: Boolean, default: false },
   sentenceLoopEnabled: { type: Boolean, default: false },
   canSentenceLoop: { type: Boolean, default: false },
@@ -470,6 +471,7 @@ const words = computed(() => {
 })
 
 const {
+  clearManualTiming,
   hasAdjustedBoundary,
   isManualTimingConfirmed,
   rememberAdjustedBoundary,
@@ -561,7 +563,7 @@ const editSelectedBoundary = (boundary, event) => {
       words: updatedWords,
       lineStartMs: undefined,
       onResult: accepted => {
-        if (accepted) rememberAdjustedBoundary(selectedWordIndex.value, updatedWords)
+        if (accepted) rememberAdjustedBoundary(selectedWordIndex.value, updatedWords, { includePrevious: boundary === 'start' })
         else
           timingMessage.value =
             'Word timing was not applied; its sentence or overlap bounds changed.'
@@ -611,8 +613,8 @@ const revealTime = timeMs => {
 
 // Only matching live playback follows. Manual inspection stays put until playback resumes
 // or a boundary is deliberately selected; never change the mapping during a drag.
-watch([() => props.progressMs, () => props.playing], () => {
-  if (props.playing && !manualInspection.value) revealTime(props.progressMs)
+watch([() => props.progressMs, () => props.playing, () => props.followLyrics], () => {
+  if (props.followLyrics && props.playing && !manualInspection.value) revealTime(props.progressMs)
 })
 watch(
   () => props.playing,
@@ -734,7 +736,7 @@ const loadDefaultSegmentation = async ({ force = false } = {}) => {
   try {
     const tokens = await invoke('segment_words', { text: lineText })
 
-    if (requestId !== segmentationRequestId.value) {
+    if (disposed || requestId !== segmentationRequestId.value || props.selectedLine?.text !== lineText || hasActualWords.value) {
       return
     }
 
@@ -747,7 +749,7 @@ const loadDefaultSegmentation = async ({ force = false } = {}) => {
       .filter(token => typeof token === 'string')
       .filter(token => token.length > 0)
   } catch (error) {
-    if (requestId !== segmentationRequestId.value) {
+    if (disposed || requestId !== segmentationRequestId.value || props.selectedLine?.text !== lineText || hasActualWords.value) {
       return
     }
 
@@ -797,17 +799,27 @@ watch(
 const handleResetWords = async () => {
   if (dragState.value || dragStartPos.value || !isWordSyncAvailable.value) return
 
-  // Clear the words object entirely - this removes persisted word timings.
+  // Clear only this sentence's working word timing after document validation.
+  let accepted = false
+  const lineIndex = props.selectedLineIndex
   emit('update:words', {
-    lineIndex: props.selectedLineIndex,
+    lineIndex,
     words: [],
+    onResult: result => { accepted = result === true },
   })
+  if (!accepted) {
+    timingMessage.value = 'Word timing was not reset; its sentence or overlap bounds changed.'
+    return
+  }
+  timingMessage.value = ''
 
-  // Reset selected boundary after clearing.
+  // Reset selected boundary and confirmation after clearing.
+  clearManualTiming()
   resetBoundarySelection()
 
   // Wait for parent state to apply, then force segmentation so first reset is reliable.
   await nextTick()
+  if (disposed || props.selectedLineIndex !== lineIndex) return
   await loadDefaultSegmentation({ force: true })
 }
 

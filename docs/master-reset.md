@@ -1,3 +1,11 @@
+# Archived Master reset feature
+
+Master reset was removed from the current 2.2.7 maintenance build at Rick’s
+request. The historical behavior below is retained for older builds only.
+Use **Reset words** for the selected sentence’s word timings, Undo for edits,
+and Import for replacement TXT/LRC/ELRC data. See the
+[current editing guide](editing-guide.md#word-editing-follow-and-confirmation).
+
 # Master reset — restart the current lyrics project
 
 The reset icon sits beside the **View YAML debug** bug icon, next to Save in the
