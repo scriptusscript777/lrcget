@@ -21,14 +21,6 @@
 
     <template #titleRight>
       <button
-        class="button button-normal rounded px-2 py-1 text-xs mr-2"
-        title="Optional automatic audio alignment; Basic editing needs no AI"
-        :disabled="isInstrumental || isSaving || isExporting || isImporting"
-        @click="alignmentOpen = true"
-      >
-        Align words
-      </button>
-      <button
         class="button button-normal h-8 w-8 shrink-0 rounded-full p-1.5 text-sm mr-2"
         title="Import lyrics file"
         aria-label="Import lyrics file"
@@ -169,6 +161,7 @@
         v-model:timing-step-ms="timingStepMs"
         v-model:loop-lead-seconds="loopLeadSeconds"
         v-model:loop-tail-seconds="loopTailSeconds"
+        :alignment-disabled="isSaving || isExporting || isImporting"
         :prevent-overlaps="preventOverlaps"
         :marker-preview="markerPreview"
         :model-value="syncedLines"
@@ -187,6 +180,7 @@
         :word-loop-target="wordLoopTarget"
         :can-loop="canPhraseLoop"
         :marker-editing="markerEditing"
+        @align-words="alignmentOpen = true"
         @word-timing-expanded-change="wordTimingExpanded = $event"
         @undo="undo"
         @redo="redo"

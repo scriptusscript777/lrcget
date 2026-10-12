@@ -508,3 +508,17 @@ Modal keyboard events cannot reach underlying lyric hotkeys. The editor explicit
 forwards modal attributes now that it renders a second modal. Preview listening
 shares the player clock; users explicitly disable existing loops when needed.
 TXT can receive sentence timing; complete applied words need no estimate prompt.
+
+Optional setup consent is remembered by an atomic, profile-local prompt marker
+through `audio_alignment_setup_prompt`; no approval itself is stored. Missing
+engines ask once; the Install button reopens explicit consent. The Synced toolbar
+places Align words after Word preview. Model controls use shared themed `.select`
+styles with native color schemes. `audio_alignment_model_status` checks hashes
+without downloading. `setup_audio_alignment` requires confirmed=true, serializes
+with inference, stages private environments/models and forwards stage/download
+progress. Cancellation terminates owned process groups before staging removal.
+Only verified environments become active via an atomic pointer; prior/manual
+environments remain. Alignment loads verified local model paths with the
+corresponding Whisper alignment heads, preventing implicit model downloads.
+Python/venv/ffmpeg prerequisites remain managed by the OS package manager.
+Windows/AppImage provisioning and OS-specific lifecycle tests are deferred.

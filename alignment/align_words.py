@@ -7,6 +7,8 @@ import math
 import re
 import sys
 
+from setup_alignment import cached_model
+
 
 def emit(value):
     print(json.dumps(value, ensure_ascii=False), flush=True, file=sys.__stdout__)
@@ -84,7 +86,8 @@ def main():
             raise ValueError("Unsupported alignment model")
         torch.set_num_threads(min(4, torch.get_num_threads()))
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        model = stable_whisper.load_model(model_name, device=device)
+        model = stable_whisper.load_model(cached_model(model_name), device=device)
+        model.set_alignment_heads(whisper._ALIGNMENT_HEADS[model_name])
         audio = whisper.load_audio(request["audio_path"])
     duration_ms = len(audio) * 1000 // 16000
     emit({"type": "progress", "percent": 0, "message": f"Aligning on {device.upper()}"})

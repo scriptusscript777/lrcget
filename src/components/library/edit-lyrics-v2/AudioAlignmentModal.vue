@@ -11,8 +11,8 @@
     <div class="flex flex-col gap-3 h-full text-sm text-neutral-800 dark:text-neutral-200">
       <p>
         Basic editing and estimated ELRC timing need no AI. This optional mode uses your local audio
-        and a Whisper model. First use may download the model. Review singing alignment before
-        applying.
+        and a Whisper model. Optional packages and uncached models are downloaded only after your
+        approval. Review singing alignment before applying.
       </p>
       <div class="flex flex-wrap items-center gap-3">
         <label
@@ -26,10 +26,15 @@
         /></label>
         <label
           >Model
-          <select v-model="model" :disabled="running" class="input" aria-label="Alignment model">
-            <option>tiny</option>
-            <option>base</option>
-            <option>small</option>
+          <select
+            v-model="model"
+            :disabled="running"
+            class="select [color-scheme:light] dark:[color-scheme:dark]"
+            aria-label="Alignment model"
+          >
+            <option value="tiny">Tiny</option>
+            <option value="base">Base</option>
+            <option value="small">Small</option>
           </select></label
         >
         <label class="flex items-center gap-2"
@@ -42,20 +47,66 @@
         timestamps and lyric text are preserved. TXT without timing can receive automatic sentence
         timing.
       </p>
-      <p v-if="available === false" class="text-amber-800 dark:text-yellow-300">
-        Optional alignment engine not installed. Follow docs/audio-alignment.md to install stable-ts
-        in an isolated environment. Basic editing remains available.
-      </p>
+      <div v-if="available === false" class="flex flex-wrap items-center gap-2">
+        <span>Optional engine unavailable. Basic editing still works.</span>
+        <button
+          class="button button-normal rounded px-3 py-1"
+          :disabled="running"
+          @click="consent = 'install'"
+        >
+          Install automatic alignment
+        </button>
+      </div>
+      <div
+        v-if="available && modelStatus?.ready === false"
+        class="flex flex-wrap items-center gap-2"
+      >
+        <span>{{ model }} model needs a verified download (about {{ modelMB }} MB).</span>
+        <button
+          class="button button-normal rounded px-3 py-1"
+          :disabled="running"
+          @click="consent = 'download'"
+        >
+          Download selected model
+        </button>
+      </div>
+      <div
+        v-if="consent"
+        role="region"
+        aria-label="Optional download consent"
+        class="rounded border border-neutral-400 dark:border-neutral-600 p-3 bg-neutral-100 dark:bg-neutral-800"
+      >
+        <p v-if="consent === 'install'">
+          Install optional Whisper, stable-ts and PyTorch in a private LRCGET environment? Budget
+          roughly 1–2 GB of downloads and at least 4 GiB free disk space; existing compatible
+          packages may reduce this. Packages come from PyPI and the official PyTorch CPU index.
+          Python 3.10–3.12, venv and ffmpeg must be installed first. This setup does not install
+          system packages or change your music. Model downloads require separate approval.
+        </p>
+        <p v-else>
+          Download the {{ model }} Whisper model from its official provider? About {{ modelMB }} MB
+          will be downloaded and stored in your Whisper cache, with a checksum check. Allow
+          {{ modelMB + 105 }} MB free disk space. Your audio and lyrics stay local.
+        </p>
+        <div class="flex gap-2 mt-2">
+          <button class="button button-primary rounded px-3 py-1" @click="setup(consent)">
+            Yes, {{ consent === 'install' ? 'install' : 'download' }}
+          </button>
+          <button class="button button-normal rounded px-3 py-1" @click="consent = null">
+            Not now
+          </button>
+        </div>
+      </div>
       <div class="flex items-center gap-2">
         <button
-          class="button button-primary rounded px-3 py-1"
-          :disabled="running || available !== true"
+          class="button button-primary rounded px-3 py-1 disabled:opacity-40 disabled:cursor-not-allowed"
+          :disabled="running || available !== true || modelStatus?.ready !== true || !!consent"
           @click="run"
         >
           Align using audio
         </button>
         <button v-if="running" class="button button-normal rounded px-3 py-1" @click="cancel">
-          Cancel alignment
+          Cancel operation
         </button>
         <span role="status">{{ message }}</span>
       </div>
@@ -137,8 +188,8 @@
     <template #footer>
       <button class="button button-normal rounded px-4 py-2" @click="emit('close')">Cancel</button>
       <button
-        class="button button-primary rounded px-4 py-2 ml-2"
-        :disabled="!plan?.changedWords || running"
+        class="button button-primary rounded px-4 py-2 ml-2 disabled:opacity-40 disabled:cursor-not-allowed"
+        :disabled="!plan?.changedWords || running || !!consent"
         @click="apply"
       >
         Apply preview
@@ -147,7 +198,7 @@
   </BaseModal>
 </template>
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import BaseModal from '@/components/common/BaseModal.vue'
@@ -169,6 +220,8 @@ const language = ref('en'),
   model = ref('base'),
   replace = ref(false),
   available = ref(null),
+  modelStatus = ref(null),
+  consent = ref(null),
   running = ref(false),
   percent = ref(0),
   message = ref('Checking optional engine…'),
@@ -176,6 +229,27 @@ const language = ref('en'),
   result = ref(null),
   plan = ref(null),
   selected = ref(0)
+const modelMB = computed(() =>
+  Math.ceil(
+    (modelStatus.value?.bytes ||
+      { tiny: 75572083, base: 145262807, small: 483617219 }[model.value]) / 1000000
+  )
+)
+let modelCheck = 0
+const checkModel = async () => {
+  const generation = ++modelCheck
+  modelStatus.value = null
+  try {
+    const status = await invoke('audio_alignment_model_status', { model: model.value })
+    if (!disposed && generation === modelCheck) modelStatus.value = status
+  } catch (err) {
+    if (!disposed && generation === modelCheck) error.value = String(err.message || err)
+  }
+}
+watch(model, () => {
+  consent.value = null
+  void checkModel()
+})
 const current = computed(() => plan.value?.lines[selected.value])
 const warning = i => plan.value?.review.find(item => item.index === i)
 let job = null,
@@ -186,11 +260,19 @@ const cancel = () => {
   const pending = job
   job = null
   running.value = false
+  consent.value = null
   message.value = 'Cancelled. Existing lyrics unchanged.'
   if (pending) void invoke('cancel_audio_alignment', { jobId: pending }).catch(() => {})
 }
 const run = async () => {
-  if (running.value || disposed) return
+  if (
+    running.value ||
+    disposed ||
+    available.value !== true ||
+    modelStatus.value?.ready !== true ||
+    consent.value
+  )
+    return
   snapshot = JSON.parse(JSON.stringify(props.getSnapshot()))
   if (snapshot.pendingMarkers) {
     error.value = 'Apply or cancel pending waveform markers first.'
@@ -255,6 +337,42 @@ const run = async () => {
     }
   }
 }
+const setup = async action => {
+  if (running.value || disposed || consent.value !== action) return
+  consent.value = null
+  const id = crypto.randomUUID()
+  job = id
+  running.value = true
+  percent.value = 0
+  error.value = ''
+  message.value = action === 'install' ? 'Preparing private setup…' : 'Preparing model download…'
+  try {
+    await invoke('setup_audio_alignment', {
+      jobId: id,
+      action,
+      model: model.value,
+      confirmed: true,
+    })
+    if (disposed || job !== id) return
+    available.value = await invoke('audio_alignment_available')
+    if (disposed || job !== id) return
+    await checkModel()
+    if (disposed || job !== id) return
+    message.value = available.value
+      ? 'Local engine ready.'
+      : 'Setup finished but engine is unavailable. Check the setup guide.'
+  } catch (err) {
+    if (!disposed && job === id) {
+      error.value = String(err.message || err)
+      message.value = 'Optional setup failed. Basic mode remains available.'
+    }
+  } finally {
+    if (job === id) {
+      job = null
+      running.value = false
+    }
+  }
+}
 const apply = () => {
   if (
     !running.value &&
@@ -279,6 +397,11 @@ onMounted(async () => {
     }
     unlisten = cleanup
     available.value = await invoke('audio_alignment_available')
+    if (disposed) return
+    await checkModel()
+    if (disposed) return
+    if (!available.value && (await invoke('audio_alignment_setup_prompt')) && !disposed)
+      consent.value = 'install'
     if (!disposed) message.value = available.value ? 'Local engine ready.' : 'Basic mode available.'
   } catch (err) {
     if (!disposed) {

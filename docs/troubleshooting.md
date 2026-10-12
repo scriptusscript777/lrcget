@@ -125,3 +125,8 @@ word times are protected unless explicitly replaced; sentence bounds and text
 remain intact. Complete applied timing saves ELRC without another estimate prompt.
 See the [illustrated audio alignment guide](audio-alignment.md) for setup and
 limitations. Singing alignment requires review; confidence is only a hint.
+
+Optional audio setup now asks once when the engine is unavailable; declining
+keeps an Install button for later. Each missing model needs separate approval.
+Align words sits immediately after Word preview in Synced; model choices remain
+readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).

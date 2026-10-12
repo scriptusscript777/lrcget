@@ -694,3 +694,17 @@ LRC alignment analyzes bounded sentences; untimed TXT uses full alignment with
 original line splits. Exact character-span mapping retains original tokens, text
 and whitespace. Invalid/low-confidence output is reviewed in the frontend rather
 than replacing lyrics with a transcript. Normal Save/export/download logic remains.
+
+Optional setup consent is remembered by an atomic, profile-local prompt marker
+through `audio_alignment_setup_prompt`; no approval itself is stored. Missing
+engines ask once; the Install button reopens explicit consent. The Synced toolbar
+places Align words after Word preview. Model controls use shared themed `.select`
+styles with native color schemes. `audio_alignment_model_status` checks hashes
+without downloading. `setup_audio_alignment` requires confirmed=true, serializes
+with inference, stages private environments/models and forwards stage/download
+progress. Cancellation terminates owned process groups before staging removal.
+Only verified environments become active via an atomic pointer; prior/manual
+environments remain. Alignment loads verified local model paths with the
+corresponding Whisper alignment heads, preventing implicit model downloads.
+Python/venv/ffmpeg prerequisites remain managed by the OS package manager.
+Windows/AppImage provisioning and OS-specific lifecycle tests are deferred.

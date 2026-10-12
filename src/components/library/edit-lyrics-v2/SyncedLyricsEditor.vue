@@ -43,6 +43,7 @@
         title="Read along with highlighted words without changing timing boxes"
         @click="toggleWordPreview"
       >Word preview</button>
+      <button type="button" class="button button-normal rounded px-2 py-1 text-xs" :disabled="alignmentDisabled" title="Optional automatic audio alignment; Basic editing needs no AI" @click="emit('align-words')">Align words</button>
       <button
         v-if="wordTimingExpanded || wordPreviewExpanded"
         v-tooltip="editorTooltip('Follow the playing sentence and its markers; editing and Loop hold the selected target')"
@@ -240,6 +241,7 @@ const props = defineProps({
   loopMode: { type: String, default: 'phrase' },
   wordLoopTarget: { type: Object, default: null },
   markerEditing: Boolean,
+  alignmentDisabled: { type: Boolean, default: false },
   markerPreview: { type: Object, default: null },
   preventOverlaps: { type: Boolean, default: true },
   canLoop: Boolean,
@@ -268,6 +270,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
+  'align-words',
   'recovery-edit-state',
   'word-timing-expanded-change',
   'undo',
