@@ -639,3 +639,11 @@ instead of allowing pip to skip them because their version is already visible.
 A failed live-progress subscription no longer prevents installed-engine detection.
 No-consent, decline/reopen, missing ffmpeg/venv, disk-space, corrupted download,
 model approval, cancellation and theme mock tests passed; Python coverage is 13 tests.
+
+Real full-song audio alignment audit: temporary Last Breath MP3, CPU/Base, 49 lyric
+sentences; 39 valid proposals/258 aligned words, ten skipped ranges requiring
+manual correction or explicit ELRC estimates. Native selected-format exports and
+boundary highlighting after reimport passed; original hashes unchanged. Preserve
+skipped row data before tokenization, guard missing sentence results and explicit
+invalid ends, and honor word-end gaps in shared editor playback. TXT full-song
+alignment and two protected manual anchors were also validated.

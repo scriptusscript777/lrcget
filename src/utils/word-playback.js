@@ -19,11 +19,14 @@ export function isLinePlaybackActive(line, progressMs, options) {
 
 export function activeWordIndex(line, progressMs, options) {
   if (!isLinePlaybackActive(line, progressMs, options) || !Array.isArray(line?.words)) return -1
-  // Scan backwards once: keep the latest timed word until the next start.
+  // Scan backwards once; explicit ends preserve silence until the next start.
   // Missing word starts do not replace already edited timing with an estimate.
   for (let index = line.words.length - 1; index >= 0; index--) {
     const startMs = line.words[index]?.start_ms
-    if (Number.isFinite(startMs) && startMs >= 0 && progressMs >= startMs) return index
+    if (Number.isFinite(startMs) && startMs >= 0 && progressMs >= startMs) {
+      const endMs = line.words[index]?.end_ms
+      return Number.isFinite(endMs) && progressMs >= endMs ? -1 : index
+    }
   }
   return -1
 }

@@ -111,3 +111,9 @@ Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
 Align words sits immediately after Word preview in Synced; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).
+
+Automatic preview reports skipped sentences separately from listening-review
+warnings and retains original data for skipped rows. Word preview, sentence-row
+word highlighting and automatic preview respect explicit word ends and silence;
+start-only LRC still uses next-start/sentence-end fallback. Complete ELRC exports
+can explicitly fill skipped word timing with approved estimates.

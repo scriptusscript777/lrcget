@@ -2,7 +2,7 @@
 
 import unittest
 
-from align_words import remap_words
+from align_words import aligned_words, remap_words, sentence_bounds
 
 
 class MappingTests(unittest.TestCase):
@@ -34,6 +34,34 @@ class MappingTests(unittest.TestCase):
         )
         self.assertEqual(result[0]["start_ms"], 200)
         self.assertIsNone(result[0]["confidence"])
+
+
+class BoundsTests(unittest.TestCase):
+    def test_explicit_zero_end_is_invalid_instead_of_treated_as_missing(self):
+        with self.assertRaisesRegex(ValueError, "boundaries"):
+            sentence_bounds({"start_ms": 1000, "end_ms": 0}, [{"start_ms": 3000}], 5000)
+
+    def test_missing_end_uses_next_sentence_or_audio_duration(self):
+        self.assertEqual(
+            sentence_bounds({"start_ms": 1000}, [{"start_ms": 3000}], 5000),
+            (1000, 3000),
+        )
+        self.assertEqual(sentence_bounds({"start_ms": 3000}, [], 5000), (3000, 5000))
+
+    def test_invalid_or_non_integer_bounds_are_skipped(self):
+        for start, end in [
+            (True, 2000),
+            (1000.5, 2000),
+            (-1, 2000),
+            (2000, 2000),
+            (1000, 6000),
+        ]:
+            with self.assertRaisesRegex(ValueError, "boundaries"):
+                sentence_bounds({"start_ms": start, "end_ms": end}, [], 5000)
+
+    def test_no_sentence_result_becomes_a_reviewable_error(self):
+        with self.assertRaisesRegex(ValueError, "sentence could not be aligned"):
+            aligned_words(None)
 
 
 if __name__ == "__main__":

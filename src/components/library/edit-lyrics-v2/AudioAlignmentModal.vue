@@ -120,10 +120,16 @@
       <p v-if="error" role="alert" class="text-red-700 dark:text-red-300">{{ error }}</p>
       <template v-if="plan">
         <p>
-          {{ plan.changedWords }} word timings proposed. {{ plan.review.length }} sentence{{
-            plan.review.length === 1 ? '' : 's'
+          {{ plan.changedWords }} word timings proposed. {{ skippedCount }} sentence{{
+            skippedCount === 1 ? '' : 's'
           }}
-          need review or were skipped. Nothing is saved until you apply and Save.
+          skipped; {{ reviewCount }} sentence{{ reviewCount === 1 ? '' : 's' }}
+          {{ reviewCount === 1 ? 'needs' : 'need' }} listening review. Nothing is saved until you
+          apply and Save.
+        </p>
+        <p v-if="plan.review.some(item => item.skipped)" class="text-xs">
+          Skipped sentences keep their original timing. Correct them manually or approve estimates
+          when saving ELRC.
         </p>
         <div class="flex gap-3 min-h-0 grow">
           <div
@@ -250,6 +256,8 @@ watch(model, () => {
   consent.value = null
   void checkModel()
 })
+const skippedCount = computed(() => plan.value?.review.filter(item => item.skipped).length || 0)
+const reviewCount = computed(() => plan.value?.review.filter(item => !item.skipped).length || 0)
 const current = computed(() => plan.value?.lines[selected.value])
 const warning = i => plan.value?.review.find(item => item.index === i)
 let job = null,
@@ -291,6 +299,7 @@ const run = async () => {
     error.value = 'Choose local audio first.'
     return
   }
+  const originalLines = structuredClone(lines)
   const id = crypto.randomUUID()
   job = id
   running.value = true
@@ -320,7 +329,7 @@ const run = async () => {
     if (JSON.stringify(props.getSnapshot()) !== JSON.stringify(snapshot))
       throw new Error('Lyrics or audio changed during alignment. Run it again.')
     result.value = output
-    plan.value = mergeAudioAlignment(lines, output, {
+    plan.value = mergeAudioAlignment(originalLines, output, {
       replace: replace.value,
       preventOverlaps: snapshot.overlap,
     })

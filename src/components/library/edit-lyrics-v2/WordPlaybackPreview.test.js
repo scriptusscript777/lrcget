@@ -35,13 +35,13 @@ describe('read-only word playback preview', () => {
     const active = () => state.previewWords.value.filter(word => word.active).map(word => word.text)
     expect(active()).toEqual(['Hello '])
     props.progressMs = 1500
-    expect(active()).toEqual(['Hello '])
+    expect(active()).toEqual([])
     props.progressMs = 2000
     expect(active()).toEqual(['world'])
     props.playing = false
     expect(active()).toEqual(['world'])
     props.progressMs = 2500
-    expect(active()).toEqual(['world'])
+    expect(active()).toEqual([])
     props.progressMs = 3000
     expect(active()).toEqual([])
     props.progressMs = 1100 // Existing Loop seeks back; preview follows the same clock.
@@ -88,15 +88,16 @@ it('matches the sentence row during live start/end edits and marker previews', a
     expect(row.currentWordIndex.value).toBe(index)
   }
   props.progressMs = 1900
-  expectSame(0)
+  expectSame(-1)
   props.line.words[1].start_ms = 1800
   expectSame(1)
   props.line.words[1].end_ms = 1850
-  expectSame(1) // Highlight stays until the next word/sentence boundary.
+  expectSame(-1) // Explicit word ends leave gaps unhighlighted.
   props.line.words[1].start_ms = 2200
-  expectSame(0)
+  expectSame(-1)
   props.previewRange = { startMs: 1950, endMs: 2800 }
   expectSame(-1)
+  props.line.words[1].end_ms = 2500
   props.progressMs = 2300
   expectSame(1)
   props.progressMs = 2800

@@ -527,3 +527,12 @@ Audio alignment progress subscription is checked separately from dependency/mode
 availability. Notification failure produces a warning without disabling a ready
 engine or implicitly triggering installation. Backend installation repair uses
 private staging even when broken package versions are visible from shared sites.
+
+AudioAlignmentModal retains an original row snapshot before worker tokenization;
+merge/skip uses that snapshot, preventing temporary untimed tokens from becoming
+saved data. Preview counts separate skipped rows from listening warnings. Shared
+activeWordIndex now honors explicit word ends with half-open intervals and returns
+no earlier word during gaps. Missing ends retain next-start/line-end behavior.
+Sentence rows, read-only Word preview and alignment preview share that clock.
+The existing explicit estimate-approval export workflow completes skipped timed
+sentences only after approval; no audio-derived result is silently invented.

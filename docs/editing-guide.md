@@ -534,11 +534,12 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 5. Turn off Word preview to hide it. No timestamps change and nothing is saved or
    exported by this toggle. Preview state lasts for this editor session.
 
-Like the sentence timeline, Word preview holds the current word highlight until
-the next timed word starts, then clears at the sentence end (including waveform
-marker previews). Word end values remain unchanged for timing edits, looping and
-export. Actual word starts are used even when the sentence end is inferred from
-the next sentence. Partial timing keeps existing starts; untimed words stay
+Like the sentence timeline and automatic alignment preview, Word preview uses
+actual word starts and explicit ends. It clears at a saved word end, leaving
+silence unhighlighted until the next word begins. Without an explicit word end,
+the highlight continues until the next timed word or sentence end (including
+waveform marker previews). Timing values remain unchanged by playback. Sentence
+ends may still be inferred from the next sentence. Partial timing keeps existing starts; untimed words stay
 unhighlighted. With no word timing, preview labels its evenly spaced estimate;
 it cannot infer actual singing.
 To create accurate word timing, expand Word timing and use Sync word against

@@ -714,3 +714,10 @@ pip --ignore-installed for its pinned CPU pair in the private staged environment
 This prevents already-visible broken versions from satisfying a repair request;
 shared Python installations remain untouched. Setup fault tests cover this case
 and venv/ensurepip failure before any package installation.
+
+The Python alignment helper validates integer sentence bounds without treating a
+zero end as missing. Missing per-sentence engine results raise a reviewable
+ValueError within the row handler; later rows continue. Full-song CPU/native
+Save/export tests use copied audio/sidecars and an isolated app database. Native
+TXT/LRC/ELRC retain format-specific text/times; ELRC carries millisecond word
+boundaries and gaps. Correct editor playback now matches reimported end tags.

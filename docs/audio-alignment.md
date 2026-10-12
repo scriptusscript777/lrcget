@@ -169,3 +169,36 @@ These Debian checks do not establish Windows or AppImage installation success.
 Those builds require their own platform-specific failure and installer tests when
 work on them resumes, including administrator/security restrictions and safe
 recovery from interrupted setup.
+
+### Full-song MP3 validation and skipped sentences
+
+A real CPU/Base test on a temporary copy of Nevertel's Last Breath aligned 258
+words across 39 of 49 lyric sentences using the existing LRC bounds. Ten sentences
+were safely skipped because their proposed ranges were invalid; low-confidence
+words on accepted sentences still need listening review. Complete untimed TXT
+also returned proposals for 39 sentences, with ten rejected. This demonstrates
+working alignment and validation, not guaranteed singing accuracy.
+
+The preview separates **skipped** sentence counts from sentences needing listening
+review. Skipped sentences retain their original document data; temporary word
+segmentation cannot become saved untimed word entries merely by applying a preview.
+When ELRC is selected, the normal save workflow offers explicit estimate approval
+for missing word timing. Declining keeps the project unchanged. Estimates preserve
+accepted/manual timestamps and are not labelled audio-derived results.
+
+Sentence rows, Word preview and automatic preview now clear highlighting at an
+explicit saved word end. Silence stays unhighlighted until the next word starts.
+Without a word end, ordinary start-only timing continues to use the next start or
+sentence end. Both themes, loop rewinds, pause, zoom and live timing edits use the
+same rules. MP3/TXT/LRC/ELRC originals remained unchanged in the test; native exports
+on the copy retained lyric text, ordinary sentence times and reimported word
+highlight boundaries. Two independently edited word anchors were also preserved.
+
+![Skipped sentence preview, light](screenshots/current/audio-alignment-skipped-light.png)
+![Skipped sentence preview, dark](screenshots/current/audio-alignment-skipped-dark.png)
+![Word preview during silence, light](screenshots/current/word-preview-silence-light.png)
+![Word preview during silence, dark](screenshots/current/word-preview-silence-dark.png)
+
+An engine result missing a sentence becomes a reviewable skip rather than failing
+the whole alignment. Explicit invalid end times (including zero) are rejected;
+they are never treated as absent and replaced with another sentence's start.

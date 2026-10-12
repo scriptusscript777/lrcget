@@ -59,6 +59,37 @@ def remap_words(text, tokens, aligned, offset=0):
     return result
 
 
+def sentence_bounds(line, remaining, duration_ms):
+    start = line.get("start_ms")
+    end = line.get("end_ms")
+    if end is None:
+        end = next(
+            (
+                other["start_ms"]
+                for other in remaining
+                if other.get("start_ms") is not None
+            ),
+            duration_ms,
+        )
+    if (
+        type(start) is not int
+        or type(end) is not int
+        or not 0 <= start < end <= duration_ms
+    ):
+        raise ValueError("Sentence boundaries are outside the audio")
+    return start, end
+
+
+def aligned_words(result):
+    if result is None:
+        raise ValueError(
+            "This sentence could not be aligned; review its lyrics and audio bounds"
+        )
+    return [
+        word for segment in result.to_dict()["segments"] for word in segment["words"]
+    ]
+
+
 def main():
     if "--check" in sys.argv:
         available = all(
@@ -144,18 +175,7 @@ def main():
                 aligned = segment["words"]
                 offset = 0
             else:
-                start = line["start_ms"]
-                next_start = next(
-                    (
-                        other["start_ms"]
-                        for other in lines[index + 1 :]
-                        if other.get("start_ms") is not None
-                    ),
-                    duration_ms,
-                )
-                end = line.get("end_ms") or next_start
-                if not 0 <= start < end <= duration_ms:
-                    raise ValueError("Sentence boundaries are outside the audio")
+                start, end = sentence_bounds(line, lines[index + 1 :], duration_ms)
                 with contextlib.redirect_stdout(sys.stderr):
                     result = model.align_words(
                         audio[start * 16 : end * 16],
@@ -172,11 +192,7 @@ def main():
                         verbose=None,
                         suppress_silence=False,
                     )
-                aligned = [
-                    word
-                    for segment in result.to_dict()["segments"]
-                    for word in segment["words"]
-                ]
+                aligned = aligned_words(result)
                 offset = start / 1000
                 candidate["start_ms"], candidate["end_ms"] = start, end
             candidate["words"] = remap_words(line["text"], tokens, aligned, offset)
