@@ -512,7 +512,7 @@ TXT can receive sentence timing; complete applied words need no estimate prompt.
 Optional setup consent is remembered by an atomic, profile-local prompt marker
 through `audio_alignment_setup_prompt`; no approval itself is stored. Missing
 engines ask once; the Install button reopens explicit consent. The Synced toolbar
-places Align words after Word preview. Model controls use shared themed `.select`
+places Align sentences after Word preview, followed by Align words. Model controls use shared themed `.select`
 styles with native color schemes. `audio_alignment_model_status` checks hashes
 without downloading. `setup_audio_alignment` requires confirmed=true, serializes
 with inference, stages private environments/models and forwards stage/download
@@ -536,3 +536,16 @@ no earlier word during gaps. Missing ends retain next-start/line-end behavior.
 Sentence rows, read-only Word preview and alignment preview share that clock.
 The existing explicit estimate-approval export workflow completes skipped timed
 sentences only after approval; no audio-derived result is silently invented.
+
+
+Sentence-only audio alignment (2.2.7, version unchanged) reuses the same native
+worker/consent path. The frontend removes saved sentence bounds from an isolated
+request copy to select whole-recording alignment, then mergeSentenceAlignment
+validates exact text, duration, and original row identity. It commits only
+sentence ranges; existing ELRC words shift by the sentence start delta without
+changing their durations. Rows whose words cannot fit are preserved and skipped.
+Conflicting proposed neighbors/blank gap cues are conservatively reverted until
+stable, never moving original skipped rows; invalid original overlaps still
+require correction. Apply requires explicit preview replacement confirmation for
+existing sentence ranges, snapshots remain guarded, and one history/recovery
+update supports Undo/Redo. No native API/model changes or automatic Save.

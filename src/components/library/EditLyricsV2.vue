@@ -180,7 +180,8 @@
         :word-loop-target="wordLoopTarget"
         :can-loop="canPhraseLoop"
         :marker-editing="markerEditing"
-        @align-words="alignmentOpen = true"
+        @align-sentences="openAlignment('sentences')"
+        @align-words="openAlignment('words')"
         @word-timing-expanded-change="wordTimingExpanded = $event"
         @undo="undo"
         @redo="redo"
@@ -219,6 +220,7 @@
   </BaseModal>
   <AudioAlignmentModal
     v-if="alignmentOpen"
+    :mode="alignmentMode"
     :get-snapshot="getAlignmentSnapshot"
     :apply-alignment="applyAudioAlignment"
     :progress-ms="progressMs"
@@ -338,6 +340,11 @@ const progressMs = computed(() =>
 )
 
 const alignmentOpen = ref(false)
+const alignmentMode = ref('words')
+const openAlignment = mode => {
+  alignmentMode.value = mode
+  alignmentOpen.value = true
+}
 const activeTab = ref('plain')
 const wordTimingExpanded = ref(false)
 const {

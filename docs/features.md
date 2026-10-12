@@ -109,7 +109,7 @@ limitations. Singing alignment requires review; confidence is only a hint.
 
 Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
-Align words sits immediately after Word preview in Synced; model choices remain
+Synced toolbar order is Word preview → Align sentences → Align words; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).
 
 Automatic preview reports skipped sentences separately from listening-review
@@ -117,3 +117,11 @@ warnings and retains original data for skipped rows. Word preview, sentence-row
 word highlighting and automatic preview respect explicit word ends and silence;
 start-only LRC still uses next-start/sentence-end fallback. Complete ELRC exports
 can explicitly fill skipped word timing with approved estimates.
+
+
+Automatic **Align sentences** now precedes **Align words** in Synced. TXT/LRC/ELRC
+use local audio to propose sentence boundaries, with listening preview and
+explicit confirmation before replacing existing timestamps. Text/gap cues stay
+intact; existing word timings shift with their sentence, and conflicting rows
+are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
+illustrated audio-alignment guide for the full workflow and limitations.

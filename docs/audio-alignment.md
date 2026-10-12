@@ -17,7 +17,7 @@ are not audio-derived singing alignment.
 ## Automatic mode — optional local audio alignment
 
 1. Open lyrics editing for a local audio track and import the lyrics if necessary.
-2. Switch to **Synced** and click **Align words** immediately after **Word preview**.
+2. Switch to **Synced** and use **Word preview → Align sentences → Align words**. Choose **Align words** for word timing.
    The toolbar wraps on narrower windows. Tiny/Base/Small use theme-aware dropdown colors.
 3. Choose the lyric language (`en`, `es`, `fr`, etc.) and model: tiny is quickest,
    base is the default, small uses more resources. A missing or damaged model
@@ -202,3 +202,34 @@ highlight boundaries. Two independently edited word anchors were also preserved.
 An engine result missing a sentence becomes a reviewable skip rather than failing
 the whole alignment. Explicit invalid end times (including zero) are rejected;
 they are never treated as absent and replaced with another sentence's start.
+
+
+## Automatically align LRC sentences
+
+1. Import TXT, LRC or ELRC and open **Synced**.
+2. Click **Align sentences**, between **Word preview** and **Align words**.
+3. Choose language/model and select **Align using audio**. This uses the whole
+   recording instead of constraining recognition to existing LRC timestamps.
+   Optional engine/model installation follows the same explicit consent workflow.
+4. Listen to the preview and compare each proposed Start/End with its previous
+   range. Skipped/conflicting sentences are yellow and keep original data.
+5. When existing sentence ranges would change, check **Replace existing sentence
+   timing … with this preview**. Apply stays disabled until you confirm.
+6. Click **Apply preview**, then Save/export your chosen formats. Cancel discards
+   proposals; Undo/Redo reverts/reapplies the entire alignment as one edit.
+
+Sentence alignment preserves lyric text and blank gap cues. It never commits
+new audio-derived word timing: use **Align words** separately if wanted. Existing
+ELRC word times move by the sentence start difference, retaining their durations.
+If they cannot fit the new end, that sentence is skipped for manual correction.
+With overlap protection on, new conflicting proposals are skipped until the
+remaining preview is safe; original overlaps must be corrected manually.
+TXT receives sentence ranges without a replacement confirmation when untimed.
+Saving as LRC keeps sentence timing; TXT contains text only. ELRC retains shifted
+existing words and follows the existing explicit estimate approval for missing
+word timing. Models cannot guarantee accurate singing alignment; listen first.
+
+![Sentence alignment toolbar, light](screenshots/current/sentence-alignment-toolbar-light.png)
+![Sentence alignment toolbar, dark](screenshots/current/sentence-alignment-toolbar-dark.png)
+![Sentence replacement preview, light](screenshots/current/sentence-alignment-preview-light.png)
+![Sentence replacement preview, dark](screenshots/current/sentence-alignment-preview-dark.png)

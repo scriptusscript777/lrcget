@@ -631,7 +631,7 @@ limitations. Singing alignment requires review; confidence is only a hint.
 
 Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
-Align words sits immediately after Word preview in Synced; model choices remain
+Synced toolbar order is Word preview → Align sentences → Align words; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](docs/audio-alignment.md).
 
 Optional setup mock audit: repair broken inherited PyTorch packages privately
@@ -647,3 +647,11 @@ boundary highlighting after reimport passed; original hashes unchanged. Preserve
 skipped row data before tokenization, guard missing sentence results and explicit
 invalid ends, and honor word-end gaps in shared editor playback. TXT full-song
 alignment and two protected manual anchors were also validated.
+
+
+Automatic **Align sentences** now precedes **Align words** in Synced. TXT/LRC/ELRC
+use local audio to propose sentence boundaries, with listening preview and
+explicit confirmation before replacing existing timestamps. Text/gap cues stay
+intact; existing word timings shift with their sentence, and conflicting rows
+are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
+illustrated audio-alignment guide for the full workflow and limitations.

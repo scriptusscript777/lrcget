@@ -717,3 +717,11 @@ word times are protected unless explicitly replaced; sentence bounds and text
 remain intact. Complete applied timing saves ELRC without another estimate prompt.
 See the [illustrated audio alignment guide](audio-alignment.md) for setup and
 limitations. Singing alignment requires review; confidence is only a hint.
+
+
+Automatic **Align sentences** now precedes **Align words** in Synced. TXT/LRC/ELRC
+use local audio to propose sentence boundaries, with listening preview and
+explicit confirmation before replacing existing timestamps. Text/gap cues stay
+intact; existing word timings shift with their sentence, and conflicting rows
+are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
+illustrated audio-alignment guide for the full workflow and limitations.

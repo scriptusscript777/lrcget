@@ -1,7 +1,7 @@
 <template>
   <BaseModal
     :model-value="true"
-    title="Automatic audio alignment"
+    :title="sentenceMode ? 'Automatic sentence alignment' : 'Automatic word alignment'"
     content-class="w-full max-w-3xl h-[80vh]"
     :click-to-close="false"
     :esc-to-close="false"
@@ -37,12 +37,17 @@
             <option value="small">Small</option>
           </select></label
         >
-        <label class="flex items-center gap-2"
+        <label v-if="!sentenceMode" class="flex items-center gap-2"
           ><input v-model="replace" type="checkbox" :disabled="running || !!result" /> Replace
           existing word timing</label
         >
       </div>
-      <p class="text-xs">
+      <p v-if="sentenceMode" class="text-xs">
+        Find sentence starts and ends from the whole recording. Lyrics and blank gap cues are
+        preserved. Existing word timing shifts with its sentence; conflicting rows are skipped.
+        Review the preview before replacing existing sentence timestamps.
+      </p>
+      <p v-else class="text-xs">
         Unchecked preserves every existing word timestamp, including accepted estimates. Sentence
         timestamps and lyric text are preserved. TXT without timing can receive automatic sentence
         timing.
@@ -120,16 +125,19 @@
       <p v-if="error" role="alert" class="text-red-700 dark:text-red-300">{{ error }}</p>
       <template v-if="plan">
         <p>
-          {{ plan.changedWords }} word timings proposed. {{ skippedCount }} sentence{{
-            skippedCount === 1 ? '' : 's'
-          }}
-          skipped; {{ reviewCount }} sentence{{ reviewCount === 1 ? '' : 's' }}
+          {{ sentenceMode ? plan.changedSentences : plan.changedWords }}
+          {{ sentenceMode ? 'sentence ranges' : 'word timings' }} proposed.
+          {{ skippedCount }} sentence{{ skippedCount === 1 ? '' : 's' }} skipped;
+          {{ reviewCount }} sentence{{ reviewCount === 1 ? '' : 's' }}
           {{ reviewCount === 1 ? 'needs' : 'need' }} listening review. Nothing is saved until you
           apply and Save.
         </p>
         <p v-if="plan.review.some(item => item.skipped)" class="text-xs">
-          Skipped sentences keep their original timing. Correct them manually or approve estimates
-          when saving ELRC.
+          Skipped sentences keep their original timing. Correct them manually<span
+            v-if="!sentenceMode"
+          >
+            or approve estimates when saving ELRC</span
+          >.
         </p>
         <div class="flex gap-3 min-h-0 grow">
           <div
@@ -167,6 +175,19 @@
             >
               Turn off existing loop for preview
             </button>
+            <p v-if="sentenceMode" class="mb-2 tabular-nums">
+              Sentence: {{ formatTimestampMs(current?.start_ms) }}–{{
+                formatTimestampMs(current?.end_ms)
+              }}
+              <span
+                v-if="snapshot?.document.synced[selected]?.start_ms != null"
+                class="block text-xs"
+              >
+                Previous: {{ formatTimestampMs(snapshot.document.synced[selected].start_ms) }}–{{
+                  formatTimestampMs(snapshot.document.synced[selected].end_ms)
+                }}
+              </span>
+            </p>
             <div class="flex flex-wrap gap-2">
               <span
                 v-for="(word, i) in current?.words"
@@ -189,13 +210,18 @@
             </div>
           </div>
         </div>
+        <label v-if="sentenceMode && plan.replacedSentences" class="flex items-start gap-2">
+          <input v-model="confirmSentenceReplacement" type="checkbox" class="mt-1" />
+          Replace existing sentence timing for {{ plan.replacedSentences }} sentence(s) with this
+          preview.
+        </label>
       </template>
     </div>
     <template #footer>
       <button class="button button-normal rounded px-4 py-2" @click="emit('close')">Cancel</button>
       <button
         class="button button-primary rounded px-4 py-2 ml-2 disabled:opacity-40 disabled:cursor-not-allowed"
-        :disabled="!plan?.changedWords || running || !!consent"
+        :disabled="!canApply"
         @click="apply"
       >
         Apply preview
@@ -208,15 +234,25 @@ import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import BaseModal from '@/components/common/BaseModal.vue'
-import { mergeAudioAlignment } from '@/utils/audio-alignment.js'
+import { mergeAudioAlignment, mergeSentenceAlignment } from '@/utils/audio-alignment.js'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 import { activeWordIndex } from '@/utils/word-playback.js'
 const props = defineProps({
+  mode: { type: String, default: 'words' },
   getSnapshot: { type: Function, required: true },
   applyAlignment: { type: Function, required: true },
   progressMs: { type: Number, default: -1 },
   loopEnabled: { type: Boolean, default: false },
 })
+const sentenceMode = computed(() => props.mode === 'sentences')
+const confirmSentenceReplacement = ref(false)
+const canApply = computed(
+  () =>
+    !!(sentenceMode.value ? plan.value?.changedSentences : plan.value?.changedWords) &&
+    !running.value &&
+    !consent.value &&
+    (!sentenceMode.value || !plan.value?.replacedSentences || confirmSentenceReplacement.value)
+)
 const emit = defineEmits(['close', 'listen', 'applied', 'pause', 'stop-loop'])
 const guardKeys = event => {
   if ((event.ctrlKey || event.metaKey) && ['s', 'z', 'y'].includes(event.key.toLowerCase()))
@@ -281,6 +317,11 @@ const run = async () => {
     consent.value
   )
     return
+  // A failed retry must never leave an older preview paired with a new snapshot.
+  plan.value = null
+  result.value = null
+  confirmSentenceReplacement.value = false
+  selected.value = 0
   snapshot = JSON.parse(JSON.stringify(props.getSnapshot()))
   if (snapshot.pendingMarkers) {
     error.value = 'Apply or cancel pending waveform markers first.'
@@ -300,12 +341,17 @@ const run = async () => {
     return
   }
   const originalLines = structuredClone(lines)
+  if (sentenceMode.value) {
+    // Reuse the engine's whole-recording TXT path, independent of saved LRC bounds.
+    for (const line of lines) {
+      delete line.start_ms
+      delete line.end_ms
+    }
+  }
   const id = crypto.randomUUID()
   job = id
   running.value = true
   error.value = ''
-  plan.value = null
-  result.value = null
   percent.value = 0
   message.value = 'Loading model and audio…'
   try {
@@ -329,7 +375,8 @@ const run = async () => {
     if (JSON.stringify(props.getSnapshot()) !== JSON.stringify(snapshot))
       throw new Error('Lyrics or audio changed during alignment. Run it again.')
     result.value = output
-    plan.value = mergeAudioAlignment(originalLines, output, {
+    const merge = sentenceMode.value ? mergeSentenceAlignment : mergeAudioAlignment
+    plan.value = merge(originalLines, output, {
       replace: replace.value,
       preventOverlaps: snapshot.overlap,
     })
@@ -383,11 +430,7 @@ const setup = async action => {
   }
 }
 const apply = () => {
-  if (
-    !running.value &&
-    plan.value?.changedWords &&
-    props.applyAlignment(plan.value.lines, snapshot)
-  ) {
+  if (canApply.value && props.applyAlignment(plan.value.lines, snapshot)) {
     emit('applied')
     emit('close')
   }

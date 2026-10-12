@@ -43,6 +43,7 @@
         title="Read along with highlighted words without changing timing boxes"
         @click="toggleWordPreview"
       >Word preview</button>
+      <button type="button" class="button button-normal rounded px-2 py-1 text-xs" :disabled="alignmentDisabled" title="Find sentence timing from local audio; preview before replacing timestamps" @click="emit('align-sentences')">Align sentences</button>
       <button type="button" class="button button-normal rounded px-2 py-1 text-xs" :disabled="alignmentDisabled" title="Optional automatic audio alignment; Basic editing needs no AI" @click="emit('align-words')">Align words</button>
       <button
         v-if="wordTimingExpanded || wordPreviewExpanded"
@@ -270,6 +271,7 @@ const props = defineProps({
 })
 
 const emit = defineEmits([
+  'align-sentences',
   'align-words',
   'recovery-edit-state',
   'word-timing-expanded-change',
