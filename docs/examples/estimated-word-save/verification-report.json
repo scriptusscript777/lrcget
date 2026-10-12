@@ -1,0 +1,116 @@
+{
+  "expected": [
+    {
+      "end_ms": 3000,
+      "start_ms": 1000,
+      "text": "first phrase",
+      "words": [
+        {
+          "end_ms": 1650,
+          "start_ms": 1000,
+          "text": "first "
+        },
+        {
+          "end_ms": 3000,
+          "start_ms": 2000,
+          "text": "phrase"
+        }
+      ]
+    },
+    {
+      "end_ms": 6000,
+      "start_ms": 3000,
+      "text": "second phrase",
+      "words": [
+        {
+          "start_ms": 3000,
+          "text": "second "
+        },
+        {
+          "start_ms": 4500,
+          "text": "phrase"
+        }
+      ]
+    }
+  ],
+  "exports": [
+    {
+      "format": "txt",
+      "path": "/tmp/lrcget-estimated-native-test/music/verification.txt",
+      "status": {
+        "type": "success"
+      }
+    },
+    {
+      "format": "lrc",
+      "path": "/tmp/lrcget-estimated-native-test/music/verification.lrc",
+      "status": {
+        "type": "success"
+      }
+    },
+    {
+      "format": "elrc",
+      "path": "/tmp/lrcget-estimated-native-test/music/verification.elrc",
+      "status": {
+        "type": "success"
+      }
+    }
+  ],
+  "files": {
+    "elrc": "[00:01.000]<00:01.000>first <00:01.650><00:02.000>phrase<00:03.000>\n[00:03.000]<00:03.000>second <00:04.500>phrase<00:06.000>\n[00:06.000]\n",
+    "lrc": "[00:01.000]first phrase\n[00:03.000]second phrase\n[00:06.000]\n",
+    "txt": "first phrase\nsecond phrase\n"
+  },
+  "plainAgain": [
+    {
+      "format": "txt",
+      "path": "/tmp/lrcget-estimated-native-test/music/verification.txt",
+      "status": {
+        "type": "success"
+      }
+    },
+    {
+      "format": "lrc",
+      "path": "/tmp/lrcget-estimated-native-test/music/verification.lrc",
+      "status": {
+        "type": "success"
+      }
+    }
+  ],
+  "reopened": [
+    {
+      "end_ms": 3000,
+      "start_ms": 1000,
+      "text": "first phrase",
+      "words": [
+        {
+          "end_ms": 1650,
+          "start_ms": 1000,
+          "text": "first "
+        },
+        {
+          "end_ms": 3000,
+          "start_ms": 2000,
+          "text": "phrase"
+        }
+      ]
+    },
+    {
+      "end_ms": 6000,
+      "start_ms": 3000,
+      "text": "second phrase",
+      "words": [
+        {
+          "end_ms": 4500,
+          "start_ms": 3000,
+          "text": "second "
+        },
+        {
+          "end_ms": 6000,
+          "start_ms": 4500,
+          "text": "phrase"
+        }
+      ]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import {
   removeRecovery,
 } from '@/utils/editor-recovery.js'
 import { useLyricHistory } from './useLyricHistory.js'
+import { prepareEstimatedWordExport } from '@/utils/estimated-word-export.js'
 import { waveformMarkerBounds, waveformNeighborWarnings } from '@/utils/waveform-markers.js'
 import {
   createSyncedLinesFromPlain,
@@ -75,8 +76,12 @@ export function useEditLyricsV2Document({
     }
     return doc
   }
-  const hasUnsavedDocument = computed(() => JSON.stringify(workingDocument()) !== savedSnapshot.value)
-  const hasRecoveryWork = computed(() => hasUnsavedDocument.value || !!recoveryContext.value.markerPreview)
+  const hasUnsavedDocument = computed(
+    () => JSON.stringify(workingDocument()) !== savedSnapshot.value
+  )
+  const hasRecoveryWork = computed(
+    () => hasUnsavedDocument.value || !!recoveryContext.value.markerPreview
+  )
   const flushRecovery = () => {
     if (!recoveryReady) return true
     if (recoveryBlocked.value || recoveryConflict.value) return false
@@ -749,17 +754,68 @@ export function useEditLyricsV2Document({
     isDirty.value = true
   }
 
+  let disposed = false
+  onScopeDispose(() => {
+    disposed = true
+  })
+  const commitPendingSentence = () => {
+    const pending = pendingSentence.value
+    if (
+      pending &&
+      syncedLines.value[pending.lineIndex]?.text === pending.originalText &&
+      typeof pending.text === 'string'
+    ) {
+      updateLineText(pending.lineIndex, pending.text)
+      pendingSentence.value = null
+    }
+  }
+  const prepareEnhancedLyrics = async confirmEstimates => {
+    if (disposed || isSaving.value || recoveryConflict.value || recoveryBlocked.value) {
+      toast.error('Resolve the recovery draft or active save before exporting.')
+      return false
+    }
+    if (isInstrumental.value) return true
+    const fingerprint = () =>
+      JSON.stringify({
+        document: workingDocument(),
+        source: audioSource.value,
+        trackId: trackId?.value,
+        lyricsfileId: lyricsfile?.value?.id,
+        overlap: preventOverlaps.value,
+        durationMs: Math.floor(recordingDurationMs()),
+      })
+    const original = fingerprint()
+    try {
+      const plan = await prepareEstimatedWordExport(workingDocument().synced, {
+        durationMs: Math.floor(recordingDurationMs()),
+        preventOverlaps: preventOverlaps.value,
+        segment: text => invoke('segment_words', { text }),
+      })
+      if (disposed || fingerprint() !== original) return false
+      if (plan.estimatedSentences && !(await confirmEstimates(plan.estimatedSentences)))
+        return false
+      if (disposed || isSaving.value || fingerprint() !== original) {
+        toast.error('Lyrics changed during export preparation. Review them and save again.')
+        return false
+      }
+      // Apply all estimates in one undoable update, only after explicit acceptance.
+      pendingSentence.value = null
+      if (JSON.stringify(plan.lines) !== JSON.stringify(syncedLines.value))
+        updateSyncedLines(plan.lines)
+      return true
+    } catch (error) {
+      toast.error(error.message || String(error))
+      return false
+    }
+  }
+
   const saveLyrics = async () => {
     if (isSaving.value) return false
     if (recoveryConflict.value || recoveryBlocked.value) {
       toast.error('Resolve the recovery draft before saving these lyrics.')
       return false
     }
-    const pending = pendingSentence.value
-    if (pending && syncedLines.value[pending.lineIndex]?.text === pending.originalText && typeof pending.text === 'string') {
-      updateLineText(pending.lineIndex, pending.text)
-      pendingSentence.value = null
-    }
+    commitPendingSentence()
     if (!isDirty.value) {
       return true
     }
@@ -910,6 +966,8 @@ export function useEditLyricsV2Document({
     rewindEndBy100,
     forwardEndBy100,
     saveLyrics,
+    prepareEnhancedLyrics,
+    commitPendingSentence,
     ensureSelectedSyncedLine,
     updateLineText,
     updateWordText,

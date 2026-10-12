@@ -84,9 +84,11 @@ Each Save menu checkbox selects only that target. Save alone retains the interna
 document, including word timing; export writes only selected formats. TXT carries
 text, standard LRC carries sentence timestamps and applicable blank gap cues,
 and ELRC carries saved word timestamps/ends. LRC-only import cannot reconstruct
-word timing. Missing/invalid ELRC timing skips/errors that format and preserves
-an existing ELRC. Failed local Save stops export. Review partial-export messages
-rather than assuming all targets succeeded.
+word timing. Editor ELRC export offers to save missing word times as estimates;
+Cancel or invalid timing stops preparation before saving/exporting and preserves
+existing files. Untimed text needs sentence timing first. Library batch export
+still uses saved word timing only. Failed local Save stops export. Review
+partial-export messages rather than assuming all targets succeeded.
 
 ## Automatic unfinished-work recovery
 

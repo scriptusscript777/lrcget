@@ -75,7 +75,13 @@
         role="status"
       >
         <span>{{ recoveryStatus }}</span>
-        <button v-if="recoveryBlocked" class="button button-normal rounded px-2 py-1" @click="discardRecovery">Discard unreadable recovery</button>
+        <button
+          v-if="recoveryBlocked"
+          class="button button-normal rounded px-2 py-1"
+          @click="discardRecovery"
+        >
+          Discard unreadable recovery
+        </button>
         <template v-if="recoveryConflict">
           <button class="button button-normal rounded px-2 py-1" @click="restoreRecoveryAndContext">
             Restore draft
@@ -267,7 +273,12 @@ const props = defineProps({
 
 const emit = defineEmits(['close'])
 
-const { disableHotkey, enableHotkey, lrclibInstance, preventOverlaps: overlapPreference } = useGlobalState()
+const {
+  disableHotkey,
+  enableHotkey,
+  lrclibInstance,
+  preventOverlaps: overlapPreference,
+} = useGlobalState()
 const {
   status,
   duration,
@@ -362,6 +373,8 @@ const {
   rewindEndBy100,
   forwardEndBy100,
   saveLyrics,
+  prepareEnhancedLyrics,
+  commitPendingSentence,
   ensureSelectedSyncedLine,
   updateLineText,
   setInstrumental,
@@ -389,9 +402,43 @@ const { saveAndPublish } = useEditLyricsV2Publish({
   saveLyrics,
 })
 
+const estimatedSentenceCount = ref(0)
+let finishEstimateRequest = null
+const finishEstimateConfirmation = accepted => {
+  const resolve = finishEstimateRequest
+  finishEstimateRequest = null
+  closeEstimateModal()
+  resolve?.(accepted)
+}
+const { open: openEstimateModal, close: closeEstimateModal } = useModal({
+  component: ConfirmModal,
+  attrs: {
+    title: 'Use estimated word timing?',
+    message: computed(
+      () =>
+        `Use estimated word timing for ${estimatedSentenceCount.value} sentence${estimatedSentenceCount.value === 1 ? '' : 's'}? Your saved word adjustments stay unchanged. Estimates will be saved in this project and the ELRC file; listen and adjust them for accuracy.`
+    ),
+    confirmText: 'Use estimates and save',
+    cancelText: 'Cancel',
+    clickToClose: false,
+    escToClose: false,
+    onConfirm: () => finishEstimateConfirmation(true),
+    onCancel: () => finishEstimateConfirmation(false),
+  },
+})
+const confirmEstimates = count =>
+  new Promise(resolve => {
+    estimatedSentenceCount.value = count
+    finishEstimateRequest = resolve
+    void openEstimateModal().catch(() => finishEstimateConfirmation(false))
+  })
+
 const { exportLyrics, isExporting } = useEditLyricsV2Export({
   audioSource: audioSourceRef,
   saveLyrics,
+  prepareEnhancedLyrics,
+  commitPendingSentence,
+  confirmEstimates,
   serializedLyricsfile,
   toast,
 })
@@ -402,10 +449,17 @@ const markerPreview = ref(null)
 const handleMarkerPreview = preview => {
   const hadPreview = !!markerPreview.value
   markerPreview.value = preview
-  if (preview || hadPreview) updateRecoveryContext({ markerPreview: preview ? {
-    lineIndex: preview.lineIndex, lineText: preview.line?.text,
-    startMs: preview.startMs, endMs: preview.endMs,
-  } : null })
+  if (preview || hadPreview)
+    updateRecoveryContext({
+      markerPreview: preview
+        ? {
+            lineIndex: preview.lineIndex,
+            lineText: preview.line?.text,
+            startMs: preview.startMs,
+            endMs: preview.endMs,
+          }
+        : null,
+    })
 }
 const confirmSentenceBoundary = (boundary, lineIndex) => {
   const commit = markerMs => {
@@ -722,13 +776,17 @@ const handleClose = () => {
 
 const handleWordLoopTarget = target => {
   wordLoopTarget.value = target
-  if (target) updateRecoveryContext({ wordSelection: { lineIndex: target.lineIndex, wordIndex: target.wordIndex } })
+  if (target)
+    updateRecoveryContext({
+      wordSelection: { lineIndex: target.lineIndex, wordIndex: target.wordIndex },
+    })
 }
 
 const applyRecoveryContext = () => {
   const context = recoveryContext.value
   recoveryMarkerRequest.value = context.markerPreview ?? null
-  if (context.activeTab === 'synced' || context.activeTab === 'plain') activeTab.value = context.activeTab
+  if (context.activeTab === 'synced' || context.activeTab === 'plain')
+    activeTab.value = context.activeTab
   wordTimingExpanded.value = context.wordTimingExpanded === true
 }
 const restoreRecoveryAndContext = () => {
@@ -775,6 +833,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  if (finishEstimateRequest) finishEstimateConfirmation(false)
   importDisposed = true
   invalidateImport()
   unbindSyncedHotkeys()

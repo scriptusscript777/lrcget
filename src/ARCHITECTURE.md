@@ -476,3 +476,16 @@ both affected words. Other word edits do not invalidate unrelated confirmations;
 Reset words clears only current sentence records after document acceptance.
 Non-advancing successful Sync locks its word. Async segmentation rejects stale
 text/requests or an already accepted word list. No persisted format changes.
+
+### ELRC estimate acceptance
+
+`estimated-word-export.js` prepares immutable word timing, preserving explicit
+starts/ends and rejecting malformed, unbounded or overlapping protected ranges.
+The document composable segments missing words through native `segment_words`,
+checks source/document/settings freshness before and after confirmation, then
+applies acceptance in one undoable update. Pending sentence text participates
+in preparation; no state changes on Cancel or errors. Export captures the exact
+prepared serialization before native Save, preserving edits made during Save.
+TXT/LRC-only exports commit pending text before capturing the same snapshot but
+never estimate words. The green dot uses `hasMeasuredWordTiming`, including
+accepted estimates. Library batch exporters/publishing are unchanged.

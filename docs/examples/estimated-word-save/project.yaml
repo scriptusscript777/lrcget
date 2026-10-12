@@ -1,0 +1,28 @@
+version: "1.0"
+metadata:
+  title: Editor test
+  artist: Temporary fixture
+  instrumental: false
+  duration_ms: 10000
+lines:
+  - text: first phrase
+    words:
+      - text: "first "
+        start_ms: 1000
+        end_ms: 1650
+      - text: phrase
+        start_ms: 2000
+        end_ms: 3000
+    start_ms: 1000
+    end_ms: 3000
+  - text: second phrase
+    words:
+      - text: "second "
+        start_ms: 3000
+      - text: phrase
+        start_ms: 4500
+    start_ms: 3000
+    end_ms: 6000
+plain: |
+  first phrase
+  second phrase

@@ -1,7 +1,15 @@
 import { invoke } from '@tauri-apps/api/core'
 import { ref } from 'vue'
 
-export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyricsfile, toast }) {
+export function useEditLyricsV2Export({
+  audioSource,
+  saveLyrics,
+  serializedLyricsfile,
+  toast,
+  prepareEnhancedLyrics,
+  confirmEstimates,
+  commitPendingSentence,
+}) {
   const isExporting = ref(false)
 
   const exportLyrics = async ({ plainText, syncedLrc, enhancedLrc, embedIntoTrack }) => {
@@ -28,9 +36,12 @@ export function useEditLyricsV2Export({ audioSource, saveLyrics, serializedLyric
     }
 
     isExporting.value = true
-    const content = serializedLyricsfile.value
-    const targetTrackId = audioSource.value?.type === 'library' ? audioSource.value.id : null
     try {
+      if (enhancedLrc && prepareEnhancedLyrics && !(await prepareEnhancedLyrics(confirmEstimates)))
+        return false
+      commitPendingSentence?.()
+      const content = serializedLyricsfile.value
+      const targetTrackId = audioSource.value?.type === 'library' ? audioSource.value.id : null
       if (!(await saveLyrics())) return false
       const results = await invoke('export_lyrics', {
         trackId: targetTrackId,

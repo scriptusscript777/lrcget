@@ -140,3 +140,9 @@ repeat precision changes do not add controls or alter export selections.
 Current word-follow maintenance: word-follow-off-confirmed-* and word-overlap-off-*
 show independent confirmation, Follow off, Reset words and green/red protection
 status. Master-reset-* captures are historical; that feature is removed.
+# ELRC estimate acceptance
+
+Current `estimated-elrc-confirmation-light.png` / `-dark.png` show the explicit
+estimate count and acceptance/Cancel choices. `estimated-elrc-accepted-light.png`
+/ `-dark.png` show mixed manual and accepted word timing, green status dots, and
+the word preview. Captured from the actual Vue editor with temporary test data.

@@ -41,6 +41,149 @@ const document = (
   return { state, scope }
 }
 
+describe('estimated ELRC document acceptance', () => {
+  it('exports pending sentence text to LRC/TXT without generating word timing', async () => {
+    const { state, scope } = document()
+    state.updateSyncedLines([{ text: 'old text', start_ms: 1000, end_ms: 3000, words: [] }])
+    state.updatePendingSentence({ lineIndex: 0, originalText: 'old text', text: 'new text' })
+    invoke
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce([{ format: 'lrc', status: { type: 'success' } }])
+    const exporting = useEditLyricsV2Export({
+      audioSource: ref({ type: 'library', id: 1 }),
+      saveLyrics: state.saveLyrics,
+      serializedLyricsfile: state.serializedLyricsfile,
+      commitPendingSentence: state.commitPendingSentence,
+      prepareEnhancedLyrics: state.prepareEnhancedLyrics,
+      confirmEstimates: vi.fn(),
+      toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
+    })
+    expect(await exporting.exportLyrics({ plainText: true, syncedLrc: true })).toBe(true)
+    const saved = invoke.mock.calls.find(([command]) => command === 'save_lyrics')[1]
+    const exported = invoke.mock.calls.find(([command]) => command === 'export_lyrics')[1]
+    expect(saved.lyricsfile).toBe(exported.lyricsfile)
+    expect(exported.lyricsfile).toContain('new text')
+    expect(state.syncedLines.value[0].words).toEqual([])
+    expect(invoke.mock.calls.some(([command]) => command === 'segment_words')).toBe(false)
+    scope.stop()
+  })
+  it('estimates the last sentence using a whole-millisecond audio end', async () => {
+    const { state, scope } = document(ref(0), ref(9.9995))
+    state.updateSyncedLines([{ text: 'last word', start_ms: 8000, words: [] }])
+    invoke.mockResolvedValue(['last ', 'word'])
+    expect(await state.prepareEnhancedLyrics(async () => true)).toBe(true)
+    expect(state.syncedLines.value[0].end_ms).toBe(9999)
+    scope.stop()
+  })
+  it('exports the accepted document and skips preparation for LRC/TXT-only exports', async () => {
+    const content = ref('sentence timing only')
+    const prepare = vi.fn(async () => {
+      content.value = 'accepted word timing'
+      return true
+    })
+    const save = vi.fn(async () => true)
+    const state = useEditLyricsV2Export({
+      audioSource: ref({ type: 'library', id: 1 }),
+      serializedLyricsfile: content,
+      saveLyrics: save,
+      prepareEnhancedLyrics: prepare,
+      confirmEstimates: vi.fn(),
+      toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
+    })
+    invoke.mockResolvedValue([{ format: 'elrc', status: { type: 'success' } }])
+    expect(await state.exportLyrics({ enhancedLrc: true })).toBe(true)
+    expect(invoke).toHaveBeenCalledWith('export_lyrics', {
+      trackId: 1,
+      formats: ['elrc'],
+      lyricsfile: 'accepted word timing',
+    })
+    prepare.mockClear()
+    expect(await state.exportLyrics({ syncedLrc: true, plainText: true })).toBe(true)
+    expect(prepare).not.toHaveBeenCalled()
+    prepare.mockResolvedValue(false)
+    save.mockClear()
+    invoke.mockClear()
+    expect(await state.exportLyrics({ enhancedLrc: true })).toBe(false)
+    expect(save).not.toHaveBeenCalled()
+    expect(invoke).not.toHaveBeenCalled()
+    expect(state.isExporting.value).toBe(false)
+  })
+  const fixture = () => [{ text: 'hello world', start_ms: 1000, end_ms: 3000, words: [] }]
+  it('cancels without edits, then accepts estimates as one undoable saved/reopenable edit', async () => {
+    const { state, scope } = document()
+    state.updateSyncedLines(fixture())
+    invoke.mockResolvedValue(['hello ', 'world'])
+    const reject = vi.fn(async () => false)
+    expect(await state.prepareEnhancedLyrics(reject)).toBe(false)
+    expect(reject).toHaveBeenCalledWith(1)
+    expect(state.syncedLines.value).toEqual(fixture())
+    expect(await state.prepareEnhancedLyrics(async () => true)).toBe(true)
+    const accepted = JSON.parse(JSON.stringify(state.syncedLines.value))
+    expect(accepted[0].words).toEqual([
+      { text: 'hello ', start_ms: 1000 },
+      { text: 'world', start_ms: 2000 },
+    ])
+    state.undo()
+    expect(state.syncedLines.value).toEqual(fixture())
+    state.redo()
+    expect(state.syncedLines.value).toEqual(accepted)
+    invoke.mockResolvedValue(null)
+    expect(await state.saveLyrics()).toBe(true)
+    const content = invoke.mock.calls.find(([command]) => command === 'save_lyrics')[1].lyricsfile
+    const second = document()
+    const { parseLyricsfile } = await import('@/utils/lyricsfile.js')
+    second.state.updateSyncedLines(parseLyricsfile(content).syncedLines)
+    expect(second.state.syncedLines.value).toEqual(accepted)
+    second.scope.stop()
+    scope.stop()
+  })
+  it('does not confirm already timed sentences or modify other file formats', async () => {
+    const { state, scope } = document()
+    const saved = [
+      {
+        ...fixture()[0],
+        words: [
+          { text: 'hello ', start_ms: 1100, end_ms: 1600 },
+          { text: 'world', start_ms: 1800, end_ms: 2900 },
+        ],
+      },
+    ]
+    state.updateSyncedLines(saved)
+    const confirm = vi.fn()
+    expect(await state.prepareEnhancedLyrics(confirm)).toBe(true)
+    expect(confirm).not.toHaveBeenCalled()
+    expect(state.syncedLines.value).toEqual(saved)
+    scope.stop()
+  })
+  it('rejects stale async confirmation and disposed editors', async () => {
+    const { state, scope } = document()
+    state.updateSyncedLines(fixture())
+    invoke.mockResolvedValue(['hello ', 'world'])
+    expect(
+      await state.prepareEnhancedLyrics(async () => {
+        state.updateLineText(0, 'changed text')
+        return true
+      })
+    ).toBe(false)
+    expect(state.syncedLines.value[0].text).toBe('changed text')
+    expect(state.syncedLines.value[0].words).toEqual([])
+    scope.stop()
+    expect(await state.prepareEnhancedLyrics(async () => true)).toBe(false)
+  })
+  it('includes pending sentence text before estimating and refuses untimed TXT', async () => {
+    const { state, scope } = document()
+    state.updateSyncedLines(fixture())
+    state.updatePendingSentence({ lineIndex: 0, originalText: 'hello world', text: 'new words' })
+    invoke.mockResolvedValue(['new ', 'words'])
+    expect(await state.prepareEnhancedLyrics(async () => true)).toBe(true)
+    expect(state.syncedLines.value[0].text).toBe('new words')
+    expect(state.syncedLines.value[0].words.map(word => word.text).join('')).toBe('new words')
+    state.updateSyncedLines([{ text: 'plain lyrics', words: [] }])
+    expect(await state.prepareEnhancedLyrics(async () => true)).toBe(false)
+    scope.stop()
+  })
+})
+
 describe('synced editing history and timing steps', () => {
   it('uses loaded recording duration when file metadata has no duration', () => {
     const { state, scope } = document(

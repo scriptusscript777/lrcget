@@ -88,7 +88,7 @@
             ? 'bg-emerald-500 border-emerald-500 dark:bg-emerald-400 dark:border-emerald-400'
             : 'bg-neutral-300 border-neutral-400 dark:bg-neutral-600 dark:border-neutral-500'
         "
-        :title="hasWordSync ? 'Word timing present. Review timing by listening; Save/export writes it to a file.' : 'No valid word timing yet'"
+        :title="hasWordSync ? 'Word timing present; it may include accepted estimates. Green does not mean manually verified. Review by listening; Save/export writes timing to a file.' : 'No saved word timing yet; displayed highlights may use estimates.'"
         :aria-label="hasWordSync ? 'Word synced' : 'Word not synced'"
       />
 
@@ -175,6 +175,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { activeWordIndex, isLinePlaybackActive } from '@/utils/word-playback.js'
+import { hasMeasuredWordTiming } from '@/utils/word-timing-status.js'
 import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import Play from '~icons/mdi/play'
 import Equal from '~icons/mdi/equal'
@@ -341,7 +342,7 @@ const endTimestampPillTitle = computed(() => {
 
 // Check if line has word-by-word synced data
 const hasWordSync = computed(() => {
-  return props.line?.words && Array.isArray(props.line.words) && props.line.words.length > 0
+  return hasMeasuredWordTiming(props.line)
 })
 
 const currentWordIndex = computed(() =>

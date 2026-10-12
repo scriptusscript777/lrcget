@@ -120,7 +120,7 @@ function mount() {
   app.provide(ssrContextKey, { modules: new Set() })
   app.mount({})
   apps.push(app)
-  return { state, props, app, document: mocks.document, confirm: mocks.modals[0] }
+  return { state, props, app, document: mocks.document, confirm: mocks.modals.find(modal => modal.attrs.title === 'Replace lyrics?') }
 }
 function deferred() {
   let resolve

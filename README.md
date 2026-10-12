@@ -360,3 +360,17 @@ views when off, independent manual adjustments retain confirmed ranges on Sync,
 confirmed words stay gray until changed, and Reset words restarts one sentence’s
 word timing with Undo support. Overlap status is green On/red Off in both themes.
 Master reset is removed; recovery and TXT/LRC/ELRC Save/import/export remain.
+
+## ELRC save with accepted estimates (version unchanged)
+
+Editor **Save and export** with ELRC selected offers to fill missing word starts
+after showing the number of affected sentences. Existing manual times, word gaps
+and lyric text stay unchanged. Users may adjust some words and leave others alone.
+Accepted estimates persist in the project and ELRC, with Undo support; Cancel does
+not save or export. Untimed text must receive sentence timing first. Invalid saved
+word data, too-short ranges and protected overlaps block preparation. Plain TXT
+and standard LRC export alone do not estimate words. Library batch export and
+server publishing retain their saved-data behavior. The green dot indicates valid
+word timing, including accepted estimates, rather than manual verification.
+
+See [illustrated export instructions](docs/editing-guide.md#export-word-timing-as-enhanced-lrc).

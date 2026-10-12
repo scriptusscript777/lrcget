@@ -60,7 +60,11 @@
             <Repeat class="w-3.5 h-3.5" />Loop word
           </button>
           <button
-            v-tooltip="editorTooltip('Repeat the selected sentence and its waveform markers; switching from Word loop selects Sentence loop')"
+            v-tooltip="
+              editorTooltip(
+                'Repeat the selected sentence and its waveform markers; switching from Word loop selects Sentence loop'
+              )
+            "
             type="button"
             class="button text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40"
             :class="sentenceLoopEnabled ? 'button-primary' : 'button-normal'"
@@ -178,7 +182,7 @@
           />s
         </label>
         <span v-if="!hasActualWords" class="text-neutral-600 dark:text-neutral-400"
-          >Estimated timing; editing saves word timing.</span
+          >Estimated timing; edit a word or accept estimates when saving ELRC.</span
         >
       </div>
       <p v-if="wordLoopEnabled && !selectedWordLoopRange" role="status" class="mt-1 text-xs">
@@ -563,13 +567,18 @@ const editSelectedBoundary = (boundary, event) => {
       words: updatedWords,
       lineStartMs: undefined,
       onResult: accepted => {
-        if (accepted) rememberAdjustedBoundary(selectedWordIndex.value, updatedWords, { includePrevious: boundary === 'start' })
+        if (accepted)
+          rememberAdjustedBoundary(selectedWordIndex.value, updatedWords, {
+            includePrevious: boundary === 'start',
+          })
         else
           timingMessage.value =
             'Word timing was not applied; its sentence or overlap bounds changed.'
       },
     })
-  else timingMessage.value = 'Word timing was not changed: keep its start before its end and inside its neighboring words.'
+  else
+    timingMessage.value =
+      'Word timing was not changed: keep its start before its end and inside its neighboring words.'
   // Reflect the actual accepted/clamped document after parent validation.
   nextTick(() => {
     const range = selectedWordLoopRange.value
@@ -736,7 +745,12 @@ const loadDefaultSegmentation = async ({ force = false } = {}) => {
   try {
     const tokens = await invoke('segment_words', { text: lineText })
 
-    if (disposed || requestId !== segmentationRequestId.value || props.selectedLine?.text !== lineText || hasActualWords.value) {
+    if (
+      disposed ||
+      requestId !== segmentationRequestId.value ||
+      props.selectedLine?.text !== lineText ||
+      hasActualWords.value
+    ) {
       return
     }
 
@@ -749,7 +763,12 @@ const loadDefaultSegmentation = async ({ force = false } = {}) => {
       .filter(token => typeof token === 'string')
       .filter(token => token.length > 0)
   } catch (error) {
-    if (disposed || requestId !== segmentationRequestId.value || props.selectedLine?.text !== lineText || hasActualWords.value) {
+    if (
+      disposed ||
+      requestId !== segmentationRequestId.value ||
+      props.selectedLine?.text !== lineText ||
+      hasActualWords.value
+    ) {
       return
     }
 
@@ -805,7 +824,9 @@ const handleResetWords = async () => {
   emit('update:words', {
     lineIndex,
     words: [],
-    onResult: result => { accepted = result === true },
+    onResult: result => {
+      accepted = result === true
+    },
   })
   if (!accepted) {
     timingMessage.value = 'Word timing was not reset; its sentence or overlap bounds changed.'

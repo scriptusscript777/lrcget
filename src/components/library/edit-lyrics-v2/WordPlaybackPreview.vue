@@ -28,7 +28,7 @@
       v-if="previewWords.length && !hasSavedTiming && !hasPartialTiming"
       class="text-xs text-neutral-600 dark:text-neutral-400"
     >
-      Evenly spaced preview. Sync words to match the recording before exporting word timing.
+      Estimated preview. Adjust words or accept estimates when saving ELRC; listen to check accuracy.
     </p>
     <p v-if="hasPartialTiming" class="text-xs text-neutral-600 dark:text-neutral-400">
       Partial word timing. Untimed words stay unhighlighted until synced.

@@ -339,13 +339,27 @@ select **Word-timed lyrics (.elrc)**. It starts unchecked; selecting or clearing
 is remembered across editor openings and app restarts. Configuration has no
 separate ELRC default switch. Existing saved selections are preserved.
 
-Confirm your edits, including word timing, before exporting. ELRC uses the saved
-word starts and ends, with millisecond precision; it preserves known word silence
-and the existing sentence gap cues. Mixed documents keep line-only sentences as
-normal timed lines. It does not analyze the recording or create accurate karaoke
-timing automatically. No saved word timing means ELRC is skipped; invalid saved
-word timing reports an error. Both cases leave an older ELRC untouched, and the
-other selected formats still run. Check partial-export messages.
+Select **Word-timed lyrics (.elrc)**, then **Save and export**. If sentences
+need word timestamps, a confirmation shows how many need estimates. Choose
+**Use estimates and save** to retain every existing manual word start/end and
+fill only missing word starts. You can adjust one word, leave the others as they
+are, and move on; exporting does not regenerate already saved timing.
+
+Accepted estimates are saved in the project and ELRC, so reopening uses the same
+word timestamps. **Undo** can reverse the acceptance. **Cancel** leaves the
+project and files unchanged. Already complete timing needs no estimate prompt.
+The app spaces estimates inside sentence bounds, using the next sentence or
+recording end if an end is missing, and preserves explicit word gaps. It does not
+analyze singing; listen and refine estimates for accuracy. Untimed TXT needs
+sentence timing first. Invalid word data, insufficient time, or sentence overlap
+with protection enabled stops preparation before any save/export; other file
+choices can be exported separately. TXT/LRC-only exports never add word timing.
+
+The green dot means valid word timing is present, including accepted estimates;
+it does not mean every word was manually checked.
+
+![ELRC estimate confirmation](screenshots/current/estimated-elrc-confirmation-light.png)
+![Accepted mixed word timing, dark theme](screenshots/current/estimated-elrc-accepted-dark.png)
 
 Example of a saved word-timed line:
 
@@ -415,8 +429,8 @@ lyrics** as the saved opt-in. It remains an optional, saved setting.
 
 For Enhanced MP3 embedding, select **Word-timed lyrics (.elrc)** and **Embed into
 track** together, then Save and export. Normal plain USLT remains available while
-ELRC has its own description. Missing saved word timing skips the ELRC sidecar
-and uses normal line embedding; invalid requested word timing stops MP3 embedding
+ELRC has its own description. Editor ELRC export offers to save missing word
+timing as estimates before embedding; invalid requested word timing stops MP3 embedding
 and leaves the old file intact. Ordinary embedding replaces old lyric variants
 and removes the app's stale custom ELRC field, preserving unrelated metadata.
 
@@ -519,8 +533,9 @@ invalid enhanced ranges need correction before import.
 
 Under **Save file types**, select only TXT, LRC, ELRC, or any combination. These
 choices do not require one another. ELRC starts unchecked and remembers changes.
-Without saved word timing, ELRC is skipped rather than estimated. Local export
-and server publishing are separate: compatible LRCLIB accepts structured YAML
+Editor ELRC export offers to save missing word timing as estimates after explicit
+acceptance. Untimed text still needs sentence timing first. Library batch exports
+continue to use saved timing only. Local export and server publishing are separate: compatible LRCLIB accepts structured YAML
 with word timing, not a dedicated uploaded ELRC sidecar. Older/custom servers
 may offer only ordinary LRC or text. See [LRCLIB API documentation](https://lrclib.net/docs).
 
