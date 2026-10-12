@@ -664,3 +664,14 @@ checks actual MSI identity, Defender availability/definitions and MSI/payload
 scans, install/repair/launch/uninstall. Current package/source/documentation
 publication and creator notification are authorized. Check package/platform guides
 for completed validation and remaining signing/Windows 11 desktop limitations.
+
+
+Documentation/image refresh (2026-10-12, app version unchanged): all 85 screenshots
+referenced by current user guides recaptured from current Vue/native startup views.
+Includes library/status, markers, word timing/loops/preview, export/embedding,
+estimates, recovery, help/settings, and optional sentence/word alignment/consent.
+Capture manifest records source/date/hash; historical removed-feature images stay
+archived. Isolated browser workflow assertions and Debian/AppImage startup passed;
+older harness selectors/expectations were updated where needed. No runtime code,
+installer bytes, personal recordings or live database changed. Current illustrated
+source/docs archives and GitHub/local Git backups refreshed.

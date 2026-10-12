@@ -174,7 +174,8 @@ successfully exported; inspect the result before retrying.
 For implementation notes and version-by-version changes, read
 [LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.7.md).
 Current images use demonstration fixtures, not personal recordings. Current editor
-and alignment captures were refreshed from 2.2.7; unchanged views retain dated provenance.
+and all other current guide images were refreshed from 2.2.7, with capture
+provenance recorded in the screenshot manifest. Archived images remain historical.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 

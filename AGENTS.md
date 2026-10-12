@@ -99,3 +99,11 @@ and payload, isolated installed-app launch checks, publisher/version/upgrade
 identity inspection and diagnostics. Signing and Windows 11 desktop validation
 remain distinct from a Windows Server CI run; do not claim SmartScreen reputation
 or Smart App Control compatibility from antivirus scans alone.
+
+Rick requested latest accurate docs/images for every new feature integration.
+Before publication, audit all current user-guide screenshot references, recapture
+views affected by integrations in both themes, and refresh the screenshot manifest
+with actual provenance. Do not call historical images current or treat mocked
+browser captures as native OS tests. Keep downloadable docs/source archives and
+GitHub/local server backups consistent. Update privacy/signing policies when data
+flows, permissions or signing behavior change; do not imply new Foundation approval.

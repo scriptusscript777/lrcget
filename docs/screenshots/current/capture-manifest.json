@@ -1,0 +1,518 @@
+{
+  "app_version": "2.2.7",
+  "runtime_commit": "a7a8e1c6e080fe3a51edd11d6734d812be735ca1",
+  "guide_image_count": 85,
+  "note": "Screenshot-only refresh; demonstration data, no personal music/library changes. Historical images outside current user-guide references remain archived.",
+  "images": [
+    {
+      "file": "appimage-startup.png",
+      "captured_utc": "2026-10-12T20:09:27.857264+00:00",
+      "sha256": "68e8b762cb64a3f4b5631fd94d81e6d56a26a316265a8ecec4c1bb8d94527010",
+      "source": "Packaged native Linux startup, isolated Xvfb/XDG profile"
+    },
+    {
+      "file": "audio-alignment-controls-dark.png",
+      "captured_utc": "2026-10-12T20:07:23.435080+00:00",
+      "sha256": "7885808f5875c358ac42eb12747daf8f3191be8b7c7f61a843ee349144baecac",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-controls-light.png",
+      "captured_utc": "2026-10-12T20:07:23.172079+00:00",
+      "sha256": "4811c3afd9c71db3fedfa838f12a9f80f44fca63cd90d7f0f4882fa7a091ae94",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-model-consent-dark.png",
+      "captured_utc": "2026-10-12T20:07:29.258088+00:00",
+      "sha256": "205c34cef79cf81e8612375de46723fb4850520c368b74620f480631f90c40b1",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-model-consent-light.png",
+      "captured_utc": "2026-10-12T20:07:29.007088+00:00",
+      "sha256": "2e3fa88355c9597cd4e03325b6ce2c6f9c0ebff745187be208a9243d18b04243",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-preview-dark.png",
+      "captured_utc": "2026-10-12T20:07:25.388083+00:00",
+      "sha256": "89c9e477475c6c9fe07059b61feeee3d79cae28134820ce7011124be0c47b49b",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-preview-light.png",
+      "captured_utc": "2026-10-12T20:07:25.141082+00:00",
+      "sha256": "9441cb32d013444c9904723c8bf826630454787f422565c22a9ae4183aa37f77",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-progress-unavailable-dark.png",
+      "captured_utc": "2026-10-12T20:09:25.290260+00:00",
+      "sha256": "469c682521144025e4f64067354af3dd50257b6e2463ee62eaf9bc183b9c0089",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-progress-unavailable-light.png",
+      "captured_utc": "2026-10-12T20:09:25.034260+00:00",
+      "sha256": "95ca83c28efb94192f630b4cad0ae3cf9bd281b9ad3d7d312a117e9048acb21a",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-setup-dark.png",
+      "captured_utc": "2026-10-12T20:07:27.641086+00:00",
+      "sha256": "8dc690ed55ff72bbab8ad497b6ac1a027542a2292b9541fbbe2a590df393ffec",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-setup-light.png",
+      "captured_utc": "2026-10-12T20:07:27.392086+00:00",
+      "sha256": "e7782623673e96b974650234315e44b5d46fc9c3e4070c1b4a09ee38894114c7",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-skipped-dark.png",
+      "captured_utc": "2026-10-12T20:07:31.322091+00:00",
+      "sha256": "2ff21b186170c39ff7793bed576422947b07f6607e677629e50e4d3223a31d35",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "audio-alignment-skipped-light.png",
+      "captured_utc": "2026-10-12T20:07:31.073091+00:00",
+      "sha256": "8b5594583e356701a69767fe285fc11c224536d4a6363c04ff000a88ba6d2c54",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "automatic-lrc-after-dark.png",
+      "captured_utc": "2026-10-12T20:09:26.014261+00:00",
+      "sha256": "995d62e5efb449155fde750b21977be6375ac2d8b185c66e417f20dc39b59af9",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "automatic-lrc-after-light.png",
+      "captured_utc": "2026-10-12T20:09:25.723261+00:00",
+      "sha256": "962c9b6ee9c6cb6e3ab577b5699956e3298de890f3d16935c3fe7f225b2e8bca",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "automatic-lrc-before-light.png",
+      "captured_utc": "2026-10-12T20:09:25.148260+00:00",
+      "sha256": "10bb81007b525b92ea9e1184feeb86931832929479b78e7596407e891dabc636",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "debian-startup.png",
+      "captured_utc": "2026-10-12T20:09:29.013266+00:00",
+      "sha256": "68e8b762cb64a3f4b5631fd94d81e6d56a26a316265a8ecec4c1bb8d94527010",
+      "source": "Packaged native Linux startup, isolated Xvfb/XDG profile"
+    },
+    {
+      "file": "editor-default-light.png",
+      "captured_utc": "2026-10-12T20:07:13.374065+00:00",
+      "sha256": "db6ddfabf314c15aea3918e4cd22c1b358e83508c40d1a3d87400e049cb58062",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "editor-recovery-restored-dark.png",
+      "captured_utc": "2026-10-12T20:05:17.077891+00:00",
+      "sha256": "451d0f86e2c6ff1e1364f8412bb642d78ec5bdad96a0919d9f69b269df8abc32",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "editor-recovery-restored-light.png",
+      "captured_utc": "2026-10-12T20:05:16.832891+00:00",
+      "sha256": "b18e708d92918f7287a1742e488c1bd136f0c775ce13587f143409010825a835",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "elrc-library-synced-dark.png",
+      "captured_utc": "2026-10-12T20:09:26.602262+00:00",
+      "sha256": "995d62e5efb449155fde750b21977be6375ac2d8b185c66e417f20dc39b59af9",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "elrc-library-synced-light.png",
+      "captured_utc": "2026-10-12T20:09:26.307262+00:00",
+      "sha256": "962c9b6ee9c6cb6e3ab577b5699956e3298de890f3d16935c3fe7f225b2e8bca",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "embedded-lyrics-settings-dark.png",
+      "captured_utc": "2026-10-12T20:10:07.104322+00:00",
+      "sha256": "cab286682e1292ed2ad5fe46e14f4611c718369ed09c3138475bbe291417dd66",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "embedded-lyrics-settings-light.png",
+      "captured_utc": "2026-10-12T20:10:06.853322+00:00",
+      "sha256": "dd0db6a213ec4346ecb7d5ea890770268db3f60c196f615bd09756601e034203",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "embedded-word-export-dark.png",
+      "captured_utc": "2026-10-12T20:10:06.345321+00:00",
+      "sha256": "bf03c52007898dc8d0b3333d966d35cceb318452aa561501e815e69faa3e7d81",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "embedded-word-export-light.png",
+      "captured_utc": "2026-10-12T20:10:06.100320+00:00",
+      "sha256": "d3d430ad5d1941e166e6f9ed92b977893bedd4970da1ea52d7269eb7d27f2ad1",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "enhanced-import-dark.png",
+      "captured_utc": "2026-10-12T20:05:15.764889+00:00",
+      "sha256": "e5c1c3a5a41fa61835a40262d2855370fa35005c7bd9d301360aa3a689d982cf",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "enhanced-import-light.png",
+      "captured_utc": "2026-10-12T20:05:15.156888+00:00",
+      "sha256": "4d36d13d0a825ecdd4f7addfc4e6540c95ebbda10124bbfa89e0a684bbdb819b",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "estimated-elrc-accepted-dark.png",
+      "captured_utc": "2026-10-12T20:04:52.980855+00:00",
+      "sha256": "aae1adae270b92529d78072ad52bcda111f7d165634d3ef9eb0d89cfe877a7d3",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "estimated-elrc-confirmation-light.png",
+      "captured_utc": "2026-10-12T20:04:51.494853+00:00",
+      "sha256": "d578e7eba59b2b23665dee48692403d77bf1a619e0480888820a9551a4dbad69",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "loop-persistent-navigation-dark.png",
+      "captured_utc": "2026-10-12T20:10:08.350324+00:00",
+      "sha256": "3623b7fc1ab31806e719b6f8819d2464402b1deb55ed5cf325a144c32a328be8",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "loop-persistent-navigation-light.png",
+      "captured_utc": "2026-10-12T20:10:08.102323+00:00",
+      "sha256": "0eaef272e0454f07418ab63fa6df665d25429aaca5ce4334cc66449f5358a46c",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "lyrics-import-dark.png",
+      "captured_utc": "2026-10-12T20:07:20.972076+00:00",
+      "sha256": "cf5a0ec6027ec1feeca24168ee8e259fc0f9a135d7da6f2329fe01e8d295b57f",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "lyrics-import-light.png",
+      "captured_utc": "2026-10-12T20:07:20.505075+00:00",
+      "sha256": "68d02250ce448aa9f5a5d3c1afc08a8934b08cae26135a9897a81d88e1e31050",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "marker-color-cancelled-light.png",
+      "captured_utc": "2026-10-12T20:07:16.410069+00:00",
+      "sha256": "ba7cf68f0b2f706d2b014d5c360b3f34e298a2c6744748e18907bc71a7b01b51",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "marker-color-pending-dark.png",
+      "captured_utc": "2026-10-12T20:07:15.254067+00:00",
+      "sha256": "9f8f3454e2ff42ebeccef08f161255517105247d7a7536f19b4d61952b2d6323",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "marker-color-pending-light.png",
+      "captured_utc": "2026-10-12T20:07:14.856067+00:00",
+      "sha256": "6a8bdc0b55678c6d1cf254c99cbc2f5a324471f37a7eeb6a532b3382df5c7858",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "marker-color-word-timing-dark.png",
+      "captured_utc": "2026-10-12T20:07:18.252072+00:00",
+      "sha256": "f7f787dc40aee16d8cc5d99363d63c551dc98d32e40932e6eb90fb447275aa51",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "marker-color-word-timing-light.png",
+      "captured_utc": "2026-10-12T20:07:17.857071+00:00",
+      "sha256": "c4287cf4941a92cb1f8eeb732b8b6a31c9cb752d4d46bf96d05c70a699945090",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "modified-dark.png",
+      "captured_utc": "2026-10-12T20:06:03.859961+00:00",
+      "sha256": "71bfcaca0f32b9232ee06d659e09e68555404fef3ff07e182ebd1d73d98b3fba",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "modified-light.png",
+      "captured_utc": "2026-10-12T20:06:03.720961+00:00",
+      "sha256": "d111b59ee71f298eefbc9ea00176794a4c2ca152b856628b78d19e209a002035",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-setting-warning-dark.png",
+      "captured_utc": "2026-10-12T20:07:13.324065+00:00",
+      "sha256": "c427f7a68b452b5bab829f488511f57196a96f97e03b72c4d0352858d6d58281",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-setting-warning-light.png",
+      "captured_utc": "2026-10-12T20:07:12.915064+00:00",
+      "sha256": "91bb92be79430379f51dae4a70733f8489e5369a90b65b4453824d3838fe0c55",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-settings-off-dark.png",
+      "captured_utc": "2026-10-12T20:05:14.142887+00:00",
+      "sha256": "6bb603630b171db385331d16b9d36f67956a480e6ac22ad71acaf6b27c1be1d0",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-settings-on-light.png",
+      "captured_utc": "2026-10-12T20:05:13.120886+00:00",
+      "sha256": "dd772c69e8f8b9bb5ba005afd91bba3fdcf10e8bedc4c940c060dda6f29f3a78",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-status-off-dark.png",
+      "captured_utc": "2026-10-12T20:07:15.996068+00:00",
+      "sha256": "b0b88d51b2e4cbad6f6ff1082e6692b2585461aba884f181e8ed9e19027c9677",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-untimed-dark.png",
+      "captured_utc": "2026-10-12T20:05:35.979920+00:00",
+      "sha256": "996e03b82e6cc42a15a30d71d34f678a164f700db05c605d49dd0f86c52f71e3",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "overlap-untimed-light.png",
+      "captured_utc": "2026-10-12T20:05:35.909920+00:00",
+      "sha256": "30e5a56c85acd187e307d87ff1f1c2d24fc49c3b104b6244672d0e2071b37c66",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "point-zoom-dark.png",
+      "captured_utc": "2026-10-12T20:07:16.860070+00:00",
+      "sha256": "f5187d81109c7d9a72426474ed235bc92ad633a40370f0f2f434214095c8ed3e",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "point-zoom-light.png",
+      "captured_utc": "2026-10-12T20:07:16.392069+00:00",
+      "sha256": "d2462c2012548a3a789cb2c34326aabd508fd5446e627b058fab70dabd19f815",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "recovery-notice-aligned-dark.png",
+      "captured_utc": "2026-10-12T20:05:17.584892+00:00",
+      "sha256": "e6143da4cf50518f79c9b9af2bfce4fcc38915e92da5123c3643c4624547908e",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "recovery-notice-aligned-light.png",
+      "captured_utc": "2026-10-12T20:05:17.351892+00:00",
+      "sha256": "e0065f0486bf6ecacab3519023e671170d656abd5a732535dba189423d038c2c",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "selected-sentence-loop-dark.png",
+      "captured_utc": "2026-10-12T20:05:18.309893+00:00",
+      "sha256": "5b485f47a2d4e110c2492d0768a1bd584265896e24c076e985f9a0d0b11da712",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "selected-sentence-loop-light.png",
+      "captured_utc": "2026-10-12T20:05:18.065893+00:00",
+      "sha256": "a4e2ee1f7cfc3193b0756dc3396829db88e7f588bd83612e5c16cce6bcb65f59",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "selected-word-loop-dark.png",
+      "captured_utc": "2026-10-12T20:05:15.237889+00:00",
+      "sha256": "36609e7cbd78ad2a42cacecf70b7aab7d2dbe223f16b25387851656d2a0d2057",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "selected-word-loop-light.png",
+      "captured_utc": "2026-10-12T20:05:14.976888+00:00",
+      "sha256": "668dbc2ca8f88b995012c72c8ffe735a5b2a30e9b6d392f78b6688f31b6b7195",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "sentence-alignment-preview-dark.png",
+      "captured_utc": "2026-10-12T20:07:26.084084+00:00",
+      "sha256": "80b24e9cf342a6edc72c931973fcc90764bc87c1f4bd956bafc95acb27b3216e",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "sentence-alignment-preview-light.png",
+      "captured_utc": "2026-10-12T20:07:25.827083+00:00",
+      "sha256": "216adedd285f575569ad301234dee0e5ba4d81413afcb98c21a5c5e31be81109",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "sentence-alignment-toolbar-dark.png",
+      "captured_utc": "2026-10-12T20:07:24.569081+00:00",
+      "sha256": "7885808f5875c358ac42eb12747daf8f3191be8b7c7f61a843ee349144baecac",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "sentence-alignment-toolbar-light.png",
+      "captured_utc": "2026-10-12T20:07:24.320081+00:00",
+      "sha256": "4811c3afd9c71db3fedfa838f12a9f80f44fca63cd90d7f0f4882fa7a091ae94",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "server-lyrics-types-dark.png",
+      "captured_utc": "2026-10-12T20:05:13.704886+00:00",
+      "sha256": "684e43616f1e4db098758aa718f9909f847cef78516086daa509f5724fba16db",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "server-lyrics-types-light.png",
+      "captured_utc": "2026-10-12T20:05:13.064885+00:00",
+      "sha256": "dc34bdf076dfca7df02e1d64eb08fbe3d8114cb47f923b1454aa38ce456ab68d",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "timed-hover-help-dark.png",
+      "captured_utc": "2026-10-12T20:05:40.306926+00:00",
+      "sha256": "d85615eba27cf5ec3cacf90c53820e24050485155e348c62202e56f137992d40",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "timed-hover-help-light.png",
+      "captured_utc": "2026-10-12T20:05:37.906923+00:00",
+      "sha256": "78a4c77adcd6e3959503438ae4693e7d5fccb1e9142533d7fdd07ae27a01bd61",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "waveform-click-play-dark.png",
+      "captured_utc": "2026-10-12T20:10:08.955325+00:00",
+      "sha256": "718684ea954521e39358edbc28e47087a8008c9c3f976eea3396e7840aeb1984",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "waveform-click-play-light.png",
+      "captured_utc": "2026-10-12T20:10:08.701324+00:00",
+      "sha256": "fe711cbc1208f08718efab40debd38dca47cd0c39d98863059c4910c3b1af382",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "waveform-follow-dark.png",
+      "captured_utc": "2026-10-12T20:07:18.849073+00:00",
+      "sha256": "e977df3de1d2143e1d026a4ddf7d4d370350e26a2ed2df3c3a84865d9e14d923",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "waveform-follow-light.png",
+      "captured_utc": "2026-10-12T20:07:18.385072+00:00",
+      "sha256": "8c7dab3928b1deb0293cb0533d4844f4dd3ca5428f91b0c576c365a6acd3ee9b",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "waveform-navigation-dark.png",
+      "captured_utc": "2026-10-12T20:07:17.834071+00:00",
+      "sha256": "a1dc9704a4447dd05e593b6e8a5ab15ee1b23a42534b6a058ae704ad05091be9",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "waveform-navigation-light.png",
+      "captured_utc": "2026-10-12T20:07:17.375071+00:00",
+      "sha256": "5a2536d48fdaddcf3ca91cdef1270a8d28cdb70269a4a5360521f9c1c0737908",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-follow-off-confirmed-dark.png",
+      "captured_utc": "2026-10-12T20:05:12.163884+00:00",
+      "sha256": "9c5b6db6968838b4d5eddfea5585be5d0e17978ab1a16aec123df58a175c1bdb",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-follow-off-confirmed-light.png",
+      "captured_utc": "2026-10-12T20:05:11.888884+00:00",
+      "sha256": "b86e8fcac13388d37cfab3de15a16841ccea2d3d4fb577f82a29e7b6950f11e4",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-overlap-off-dark.png",
+      "captured_utc": "2026-10-12T20:05:12.736885+00:00",
+      "sha256": "d6fa751a150a36b56ba04d522d5782fa0a789f08432dd87bb38f085a56d7fc0f",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-overlap-off-light.png",
+      "captured_utc": "2026-10-12T20:05:12.471884+00:00",
+      "sha256": "621a64e367dd572e2e71299878530c9de0ddcb5eccaeea31f1d60f9d28a443b4",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-playback-preview-dark.png",
+      "captured_utc": "2026-10-12T20:10:07.732323+00:00",
+      "sha256": "7bb7f449d76086b4dbe3373424d504c8cb696eafe66c19492e2a7750bd2fdf4a",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-playback-preview-light.png",
+      "captured_utc": "2026-10-12T20:10:07.486322+00:00",
+      "sha256": "01e8702a941998ef59a81e9ae04694a250a5cc977bb3910528f8184de953dd65",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-preview-live-edit-dark.png",
+      "captured_utc": "2026-10-12T20:05:16.778891+00:00",
+      "sha256": "b649ddfb1ed75aa882a82ee7a2d7802cbfd0c263a6d12d8e182e5a3edf864078",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-preview-live-edit-light.png",
+      "captured_utc": "2026-10-12T20:05:16.529891+00:00",
+      "sha256": "8ea0d38163da89d5679668b941e9e6f7f0cc6642baabe1b21a443657076f488c",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-preview-loop-zoom-light.png",
+      "captured_utc": "2026-10-12T20:05:15.584889+00:00",
+      "sha256": "a7752b149ff3d299e4d9a5b0e16314e5af95a97a08bd37db6b6d7b19925aeacc",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-preview-silence-dark.png",
+      "captured_utc": "2026-10-12T20:05:17.495892+00:00",
+      "sha256": "cf805a94856d98cf8099d6c6c3ae0ad30cee60939fa4c2c7ae5fa02fb2558b7f",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-preview-silence-light.png",
+      "captured_utc": "2026-10-12T20:05:17.242892+00:00",
+      "sha256": "a127eef11658d1ea2835538f3fe2d9bf3d10f916b7fe59016fcbb043ee882f45",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-sync-confirmed-dark.png",
+      "captured_utc": "2026-10-12T20:05:12.715885+00:00",
+      "sha256": "e1b3f2c4e2e6040efe71ea649fbf61e24f7881ff94e0afac5925d917cc65af86",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-sync-confirmed-light.png",
+      "captured_utc": "2026-10-12T20:05:12.453885+00:00",
+      "sha256": "4ca601f1a4bc7b0952ea959c810d85f595bf2eb24b8cedd6e89684cc6a6e613f",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-timing-protected-dark.png",
+      "captured_utc": "2026-10-12T20:05:13.542886+00:00",
+      "sha256": "3a916be348425f2cb7703343d47b986b60528b8cf15a1a15a27c67f2a829e974",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "word-timing-protected-light.png",
+      "captured_utc": "2026-10-12T20:05:13.257886+00:00",
+      "sha256": "a566cc7de67091d46a7f90adfafc5bc698294bb0dd07ffb3629748a03e5db715",
+      "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    }
+  ]
+}

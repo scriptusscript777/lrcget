@@ -38,8 +38,8 @@ or lyric display on every player. WhisperX and Demucs are not required.
 ![Zoomed waveform following playback in light mode](screenshots/current/waveform-follow-light.png)
 
 Screenshots use temporary fixture lyrics and waveform data. Current editor/alignment
-views were refreshed from 2.2.7; the screenshot index identifies capture dates and
-older unchanged views.
+and all other current guide images were refreshed from 2.2.7; the screenshot
+manifest identifies dates and fixture/native provenance. Historical images are separate.
 The guides describe the current build; historical release notes describe their
 own versions, including behavior since changed.
 
