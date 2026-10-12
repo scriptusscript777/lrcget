@@ -15,6 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:
@@ -28,6 +31,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Frontend tests failed' }
           node --test packaging/windows/msi-config.checks.mjs
           if ($LASTEXITCODE -ne 0) { throw 'MSI configuration tests failed' }
+      - name: Test optional alignment setup and Python code quality
+        shell: pwsh
+        run: |
+          python -m pip install ruff
+          if ($LASTEXITCODE -ne 0) { throw 'Ruff setup failed' }
+          python -m ruff check alignment
+          if ($LASTEXITCODE -ne 0) { throw 'Python lint failed' }
+          python -m unittest discover -s alignment -p 'test_*.py'
+          if ($LASTEXITCODE -ne 0) { throw 'Optional alignment tests failed' }
       - name: Build MSI with the supported Windows toolchain
         shell: pwsh
         run: ./packaging/windows/build-msi.ps1 -OutputDirectory "$env:GITHUB_WORKSPACE/packages"

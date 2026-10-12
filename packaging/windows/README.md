@@ -59,3 +59,29 @@ the Rust `x86_64-pc-windows-msvc` target, and a user-local LLD 18 under
 `~/.local/share/lrcget-build-tools/root`. Existing MinGW, wixl, msitools and NSIS
 are available, but the supported MSI workflow uses the native Windows toolchain
 rather than claiming those Linux tools alone validate this Tauri app.
+
+
+## Current 2.2.7 platform validation
+
+Windows packaging is resumed for a build-only temporary branch. Public releases
+and creator notifications remain held. The workflow now checks the MSI's actual
+publisher/version/upgrade GUID, fresh-enough Defender definitions, custom scans
+of the installer and installed payload, installation, repair reinstall, visible
+app launch, and uninstallation. Diagnostics are uploaded even on failure; a
+failed/unavailable scan is not reported as clean. This remains Windows Server
+validation, not Windows 11 desktop/SmartScreen certification. Packages remain
+unsigned unless a real signing certificate is configured.
+
+Automatic alignment now supports a Windows private environment using
+`Scripts/python.exe` under `%LOCALAPPDATA%/net.lrclib.lrcget/alignment-environments`.
+Install Python 3.10–3.12 with pip/venv and FFmpeg first. Standard per-user Python
+3.11/3.12/3.10 installations are discovered; otherwise `python.exe` must be on
+PATH. `LRCGET_ALIGN_PYTHON` can select an existing complete environment, and its
+packages are not modified by managed setup. The app requests private package
+installation once, with separate model-download consent. It never silently
+installs system Python or FFmpeg. Windows cancellation terminates the owned
+worker tree; background workers do not open console windows. Basic editing,
+estimates, sentence/word manual synchronization and export require no AI setup.
+The workflow tests consent/integrity and Windows environment layout without
+large model/package downloads; full Windows singing alignment remains a
+separate desktop test after installing optional dependencies.

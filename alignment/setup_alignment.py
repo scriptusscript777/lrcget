@@ -112,10 +112,16 @@ def run_checked(args):
         )
 
 
+def environment_python(target):
+    return Path(target) / (
+        "Scripts/python.exe" if sys.platform == "win32" else "bin/python"
+    )
+
+
 def install_engine(target):
-    if sys.platform != "linux":
+    if sys.platform not in {"linux", "win32"}:
         raise ValueError(
-            "Integrated setup currently supports Linux. Basic mode remains available."
+            "Integrated setup supports Linux and Windows. Basic mode remains available."
         )
     if not (3, 10) <= sys.version_info[:2] <= (3, 12):
         raise ValueError(
@@ -123,7 +129,7 @@ def install_engine(target):
         )
     if not shutil.which("ffmpeg"):
         raise ValueError(
-            "Install ffmpeg using your package manager first (Debian: sudo apt install ffmpeg python3-venv)."
+            "Install ffmpeg and Python prerequisites first (Windows: Python 3.10–3.12 with pip and ffmpeg on PATH; Debian: sudo apt install ffmpeg python3-venv)."
         )
     target = Path(target)
     if shutil.disk_usage(target.parent).free < 4 * 1024**3:
@@ -134,9 +140,9 @@ def install_engine(target):
         venv.EnvBuilder(with_pip=True, system_site_packages=True).create(target)
     except (OSError, subprocess.SubprocessError) as error:
         raise ValueError(
-            "Python venv is unavailable. Install python3-venv with your package manager, then retry."
+            "Python venv is unavailable. On Windows repair Python with pip/venv enabled; on Debian install python3-venv, then retry."
         ) from error
-    python = str(target / "bin/python")
+    python = str(environment_python(target))
     existing = (
         subprocess.run(
             [

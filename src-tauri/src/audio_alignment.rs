@@ -18,9 +18,45 @@ static SLOT: Semaphore = Semaphore::const_new(1);
 static JOBS: LazyLock<Mutex<HashMap<String, Option<oneshot::Sender<()>>>>> =
     LazyLock::new(|| Mutex::new(HashMap::new()));
 fn managed_root() -> Result<PathBuf, String> {
+    #[cfg(windows)]
+    return std::env::var_os("LOCALAPPDATA")
+        .map(PathBuf::from)
+        .or_else(|| home().map(|home| home.join("AppData/Local")))
+        .map(|root| root.join("net.lrclib.lrcget/alignment-environments"))
+        .ok_or_else(|| "Local application directory unavailable".into());
+    #[cfg(not(windows))]
     std::env::var_os("HOME")
         .map(|home| PathBuf::from(home).join(".local/share/lrcget/alignment-environments"))
         .ok_or_else(|| "Home directory unavailable".into())
+}
+fn home() -> Option<PathBuf> {
+    std::env::var_os(if cfg!(windows) { "USERPROFILE" } else { "HOME" }).map(PathBuf::from)
+}
+fn environment_python(root: &std::path::Path, windows: bool) -> PathBuf {
+    root.join(if windows {
+        "Scripts/python.exe"
+    } else {
+        "bin/python"
+    })
+}
+fn base_python() -> PathBuf {
+    #[cfg(windows)]
+    if let Some(root) = std::env::var_os("LOCALAPPDATA") {
+        for version in ["Python311", "Python312", "Python310"] {
+            let candidate = PathBuf::from(&root)
+                .join("Programs/Python")
+                .join(version)
+                .join("python.exe");
+            if candidate.is_file() {
+                return candidate;
+            }
+        }
+    }
+    if cfg!(windows) {
+        "python.exe".into()
+    } else {
+        "python3".into()
+    }
 }
 fn valid_environment_name(name: &str) -> bool {
     name.starts_with("env-")
@@ -35,7 +71,7 @@ fn managed_environment() -> Option<PathBuf> {
     if !valid_environment_name(&name) {
         return None;
     }
-    let path = root.join(name).join("bin/python");
+    let path = environment_python(&root.join(name), cfg!(windows));
     path.is_file().then_some(path)
 }
 fn python() -> PathBuf {
@@ -45,20 +81,26 @@ fn python() -> PathBuf {
     if let Some(path) = managed_environment() {
         return path;
     }
-    if let Some(home) = std::env::var_os("HOME") {
-        let path = PathBuf::from(home).join(".local/share/lrcget/alignment-venv/bin/python");
+    if let Some(home) = home() {
+        let path = environment_python(
+            &home.join(".local/share/lrcget/alignment-venv"),
+            cfg!(windows),
+        );
         if path.is_file() {
             return path;
         }
     }
-    "python3".into()
+    base_python()
 }
 
 #[tauri::command]
 pub async fn audio_alignment_available() -> Result<bool, String> {
+    let mut command = Command::new(python());
+    #[cfg(windows)]
+    command.creation_flags(0x08000000);
     let output = tokio::time::timeout(
         std::time::Duration::from_secs(15),
-        Command::new(python())
+        command
             .args(["-c", "import stable_whisper, whisper, torch, torchaudio, shutil; assert shutil.which('ffmpeg'); print(True)"])
             .kill_on_drop(true)
             .output(),
@@ -164,6 +206,8 @@ async fn worker(
     .map_err(|e| e.to_string())?;
     let errors = tempfile::tempfile().map_err(|e| e.to_string())?;
     let mut command = Command::new(executable);
+    #[cfg(windows)]
+    command.creation_flags(0x08000000); // CREATE_NO_WINDOW: background worker, not a console app.
     #[cfg(unix)]
     {
         use std::os::unix::process::CommandExt;
@@ -211,6 +255,23 @@ async fn worker(
             libc::kill(-pid, libc::SIGKILL);
         }
     }
+    #[cfg(windows)]
+    if let Some(pid) = child.id().filter(|_| result.is_err()) {
+        // Cancel pip/ffmpeg descendants as well as the owned Python worker.
+        if matches!(child.try_wait(), Ok(None)) {
+            let _ = tokio::time::timeout(
+                std::time::Duration::from_secs(10),
+                Command::new("taskkill.exe")
+                    .args(["/PID", &pid.to_string(), "/T", "/F"])
+                    .creation_flags(0x08000000)
+                    .kill_on_drop(true)
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status(),
+            )
+            .await;
+        }
+    }
     let _ = child.kill().await;
     let _ = child.wait().await;
     result
@@ -221,7 +282,7 @@ pub async fn audio_alignment_model_status(model: String, app: AppHandle) -> Resu
     let (_sender, mut cancel) = oneshot::channel();
     worker(
         "model-status",
-        "python3".into(),
+        python(),
         "setup_alignment.py",
         json!({"action":"model-status","model":model}).to_string(),
         &app,
@@ -245,9 +306,9 @@ pub async fn setup_audio_alignment(
     {
         return Err("Explicit consent and a valid setup action are required".into());
     }
-    if std::env::consts::OS != "linux" {
+    if !cfg!(any(target_os = "linux", windows)) {
         return Err(
-            "Integrated setup currently supports Linux. Basic mode remains available.".into(),
+            "Integrated setup supports Linux and Windows. Basic mode remains available.".into(),
         );
     }
     if action == "install" && std::env::var_os("LRCGET_ALIGN_PYTHON").is_some() {
@@ -280,7 +341,7 @@ async fn setup(
     } else {
         std::env::var_os("XDG_CACHE_HOME")
             .map(PathBuf::from)
-            .or_else(|| std::env::var_os("HOME").map(|home| PathBuf::from(home).join(".cache")))
+            .or_else(|| home().map(|home| home.join(".cache")))
             .ok_or("Cache directory unavailable")?
             .join("whisper")
     };
@@ -295,7 +356,11 @@ async fn setup(
         .map_err(|e| e.to_string())?;
     let result = worker(
         job_id,
-        "python3".into(),
+        if action == "install" {
+            base_python()
+        } else {
+            python()
+        },
         "setup_alignment.py",
         json!({"action":action,"model":model,"confirmed":true,"target":staging.path()}).to_string(),
         app,
@@ -346,6 +411,15 @@ fn remember_setup_prompt(directory: &std::path::Path) -> std::io::Result<bool> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn private_environment_uses_platform_python_layout() {
+        let root = std::path::Path::new("environment");
+        assert_eq!(
+            environment_python(root, true),
+            root.join("Scripts/python.exe")
+        );
+        assert_eq!(environment_python(root, false), root.join("bin/python"));
+    }
     #[test]
     fn setup_question_is_shown_once_per_profile() {
         let profile = tempfile::tempdir().unwrap();

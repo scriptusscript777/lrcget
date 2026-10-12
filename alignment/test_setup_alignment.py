@@ -130,8 +130,32 @@ class SetupTests(unittest.TestCase):
             setup.install_engine(str(Path(directory) / "venv"))
             cpu_command = install.call_args_list[0].args[0]
             self.assertIn("--ignore-installed", cpu_command)
-            self.assertIn(str(Path(directory) / "venv/bin/python"), cpu_command)
+            self.assertIn(
+                str(setup.environment_python(Path(directory) / "venv")), cpu_command
+            )
             self.assertIn("https://download.pytorch.org/whl/cpu", cpu_command)
+
+    def test_private_setup_uses_windows_layout_without_modifying_system_packages(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(setup.sys, "platform", "win32"),
+            patch.object(setup.shutil, "which", return_value="ffmpeg.exe"),
+            patch.object(
+                setup.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(free=8 * 1024**3),
+            ),
+            patch.object(setup.venv.EnvBuilder, "create"),
+            patch.object(
+                setup.subprocess, "run", return_value=SimpleNamespace(returncode=1)
+            ),
+            patch.object(setup, "run_checked") as install,
+        ):
+            target = Path(directory) / "private"
+            self.assertTrue(setup.install_engine(target)["ready"])
+            for call in install.call_args_list:
+                self.assertEqual(call.args[0][0], str(target / "Scripts/python.exe"))
+            self.assertIn("--ignore-installed", install.call_args_list[0].args[0])
 
     def test_missing_venv_returns_prerequisite_error_before_package_install(self):
         with (

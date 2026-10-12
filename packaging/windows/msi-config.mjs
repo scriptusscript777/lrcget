@@ -21,6 +21,7 @@ export function msiVersion(version) {
 export function windowsConfig(version) {
   return {
     bundle: {
+      publisher: 'Rick Lidgett (LRCGET fork)',
       windows: {
         wix: { version: msiVersion(version), upgradeCode, language: 'en-US' },
         webviewInstallMode: { type: 'embedBootstrapper' },

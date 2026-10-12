@@ -549,3 +549,17 @@ stable, never moving original skipped rows; invalid original overlaps still
 require correction. Apply requires explicit preview replacement confirmation for
 existing sentence ranges, snapshots remain guarded, and one history/recovery
 update supports Undo/Redo. No native API/model changes or automatic Save.
+
+
+Platform packaging resumed for AppImage and build-only Windows MSI validation.
+Alignment setup uses platform-specific private Python paths; Windows discovers
+standard per-user Python installations or python.exe on PATH. Cache status uses
+the selected available interpreter. Worker console windows are hidden, and an
+error/cancellation terminates the owned Windows process tree with a bounded
+native taskkill call before staging cleanup. Linux paths/process groups remain
+compatible. Python setup accepts Linux/Windows, preserves consent/version/space/
+FFmpeg checks, and creates Scripts/python.exe environments on Windows. Model
+checks/downloads remain local/explicit. No system prerequisite installation is
+implied. Windows packaging tests scan installer/payload, verify publisher/GUID/
+version, install/repair/launch/uninstall only on disposable runners. Public
+GitHub release and creator notification remain held independently from CI builds.
