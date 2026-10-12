@@ -43,8 +43,8 @@ and does not supply the native backend. Never use a real music profile for
 destructive automated testing. See the architecture documents and `AGENTS.md`
 for repository conventions.
 
-AppImage and Windows updates/builds are deferred at Rick’s request. The current
-2.2.7 artifact is Debian only; older platform packages do not contain these fixes.
+AppImage and Windows MSI builds resumed at Rick’s request on 2026-10-12. The current
+2.2.7 release includes Debian, AppImage and a Windows MSI beta from the reviewed runtime source.
 
 ## Windows x64
 

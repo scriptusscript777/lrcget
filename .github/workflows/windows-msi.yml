@@ -2,9 +2,16 @@ name: Build and check Windows MSI
 
 on:
   workflow_dispatch:
+    inputs:
+      sign_msi:
+        description: 'Request approved SignPath signing (requires configured Foundation project)'
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   windows-msi:
@@ -57,6 +64,59 @@ jobs:
       - name: Check MSI installation and removal
         shell: pwsh
         run: ./packaging/windows/check-msi.ps1 -PackageDirectory "$env:GITHUB_WORKSPACE/packages"
+      - name: Validate optional SignPath settings
+        if: ${{ inputs.sign_msi }}
+        shell: pwsh
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          SIGNPATH_ARTIFACT_CONFIGURATION_SLUG: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+        run: |
+          foreach ($name in @('SIGNPATH_API_TOKEN', 'SIGNPATH_ORGANIZATION_ID', 'SIGNPATH_PROJECT_SLUG', 'SIGNPATH_SIGNING_POLICY_SLUG', 'SIGNPATH_ARTIFACT_CONFIGURATION_SLUG')) {
+            if (-not [Environment]::GetEnvironmentVariable($name)) { throw "Missing $name. See docs/code-signing.md; signing requires approval and configuration." }
+          }
+          $version = (Get-Content src-tauri/Cargo.toml | Select-String '^version\s*=\s*"([^"]+)"').Matches[0].Groups[1].Value
+          "app_version=$version" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+      - name: Upload verified unsigned MSI for SignPath
+        id: unsigned-msi
+        if: ${{ inputs.sign_msi }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-msi-signing-input
+          path: packages/*.msi
+          if-no-files-found: error
+      - name: Request SignPath signing
+        if: ${{ inputs.sign_msi }}
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          github-artifact-id: ${{ steps.unsigned-msi.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-packages
+          parameters: |
+            version: ${{ toJSON(env.app_version) }}
+      - name: Recompute signed checksums and require valid signatures
+        if: ${{ inputs.sign_msi }}
+        shell: pwsh
+        run: |
+          $packages = @(Get-ChildItem signed-packages -Filter '*.msi' -File -Recurse)
+          if ($packages.Count -ne 1) { throw 'Expected exactly one SignPath-signed MSI.' }
+          $package = $packages[0]
+          $hash = (Get-FileHash $package.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          [IO.File]::WriteAllText("$($package.FullName).sha256", "$hash  $($package.Name)`n", [Text.UTF8Encoding]::new($false))
+          ./packaging/windows/check-msi.ps1 -PackageDirectory $package.DirectoryName -RequireSignature
+      - uses: actions/upload-artifact@v4
+        if: ${{ success() && inputs.sign_msi }}
+        with:
+          name: windows-msi-signed-results
+          path: signed-packages/
+          if-no-files-found: error
       - uses: actions/upload-artifact@v4
         if: always()
         with:

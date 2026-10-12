@@ -7,7 +7,7 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 
 | Build                               | Build host and command                                                                   | Status and limitations                                                                                                                                                                                                                                                                        |
 | ----------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Debian x64                          | Linux: `npm run tauri -- build --bundles deb`                                            | Current Debian-only 2.2.7 build on this Mint PC; see package/review installation status. Package `lrcget` upgrades in place. Current build requires glibc 2.39+. Other Debian desktops are not all verified.                                                                                                                                      |
+| Debian x64                          | Linux: `npm run tauri -- build --bundles deb`                                            | Current 2.2.7 Debian build on this Mint PC; see package/review installation status. Package `lrcget` upgrades in place. Current build requires glibc 2.39+. Other Debian desktops are not all verified.                                                                                                                                      |
 | AppImage x64                        | Linux: `npm run tauri -- build --bundles appimage`                                       | Built, checksum verified and native startup tested in a temporary profile. Linux x64, glibc 2.39+. FUSE 2 or extract-and-run required. Not a universal build for older Linux releases.                                                                                                        |
 | Windows MSI x64                     | Windows with MSVC/SDK: `./packaging/windows/build-msi.ps1`                               | Native build/test workflow provided. See package status for actual results. Fixed upgrade identity, three-field version mapping, unsigned package unless signing configured. WebView2 bootstrapper may download the runtime. Windows 11 desktop/older-version upgrade checks remain separate. |
 | Windows NSIS x64                    | Windows with MSVC/SDK: `npm run tauri -- build --bundles nsis`                           | Alternative `.exe` installer target; not built/tested for this release. Do not assume its upgrade/version behavior equals the reviewed MSI overlay.                                                                                                                                           |
@@ -16,8 +16,10 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 | Linux/Windows ARM or Windows 32-bit | Appropriate native/cross toolchain and explicit Rust target                              | Not provided or verified for this release. x64 installers do not establish native ARM/32-bit compatibility.                                                                                                                                                                                   |
 | Linux development                   | `npm run tauri dev`                                                                      | Native debug app; not a redistributable installer. `npm run dev` alone is only the frontend server.                                                                                                                                                                                           |
 
-AppImage and Windows changes/builds are deferred until Rick requests them.
-Older artifacts remain available but do not include 2.2.7 fixes.
+AppImage and Windows MSI builds resumed on 2026-10-12. Current tests/artifacts
+are recorded in [packages](packages.md). Current package/documentation publication
+and developer notification are authorized. Historical artifacts do not include
+current 2.2.7 fixes.
 
 ## MSI and Linux cross tools
 
@@ -51,10 +53,11 @@ was stored; missing cross tools were installed in the user profile where possibl
 - The editor imports TXT, LRC and ELRC. Inline enhanced tags inside .lrc files
   are recognized too. Nonzero offsets, ambiguous repeated line tags with absolute
   word times, malformed ranges and out-of-order enhanced rows report an error.
-  Automatic .elrc library scanning is not added. A standard LRC can retain line
+  Startup/F5 recognizes matching valid ELRC before ordinary LRC/TXT for eligible unedited tracks. A standard LRC can retain line
   gaps with blank cues but cannot retain every word end; use ELRC or the internal
   document for word timing.
-- Timing is manual. Loop audition uses approximately 40 ms player notifications.
+- Timing may be manual, estimated or optional audio-aligned; model proposals
+  require listening review. Loop audition uses bounded native playback ranges.
   Saved millisecond resolution does not imply sample-accurate loop boundaries.
 - Save/export/publish are distinct. Publishing needs the configured LRCLIB service
   and network; it does not upload ELRC sidecars. Failed targets can coexist with

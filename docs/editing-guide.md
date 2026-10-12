@@ -73,7 +73,8 @@ ambiguous repeated line tags with absolute word times need correction first.
 ![Dark theme: confirmation before replacing lyrics](screenshots/current/lyrics-import-dark.png)
 
 You need the corresponding audio recording to listen and set timings. LRCGET
-does not run Whisper/Demucs or automatically align plain text to singing.
+does not require AI. Optional Align sentences/Align words uses local
+Whisper/stable-ts to propose timing from audio after consent; review before applying.
 
 ![Untimed imported text has no confirmed waveform markers](screenshots/current/overlap-untimed-dark.png)
 
@@ -334,7 +335,8 @@ For missing words, correct the trusted text manually. For a wrong recording,
 choose the right audio before timing. For lyrics that do not appear in a player,
 check that you exported LRC/embedded lyrics rather than only pressing Save,
 and that the player supports the format. This app does not automatically detect
-lead vocals, guarantee exact lip sync or run Whisper/Demucs.
+lead vocals or guarantee exact lip sync. Optional local Whisper/stable-ts alignment
+provides reviewable proposals; Demucs is not required.
 
 ## Current Views
 
@@ -525,7 +527,7 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
    word starts and the same playback clock as the sentence timeline. Live word
    timing edits update both views immediately; no Sync or Save is needed to see
    an accepted boundary adjustment. Boxes can stay collapsed; resizing is unnecessary.
-3. **Follow Lyrics** is enabled when you turn on the preview. It follows the playing
+3. **Follow Lyrics** retains its current on/off choice when you open the preview. It follows the playing
    sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
    when you want to continue through the song.
 4. Turn on **Loop selected phrase** to repeat that phrase. The preview follows

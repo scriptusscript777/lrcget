@@ -146,3 +146,17 @@ Current `estimated-elrc-confirmation-light.png` / `-dark.png` show the explicit
 estimate count and acceptance/Cancel choices. `estimated-elrc-accepted-light.png`
 / `-dark.png` show mixed manual and accepted word timing, green status dots, and
 the word preview. Captured from the actual Vue editor with temporary test data.
+
+
+## Release publication refresh — 2026-10-12, version 2.2.7
+
+The current runtime was recaptured in both themes: editor-default/editor-follow,
+word-timing-zoom, point-zoom, waveform-navigation/follow, export-options,
+lyrics-import and untimed-text (18 images). Automatic alignment controls, previews,
+skips, setup/model consent and sentence-alignment toolbar/preview were refreshed
+using isolated mocked native commands. Checks passed toolbar order, model readability,
+cancellation/stale results, manual timing protection, skipped rows, one-step
+Undo/Redo and ELRC save behavior. Debian/AppImage startup images use actual latest
+packaged executables and separate temporary XDG/Xvfb profiles. Earlier unchanged
+views retain the historical provenance above. No personal audio/library was used
+or overwritten by the screenshot capture.

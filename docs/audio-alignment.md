@@ -1,7 +1,8 @@
 # Basic editing and optional Automatic audio alignment
 
-Version remains **2.2.7**. Debian is the active supported build; Windows/AppImage
-updates remain on hold.
+Version remains **2.2.7**. Debian, AppImage and Windows MSI builds now use the
+current source; see [package status](packages.md) for actual validation and
+platform limitations. Current release publication is authorized; packages remain unsigned.
 
 ## Basic mode — no AI engine required
 
@@ -85,8 +86,8 @@ becomes active. Cancellation/failure preserves any previous working environment.
 Verified prior managed environments are retained for recovery; external Python
 installations and other apps' files are never removed.
 
-This private package installer currently requires **Linux with Python 3.10–3.12,
-venv and ffmpeg already available**. It checks version, ffmpeg, space, package
+The private package installer requires **Python 3.10–3.12, pip/venv and FFmpeg
+already available** on Linux or Windows. It checks version, ffmpeg, space, package
 imports and torch/torchaudio compatibility. Missing OS prerequisites need the
 system package manager and administrator authentication; the application does
 not silently install privileged system packages. On Debian/Mint, when needed:
@@ -137,14 +138,12 @@ lyrics or download approval; consent is specific to each explicit operation.
 | Build                 | Optional dependency setup status and requirements                                                                                                                                                                                                                                                                                                                                                                                           |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Debian/Mint           | Private engine installer, one-time prompt, separate verified model download, progress/cancel and Basic fallback implemented. Administrator installs missing Python/venv/ffmpeg through apt. Tested in a fresh private environment reusing compatible existing libraries; a completely clean 1–2 GB CPU dependency download was not exercised.                                                                                               |
-| AppImage (held)       | Keep Basic usable without AI. Before resuming release builds, validate host Python/version/venv, ffmpeg availability, private writable paths and read-only bundle execution. Do not assume an AppImage supplies Python or CUDA.                                                                                                                                                                                                             |
-| Windows 11 MSI (held) | Before implementing, provide a trusted Python/venv and ffmpeg provisioning path with license/source/checksum checks, per-user writable storage, Windows child-process cancellation and model verification. Account for permissions, locked files, PATH/architecture issues, TLS/network failures, Defender and security policies. Test install/upgrade/uninstall and actual Windows 11 launch; Linux/Wine does not establish these results. |
+| AppImage | Uses the Linux private engine on the host. Packaged startup passed in an isolated profile. System Python/venv/FFmpeg and large optional dependencies/models are not bundled; a completely fresh setup inside AppImage is not yet tested. |
+| Windows x64 MSI beta | Private per-user Scripts/python.exe layout, prerequisite detection, consent and worker cancellation are implemented. Windows CI build/install/launch/scan passed; full optional dependency/model installation and singing alignment on a Windows 11 desktop remain untested. |
 
-Future platform setup should use the same single-question/Install-button behavior
-and separate model consent. No Windows/AppImage binaries are updated by this Debian
-change. CUDA reuse is supported when compatible libraries/drivers exist, but the
-managed fresh installation chooses CPU wheels and does not install GPU drivers.
-Singing alignment still needs review regardless of platform.
+CUDA reuse is supported when compatible libraries/drivers exist. Managed fresh
+installation chooses CPU wheels and does not install GPU drivers. Singing
+alignment still needs review regardless of platform.
 
 Language codes and alignment API behavior follow the
 [stable-ts documentation](https://github.com/jianfch/stable-ts).
@@ -166,9 +165,9 @@ available; no additional installation is triggered by this notification failure.
 ![Progress notification fallback, dark](screenshots/current/audio-alignment-progress-unavailable-dark.png)
 
 These Debian checks do not establish Windows or AppImage installation success.
-Those builds require their own platform-specific failure and installer tests when
-work on them resumes, including administrator/security restrictions and safe
-recovery from interrupted setup.
+Windows installer/security checks have now passed; full optional engine installation
+and singing alignment still need target-platform testing, including permissions,
+security restrictions and interrupted setup.
 
 ### Full-song MP3 validation and skipped sentences
 
@@ -233,3 +232,13 @@ word timing. Models cannot guarantee accurate singing alignment; listen first.
 ![Sentence alignment toolbar, dark](screenshots/current/sentence-alignment-toolbar-dark.png)
 ![Sentence replacement preview, light](screenshots/current/sentence-alignment-preview-light.png)
 ![Sentence replacement preview, dark](screenshots/current/sentence-alignment-preview-dark.png)
+
+
+Windows optional installation uses the same once-only consent, with a private
+`Scripts/python.exe` environment. Python 3.10–3.12 (pip/venv) and FFmpeg must
+already be installed; the MSI does not bundle these optional prerequisites or
+large models. Standard per-user Python folders are detected; other installations
+need Python on PATH or an explicit existing engine path. Linux AppImage uses the
+same optional environment as Debian under the current user, independent of where
+the portable executable is placed. [Windows setup](../packaging/windows/README.md)
+describes paths, download consent, cancellation and security limitations.

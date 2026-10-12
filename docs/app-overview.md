@@ -173,19 +173,19 @@ successfully exported; inspect the result before retrying.
 
 For implementation notes and version-by-version changes, read
 [LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.7.md).
-Current images use demonstration fixtures, not personal recordings. New help/settings
-captures show 2.2.4; unchanged views retain the freshly captured 2.2.2 images.
+Current images use demonstration fixtures, not personal recordings. Current editor
+and alignment captures were refreshed from 2.2.7; unchanged views retain dated provenance.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 
 ## Scope and Verification
 
 This fork's current packages are Linux amd64 Debian/AppImage; see
-[package instructions](packages.md). The Windows MSI build is prepared and awaits
-successful native validation before publication. Historical upstream
+[package instructions](packages.md). The Windows MSI beta passed native Windows
+Server build, installation, launch and Defender checks; Windows 11 desktop testing remains separate. Historical upstream
 Windows/macOS download links are not installers for these modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
-YouTube-download, Whisper, WhisperX or Demucs pipelines.
+YouTube-download, WhisperX or Demucs pipelines. Its optional local alignment uses Whisper/stable-ts.
 
 Current checks are recorded in the [2.2.7 review](reviews/2.2.7.md).
 Browser checks cover timing drags, fixed sentence markers, zoom, Undo/Redo,
@@ -285,8 +285,8 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
    word starts and the same playback clock as the sentence timeline. Live word
    timing edits update both views immediately; no Sync or Save is needed to see
    an accepted boundary adjustment. Boxes can stay collapsed; resizing is unnecessary.
-3. **Follow Lyrics** is enabled when you turn on the preview. It follows the playing
-   sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
+3. **Follow Lyrics** retains its current on/off choice when you open the preview.
+   When on, it follows the playing sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
    when you want to continue through the song.
 4. Turn on **Loop selected phrase** to repeat that phrase. The preview follows
    every rewind, and Loop remains enabled until you turn it off. Lead-in, tail,
@@ -294,10 +294,9 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
 5. Turn off Word preview to hide it. No timestamps change and nothing is saved or
    exported by this toggle. Preview state lasts for this editor session.
 
-Like the sentence timeline, Word preview holds the current word highlight until
-the next timed word starts, then clears at the sentence end (including waveform
-marker previews). Word end values remain unchanged for timing edits, looping and
-export. Actual word starts are used even when the sentence end is inferred from
+Like the sentence timeline, Word preview clears at an explicit word end and
+leaves silence unhighlighted. Without an end, it uses the next word start or
+sentence end (including waveform previews). Word ends remain unchanged by viewing. Actual word starts are used even when the sentence end is inferred from
 the next sentence. Partial timing keeps existing starts; untimed words stay
 unhighlighted. With no word timing, preview labels its evenly spaced estimate;
 it cannot infer actual singing.

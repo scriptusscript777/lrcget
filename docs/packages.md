@@ -1,67 +1,92 @@
-# Local packages — 2.2.7
+# Packages and installation — 2.2.7
 
-All current features are from the reviewed local version. Final GitHub publishing
-and creator notification follow validation and the local backup. Historical upstream Windows/macOS links
-are different releases and do not include Rick's local changes.
+[Current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1) contains the current Debian, AppImage, Windows MSI beta,
+checksums and source archives with documentation/images. These are independent
+fork builds. Original upstream releases contain different code.
 
-## Linux Debian package
+## Verify downloads
 
-`LRCGET_2.2.7_amd64.deb` and its `.sha256` file are in Downloads.
-It upgrades the existing `lrcget` amd64 package and retains `net.lrclib.lrcget`
-data. Installed version remains 2.2.6+local.10 because automatic installation requires
-administrator authentication. Close the app before upgrading; see the command in the
-[2.2.7 review](reviews/2.2.7.md).
+Download the selected package and its adjacent `.sha256` file into the same folder.
+On Linux run `sha256sum -c PACKAGE.sha256` with the actual filename. On Windows:
 
-AppImage and Windows updates are deferred at Rick's request. The packages below
-are older local.9/local.8 artifacts and do not contain the latest Debian word-timing fixes.
-
-## Linux AppImage
-
-`LRCGET_2.2.6+local.9_amd64.AppImage` is a portable x86-64 Linux package. It uses
-the same app identifier/data as the Debian install; it does not add a second
-Debian package. Run one version at a time. Download/checksum files are kept in
-Downloads and the local server's installer backup.
-
-```bash
-sha256sum -c LRCGET_2.2.6+local.9_amd64.AppImage.sha256
-chmod +x LRCGET_2.2.6+local.9_amd64.AppImage
-./LRCGET_2.2.6+local.9_amd64.AppImage
+```powershell
+Get-FileHash .\LRCGET_2.2.7_x64_en-US.msi -Algorithm SHA256
+Get-Content .\LRCGET_2.2.7_x64_en-US.msi.sha256
 ```
 
-If the host lacks FUSE 2, use `./LRCGET_2.2.6+local.9_amd64.AppImage --appimage-extract-and-run`.
-This build uses the current Mint 22 / Ubuntu 24.04 toolchain and requires glibc
-2.39 or newer. Bundling does not make it compatible with older glibc releases.
-Other distributions need a compatible graphical desktop and runtime baseline;
-Startup was smoke-tested on this Linux PC using an isolated Xvfb desktop and
-temporary profile. The Select directories screen rendered, and schema 21 was
-created under that temporary profile. This does not claim testing on other
-distributions.
+Compare the complete hash. Checksums detect changed downloads; they are not digital
+publisher signatures. All three packages are currently unsigned.
 
-![AppImage startup with temporary profile](screenshots/current/appimage-startup.png)
+## Debian amd64
 
-## Windows 11 MSI
+Close the application, then:
 
-An earlier local.8 native Windows MSI was built by the manual workflow. Backend validation found
-a missing FFmpeg test dependency and a Linux-specific test assertion; these are
-corrected locally and await Windows revalidation. The supported build instructions
-and version/upgrade logic are in [packaging/windows](../packaging/windows/README.md).
-`LRCGET_2.2.6+local.9_windows-source.zip` supplies the older local.9 source plus the build
-script; it is a source archive, not an installer.
+```bash
+sha256sum -c LRCGET_2.2.7_amd64.deb.sha256
+sudo apt install ./LRCGET_2.2.7_amd64.deb
+```
 
-The first MSI is a diagnostic artifact, not a validated release download. Windows
-installation checks and native revalidation must pass before distribution. Windows
-11 interactive playback and older-version upgrades remain unverified.
+For an already installed 2.2.7 maintenance build use
+`sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb`.
+It retains package `lrcget`, architecture amd64 and app identity `net.lrclib.lrcget`.
+The release upload does not automatically reinstall the local application.
+Requires glibc 2.39+, GTK 3 and WebKitGTK 4.1: Mint 22 / Ubuntu 24.04 baseline.
+Other Debian-based desktops and ARM are not automatically compatible.
+Uninstall the program with `sudo apt remove lrcget`; user data is kept separately.
 
-See [building from source](build-from-source.md) for Linux/Windows prerequisites,
-locked builds, tests and application identity.
+![Packaged Debian startup with isolated profile](screenshots/current/debian-startup.png)
 
-See the [all-platform build matrix and limitations](platform-builds.md) and
-[complete code/maintenance guide](developer-guide.md).
+## AppImage x64
 
-## Same-version Debian maintenance build
+```bash
+sha256sum -c LRCGET_2.2.7_amd64.AppImage.sha256
+chmod +x LRCGET_2.2.7_amd64.AppImage
+./LRCGET_2.2.7_amd64.AppImage
+```
 
-The recovery changes keep version 2.2.7 at Rick's request. Prior Downloads
-artifacts are preserved under dated backup names before replacing the current
-installer and source archives. Use `sudo apt install --reinstall` with the current
-Debian file to replace an already-installed 2.2.7. AppImage and Windows artifacts
-remain older builds and do not contain recovery. See [recovery](recovery.md).
+Without FUSE 2 run
+`./LRCGET_2.2.7_amd64.AppImage --appimage-extract-and-run`.
+The current build requires glibc 2.39+ and a compatible Linux x64 graphical/audio
+runtime. Bundling does not remove the glibc baseline. AppImage shares the same user
+profile as Debian: run one version at a time. Remove the portable executable to
+remove the program; it does not automatically erase lyrics/profile data.
+
+![Packaged AppImage startup with isolated profile](screenshots/current/appimage-startup.png)
+
+## Windows x64 MSI beta
+
+Download `LRCGET_2.2.7_x64_en-US.msi`, verify the checksum, close an existing LRCGET
+instance, and open the installer. Follow Windows installation prompts. Uninstall
+through Settings → Apps → Installed apps → LRCGET. Keep backups before upgrades.
+The WebView2 bootstrapper is bundled; a missing runtime may need network access.
+
+Application version is 2.2.7; MSI version is 2.2.7000. Publisher metadata is
+Rick Lidgett (LRCGET fork), product is LRCGET, and upgrade GUID remains fixed.
+This is unsigned metadata, not a verified digital publisher identity.
+Windows Server 2025 CI passed install, repair reinstall, visible app launch,
+uninstall and Microsoft Defender scans of both MSI and installed payload.
+Windows 11 interactive audio/editing, optional alignment setup and upgrades from
+older Windows installers remain unverified. SmartScreen or Smart App Control can
+warn/block unsigned builds. [Signing policy](code-signing.md) explains pending setup.
+
+## Optional automatic alignment
+
+Basic editing, word estimates and manual sync work without AI. Optional sentence/
+word audio alignment needs Python 3.10–3.12 with pip/venv and FFmpeg already available.
+An explicit setup installs private pinned PyTorch/Whisper/stable-ts packages; models
+need separate consent. The AppImage/MSI does not bundle these large packages/models.
+See [alignment setup and failure recovery](audio-alignment.md) and
+[Windows prerequisites](../packaging/windows/README.md).
+
+## Verification scope
+
+Runtime packages were built from source commit `a7a8e1c`; final documentation/signing
+preparation is included in the release source archives. Linux passed 558 frontend,
+88 native (two optional fixtures ignored), 18 Python tests, Ruff/scoped ESLint/Cargo
+check and three MSI config checks. Debian/AppImage startup used isolated Xvfb profiles.
+Windows passed 558 frontend and 86 native tests (two ignored), setup tests/Ruff and
+installer/security checks. [Successful Windows run](https://github.com/scriptusscript777/lrcget/actions/runs/38296288986).
+These tests do not establish all OS/player/recording compatibility.
+
+[Source builds](build-from-source.md) · [Platform matrix](platform-builds.md) ·
+[Illustrated how-tos](how-to.md) · [Developer guide](developer-guide.md)

@@ -164,3 +164,11 @@ Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
 Synced toolbar order is Word preview → Align sentences → Align words; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).
+
+
+Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
+Optional alignment setup now understands Windows private Python environments;
+Basic features remain independent of AI requirements. Windows build-only CI
+checks actual MSI identity, Defender availability/definitions and MSI/payload
+scans, install/repair/launch/uninstall. Current packages, checksums, source and illustrated guides are published in the
+2.2.7 release. Check package/platform guides for validation scope and signing limitations.

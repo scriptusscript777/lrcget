@@ -1,9 +1,8 @@
 # Windows 11 x64 MSI build
 
 This folder builds the reviewed local LRCGET source into a Windows MSI. The MSI
-has been built on the native Windows runner. The first backend test run exposed
-missing FFmpeg and a Linux-specific test assertion; corrected setup awaits
-Windows revalidation before distribution. Windows 11 desktop tests remain
+was built and validated on the native Windows Server 2025 runner. Earlier missing
+FFmpeg/test-platform issues were corrected; current tests and installer checks passed. Windows 11 desktop tests remain
 required. Tauri’s supported MSI/WiX toolchain requires Windows.
 
 On a Windows 11 x64 PC, install Node.js 22 LTS, Rust (MSVC stable), and Microsoft
@@ -63,8 +62,8 @@ rather than claiming those Linux tools alone validate this Tauri app.
 
 ## Current 2.2.7 platform validation
 
-Windows packaging is resumed for a build-only temporary branch. Public releases
-and creator notifications remain held. The workflow now checks the MSI's actual
+The unsigned Windows MSI beta is published with validation logs linked from the
+release. Developer notification is authorized after all package/documentation updates. The workflow now checks the MSI's actual
 publisher/version/upgrade GUID, fresh-enough Defender definitions, custom scans
 of the installer and installed payload, installation, repair reinstall, visible
 app launch, and uninstallation. Diagnostics are uploaded even on failure; a
@@ -85,3 +84,6 @@ estimates, sentence/word manual synchronization and export require no AI setup.
 The workflow tests consent/integrity and Windows environment layout without
 large model/package downloads; full Windows singing alignment remains a
 separate desktop test after installing optional dependencies.
+
+
+See [Code signing policy](../../docs/code-signing.md) and [privacy](../../docs/privacy.md) for pending SignPath setup and network behavior.

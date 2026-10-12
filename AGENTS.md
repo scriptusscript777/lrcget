@@ -53,7 +53,8 @@ Do not change application/release version numbers unless Rick explicitly asks.
 Rick requested this freeze on 2026-10-11, superseding automatic version increments.
 Continue the remaining maintenance steps for each code update: logic/bug review,
 appropriate checks, documentation/screenshots, Debian builds and local Git/server
-backups. Existing GitHub, Windows and AppImage holds remain in effect.
+backups. Rick authorized current Debian/AppImage/MSI, source, illustrated guides
+and developer notification publication on 2026-10-12.
 When Rick requests a version bump, advance the main version, not `+local.xx`.
 Rick prefers decimal carry: 2.2.1 through 2.2.9, then 2.3.0; 2.9.9 advances to
 3.0.0. Preserve existing historical artifact names and package/application identity.
@@ -89,8 +90,10 @@ is not needed.
 
 ### Current platform focus
 
-Rick explicitly deferred all AppImage and Windows builds/updates until he asks
-to resume them. Current fixes target the Debian package only. When Windows work
+Rick resumed AppImage and Windows MSI builds on 2026-10-12. Build-only GitHub
+Actions MSI validation passed. Rick authorized publication of the current
+Debian/AppImage/MSI beta, docs/images/how-tos and original-developer notification. Current Debian remains included and version stays
+2.2.7 until Rick explicitly changes it. When Windows work
 resumes, include Defender definition/availability checks and scans of the MSI
 and payload, isolated installed-app launch checks, publisher/version/upgrade
 identity inspection and diagnostics. Signing and Windows 11 desktop validation

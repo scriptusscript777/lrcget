@@ -31,14 +31,15 @@ and [troubleshooting guide](troubleshooting.md).
 LRCGET finds lyrics through LRCLIB and helps you manually synchronize them to
 your recording. This fork adds waveform navigation, preview-and-confirm markers,
 word editing, improved embedding, refresh controls and saved modification dates.
-It does not automatically identify singing, run Whisper/Demucs, or guarantee
-perfect synchronization or lyric display on every player.
+Basic editing requires no AI. Optional local Whisper/stable-ts alignment proposes
+sentence/word timing after consent; it does not guarantee perfect singing timing
+or lyric display on every player. WhisperX and Demucs are not required.
 
 ![Zoomed waveform following playback in light mode](screenshots/current/waveform-follow-light.png)
 
-Screenshots use temporary fixture lyrics and waveform data. Word-loop and embedding
-views were recaptured from 2.2.6+local.8; the screenshot index identifies older
-unchanged views.
+Screenshots use temporary fixture lyrics and waveform data. Current editor/alignment
+views were refreshed from 2.2.7; the screenshot index identifies capture dates and
+older unchanged views.
 The guides describe the current build; historical release notes describe their
 own versions, including behavior since changed.
 
@@ -77,3 +78,6 @@ word times are protected unless explicitly replaced; sentence bounds and text
 remain intact. Complete applied timing saves ELRC without another estimate prompt.
 See the [illustrated audio alignment guide](audio-alignment.md) for setup and
 limitations. Singing alignment requires review; confidence is only a hint.
+
+
+See [Code signing policy](code-signing.md) and [privacy](privacy.md) for pending SignPath setup and network behavior.

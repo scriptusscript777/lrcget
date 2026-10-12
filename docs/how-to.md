@@ -5,8 +5,8 @@ For Rick Lidgett's LRCGET **2.2.7**.
 
 ## Install or Upgrade
 
-1. Use the current `.deb` and checksum in Downloads. The 2.2.7 GitHub release
-   remains unpublished until validation and the backup are complete.
+1. Download the current `.deb` and checksum from the
+   [2.2.7 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1).
    See [all package and source instructions](packages.md) for AppImage and Windows.
 2. Close LRCGET. In the directory containing the download, run:
 
@@ -18,8 +18,8 @@ sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb
 3. Reopen LRCGET and let its startup scan finish.
 
 The package upgrades the existing installed application, not a second copy.
-This fork release supplies Linux amd64; upstream installers for other platforms
-do not contain these enhancements.
+This fork release supplies Debian amd64, AppImage x64 and an unsigned Windows x64
+MSI beta. Follow the package guide for compatibility and Windows installation.
 
 ## Add Music and Refresh the Library
 
@@ -392,7 +392,7 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
    word starts and the same playback clock as the sentence timeline. Live word
    timing edits update both views immediately; no Sync or Save is needed to see
    an accepted boundary adjustment. Boxes can stay collapsed; resizing is unnecessary.
-3. **Follow Lyrics** is enabled when you turn on the preview. It follows the playing
+3. **Follow Lyrics** retains its current on/off choice when you open the preview. It follows the playing
    sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
    when you want to continue through the song.
 4. Turn on **Loop selected phrase** to repeat that phrase. The preview follows
@@ -488,8 +488,8 @@ Loop selection, context and zoom are listening aids, not exported lyric events.
 ## Sync Every Word in a Sentence in One Continuous Pass
 
 This is manual timing: one press per word, not automatic singing recognition.
-The existing Sync word action advances through boundaries; no separate
-one-click sentence alignment mode has been added.
+The existing Sync word action advances through boundaries. For optional audio-derived
+proposals instead, use Align sentences/Align words and review before applying.
 
 1. Set the sentence start/end first, then expand **Word timing**.
 2. Turn **Loop word** and phrase **Loop** off so audio continues through the sentence.
@@ -647,3 +647,11 @@ explicit confirmation before replacing existing timestamps. Text/gap cues stay
 intact; existing word timings shift with their sentence, and conflicting rows
 are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
 illustrated audio-alignment guide for the full workflow and limitations.
+
+
+Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
+Optional alignment setup now understands Windows private Python environments;
+Basic features remain independent of AI requirements. Windows build-only CI
+checks actual MSI identity, Defender availability/definitions and MSI/payload
+scans, install/repair/launch/uninstall. Current packages, checksums, source and illustrated guides are published in the
+2.2.7 release. Check package/platform guides for validation scope and signing limitations.

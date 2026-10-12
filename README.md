@@ -1,174 +1,89 @@
-# LRCGET
+# LRCGET — Rick Lidgett's Enhanced Build
 
-Utility for mass-downloading LRC synced lyrics for your offline music library.
+An independent MIT-licensed fork of [LRCGET](https://github.com/tranxuanthang/lrcget),
+maintained by [Rick Lidgett](https://github.com/scriptusscript777). Original authors,
+copyright notices and license remain credited. Application version stays **2.2.7**.
 
-## Rick Lidgett's Enhanced Build
+## Downloads and installation
 
-Editing enhancements and local maintenance by **Rick Lidgett**
-([@scriptusscript777](https://github.com/scriptusscript777)).
-The original LRCGET project and its authors retain their existing credits.
+[Current 2.2.7 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1) includes Linux Debian amd64, Linux AppImage x64,
+and an unsigned Windows x64 MSI beta, each with a SHA256 checksum. Source ZIP and
+tar.gz archives include the code, illustrated documentation and build scripts.
 
-Word timing provides adjacent **Loop word** and **Loop sentence** controls,
-precise Start/End editing, padding and readable zoomed labels.
-See [word-loop instructions](docs/how-to.md#loop-one-word-for-precise-timing).
+| Package | Install or run | Compatibility |
+| --- | --- | --- |
+| [Debian](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.7-windows-beta.1/LRCGET_2.2.7_amd64.deb) | `sudo apt install ./LRCGET_2.2.7_amd64.deb` | Mint 22 / Ubuntu 24.04 baseline, glibc 2.39+; upgrades package `lrcget` |
+| [AppImage](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.7-windows-beta.1/LRCGET_2.2.7_amd64.AppImage) | `chmod +x LRCGET_2.2.7_amd64.AppImage`, then run it | Linux x64, glibc 2.39+; FUSE 2 or `--appimage-extract-and-run` |
+| [Windows MSI beta](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.7-windows-beta.1/LRCGET_2.2.7_x64_en-US.msi) | Open the MSI and follow installation prompts | Windows x64; WebView2; unsigned, Windows Server CI tested |
 
-Optional Enhanced LRC (`.elrc`) can now be exported alongside TXT and standard LRC.
-Select it under Save → file types; your choice is remembered until you change it.
-See the [illustrated export guide](docs/how-to.md#export-word-timing-as-enhanced-lrc).
+Already using Debian version 2.2.7? Close LRCGET and use
+`sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb` for this maintenance build.
+AppImage and Debian use the same profile; run one version at a time.
+Windows 11 interactive playback, optional engine setup and older-version upgrades
+still need desktop testing. See [package instructions and checks](docs/packages.md)
+and [platform limitations](docs/platform-builds.md). No current macOS/RPM/ARM fork
+packages are provided. Historical upstream downloads below are separate releases.
 
-Read-only **Word preview** follows playback/Loop without resizing timing boxes.
-MP3 embedding supports standard USLT/SYLT plus optional ELRC text and word timing;
-see the [embedding and preview guide](docs/how-to.md#embed-standard-and-enhanced-lyrics-in-mp3).
+## Features and illustrated how-tos
 
-**Version 2.2.7 (local update)** adds waveform and lyric-editing tools, safer exports,
-and startup/F5 library refresh. This is an independent fork release, not an
-official upstream release. GitHub publication of 2.2.6 is paused; its installer
-is available locally in Rick’s Downloads folder.
+- Download lyrics from the configured LRCLIB-compatible server; recognize actual
+  word timing and fall back to ordinary LRC/TXT according to selected filters.
+- Import/edit plain TXT, sentence-timed LRC and word-timed ELRC; startup/F5 checks
+  matching ELRC before LRC/TXT for eligible unedited tracks.
+- Click-to-play waveform, stable playhead while zooming, precise Start/End marker
+  previews, Cancel, Undo/Redo and theme-aware overlap protection.
+- Timing-only word boxes, gray disabled Sync after confirmation, independent
+  word zoom, Pause/Resume, persistent word/sentence loops and live Word preview.
+- Basic manual editing and estimated words need no AI. Optional local
+  **Align sentences** and **Align words** use consented Whisper/stable-ts models;
+  listen to proposals before applying. Missing engine setup asks once, with an
+  Install button for later and separate verified model-download consent.
+- Save unfinished-work recovery separately from exports; successful saves clean
+  only the current completed draft. Reset words affects one sentence; no master reset.
+- Select TXT, LRC, ELRC and supported MP3/FLAC embedding independently. ELRC can
+  preserve existing edited words and explicitly accepted missing estimates.
+  MP3 supports USLT, SYLT and optional TXXX Enhanced LRC text.
+- Hover help is off by default; Configuration enables it, F1 requests it explicitly.
 
-[Download the last published Linux amd64 installer (2.2.5)](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.5-local.1/LRCGET_2.2.5%2Blocal.1_amd64.deb)
-| [Release and checksum](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.5-local.1)
-| [Current marker/word/export update](docs/releases/2.2.7.md)
-| [Editing guide](docs/editing-guide.md)
-| [Illustrated overview](docs/app-overview.md)
-| [Step-by-step how-tos](docs/how-to.md)
-| [Documentation index](docs/README.md)
-| [Detailed changes](LOCAL_CHANGES.md)
+Start with the [documentation index](docs/README.md), [complete features](docs/features.md),
+[step-by-step how-tos](docs/how-to.md), [editing reference](docs/editing-guide.md),
+[automatic alignment guide](docs/audio-alignment.md), [recovery guide](docs/recovery.md),
+[troubleshooting](docs/troubleshooting.md), [source/build guide](docs/build-from-source.md)
+and [developer guide](docs/developer-guide.md).
 
-### What's Included
+## Current interface
 
-- Zoomable waveform with playback following, paused panning and click-to-play.
-- Single clicks play from the selected point; Play resumes without restarting.
-  Double-click/button zoom preserves audio position, with smooth playhead movement.
-- Double-click a waveform point repeatedly to magnify it for marker editing.
-- Always-visible Start/End marker times include milliseconds and follow previews.
-- A faint highlight between the markers identifies the selected lyric range.
-- Neighboring lyric warnings catch crossed boundaries before Apply Markers,
-  including during zoomed previews; intentional overlaps remain allowed.
-- Labeled Elapsed, Total, Position and View clocks distinguish recording time,
-  playhead position and the zoomed range.
-- Wheel/trackpad panning at any playback state, without follow snapping back;
-  zoom preserves the visible phrase marker for precise editing.
-- Zoom, including double-click zoom, keeps playback follow enabled with Loop off
-  or on; pause/play resumes following after manual
-  inspection. Placed marker timestamps stay fixed during playback and navigation.
-- Selected phrase start/end handles, session undo/redo, 10/25/50/100 ms timing
-  steps and phrase looping.
-- Entering Synced defaults to the first timed lyric rather than an opening
-  blank cue. Existing selections are preserved; untimed rows have no markers.
-- Sentence sync/nudge controls update the waveform markers through shared
-  timing checks. Follow Lyrics advances both markers; editing/loops pin them.
-- Marker preview with explicit Apply Markers / Cancel; confirmed boundaries
-  form one undoable edit and stay fixed through playback and zoom.
-- Phrase loops audition pending marker previews with zero lead-in/tail by default.
-- Direct plain TXT, line-timed TXT and LRC import, with replacement confirmation;
-  untimed words become rows you can synchronize manually to the recording.
-- Optional word-timing view, collapsed initially, with 1-8x linear zoom,
-  playback scrolling and readable highlighting in light/dark themes.
-- **Follow Lyrics** advances the word boxes during playback; selecting a line
-  pins it for editing. Marker previews and loops keep the selected line fixed.
-- Timing-only word boxes: drag dividers or use precise Start/End fields. Edit
-  wording in the sentence row. Sync preserves manually adjusted timing and turns gray until another edit;
-  unsafe playback stamps are rejected without collapsing neighboring words.
-- Additional **Pause/Resume** beside word-lane Play continues from the current
-  position while retaining Loop.
-- Cleaner word editing without the pink selection bubble; canceled drags do
-  not commit timing edits, and keyboard shortcuts respect the active tool.
-- Synced LRC export selected by default, optional embedded lyrics, and safer
-  sidecar/audio exports without leftover backups. Saving and publishing are explicit.
-- Incremental library scanning on opening and F5 refresh without reloading.
-- Matching external LRC automatically upgrades imported/downloaded Plain or missing lyrics to Synced;
-  TXT fills missing lyrics when no valid LRC exists. Manually saved edits, including untimed work, stay protected.
-- Green **Modified** date/time column, retained through embedding and restarts.
+![Light theme editor with sentence and word alignment](docs/screenshots/current/sentence-alignment-toolbar-light.png)
+![Dark theme sentence alignment preview](docs/screenshots/current/sentence-alignment-preview-dark.png)
+![Light theme word timing and loops](docs/screenshots/current/selected-word-loop-light.png)
+![Dark theme save and export choices](docs/screenshots/current/embedded-word-export-dark.png)
 
-### Documentation and How-Tos
+Images show the actual Vue interface using isolated demonstration lyrics and mocked
+native commands; packaged Linux startup is tested separately. See the
+[capture index](docs/screenshots/current/README.md) for dates and provenance.
+Screenshots do not demonstrate guaranteed singing accuracy.
 
-Start with the [illustrated app overview](docs/app-overview.md) for all current
-features and the [modification map](docs/app-overview.md#modification-map) for
-Rick Lidgett's enhancements. The [how-to guide](docs/how-to.md) includes:
+## Validation and limitations
 
-- [Create timestamps from plain TXT/Genius lyrics](docs/how-to.md#create-timed-lyrics-from-a-text-file).
-- [Edit an existing LRC or timed TXT](docs/how-to.md#edit-an-existing-lrc-or-timed-text-file).
-- [Preview and confirm precise markers](docs/how-to.md#place-precise-markers-and-preview-before-confirming).
-- [Zoom/follow without looping](docs/how-to.md#zoom-and-follow-without-looping).
-- [Loop the selected marker range](docs/how-to.md#loop-between-the-markers).
-- [Edit words and their timing](docs/how-to.md#edit-individual-words).
-- [Save, export and embed](docs/how-to.md#save-and-export-for-playback), or
-  [publish intentionally](docs/how-to.md#publish-lyrics-for-other-users).
-- [Check modification dates](docs/how-to.md#check-modified-dates) and
-  [troubleshoot common symptoms](docs/how-to.md#troubleshooting).
+Linux: 558 frontend tests, 88 native tests (two optional fixtures ignored), 18
+Python tests, Ruff, scoped ESLint, Cargo check and MSI configuration tests passed.
+Debian and AppImage opened successfully under isolated Xvfb profiles.
+[Windows CI](https://github.com/scriptusscript777/lrcget/actions/runs/38296288986)
+passed 558 frontend/86 native tests, optional setup tests, MSI identity/checksum,
+Defender installer/payload scans, install, repair, visible launch and uninstall.
+Windows scans found no threats; they do not establish SmartScreen reputation.
+See the [detailed review](docs/reviews/2.2.7.md) and [release notes](docs/releases/2.2.7.md).
 
-Each workflow includes relevant screenshots. The [editing reference](docs/editing-guide.md)
-contains detailed shortcuts and limits; [LOCAL_CHANGES](LOCAL_CHANGES.md)
-records implementation history. Old release notes describe older behavior, not
-current defaults.
+Models and estimated timing require listening review. Plain TXT cannot store
+sentence/word timing; LRC stores sentence timing, ELRC stores inline word timing.
+Player support varies. Local exports do not publish to a server; publishing sends
+lyrics/metadata only when requested. See [privacy](docs/privacy.md).
 
-### Install This Build
+## Code signing policy
 
-The 2.2.6 installer and checksum are in Rick’s local Downloads folder. Close
-LRCGET, then run there:
-
-```bash
-sha256sum -c LRCGET_2.2.7_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.7_amd64.deb
-```
-
-The unsigned Debian package upgrades the existing app, not a second copy.
-The current Linux amd64 Debian package and AppImage include these enhancements.
-[Package instructions](docs/packages.md) cover the AppImage and the prepared Windows
-MSI build. A Windows builder is still required; upstream Windows/macOS links
-below do not include these enhancements.
-No additional WAV conversion, Whisper or Demucs installation is needed.
-
-### Current Interface
-
-The main phrase editor stays uncluttered; **Word timing** opens the optional
-individual-word tools. Pending marker edits show **Apply Markers** and **Cancel**;
-the lyric-row timestamps stay unchanged until you apply the pair.
-
-![Follow Lyrics advances the word boxes during playback](docs/screenshots/current/editor-follow-light.png)
-
-![Timing-only word boxes with protected Sync](docs/screenshots/current/word-timing-protected-light.png)
-
-![Light theme: pending marker pair with Apply and Cancel](docs/screenshots/current/marker-preview-light.png)
-
-![Current build: zoomed waveform following playback](docs/screenshots/current/waveform-follow-light.png)
-
-![Saved modification dates after the Lyrics column](docs/screenshots/current/modified-light.png)
-
-![Light theme: phrase editor with word timing collapsed](docs/screenshots/current/editor-default-light.png)
-
-<details>
-<summary>Dark theme and expanded word-timing tools</summary>
-
-![Dark theme: Follow Lyrics](docs/screenshots/current/editor-follow-dark.png)
-
-![Dark theme: safe word timing](docs/screenshots/current/word-timing-protected-dark.png)
-
-![Dark theme: pending marker pair with Apply and Cancel](docs/screenshots/current/marker-preview-dark.png)
-
-![Latest build: double-click waveform zoom in dark theme](docs/screenshots/current/point-zoom-dark.png)
-
-![Latest export menu: LRC, TXT and embedding](docs/screenshots/current/export-options-dark.png)
-
-![Dark theme: phrase editor with word timing collapsed](docs/screenshots/current/editor-default-dark.png)
-
-![Light theme: expanded word timing and phrase markers](docs/screenshots/current/editor-follow-light.png)
-
-![Dark theme: expanded word timing and phrase markers](docs/screenshots/current/editor-follow-dark.png)
-
-![Zoomed word-timing view](docs/screenshots/current/word-timing-zoom-light.png)
-
-![Light theme: zoomed phrase end with manual scrolling](docs/screenshots/current/waveform-navigation-light.png)
-
-![Dark theme: zoomed phrase end with manual scrolling](docs/screenshots/current/waveform-navigation-dark.png)
-
-</details>
-
-Current guide screenshots were recaptured from .20 using temporary fixture lyrics
-and mocked waveform data, not personal
-music. These tools aid manual editing; they do not guarantee singer alignment
-or lyric display in every player. The .20 code run passed 369 frontend and 52 Rust tests, plus
-browser and isolated native Linux checks; existing lint/compiler warnings remain.
+Current packages are unsigned. SignPath Foundation application/approval is pending;
+no Foundation signature or sponsorship is claimed. See [code signing policy and
+setup](docs/code-signing.md). Upstream signing status has not been verified.
 
 ## Original Project
 
@@ -279,13 +194,13 @@ If you prefer to contact by email:
 
 LRCGET is made with [Tauri](https://tauri.app).
 
-To start developing the application, you need to do the [prerequisites](https://tauri.app/v1/guides/getting-started/prerequisites) steps according to your operating system.
+To start developing the application, you need to do the [prerequisites](https://v2.tauri.app/start/prerequisites/) steps according to your operating system.
 
 For example, you need the following components to start the development in Windows:
 
 - Microsoft Visual Studio C++ Build Tools
-- Rust 1.81.0 or higher
-- NodeJS v16.18.0 or higher
+- Stable Rust with the MSVC target
+- Node.js 22
 
 Start the development window with the following command:
 
@@ -311,7 +226,7 @@ Your built binaries are located at:
 ./src-tauri/target/release/
 ```
 
-For more detailed instruction, follow the [building guide](https://tauri.app/v1/guides/building/) to build the application according to your OS platform.
+For more detailed instruction, follow the [building guide](https://v2.tauri.app/distribute/) to build the application according to your OS platform.
 
 Hover help is off by default. In **Configuration**, enable **Show hover help**
 and Save if you want automatic descriptions. Your choice survives restarting.
@@ -400,5 +315,5 @@ limitations. Singing alignment requires review; confidence is only a hint.
 
 Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
-Align words sits immediately after Word preview in Synced; model choices remain
+Synced toolbar order is Word preview → Align sentences → Align words; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](docs/audio-alignment.md).

@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$PackageDirectory)
+param([Parameter(Mandatory)][string]$PackageDirectory, [switch]$RequireSignature)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_OS -ne 'Windows') {
@@ -33,8 +33,10 @@ if ($properties.ProductName -ne 'LRCGET' -or $properties.ProductVersion -ne $con
     $properties.Manufacturer -ne $config.bundle.publisher) {
     throw 'MSI publisher, version or upgrade identity is incorrect.'
 }
-(Get-AuthenticodeSignature $package | Select-Object Status, StatusMessage) |
+$signature = Get-AuthenticodeSignature $package
+($signature | Select-Object Status, StatusMessage, @{Name='Signer';Expression={if ($_.SignerCertificate) { $_.SignerCertificate.Subject } else { $null }}}) |
     ConvertTo-Json | Set-Content (Join-Path $PackageDirectory 'signature-status.json')
+if ($RequireSignature -and $signature.Status -ne 'Valid') { throw 'Signed MSI lacks a valid trusted signature.' }
 
 # A Defender scan is required; unavailable scanning is an error, not a clean result.
 if (-not (Get-Command Get-MpComputerStatus -ErrorAction SilentlyContinue)) {
@@ -92,6 +94,9 @@ try {
     $view.Close()
     $executables = @($installer.ComponentPath($properties.ProductCode, $componentId) | Where-Object { $_ -and (Test-Path $_ -PathType Leaf) })
     if ($executables.Count -ne 1) { throw 'Expected one installed LRCGET executable.' }
+    if ($RequireSignature -and (Get-AuthenticodeSignature $executables[0]).Status -ne 'Valid') {
+        throw 'Installed LRCGET executable lacks a valid trusted signature.'
+    }
     Invoke-DefenderCheck (Split-Path $executables[0]) 'defender-payload.log'
     $process = Start-Process $executables[0] -PassThru
     for ($attempt = 0; $attempt -lt 60; $attempt++) {

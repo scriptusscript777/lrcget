@@ -125,3 +125,11 @@ explicit confirmation before replacing existing timestamps. Text/gap cues stay
 intact; existing word timings shift with their sentence, and conflicting rows
 are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
 illustrated audio-alignment guide for the full workflow and limitations.
+
+
+Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
+Optional alignment setup now understands Windows private Python environments;
+Basic features remain independent of AI requirements. Windows build-only CI
+checks actual MSI identity, Defender availability/definitions and MSI/payload
+scans, install/repair/launch/uninstall. Current packages, checksums, source and illustrated guides are published in the
+2.2.7 release. Check package/platform guides for validation scope and signing limitations.
