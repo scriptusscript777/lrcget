@@ -708,3 +708,9 @@ environments remain. Alignment loads verified local model paths with the
 corresponding Whisper alignment heads, preventing implicit model downloads.
 Python/venv/ffmpeg prerequisites remain managed by the OS package manager.
 Windows/AppImage provisioning and OS-specific lifecycle tests are deferred.
+
+If inherited torch/torchaudio imports or compatibility checks fail, setup uses
+pip --ignore-installed for its pinned CPU pair in the private staged environment.
+This prevents already-visible broken versions from satisfying a repair request;
+shared Python installations remain untouched. Setup fault tests cover this case
+and venv/ensurepip failure before any package installation.

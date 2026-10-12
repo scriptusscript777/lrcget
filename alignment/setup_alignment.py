@@ -161,6 +161,8 @@ def install_engine(target):
                 "install",
                 "--disable-pip-version-check",
                 "--no-cache-dir",
+                # Broken inherited packages must not satisfy the private repair.
+                "--ignore-installed",
                 "torch==2.9.1",
                 "torchaudio==2.9.1",
                 "--index-url",

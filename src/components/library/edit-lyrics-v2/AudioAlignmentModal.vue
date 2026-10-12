@@ -396,6 +396,11 @@ onMounted(async () => {
       return
     }
     unlisten = cleanup
+  } catch (err) {
+    if (disposed) return
+    error.value = `Live progress is unavailable: ${String(err.message || err)}. You can still run or cancel the operation.`
+  }
+  try {
     available.value = await invoke('audio_alignment_available')
     if (disposed) return
     await checkModel()

@@ -633,3 +633,9 @@ Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
 Align words sits immediately after Word preview in Synced; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](docs/audio-alignment.md).
+
+Optional setup mock audit: repair broken inherited PyTorch packages privately
+instead of allowing pip to skip them because their version is already visible.
+A failed live-progress subscription no longer prevents installed-engine detection.
+No-consent, decline/reopen, missing ffmpeg/venv, disk-space, corrupted download,
+model approval, cancellation and theme mock tests passed; Python coverage is 13 tests.

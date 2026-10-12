@@ -130,3 +130,9 @@ Optional audio setup now asks once when the engine is unavailable; declining
 keeps an Install button for later. Each missing model needs separate approval.
 Align words sits immediately after Word preview in Synced; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).
+
+If automatic alignment reports that live progress is unavailable, this refers
+to the notification channel, not missing Whisper packages. The app still checks
+installed requirements and enables alignment when ready. Broken inherited
+PyTorch imports can be repaired privately through the explicit Install action.
+See [optional setup failure checks](audio-alignment.md#setup-failure-checks).

@@ -522,3 +522,8 @@ environments remain. Alignment loads verified local model paths with the
 corresponding Whisper alignment heads, preventing implicit model downloads.
 Python/venv/ffmpeg prerequisites remain managed by the OS package manager.
 Windows/AppImage provisioning and OS-specific lifecycle tests are deferred.
+
+Audio alignment progress subscription is checked separately from dependency/model
+availability. Notification failure produces a warning without disabling a ready
+engine or implicitly triggering installation. Backend installation repair uses
+private staging even when broken package versions are visible from shared sites.

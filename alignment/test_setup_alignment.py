@@ -8,6 +8,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 from unittest.mock import patch
 
 import setup_alignment as setup
@@ -110,6 +111,47 @@ class SetupTests(unittest.TestCase):
             self.assertRaisesRegex(ValueError, "ffmpeg"),
         ):
             setup.install_engine("/unused")
+
+    def test_broken_visible_torch_is_repaired_inside_private_environment(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(setup.shutil, "which", return_value="/usr/bin/ffmpeg"),
+            patch.object(
+                setup.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(free=8 * 1024**3),
+            ),
+            patch.object(setup.venv.EnvBuilder, "create"),
+            patch.object(
+                setup.subprocess, "run", return_value=SimpleNamespace(returncode=1)
+            ),
+            patch.object(setup, "run_checked") as install,
+        ):
+            setup.install_engine(str(Path(directory) / "venv"))
+            cpu_command = install.call_args_list[0].args[0]
+            self.assertIn("--ignore-installed", cpu_command)
+            self.assertIn(str(Path(directory) / "venv/bin/python"), cpu_command)
+            self.assertIn("https://download.pytorch.org/whl/cpu", cpu_command)
+
+    def test_missing_venv_returns_prerequisite_error_before_package_install(self):
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            patch.object(setup.shutil, "which", return_value="/usr/bin/ffmpeg"),
+            patch.object(
+                setup.shutil,
+                "disk_usage",
+                return_value=SimpleNamespace(free=8 * 1024**3),
+            ),
+            patch.object(
+                setup.venv.EnvBuilder,
+                "create",
+                side_effect=subprocess.CalledProcessError(1, "ensurepip"),
+            ),
+            patch.object(setup, "run_checked") as install,
+        ):
+            with self.assertRaisesRegex(ValueError, "python3-venv"):
+                setup.install_engine(str(Path(directory) / "venv"))
+            install.assert_not_called()
 
 
 if __name__ == "__main__":

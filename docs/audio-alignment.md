@@ -150,3 +150,22 @@ Language codes and alignment API behavior follow the
 [stable-ts documentation](https://github.com/jianfch/stable-ts).
 See [editing](editing-guide.md), [exports](how-to.md) and
 [troubleshooting](troubleshooting.md) for the existing no-AI workflow.
+
+### Setup failure checks
+
+Mock tests exercise missing ffmpeg/venv, insufficient space, declined consent,
+failed/cancelled setup, separate model approval, cached reuse and corrupt downloads.
+When inherited PyTorch packages fail their import/compatibility check, CPU repair
+uses a private installation even if pip sees the same package versions elsewhere;
+it does not replace shared packages. A failed progress-event subscription reports
+that live progress is unavailable while still checking the engine/model normally.
+It cannot falsely classify a working installation as missing. Run/Cancel remain
+available; no additional installation is triggered by this notification failure.
+
+![Progress notification fallback, light](screenshots/current/audio-alignment-progress-unavailable-light.png)
+![Progress notification fallback, dark](screenshots/current/audio-alignment-progress-unavailable-dark.png)
+
+These Debian checks do not establish Windows or AppImage installation success.
+Those builds require their own platform-specific failure and installer tests when
+work on them resumes, including administrator/security restrictions and safe
+recovery from interrupted setup.
