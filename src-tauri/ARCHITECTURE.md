@@ -641,10 +641,12 @@ replace confirmation, undo and dirty/session guards remain in effect. TXT/LRC/EL
 export selections are independent. Publishing already sends serialized YAML with
 word timing to compatible LRCLIB servers; it does not upload ELRC sidecar files.
 
-### Recovery and Master reset maintenance (2.2.7, version unchanged)
+### Recovery and earlier Master reset maintenance (2.2.7, version unchanged)
 
 Drafts live in the frontend webview profile and do not call native Save/export.
-Master reset affects only the working document until explicit Save. Existing
+The former Master reset affected only the working document until explicit Save.
+It has now been removed from the frontend; the saved-untimed scan protection
+remains relevant to ordinary manual saves/imports. Existing
 `save_lyrics` writes `lyricsfiles.edited_at`. `import_matching_sidecar` now also
 protects any record with non-null `edited_at`, so clearing and saving timing
 cannot be reversed by a stale sidecar during startup/F5. This needs no schema
@@ -665,3 +667,9 @@ Native repeats avoid per-wrap GUI IPC; decoded read-ahead and output latency
 remain relevant when applying a new range. No persisted schema/format change.
 The read-only examples/verify_editor_loop.rs renders a copied recording through
 Kira MockBackend to verify repeats, paused live changes, resume and loop disable.
+
+The requested one-time LRC/TXT database resync used the existing frontend import
+parser and save_lyrics native command after a SQLite/browser-storage backup.
+No scanner policy, migrations, MP3 embedding or export behavior changed. Source
+files populate synced/plain fields independently and the normal native presence
+calculation/track identity/save transaction remains authoritative.
