@@ -1,5 +1,39 @@
 import { describe, expect, it } from 'vitest'
-import { linesToLrc, parseLrcLines, parseLyricsfile, serializeLyricsfile } from './lyricsfile.js'
+import {
+  libraryLyricsStatus,
+  linesToLrc,
+  parseLrcLines,
+  parseLyricsfile,
+  serializeLyricsfile,
+} from './lyricsfile.js'
+import { parseImportedLyrics } from './lyrics-import.js'
+
+describe('library synced status', () => {
+  it.each([
+    ['user.elrc', '[00:01.000]<00:01.000>hello <00:02.000>world<00:03.000>', 'synced'],
+    ['server.elrc', '[00:01.000]<00:01.000>downloaded<00:03.000>', 'synced'],
+    ['song.lrc', '[00:01.000]sentence timing', 'synced'],
+    ['song.txt', 'untimed text', 'plain'],
+  ])('shows correct status for %s', (file, content, status) => {
+    const parsed = parseImportedLyrics(content, file)
+    const lyricsfile = serializeLyricsfile({
+      track: { title: 'test', duration: 10 },
+      plainLyrics: parsed.plain,
+      syncedLines: parsed.lines,
+    })
+    expect(libraryLyricsStatus({ lyricsfile })).toBe(status)
+  })
+  it('keeps unsynced sentence editing rows Plain until they have real timestamps', () => {
+    const lyricsfile = serializeLyricsfile({
+      track: { title: 'test', duration: 10 },
+      plainLyrics: '',
+      syncedLines: [{ text: 'not timed', words: [] }],
+    })
+    expect(libraryLyricsStatus({ lyricsfile })).toBe('plain')
+    expect(libraryLyricsStatus(null)).toBeNull()
+    expect(libraryLyricsStatus({ instrumental: true })).toBe('instrumental')
+  })
+})
 
 describe('standard LRC gap export', () => {
   const first = { text: 'First phrase', start_ms: 1000, end_ms: 2000 }

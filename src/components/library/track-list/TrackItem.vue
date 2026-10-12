@@ -128,7 +128,7 @@ import { lyricsModifiedTime } from '@/utils/lyrics-modified-time.js'
 import { useSearchLyrics } from '../../../composables/search-lyrics.js'
 import { useEditLyricsV2 } from '../../../composables/edit-lyrics-v2.js'
 import Equalizer from '@/components/icons/Equalizer.vue'
-import { parseLyricsfile } from '@/utils/lyricsfile.js'
+import { libraryLyricsStatus } from '@/utils/lyricsfile.js'
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
@@ -160,25 +160,7 @@ const isPlaying = computed(() => {
   return playingTrack.value && track.value && playingTrack.value.id === track.value.id
 })
 
-const lyricsStatus = computed(() => {
-  if (!track.value) {
-    return null
-  }
-  if (track.value.instrumental) {
-    return 'instrumental'
-  }
-  if (!track.value.lyricsfile) {
-    return null
-  }
-  const parsed = parseLyricsfile(track.value.lyricsfile)
-  if (parsed.syncedLines && parsed.syncedLines.length > 0) {
-    return 'synced'
-  }
-  if (parsed.plainLyrics && parsed.plainLyrics.length > 0) {
-    return 'plain'
-  }
-  return null
-})
+const lyricsStatus = computed(() => libraryLyricsStatus(track.value))
 
 const openEditLyricsV2 = track => {
   const audioSource = {

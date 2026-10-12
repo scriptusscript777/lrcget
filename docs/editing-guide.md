@@ -687,3 +687,20 @@ without relying on color.
 
 ![Overlap Settings on](screenshots/current/overlap-settings-on-light.png)
 ![Overlap Settings off](screenshots/current/overlap-settings-off-dark.png)
+
+
+### ELRC discovery and library status
+
+Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
+back to `.txt`. Untouched ordinary LRC can upgrade to real word timing. Existing
+word timing, instrumental lyrics and explicit editor saves remain protected.
+Invalid ELRC falls back safely; scans never change audio or sidecars and do not
+mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
+sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
+automatic export formats; downloads never silently generate estimated word times.
+
+
+Matching valid ELRC is labeled Synced without a Modified date on import:
+
+![ELRC library status, light](screenshots/current/elrc-library-synced-light.png)
+![ELRC library status, dark](screenshots/current/elrc-library-synced-dark.png)

@@ -3,6 +3,7 @@ metadata:
   title: Editor test
   artist: Temporary fixture
   instrumental: false
+  album: Export regression test
   duration_ms: 10000
 lines:
   - text: first phrase

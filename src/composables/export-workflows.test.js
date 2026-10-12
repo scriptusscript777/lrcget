@@ -36,6 +36,49 @@ async function popupState() {
 }
 
 describe('submitted export choices', () => {
+  it.each([
+    ['all', true],
+    ['skipSynced', true],
+    ['skipPlain', true],
+    ['all', false],
+    ['skipSynced', false],
+    ['skipPlain', false],
+  ])('honors ELRC download filtering and automatic export: %s / %s', async (mode, autoExport) => {
+    const config = {
+      auto_export_enabled: autoExport,
+      export_txt: false,
+      export_lrc: false,
+      export_elrc: true,
+      export_embedded: false,
+      try_embed_lyrics: false,
+      skip_tracks_with_synced_lyrics: mode !== 'all',
+      skip_tracks_with_plain_lyrics: mode === 'skipPlain',
+    }
+    invoke.mockImplementation(async command => (command === 'get_track_ids' ? [7] : config))
+    const state = await popupState()
+    await state.openDownloadOptions()
+    expect(state.downloadDraft.value.downloadLyricsFor).toBe(mode)
+    await state.downloadAllLyrics()
+    expect(invoke).toHaveBeenCalledWith('get_track_ids', {
+      searchQuery: '',
+      syncedLyricsTracks: mode === 'all',
+      plainLyricsTracks: mode !== 'skipPlain',
+      instrumentalTracks: mode === 'all',
+      noLyricsTracks: true,
+    })
+    const queue = (await import('./downloader.js')).useDownloader().downloadQueue.value
+    expect(queue[0].autoExport).toEqual(
+      autoExport
+        ? {
+            plainText: false,
+            syncedLrc: false,
+            enhancedLrc: true,
+            embedIntoTrack: false,
+          }
+        : null
+    )
+    expect(invoke.mock.calls.some(([command]) => command === 'segment_words')).toBe(false)
+  })
   it('shares embed-only choices, gates execution, and preserves a disabled remembered choice', async () => {
     const state = await popupState()
     let config = {

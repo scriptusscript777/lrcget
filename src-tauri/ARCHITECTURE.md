@@ -8,10 +8,14 @@ directories are rejected before marking tracks pending; traversal errors abort
 before pruning missing tracks. File metadata/hash/import failures also prevent
 missing-track cleanup until a complete successful scan. Refresh never writes
 sidecars or audio tags. Each successfully processed track also checks matching
-sidecars inside its batch transaction. A valid LRC with nonempty timed words
-(or the instrumental marker) upgrades plain/missing lyrics, taking precedence
-over TXT; TXT only fills missing lyrics. Explicit editor saves, including untimed/reset work, and synced/instrumental
-records are protected. This also applies to unchanged audio and reattached orphaned lyrics.
+sidecars inside its batch transaction. Valid ELRC takes precedence over LRC,
+then TXT for missing lyrics. `lyricsfile/enhanced_import.rs` validates absolute
+line/word timestamps, explicit ends/gap cues and shared export bounds before
+storing structured YAML. Inline word-tagged LRC uses the same parser. Invalid
+ELRC falls back to valid ordinary LRC/TXT without importing inline tags as text.
+Unedited ordinary LRC may upgrade to word timing; explicit editor saves
+(including untimed/empty work), instrumental records and existing word timing
+remain protected. This also applies to unchanged audio and reattached orphaned lyrics.
 No external import sets an explicit editor-save date.
 TXT/LRC exports coexist. A shared writer lock serializes destination changes;
 `tempfile` stages sidecar/audio replacements on the destination filesystem.

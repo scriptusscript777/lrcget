@@ -610,3 +610,14 @@ without relying on color.
 ![Follow off in dark mode](screenshots/current/word-follow-off-confirmed-dark.png)
 ![Overlap prevention off](screenshots/current/word-overlap-off-light.png)
 ![Overlap prevention off in dark mode](screenshots/current/word-overlap-off-dark.png)
+
+
+### ELRC discovery and library status
+
+Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
+back to `.txt`. Untouched ordinary LRC can upgrade to real word timing. Existing
+word timing, instrumental lyrics and explicit editor saves remain protected.
+Invalid ELRC falls back safely; scans never change audio or sidecars and do not
+mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
+sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
+automatic export formats; downloads never silently generate estimated word times.

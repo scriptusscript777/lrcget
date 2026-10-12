@@ -4,6 +4,9 @@ use crate::utils::strip_timestamp;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
+mod enhanced_import;
+pub use enhanced_import::build_enhanced_lyricsfile;
+
 pub const LYRICSFILE_VERSION: &str = "1.0";
 pub const INSTRUMENTAL_LRC: &str = "[au: instrumental]";
 

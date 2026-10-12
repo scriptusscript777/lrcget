@@ -10,8 +10,11 @@ is enabled. Disabled embedding cannot be submitted, and publishing still require
 The library performs an incremental quick-hash scan on every opening. F5 invokes the same
 refresh action, captures native webview reload, ignores held/repeated keys while
 scanning, and refuses refresh with an open modal to protect unsaved editing.
-Startup/F5 can upgrade Plain to Synced from a valid matching external LRC;
-missing lyrics fall back to matching TXT. Saved synced lyrics stay protected.
+Startup/F5 imports valid matching ELRC before LRC, then TXT for missing lyrics.
+Unedited ordinary LRC may upgrade to real word timing. Explicit editor saves,
+instrumental records and existing word timing remain protected. TrackItem uses
+`libraryLyricsStatus`: real line timestamps mean Synced, untimed editing rows
+remain Plain; imported/downloaded valid ELRC is Synced without being Modified.
 The header menu displays the shortcut. Scans do not export or rewrite music files.
 The synced editor keeps bounded session undo/redo snapshots via `useLyricHistory`.
 Timing steps (10/25/50/100 ms) apply to line, end and bulk controls; line nudges

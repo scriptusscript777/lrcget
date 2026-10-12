@@ -1,6 +1,18 @@
 import YAML from 'yaml'
 import { hasMeasuredWordTiming } from './word-timing-status.js'
 
+export function libraryLyricsStatus(track) {
+  if (!track) return null
+  if (track.instrumental) return 'instrumental'
+  if (!track.lyricsfile) return null
+  const parsed = parseLyricsfile(track.lyricsfile)
+  if (parsed.isInstrumental) return 'instrumental'
+  if (parsed.syncedLines.some(line => Number.isFinite(line.start_ms) && line.start_ms >= 0))
+    return 'synced'
+  if (parsed.plainLyrics.trim() || parsed.syncedLines.some(line => line.text.trim())) return 'plain'
+  return null
+}
+
 export const LYRICSFILE_VERSION = '1.0'
 export const INSTRUMENTAL_LRC = '[au: instrumental]'
 

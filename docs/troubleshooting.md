@@ -103,3 +103,13 @@ for restoration, conflicts, cleanup and limitations.
 Use **Reset words** to rebuild only the selected sentence’s word timing estimates;
 Undo restores the previous timing. Master reset has been removed. For external
 TXT/LRC/ELRC replacement, use Import and its existing confirmation.
+
+
+### Matching ELRC does not appear as Synced
+
+Use the audio file's exact basename with `.elrc` in the same folder, then refresh
+with F5. Discovery accepts absolute line/word timestamps and validated ranges.
+Nonzero `[offset:...]`, malformed or crossed timestamps are rejected; apply any
+offset to the timestamps first. Valid ordinary LRC/TXT is used as fallback.
+Explicit saved edits and existing word timing remain protected from sidecar
+replacement; use explicit Import in the editor when intentionally replacing them.

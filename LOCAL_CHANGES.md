@@ -605,3 +605,14 @@ server publishing retain their saved-data behavior. The green dot indicates vali
 word timing, including accepted estimates, rather than manual verification.
 
 See [illustrated export instructions](docs/editing-guide.md#export-word-timing-as-enhanced-lrc).
+
+
+### ELRC discovery and library status
+
+Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
+back to `.txt`. Untouched ordinary LRC can upgrade to real word timing. Existing
+word timing, instrumental lyrics and explicit editor saves remain protected.
+Invalid ELRC falls back safely; scans never change audio or sidecars and do not
+mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
+sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
+automatic export formats; downloads never silently generate estimated word times.

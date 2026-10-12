@@ -456,3 +456,9 @@ without relying on color.
 ![Follow off in dark mode](screenshots/current/word-follow-off-confirmed-dark.png)
 ![Overlap prevention off](screenshots/current/word-overlap-off-light.png)
 ![Overlap prevention off in dark mode](screenshots/current/word-overlap-off-dark.png)
+
+
+Matching valid ELRC is labeled Synced without a Modified date on import:
+
+![ELRC library status, light](screenshots/current/elrc-library-synced-light.png)
+![ELRC library status, dark](screenshots/current/elrc-library-synced-dark.png)
