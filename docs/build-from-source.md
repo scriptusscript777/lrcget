@@ -75,3 +75,15 @@ Use a valid short range inside the recording. This renders streaming audio
 without a physical device, database or lyric writes; it checks repeated bounds,
 live paused changes, resume and clearing the loop. It complements interface tests
 and does not measure audible output/device latency.
+
+
+## Basic and optional Automatic audio alignment
+
+Basic TXT/LRC/ELRC editing, estimated word timing and manual synchronization
+remain available without AI. **Align words** in the editor header opens optional
+local audio alignment with language/model selection, progress and cancellation.
+Preview yellow uncertain words, listen, then Apply in one Undo step. Existing
+word times are protected unless explicitly replaced; sentence bounds and text
+remain intact. Complete applied timing saves ELRC without another estimate prompt.
+See the [illustrated audio alignment guide](audio-alignment.md) for setup and
+limitations. Singing alignment requires review; confidence is only a hint.

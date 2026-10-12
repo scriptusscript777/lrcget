@@ -677,3 +677,20 @@ parser and save_lyrics native command after a SQLite/browser-storage backup.
 No scanner policy, migrations, MP3 embedding or export behavior changed. Source
 files populate synced/plain fields independently and the normal native presence
 calculation/track identity/save transaction remains authoritative.
+
+
+### Optional local audio alignment
+
+`audio_alignment.rs` exposes availability, align and cancel commands. The Python
+worker `alignment/align_words.py` is embedded in the binary and staged temporarily.
+It reads JSON, loads optional stable-ts/Whisper/PyTorch, uses CPU or available CUDA
+and emits progress/result JSON. A dedicated optional Python environment or
+LRCGET_ALIGN_PYTHON is resolved without making Basic editing depend on Python.
+One semaphore prevents concurrent model jobs; request IDs, early cancellations,
+30-minute timeout and process cleanup protect lifecycle. Unix decoder children
+share the worker process group and are terminated with it. Audio metadata is
+checked before/after; no lyric database/music/sidecar writes occur in the worker.
+LRC alignment analyzes bounded sentences; untimed TXT uses full alignment with
+original line splits. Exact character-span mapping retains original tokens, text
+and whitespace. Invalid/low-confidence output is reviewed in the frontend rather
+than replacing lyrics with a transcript. Normal Save/export/download logic remains.

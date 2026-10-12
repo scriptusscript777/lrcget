@@ -41,6 +41,30 @@ const document = (
   return { state, scope }
 }
 
+describe('audio alignment document commits', () => {
+  it('accepts unchanged source in one undoable update and rejects stale edits', async () => {
+    const { state, scope } = document()
+    const before = [{ text: 'hello', start_ms: 1000, end_ms: 2000, words: [] }]
+    state.updateSyncedLines(before)
+    await nextTick()
+    const snapshot = JSON.parse(JSON.stringify(state.getAlignmentSnapshot()))
+    const aligned = [{ ...before[0], words: [{ text: 'hello', start_ms: 1100, end_ms: 1800 }] }]
+    expect(state.applyAudioAlignment(aligned, snapshot)).toBe(true)
+    await nextTick()
+    state.undo()
+    expect(state.syncedLines.value).toEqual(before)
+    state.updatePlainLyrics('new text')
+    expect(state.applyAudioAlignment(aligned, snapshot)).toBe(false)
+    scope.stop()
+  })
+  it('rejects apply after editor disposal', () => {
+    const { state, scope } = document()
+    const snapshot = state.getAlignmentSnapshot()
+    scope.stop()
+    expect(state.applyAudioAlignment([], snapshot)).toBe(false)
+  })
+})
+
 describe('estimated ELRC document acceptance', () => {
   it('exports pending sentence text to LRC/TXT without generating word timing', async () => {
     const { state, scope } = document()

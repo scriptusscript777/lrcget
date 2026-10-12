@@ -769,6 +769,30 @@ export function useEditLyricsV2Document({
       pendingSentence.value = null
     }
   }
+  const getAlignmentSnapshot = () => ({
+    document: workingDocument(),
+    source: audioSource.value,
+    overlap: preventOverlaps.value,
+    duration: Math.floor(recordingDurationMs()),
+    pendingMarkers: recoveryContext.value.markerPreview,
+  })
+  const applyAudioAlignment = (lines, snapshot) => {
+    if (
+      disposed ||
+      isSaving.value ||
+      recoveryBlocked.value ||
+      recoveryConflict.value ||
+      JSON.stringify(getAlignmentSnapshot()) !== JSON.stringify(snapshot)
+    ) {
+      toast.error('Lyrics or audio changed. Run alignment again before applying.')
+      return false
+    }
+    pendingSentence.value = null
+    updateSyncedLines(lines)
+    ensureSelectedSyncedLine()
+    return true
+  }
+
   const prepareEnhancedLyrics = async confirmEstimates => {
     if (disposed || isSaving.value || recoveryConflict.value || recoveryBlocked.value) {
       toast.error('Resolve the recovery draft or active save before exporting.')
@@ -967,6 +991,8 @@ export function useEditLyricsV2Document({
     forwardEndBy100,
     saveLyrics,
     prepareEnhancedLyrics,
+    getAlignmentSnapshot,
+    applyAudioAlignment,
     commitPendingSentence,
     ensureSelectedSyncedLine,
     updateLineText,

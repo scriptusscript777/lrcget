@@ -2941,6 +2941,7 @@ dependencies = [
  "include_dir",
  "indoc",
  "kira",
+ "libc",
  "lofty",
  "rayon",
  "regex",

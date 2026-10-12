@@ -492,3 +492,19 @@ prepared serialization before native Save, preserving edits made during Save.
 TXT/LRC-only exports commit pending text before capturing the same snapshot but
 never estimate words. The green dot uses `hasMeasuredWordTiming`, including
 accepted estimates. Library batch exporters/publishing are unchanged.
+
+
+### Optional audio alignment
+
+`AudioAlignmentModal.vue` is separate from Basic editing. It snapshots working
+lyrics/source/bounds/overlap preferences, separates words with native charabia,
+invokes one cancelable job and merges proposals via `audio-alignment.js`.
+Exact text, ordered positive ranges and preserved anchors are validated before
+preview/apply. Existing starts/ends are protected by default; explicit Replace
+allows changing word timing. Missing/invalid sentences remain unchanged and
+low/unknown-confidence words are yellow. Snapshot changes/disposal reject late
+results. Apply uses document history/recovery in one update; no Save is automatic.
+Modal keyboard events cannot reach underlying lyric hotkeys. The editor explicitly
+forwards modal attributes now that it renders a second modal. Preview listening
+shares the player clock; users explicitly disable existing loops when needed.
+TXT can receive sentence timing; complete applied words need no estimate prompt.

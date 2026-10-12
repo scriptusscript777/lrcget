@@ -1,5 +1,6 @@
 <template>
   <BaseModal
+    v-bind="$attrs"
     :click-to-close="false"
     :esc-to-close="false"
     content-class="w-full h-[95vh] max-w-screen-lg"
@@ -19,6 +20,14 @@
     </template>
 
     <template #titleRight>
+      <button
+        class="button button-normal rounded px-2 py-1 text-xs mr-2"
+        title="Optional automatic audio alignment; Basic editing needs no AI"
+        :disabled="isInstrumental || isSaving || isExporting || isImporting"
+        @click="alignmentOpen = true"
+      >
+        Align words
+      </button>
       <button
         class="button button-normal h-8 w-8 shrink-0 rounded-full p-1.5 text-sm mr-2"
         title="Import lyrics file"
@@ -214,6 +223,18 @@
       />
     </div>
   </BaseModal>
+  <AudioAlignmentModal
+    v-if="alignmentOpen"
+    :get-snapshot="getAlignmentSnapshot"
+    :apply-alignment="applyAudioAlignment"
+    :progress-ms="progressMs"
+    :loop-enabled="loopEnabled"
+    @pause="pause"
+    @stop-loop="toggleLoop(loopMode)"
+    @close="alignmentOpen = false"
+    @applied="activeTab = 'synced'"
+    @listen="handleWaveformSeek"
+  />
 </template>
 
 <script setup>
@@ -221,6 +242,7 @@ import { computed, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 import { useToast } from 'vue-toastification'
 import { useModal } from 'vue-final-modal'
 import BaseModal from '@/components/common/BaseModal.vue'
+import AudioAlignmentModal from '@/components/library/edit-lyrics-v2/AudioAlignmentModal.vue'
 import ConfirmModal from '@/components/common/ConfirmModal.vue'
 import EditLyricsV2DebugModal from '@/components/library/edit-lyrics-v2/EditLyricsV2DebugModal.vue'
 import EditLyricsV2HeaderActions from '@/components/library/edit-lyrics-v2/EditLyricsV2HeaderActions.vue'
@@ -246,6 +268,8 @@ import { invoke } from '@tauri-apps/api/core'
 import { parseLrcLines } from '@/utils/lyricsfile.js'
 import { parseImportedLyrics } from '@/utils/lyrics-import.js'
 import { useWaveformPlayback } from '@/composables/edit-lyrics-v2/useWaveformPlayback.js'
+
+defineOptions({ inheritAttrs: false })
 
 const props = defineProps({
   // Audio source for playback (library track or file-based track)
@@ -319,6 +343,7 @@ const progressMs = computed(() =>
     : -1
 )
 
+const alignmentOpen = ref(false)
 const activeTab = ref('plain')
 const wordTimingExpanded = ref(false)
 const {
@@ -374,6 +399,8 @@ const {
   forwardEndBy100,
   saveLyrics,
   prepareEnhancedLyrics,
+  getAlignmentSnapshot,
+  applyAudioAlignment,
   commitPendingSentence,
   ensureSelectedSyncedLine,
   updateLineText,

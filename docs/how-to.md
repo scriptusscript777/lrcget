@@ -621,3 +621,15 @@ Invalid ELRC falls back safely; scans never change audio or sidecars and do not
 mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
 sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
 automatic export formats; downloads never silently generate estimated word times.
+
+
+## Basic and optional Automatic audio alignment
+
+Basic TXT/LRC/ELRC editing, estimated word timing and manual synchronization
+remain available without AI. **Align words** in the editor header opens optional
+local audio alignment with language/model selection, progress and cancellation.
+Preview yellow uncertain words, listen, then Apply in one Undo step. Existing
+word times are protected unless explicitly replaced; sentence bounds and text
+remain intact. Complete applied timing saves ELRC without another estimate prompt.
+See the [illustrated audio alignment guide](audio-alignment.md) for setup and
+limitations. Singing alignment requires review; confidence is only a hint.

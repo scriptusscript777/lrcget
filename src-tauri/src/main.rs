@@ -3,6 +3,7 @@
     windows_subsystem = "windows"
 )]
 
+pub mod audio_alignment;
 pub mod db;
 pub mod export;
 pub mod library;
@@ -1748,6 +1749,9 @@ async fn main() {
             flag_lyrics,
             play_track,
             get_audio_waveform,
+            audio_alignment::audio_alignment_available,
+            audio_alignment::align_lyrics_audio,
+            audio_alignment::cancel_audio_alignment,
             pause_track,
             resume_track,
             seek_track,

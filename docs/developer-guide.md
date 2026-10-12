@@ -147,3 +147,15 @@ word/document/bounds changes are reevaluated. Ordinary playback stamping retains
 advance, with duplicate unchanged-position actions suppressed without warnings.
 Pause/Resume emits through the synced editor to the existing player functions;
 it has no lyric mutation, seek, selection or loop-mode side effect.
+
+
+## Basic and optional Automatic audio alignment
+
+Basic TXT/LRC/ELRC editing, estimated word timing and manual synchronization
+remain available without AI. **Align words** in the editor header opens optional
+local audio alignment with language/model selection, progress and cancellation.
+Preview yellow uncertain words, listen, then Apply in one Undo step. Existing
+word times are protected unless explicitly replaced; sentence bounds and text
+remain intact. Complete applied timing saves ELRC without another estimate prompt.
+See the [illustrated audio alignment guide](audio-alignment.md) for setup and
+limitations. Singing alignment requires review; confidence is only a hint.
