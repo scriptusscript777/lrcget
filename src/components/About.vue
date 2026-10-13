@@ -19,7 +19,12 @@
               <Alert class="text-lg" />
               New update is available. See what's new and download at
               <span
-                ><a :href="newestReleaseUrl" class="link" target="_blank" @click="downloadUpdate"
+                ><a
+                  :href="newestReleaseUrl"
+                  class="link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  @click="downloadUpdate"
                   >LRCGET GitHub Release Page</a
                 >!</span
               >
@@ -37,13 +42,20 @@
       </div>
 
       <div class="mb-6">
-        <label class="group-label mb-2">Donation</label>
+        <label class="group-label mb-2">Support the original creator</label>
 
         <div class="text-sm">
+          <p class="mb-2">Original LRCGET project by tranxuanthang.</p>
+
           <div class="mb-2">
             <div class="mb-1">GitHub Sponsors (Recommended):</div>
             <div>
-              <a href="https://github.com/sponsors/tranxuanthang" class="link" target="_blank">
+              <a
+                href="https://github.com/sponsors/tranxuanthang"
+                class="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 https://github.com/sponsors/tranxuanthang
               </a>
             </div>
@@ -52,7 +64,12 @@
           <div class="mb-2">
             <div class="mb-1">Buy Me a Coffee:</div>
             <div>
-              <a href="https://www.buymeacoffee.com/thangtran" class="link" target="_blank">
+              <a
+                href="https://www.buymeacoffee.com/thangtran"
+                class="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 https://www.buymeacoffee.com/thangtran
               </a>
             </div>
@@ -61,7 +78,12 @@
           <div class="mb-2">
             <div class="mb-1">Paypal:</div>
             <div>
-              <a href="https://paypal.me/tranxuanthang98" class="link" target="_blank">
+              <a
+                href="https://paypal.me/tranxuanthang98"
+                class="link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
                 https://paypal.me/tranxuanthang98
               </a>
             </div>
@@ -91,6 +113,7 @@
               href="https://github.com/tranxuanthang/lrcget"
               class="link"
               target="_blank"
+              rel="noopener noreferrer"
               @click="downloadUpdate"
               >github.com/tranxuanthang/lrcget</a
             >
@@ -102,6 +125,7 @@
               href="mailto:hoangtudevops@protonmail.com"
               class="link"
               target="_blank"
+              rel="noopener noreferrer"
               @click="downloadUpdate"
               >hoangtudevops@protonmail.com</a
             >
