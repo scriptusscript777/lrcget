@@ -40,8 +40,10 @@ jobs:
           python -m ruff check alignment
           python -m unittest discover -s alignment -p 'test_*.py'
       - name: Test native backend
-        working-directory: src-tauri
-        run: cargo test --locked
+        run: |
+          # The Tauri build macro needs the built web interface (dist/).
+          npm run build
+          cd src-tauri && cargo test --locked
       - name: Build Debian package and AppImage
         run: |
           npm run tauri -- build --bundles deb,appimage
@@ -59,9 +61,14 @@ jobs:
           test "$(find previous-deb -name '*.deb' | wc -l)" -eq 1
       - name: Check Debian upgrade, launch, removal and AppImage launch
         run: ./packaging/linux/check-packages.sh packages previous-deb/*.deb
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about
+      - name: Generate third-party notices and stop on unreviewed licenses
+        run: python3 tools/third_party_notices.py --appimage packages/*.AppImage --output packages/THIRD_PARTY_NOTICES.md --check
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: linux-packages-results
           path: packages/
-          if-no-files-found: error
+          if-no-files-found: warn

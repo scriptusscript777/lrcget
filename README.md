@@ -1,326 +1,232 @@
-# LRCGET — Rick Lidgett's Enhanced Build
+# LRCGET — Rick Lidgett's Enhanced Lyrics Editor
 
-An independent MIT-licensed fork of [LRCGET](https://github.com/tranxuanthang/lrcget),
-maintained by [Rick Lidgett](https://github.com/scriptusscript777). Original authors,
-copyright notices and license remain credited. Application version stays **2.2.7**.
+A desktop app for downloading, creating and precisely timing synced lyrics for
+your offline music library. It is an independent, MIT-licensed fork of
+[LRCGET](https://github.com/tranxuanthang/lrcget) by tranxuanthang, adding a
+waveform lyrics editor, word-by-word timing, Enhanced LRC (`.elrc`) and update
+alerts. See [What this fork changes](#what-this-fork-changes) and
+[License and attribution](#license-and-attribution).
+
+**[Download the latest release](https://github.com/scriptusscript777/lrcget/releases/latest)** ·
+[Illustrated how-tos](docs/how-to.md) · [Changelog](CHANGELOG.md) ·
+[Report a problem](https://github.com/scriptusscript777/lrcget/issues)
+
+![LRCGET editor with sentence and word alignment](docs/screenshots/current/sentence-alignment-toolbar-light.png)
 
 ## Supported systems
 
-Desktop and laptop computers only: Linux x64 (Debian package or AppImage; Mint 22 /
-Ubuntu 24.04 or newer) and Windows 10/11 x64 (MSI). The editor needs a window at
-least 1024 × 768 and is designed for a mouse and keyboard. Phones, tablets,
-Chromebooks, macOS and ARM computers are not supported; there is no mobile version.
+| System                                                              | Installer | Processor              |
+| ------------------------------------------------------------------- | --------- | ---------------------- |
+| Windows 10 and 11                                                   | `.msi`    | x64 (64-bit Intel/AMD) |
+| Linux Mint 22, Ubuntu 24.04, Debian-based systems with glibc 2.39+  | `.deb`    | x64 (amd64)            |
+| Other Linux distributions with glibc 2.39+, GTK 3 and WebKitGTK 4.1 | AppImage  | x64                    |
 
-## Downloads and installation
+Desktop and laptop computers only. The editor needs a window of at least
+1024 × 768 and is designed for a mouse and keyboard. **Not supported:** phones,
+tablets, Chromebooks, macOS, ARM computers (no ARM64 builds are published) and
+older Linux releases.
 
-[Current 2.2.7 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1) includes Linux Debian amd64, Linux AppImage x64,
-and an unsigned Windows x64 MSI beta, each with a SHA256 checksum. Source ZIP and
-tar.gz archives include the code, illustrated documentation and build scripts.
+## Download
 
-| Package | Install or run | Compatibility |
-| --- | --- | --- |
-| [Debian](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.7-windows-beta.1/LRCGET_2.2.7_amd64.deb) | `sudo apt install ./LRCGET_2.2.7_amd64.deb` | Mint 22 / Ubuntu 24.04 baseline, glibc 2.39+; upgrades package `lrcget` |
-| [AppImage](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.7-windows-beta.1/LRCGET_2.2.7_amd64.AppImage) | `chmod +x LRCGET_2.2.7_amd64.AppImage`, then run it | Linux x64, glibc 2.39+; FUSE 2 or `--appimage-extract-and-run` |
-| [Windows MSI beta](https://github.com/scriptusscript777/lrcget/releases/download/v2.2.7-windows-beta.1/LRCGET_2.2.7_x64_en-US.msi) | Open the MSI and follow installation prompts | Windows x64; WebView2; unsigned, Windows Server CI tested |
+Each [release](https://github.com/scriptusscript777/lrcget/releases/latest) contains:
 
-Already using Debian version 2.2.7? Close LRCGET and use
-`sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb` for this maintenance build.
-AppImage and Debian use the same profile; run one version at a time.
-Windows 11 interactive playback, optional engine setup and older-version upgrades
-still need desktop testing. See [package instructions and checks](docs/packages.md)
-and [platform limitations](docs/platform-builds.md). No current macOS/RPM/ARM fork
-packages are provided. Historical upstream downloads below are separate releases.
+| File                                          | Use                                            |
+| --------------------------------------------- | ---------------------------------------------- |
+| `LRCGET_<version>_x64_en-US.msi`              | Windows 10/11 installer                        |
+| `LRCGET_<version>_amd64.deb`                  | Linux Mint / Ubuntu / Debian package           |
+| `LRCGET_<version>_amd64.AppImage`             | Portable Linux app                             |
+| `LRCGET_<version>_source.zip` / `.tar.gz`     | Full source code with documentation            |
+| `LRCGET_<version>_docs.zip`                   | Illustrated guides on their own                |
+| `LRCGET_<version>_THIRD_PARTY_NOTICES.md`     | Licenses of the bundled open-source components |
+| `*.sha256`, `LRCGET_<version>_SHA256SUMS.txt` | Checksums to verify downloads                  |
 
-## Features and illustrated how-tos
+Every installer is built and tested by GitHub Actions before it is published,
+including installing over the previous release and uninstalling.
 
-- Download lyrics from the configured LRCLIB-compatible server; recognize actual
-  word timing and fall back to ordinary LRC/TXT according to selected filters.
-- Import/edit plain TXT, sentence-timed LRC and word-timed ELRC; startup/F5 checks
-  matching ELRC before LRC/TXT for eligible unedited tracks.
-- Click-to-play waveform, stable playhead while zooming, precise Start/End marker
-  previews, Cancel, Undo/Redo and theme-aware overlap protection.
-- Timing-only word boxes, gray disabled Sync after confirmation, independent
-  word zoom, Pause/Resume, persistent word/sentence loops and live Word preview.
-- Basic manual editing and estimated words need no AI. Optional local
-  **Align sentences** and **Align words** use consented Whisper/stable-ts models;
-  listen to proposals before applying. Missing engine setup asks once, with an
-  Install button for later and separate verified model-download consent.
-- Save unfinished-work recovery separately from exports; successful saves clean
-  only the current completed draft. Reset words affects one sentence; no master reset.
-- Select TXT, LRC, ELRC and supported MP3/FLAC embedding independently. ELRC can
-  preserve existing edited words and explicitly accepted missing estimates.
-  MP3 supports USLT, SYLT and optional TXXX Enhanced LRC text.
-- Hover help is off by default; Configuration enables it, F1 requests it explicitly.
+## Install
 
-Start with the [documentation index](docs/README.md), [complete features](docs/features.md),
-[step-by-step how-tos](docs/how-to.md), [editing reference](docs/editing-guide.md),
-[automatic alignment guide](docs/audio-alignment.md), [recovery guide](docs/recovery.md),
-[troubleshooting](docs/troubleshooting.md), [source/build guide](docs/build-from-source.md)
-and [developer guide](docs/developer-guide.md).
+Your music library, lyrics and settings are kept when you install a newer
+version over an older one. Optionally verify a download first: on Linux run
+`sha256sum -c FILE.sha256`; on Windows compare `Get-FileHash FILE` with the
+`.sha256` file.
 
-## Current interface
+### Windows 10/11 (`.msi`)
 
-![Light theme editor with sentence and word alignment](docs/screenshots/current/sentence-alignment-toolbar-light.png)
-![Dark theme sentence alignment preview](docs/screenshots/current/sentence-alignment-preview-dark.png)
-![Light theme word timing and loops](docs/screenshots/current/selected-word-loop-light.png)
-![Dark theme save and export choices](docs/screenshots/current/embedded-word-export-dark.png)
+1. Download the `.msi` file and double-click it.
+2. If **Windows protected your PC** appears, choose **More info**, then
+   **Run anyway**. The installer is not yet code-signed, so SmartScreen warns
+   (code signing through SignPath Foundation has been requested).
+3. Follow the installer. Installing a newer version replaces the old one.
 
-Images show the actual Vue interface using isolated demonstration lyrics and mocked
-native commands; packaged Linux startup is tested separately. See the
-[capture index](docs/screenshots/current/README.md) for dates and provenance.
-Screenshots do not demonstrate guaranteed singing accuracy.
+Uninstall from **Settings → Apps → Installed apps → LRCGET**. If WebView2 is
+missing, the installer downloads it from Microsoft.
 
-## Validation and limitations
+### Linux Mint, Ubuntu, Debian (`.deb`)
 
-Linux: 558 frontend tests, 88 native tests (two optional fixtures ignored), 18
-Python tests, Ruff, scoped ESLint, Cargo check and MSI configuration tests passed.
-Debian and AppImage opened successfully under isolated Xvfb profiles.
-[Windows CI](https://github.com/scriptusscript777/lrcget/actions/runs/38296288986)
-passed 558 frontend/86 native tests, optional setup tests, MSI identity/checksum,
-Defender installer/payload scans, install, repair, visible launch and uninstall.
-Windows scans found no threats; they do not establish SmartScreen reputation.
-See the [detailed review](docs/reviews/2.2.7.md) and [release notes](docs/releases/2.2.7.md).
+1. Close LRCGET if it is running.
+2. Open a terminal in the download folder and run (use the actual file name):
 
-Models and estimated timing require listening review. Plain TXT cannot store
-sentence/word timing; LRC stores sentence timing, ELRC stores inline word timing.
-Player support varies. Local exports do not publish to a server; publishing sends
-lyrics/metadata only when requested. See [privacy](docs/privacy.md).
+   ```bash
+   sudo apt install ./LRCGET_2.2.7_amd64.deb
+   ```
 
-## Code signing policy
+3. Start LRCGET from the application menu. A newer `.deb` upgrades the installed
+   copy in place. To reinstall the same version, add `--reinstall`.
 
-Current packages are unsigned. SignPath Foundation application/approval is pending;
-no Foundation signature or sponsorship is claimed. See [code signing policy and
-setup](docs/code-signing.md). Upstream signing status has not been verified.
+Uninstall with `sudo apt remove lrcget`. Your lyrics database is kept in
+`~/.local/share/net.lrclib.lrcget`.
 
-## Original Project
+### Other Linux (AppImage)
 
-LRCGET will scan every files in your chosen directory for music files, then and try to download lyrics to a LRC files having the same name and save them to the same directory as your music files.
+1. Make the file runnable: right-click it, choose **Properties → Permissions**
+   and turn on **Allow executing file as program**, or run
+   `chmod +x LRCGET_2.2.7_amd64.AppImage`.
+2. Double-click it to start. If it reports missing FUSE, install `libfuse2`
+   (`libfuse2t64` on Ubuntu 24.04) or run it with `--appimage-extract-and-run`.
+3. To update, replace the old AppImage file with the new one.
 
-LRCGET is the official client of [LRCLIB](https://lrclib.net) service.
+The AppImage and the `.deb` share the same settings; run one at a time. More
+detail: [package guide](docs/packages.md).
 
-## Upstream Downloads
+## Update alerts
 
-The historical links below are upstream v2.1.0 downloads, not Rick Lidgett's
-enhanced build. Visit the [upstream release page](https://github.com/tranxuanthang/lrcget/releases)
-for upstream versions and other platforms.
+Each time LRCGET starts, it asks GitHub once whether a newer version has been
+published. If so, an **Update available** window shows the new version and the
+one installer that matches your computer, with install steps.
 
-### Windows
+![Update available window](docs/screenshots/current/update-available-light.png)
 
-EXE installer (recommended): [LRCGET_2.1.0_x64-setup.exe](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_x64-setup.exe)
+- **Download update** opens the download in your browser. LRCGET never installs
+  or runs anything by itself.
+- **Later** reminds you at the next start; **Skip this version** hides that version.
+- Without an internet connection the check stays silent. Open **About** to check
+  by hand. Details: [how-to](docs/how-to.md#get-notified-about-new-releases) and
+  [privacy](docs/privacy.md#automatic-update-check).
 
-MSI installer: [LRCGET_2.1.0_x64_en-US.msi](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_x64_en-US.msi)
+## Features
 
-### Linux
+- **Library:** scan your music folders, browse tracks, albums and artists, see
+  which songs have synced, plain or no lyrics, and refresh with F5.
+- **Find lyrics online:** search [LRCLIB](https://lrclib.net), compare durations,
+  preview and apply results, or download lyrics for the whole library.
+- **Waveform editor:** click-to-play waveform with zoom, precise Start/End
+  markers, previews, Cancel, Undo/Redo and overlap protection.
+- **Word timing:** time every word, loop a word or sentence while refining it,
+  and save Enhanced LRC (`.elrc`) with word timestamps.
+- **Import and export:** plain TXT, standard LRC and ELRC chosen independently;
+  optional embedding in MP3 (USLT/SYLT/TXXX) and FLAC.
+- **Optional audio alignment:** local Whisper/stable-ts alignment of sentences or
+  words, installed only with your consent. Basic editing needs no AI.
+- **Safety:** unfinished work is recovered automatically; publishing to LRCLIB
+  always asks for confirmation.
+- **Themes and help:** light and dark themes, optional hover help, F1 help and
+  configurable shortcuts.
 
-Flatpak build (recommended, for most Linux distros):
+Full list: [features](docs/features.md).
 
-<a href='https://flathub.org/en/apps/net.lrclib.lrcget'><img width='120' alt='Get LRCGET on Flathub' src='https://flathub.org/api/badge?locale=en'/></a>
+## Screenshots
 
-Deb packages (for Ubuntu 24.04+ and Linux Mint 22+): [LRCGET_2.1.0_amd64.deb](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_amd64.deb)
+|                                                                                 |                                                                                    |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
+| ![Tracks list](docs/screenshots/current/library-tracks-light.png)               | ![Search lyrics online](docs/screenshots/current/search-lyrics-dark.png)           |
+| ![Word timing and loops](docs/screenshots/current/selected-word-loop-light.png) | ![Save and export choices](docs/screenshots/current/embedded-word-export-dark.png) |
 
-RPM packages (for Fedora, openSUSE, etc.): [LRCGET-2.1.0-1.x86_64.rpm](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET-2.1.0-1.x86_64.rpm)
+More pictures in the [illustrated overview](docs/app-overview.md) and
+[how-tos](docs/how-to.md). Screenshots use generated demonstration music.
 
-AppImage (for most Linux distros): [LRCGET_2.1.0_amd64.AppImage](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_amd64.AppImage)
+## Documentation
 
-### macOS
+- [Step-by-step how-tos](docs/how-to.md) and [editing reference](docs/editing-guide.md)
+- [Package installation and verification](docs/packages.md)
+- [Troubleshooting](docs/troubleshooting.md) and [recovery](docs/recovery.md)
+- [Optional audio alignment](docs/audio-alignment.md)
+- [Privacy and network use](docs/privacy.md)
+- [Building from source](docs/build-from-source.md), [developer guide](docs/developer-guide.md)
+  and [platform builds](docs/platform-builds.md)
+- [Changelog](CHANGELOG.md) and [detailed release notes](docs/releases/)
 
-Mac x64 (Intel): [LRCGET_2.1.0_x64.dmg](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_x64.dmg)
+## Known limitations
 
-Mac Apple Silicon: [LRCGET_2.1.0_aarch64.dmg](https://github.com/tranxuanthang/lrcget/releases/download/2.1.0/LRCGET_2.1.0_aarch64.dmg)
+- Windows installer is not code-signed yet, so SmartScreen shows a warning.
+- x64 only; no macOS, ARM, RPM or Flatpak builds of this fork.
+- Linux packages need glibc 2.39 or newer (Mint 22 / Ubuntu 24.04 or newer).
+- Estimated and automatically aligned timing needs listening review; singing
+  alignment is not perfect.
+- Plain TXT stores no timing; LRC stores sentence timing; ELRC stores word timing.
+  Word highlighting depends on the player you use.
+- Same-version maintenance builds do not trigger update alerts; only a higher
+  version does.
 
-## Historical Upstream Screenshots
+## Report a problem
 
-These images show an older upstream interface, not this fork's current editor.
-
-<details>
-<summary>View original upstream screenshots</summary>
-
-![01.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/01.png)
-
-![02.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/02.png)
-
-![03.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/03.png)
-
-![04.png](https://raw.githubusercontent.com/tranxuanthang/lrcget/9e0578bd9411fcc024a56d2f1108701751c5ec3a/screenshots/04.png)
-
-</details>
-
-## Donation
-
-Toss a coin to your developer?
-
-**GitHub Sponsors (Recommended - 100% of your support goes to the developer):**
-
-https://github.com/sponsors/tranxuanthang
-
-**Buy Me a Coffee:**
-
-https://www.buymeacoffee.com/thangtran
-
-**Paypal:**
-
-https://paypal.me/tranxuanthang98
-
-**Monero (XMR):**
-
-```
-43ZN5qDdGQhPGthFnngD8rjCHYLsEFBcyJjDC1GPZzVxWSfT8R48QCLNGyy6Z9LvatF5j8kSgv23DgJpixJg8bnmMnKm3b7
-```
-
-**Litecoin (LTC):**
-
-```
-ltc1q7texq5qsp59gclqlwf6asrqmhm98gruvz94a48
-```
+Open an [issue](https://github.com/scriptusscript777/lrcget/issues) with your
+system, LRCGET version (shown in **About**) and steps to reproduce. Issues are
+public: leave out personal paths, private lyrics, audio and email addresses.
 
 ## Troubleshooting
 
-**Audio cannot be played in Linux (Ubuntu and other distros)**
+- **No audio on Linux:** install `pipewire-alsa` (`sudo apt install pipewire-alsa`).
+- **App won't open on Windows:** install Microsoft Edge WebView2 if it was removed
+  (for example on LTSC or "debloated" systems).
+- **Invisible scrollbar on KDE Plasma:** System Settings → Appearance → Global
+  Theme → Application Style → Configure GNOME/GTK Application Style, choose a
+  different GTK theme.
 
-Try to install `pipewire-alsa` package. For example, in Ubuntu or Debian-based distros:
+More in [troubleshooting](docs/troubleshooting.md).
 
-```
-sudo apt install pipewire-alsa
-```
+## Building from source
 
-**App won't open in Windows 10/11**
+Requires Node.js 22, stable Rust and the
+[Tauri prerequisites](https://v2.tauri.app/start/prerequisites/) for your system.
 
-If you are using Windows 10 LTSC, or have tried running some scripts to debloat Windows 10 (which will uninstall Microsoft Edge and its webview component), you might have issues as LRCGET depends on WebView2. Reinstalling Microsoft Edge might fix the problem (see issue https://github.com/tranxuanthang/lrcget/issues/45).
-
-**Scrollbar is invisible in Linux (KDE Plasma 5/6)**
-
-The exact cause is still unknown, but it can be fixed by going to System Settings > Appearance > Global Theme > Application Style > Configure GNOME/GTK Application Style... > Change to something other than breeze (Awaita or Default) > Apply (see comment https://github.com/tranxuanthang/lrcget/issues/44#issuecomment-1962998268)
-
-## Contact
-
-If you prefer to contact by email:
-
-[hoangtudevops@protonmail.com](mailto:hoangtudevops@protonmail.com)
-
-## Development
-
-LRCGET is made with [Tauri](https://tauri.app).
-
-To start developing the application, you need to do the [prerequisites](https://v2.tauri.app/start/prerequisites/) steps according to your operating system.
-
-For example, you need the following components to start the development in Windows:
-
-- Microsoft Visual Studio C++ Build Tools
-- Stable Rust with the MSVC target
-- Node.js 22
-
-Start the development window with the following command:
-
-```shell
-cd lrcget
-npm install
-npm run tauri dev
+```bash
+npm ci
+npm run tauri dev                                 # development window
+npm run tauri -- build --bundles deb,appimage    # Linux packages
 ```
 
-## Building
+The Windows MSI is built with `packaging/windows/build-msi.ps1`. Full
+instructions: [build from source](docs/build-from-source.md).
 
-Start the build process with the following command:
+**Releases (maintainers):** commit the version, `CHANGELOG.md` and
+`docs/releases/<version>.md`, then run **Actions → Release installers** with a
+tag such as `v2.2.8`. It runs the Windows (`windows-msi.yml`) and Linux
+(`linux-packages.yml`) build and install checks and publishes only if all of
+them pass.
 
-```shell
-cd lrcget
-npm install
-npm run tauri build
-```
+## What this fork changes
 
-Your built binaries are located at:
+This fork keeps the original LRCGET library scanner, LRCLIB downloader and
+publisher, and adds the lyrics editor and packaging work described above.
+Modified and added files are recorded in the Git history; summaries are in
+[CHANGELOG.md](CHANGELOG.md), [LOCAL_CHANGES.md](LOCAL_CHANGES.md) and
+[docs/releases](docs/releases/). The app keeps the original identifier
+`net.lrclib.lrcget`. This is not an official LRCGET release, and the original
+author does not endorse or support it.
 
-```
-./src-tauri/target/release/
-```
+## License and attribution
 
-For more detailed instruction, follow the [building guide](https://v2.tauri.app/distribute/) to build the application according to your OS platform.
+LRCGET is © 2023 tranxuanthang and is distributed under the
+[MIT License](LICENSE); the original copyright and permission notice are kept
+unchanged and must be included in copies or substantial portions of the
+software. Modifications are by Rick Lidgett
+([@scriptusscript777](https://github.com/scriptusscript777)) under the same
+license. Third-party libraries keep their own licenses; see
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-Hover help is off by default. In **Configuration**, enable **Show hover help**
-and Save if you want automatic descriptions. Your choice survives restarting.
-F1 shows help for a hovered or focused control either way; it closes after two
-seconds. Help never blocks waveform editing or playback controls.
+## Original project
 
-Linux compatibility: the shared hover-help behavior is independent of desktop
-environment. This amd64 installer requires glibc 2.39 or newer, GTK 3 and
-WebKitGTK 4.1 (such as Ubuntu 24.04 / Mint 22 or compatible newer systems).
-Older Debian-based releases and ARM need a build for their platform; a `.deb`
-extension alone does not guarantee binary compatibility.
+[LRCGET](https://github.com/tranxuanthang/lrcget) scans your music folders and
+downloads matching LRC lyrics from [LRCLIB](https://lrclib.net), saving them
+next to your music files. LRCGET is the official client of the LRCLIB service.
+For the original app on all platforms (including Flatpak, RPM and macOS), see the
+[upstream releases](https://github.com/tranxuanthang/lrcget/releases).
 
-Loop now remains enabled when selecting or playing another lyric. Its range moves
-to the selected markers; turn Loop off explicitly for continuous playback.
-See the [loop how-to](docs/how-to.md#loop-between-the-markers).
-
-See the [complete feature index](docs/features.md), [troubleshooting](docs/troubleshooting.md),
-and [package/source guide](docs/packages.md). The manual Windows MSI build is in
-[Windows packaging](packaging/windows/README.md).
-
-## Automatic unfinished-work recovery
-
-Unfinished lyrics are protected separately from normal saves and exports.
-Reopen the song or use Resume editing to recover it. Successful Save cleans
-only that project's completed draft; newer edits and pending markers remain.
-Word timing warnings now use yellow text. See the [recovery guide](docs/recovery.md)
-for restoration, conflicts, cleanup and limitations.
-
-## Restart one sentence’s word timing
-
-Use **Reset words** to clear only the selected sentence’s word timing and
-regenerate evenly spaced estimates. Text and sentence markers stay in place;
-Undo restores the prior word timings. Master reset has been removed.
-
-Word preview matches live sentence-row highlighting; the recovery notice leaves
-space beside the main debug icon. See the [editing guide](docs/editing-guide.md).
-
-Native-loop maintenance (version unchanged): word/sentence repeats run inside
-the audio engine with approximately 10 ms cursor updates during loops. Live
-waveform preview ranges, word edits, Pause/Resume and context remain supported.
-Ordered backend sessions reject stale commands/cleanup from older editors.
-See [editing guide](docs/editing-guide.md) for listening and latency details.
-
-Word-editing maintenance (version remains 2.2.7): Follow Lyrics holds both word
-views when off, independent manual adjustments retain confirmed ranges on Sync,
-confirmed words stay gray until changed, and Reset words restarts one sentence’s
-word timing with Undo support. Overlap status is green On/red Off in both themes.
-Master reset is removed; recovery and TXT/LRC/ELRC Save/import/export remain.
-
-## ELRC save with accepted estimates (version unchanged)
-
-Editor **Save and export** with ELRC selected offers to fill missing word starts
-after showing the number of affected sentences. Existing manual times, word gaps
-and lyric text stay unchanged. Users may adjust some words and leave others alone.
-Accepted estimates persist in the project and ELRC, with Undo support; Cancel does
-not save or export. Untimed text must receive sentence timing first. Invalid saved
-word data, too-short ranges and protected overlaps block preparation. Plain TXT
-and standard LRC export alone do not estimate words. Library batch export and
-server publishing retain their saved-data behavior. The green dot indicates valid
-word timing, including accepted estimates, rather than manual verification.
-
-See [illustrated export instructions](docs/editing-guide.md#export-word-timing-as-enhanced-lrc).
-
-
-### ELRC discovery and library status
-
-Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
-back to `.txt`. Untouched ordinary LRC can upgrade to real word timing. Existing
-word timing, instrumental lyrics and explicit editor saves remain protected.
-Invalid ELRC falls back safely; scans never change audio or sidecars and do not
-mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
-sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
-automatic export formats; downloads never silently generate estimated word times.
-
-
-## Basic and optional Automatic audio alignment
-
-Basic TXT/LRC/ELRC editing, estimated word timing and manual synchronization
-remain available without AI. **Align words** in the editor header opens optional
-local audio alignment with language/model selection, progress and cancellation.
-Preview yellow uncertain words, listen, then Apply in one Undo step. Existing
-word times are protected unless explicitly replaced; sentence bounds and text
-remain intact. Complete applied timing saves ELRC without another estimate prompt.
-See the [illustrated audio alignment guide](docs/audio-alignment.md) for setup and
-limitations. Singing alignment requires review; confidence is only a hint.
-
-Optional audio setup now asks once when the engine is unavailable; declining
-keeps an Install button for later. Each missing model needs separate approval.
-Synced toolbar order is Word preview → Align sentences → Align words; model choices remain
-readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](docs/audio-alignment.md).
+Support the original developer:
+[GitHub Sponsors](https://github.com/sponsors/tranxuanthang) ·
+[Buy Me a Coffee](https://www.buymeacoffee.com/thangtran) ·
+[PayPal](https://paypal.me/tranxuanthang98) ·
+Monero `43ZN5qDdGQhPGthFnngD8rjCHYLsEFBcyJjDC1GPZzVxWSfT8R48QCLNGyy6Z9LvatF5j8kSgv23DgJpixJg8bnmMnKm3b7` ·
+Litecoin `ltc1q7texq5qsp59gclqlwf6asrqmhm98gruvz94a48`.
+Original author contact: [hoangtudevops@protonmail.com](mailto:hoangtudevops@protonmail.com)
+(for the original project, not this fork).

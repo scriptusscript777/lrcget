@@ -71,6 +71,17 @@ remains in Git and `lrcget-backup.bundle`. Run unit, native and end-to-end updat
 checks first; releases must be production-ready. A user-visible update alert
 fires only for a higher version, so a same-version rebuild does not notify users.
 
+Release workflow (Rick, 2026-10-12): make changes on a separate branch, run local
+tests, commit, push, and let `windows-msi.yml` and `linux-packages.yml` pass on
+GitHub before merging into `local/editor-lrc-default`. Publish only through
+**Actions → Release installers** (`release.yml`), which reruns both checks and
+uploads only if they pass. Add every release to `CHANGELOG.md` and
+`docs/releases/<version>.md`; regenerate `THIRD_PARTY_NOTICES.md` with
+`python3 tools/third_party_notices.py` when dependencies change. Never commit
+installers or secrets to the source repository; signing keys live only in GitHub
+Actions secrets. No WinGet and no in-app automatic installation; keep the GitHub
+update alert. Mirror the same commits to the local Git server backup.
+
 Apply this maintenance workflow every time this app is modified. Update feature
 lists, how-tos and release notes together; capture fresh light/dark screenshots
 for changed visible behavior and verify documentation/download links. Verify the

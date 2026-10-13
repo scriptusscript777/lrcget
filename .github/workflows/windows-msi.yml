@@ -8,6 +8,13 @@ on:
         type: boolean
         default: false
         required: false
+  # Lets release.yml run these exact build and install checks before publishing.
+  workflow_call:
+    inputs:
+      sign_msi:
+        type: boolean
+        default: false
+        required: false
 
 permissions:
   contents: read

@@ -25,7 +25,7 @@ current source to behavior; it is not a promise that every platform is verified.
 | `src-tauri/Cargo.toml`, `Cargo.lock`                        | Native app version and Rust dependency lock                                                               |
 | `package.json`, `package-lock.json`                         | Frontend scripts and locked dependencies                                                                  |
 | `src-tauri/tauri.conf.json`, `packaging/`                   | App identity, native permissions/bundling, desktop metadata and Windows tooling                           |
-| `.github/workflows/`                                        | Existing upstream release workflows plus a manually triggered Windows verification job                    |
+| `.github/workflows/`                                        | `windows-msi.yml` and `linux-packages.yml` build and install-test packages; `release.yml` publishes |
 | `docs/`, `LOCAL_CHANGES.md`                                 | User guides, images, version history and verification records                                             |
 
 ## Timing data and control flow
@@ -112,6 +112,23 @@ verify hashes/startup, update the installed Debian app in place when code change
 commit locally and refresh the configured server backup. Publish to the fork and
 notify upstream only under current user authorization. Do not rewrite unrelated
 PRs or include private music/databases, build directories or unrelated projects.
+
+### Releases on GitHub
+
+1. Work on a branch; run `npx vitest run`, `cargo test --locked` and lint locally.
+2. Push the branch and run **Build and check Windows MSI** and **Build and check
+   Linux packages** on it from the Actions tab. Both must pass.
+3. Merge into `local/editor-lrc-default` with the version change, a `CHANGELOG.md`
+   entry and `docs/releases/<version>.md`.
+4. Run **Release installers** (`release.yml`) with the tag, for example `v2.2.8`.
+   It reruns both checks and publishes the `.msi`, `.deb`, AppImage, source and
+   docs archives and checksums only if every check passes. New releases start as
+   drafts by default; publish the draft to make it Latest and trigger update alerts.
+
+The Linux check (`packaging/linux/check-packages.sh`) installs the published
+`.deb`, upgrades it with the user profile kept, starts the app, removes it and
+starts the AppImage. The Windows check (`packaging/windows/check-msi.ps1`)
+installs over the published MSI, repairs, launches and uninstalls it.
 
 ## Known limits
 
