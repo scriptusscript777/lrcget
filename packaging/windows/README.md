@@ -36,8 +36,11 @@ runtime during installation. This is not a fully offline WebView2 package.
 Before distributing the MSI, verify installation and uninstallation on Windows
 11, upgrading an existing install without duplicates, and playback, waveform,
 word loops, preferences and TXT/LRC/ELRC/ID3 exports. The Linux checks do not
-substitute for these Windows checks. Packages are unsigned unless a signing
-certificate is configured; no signing certificate is included here.
+substitute for these Windows checks. The MSI has no digital publisher signature. As a new independent fork with
+limited public recognition, the project does not yet qualify for a sponsored
+signing certificate. Windows may show an unknown-publisher or SmartScreen warning
+for this reason. See the user-facing signing status guide for checksum and scan
+guidance.
 
 ## Manual Windows build runner
 
@@ -68,8 +71,9 @@ publisher/version/upgrade GUID, fresh-enough Defender definitions, custom scans
 of the installer and installed payload, installation, repair reinstall, visible
 app launch, and uninstallation. Diagnostics are uploaded even on failure; a
 failed/unavailable scan is not reported as clean. This remains Windows Server
-validation, not Windows 11 desktop/SmartScreen certification. Packages remain
-unsigned unless a real signing certificate is configured.
+validation, not Windows 11 desktop/SmartScreen certification. The current MSI is
+unsigned, so Windows cannot verify its publisher from the package signature.
+Details for users are in the [Windows signing status guide](../../docs/code-signing.md).
 
 Automatic alignment now supports a Windows private environment using
 `Scripts/python.exe` under `%LOCALAPPDATA%/net.lrclib.lrcget/alignment-environments`.
@@ -86,4 +90,4 @@ large model/package downloads; full Windows singing alignment remains a
 separate desktop test after installing optional dependencies.
 
 
-See [Code signing policy](../../docs/code-signing.md) and [privacy](../../docs/privacy.md) for pending SignPath setup and network behavior.
+See [Windows signing status](../../docs/code-signing.md) and [privacy](../../docs/privacy.md) for signing and network behavior.

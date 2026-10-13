@@ -54,9 +54,14 @@ version over an older one. Optionally verify a download first: on Linux run
 ### Windows 10/11 (`.msi`)
 
 1. Download the `.msi` file and double-click it.
-2. If **Windows protected your PC** appears, choose **More info**, then
-   **Run anyway**. The installer is not yet code-signed, so SmartScreen warns
-   (code signing through SignPath Foundation has been requested).
+2. This MSI has no digital publisher signature, so Windows cannot verify its
+   publisher and may show an unknown-publisher or SmartScreen warning. This is a
+   new independent fork with limited public recognition, so it does not yet
+   qualify for a sponsored signing certificate. The warning alone does not mean
+   malware. Install only if you downloaded it from the LRCGET fork's official
+   GitHub release and its SHA-256 matches the published checksum. Windows CI scans
+   reported no threats, though scans cannot guarantee a file is risk-free or
+   prevent Windows from warning.
 3. Follow the installer. Installing a newer version replaces the old one.
 
 Uninstall from **Settings → Apps → Installed apps → LRCGET**. If WebView2 is
@@ -148,7 +153,9 @@ More pictures in the [illustrated overview](docs/app-overview.md) and
 
 ## Known limitations
 
-- Windows installer is not code-signed yet, so SmartScreen shows a warning.
+- The Windows MSI is unsigned. Windows may show an unknown-publisher or
+  SmartScreen warning because this new fork does not yet qualify for a sponsored
+  signing certificate. Verify the download checksum before installing.
 - x64 only; no macOS, ARM, RPM or Flatpak builds of this fork.
 - Linux packages need glibc 2.39 or newer (Mint 22 / Ubuntu 24.04 or newer).
 - Estimated and automatically aligned timing needs listening review; singing

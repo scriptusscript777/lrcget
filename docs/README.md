@@ -87,4 +87,4 @@ See the [illustrated audio alignment guide](audio-alignment.md) for setup and
 limitations. Singing alignment requires review; confidence is only a hint.
 
 
-See [Code signing policy](code-signing.md) and [privacy](privacy.md) for pending SignPath setup and network behavior.
+See [Windows signing status](code-signing.md) and [privacy](privacy.md) for signing and network behavior.

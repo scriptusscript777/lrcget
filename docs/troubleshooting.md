@@ -79,8 +79,12 @@ The check runs once, a few seconds after LRCGET starts. No alert appears when:
 LRCGET only downloads the file; it never runs an installer. Follow the steps for
 your format in [Install a downloaded update](how-to.md#install-a-downloaded-update).
 For an AppImage, make the new file executable and start the new file, not the old
-one or an old desktop shortcut. On Windows, a SmartScreen warning is expected
-because the MSI is not code-signed; choose **More info**, then **Run anyway**.
+one or an old desktop shortcut. On Windows, an unknown-publisher or SmartScreen
+warning may appear because the MSI is unsigned and the new fork does not yet
+qualify for a sponsored signing certificate. This warning alone does not mean
+malware. Verify the downloaded MSI's SHA-256 against the official release before
+installing; Defender scans reported no threats, but cannot guarantee safety.
+Windows security settings may still block installation.
 
 ## Windows installer or build fails
 

@@ -90,8 +90,13 @@ in the [package guide](packages.md#verify-downloads).
 
 1. Close LRCGET.
 2. Double-click the downloaded `.msi` file.
-3. If **Windows protected your PC** appears, choose **More info**, then
-   **Run anyway**. The installer is not yet code-signed, so SmartScreen warns.
+3. The MSI has no digital publisher signature, so Windows cannot verify its
+   publisher and may show an unknown-publisher or SmartScreen warning. This is a
+   new independent fork with limited public recognition, so it does not yet
+   qualify for a sponsored signing certificate. The warning alone does not mean
+   malware. Before installing, verify the MSI against the SHA-256 checksum on the
+   official release page. Defender scans in Windows CI reported no threats, but
+   no scan can guarantee a file is risk-free. Windows may still warn or block it.
 4. Follow the installer. It replaces the installed version; the old version is
    removed automatically and does not appear twice in **Installed apps**.
 

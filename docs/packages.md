@@ -21,7 +21,9 @@ Get-Content .\LRCGET_2.2.7_x64_en-US.msi.sha256
 ```
 
 Compare the complete hash. Checksums detect changed downloads; they are not digital
-publisher signatures. All three packages are currently unsigned.
+publisher signatures. The Windows MSI has no Authenticode signature; the DEB and
+AppImage do not use Windows publisher verification. Windows warning guidance below
+applies to the MSI.
 
 ## Debian amd64
 
@@ -68,12 +70,19 @@ The WebView2 bootstrapper is bundled; a missing runtime may need network access.
 
 Application version is 2.2.7; MSI version is 2.2.7000. Publisher metadata is
 Rick Lidgett (LRCGET fork), product is LRCGET, and upgrade GUID remains fixed.
-This is unsigned metadata, not a verified digital publisher identity.
-Windows Server 2025 CI passed install, repair reinstall, visible app launch,
-uninstall and Microsoft Defender scans of both MSI and installed payload.
+This is unsigned metadata, not a verified digital publisher identity. Windows
+may warn because the MSI has no digital publisher signature and cannot verify its
+publisher. This new independent fork has limited public recognition and does not
+yet qualify for a sponsored signing certificate. That warning alone does not mean
+malware. Download only from the official LRCGET fork release and verify the SHA-256 checksum. Windows Server
+2025 CI passed installation, repair reinstall, visible app launch and
+uninstallation; Microsoft Defender scans of the MSI and installed payload
+reported no threats. Scans and checksums reduce risk but cannot guarantee safety
+or remove Windows warnings.
 Windows 11 interactive audio/editing, optional alignment setup and upgrades from
 older Windows installers remain unverified. SmartScreen or Smart App Control can
-warn/block unsigned builds. [Signing policy](code-signing.md) explains pending setup.
+warn or block unsigned builds. [Windows signing status](code-signing.md) explains
+the current limitation.
 
 ## Optional automatic alignment
 
