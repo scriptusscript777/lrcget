@@ -1,7 +1,7 @@
 {
   "app_version": "2.2.7",
   "runtime_commit": "a7a8e1c6e080fe3a51edd11d6734d812be735ca1",
-  "guide_image_count": 85,
+  "guide_image_count": 89,
   "note": "Screenshot-only refresh; demonstration data, no personal music/library changes. Historical images outside current user-guide references remain archived.",
   "images": [
     {
@@ -387,6 +387,30 @@
       "captured_utc": "2026-10-12T20:05:37.906923+00:00",
       "sha256": "78a4c77adcd6e3959503438ae4693e7d5fccb1e9142533d7fdd07ae27a01bd61",
       "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "update-available-appimage-light.png",
+      "captured_utc": "2026-10-13T00:45:44.408775+00:00",
+      "sha256": "3400ad3857e365cb51107336d2c238f0616096e2e2e2eb7e71505877969d290d",
+      "source": "Native Linux debug build (isolated Xvfb/XDG profile); update alert shown with the debug-only preview using sample 2.2.8 release data"
+    },
+    {
+      "file": "update-available-dark.png",
+      "captured_utc": "2026-10-13T00:45:44.408775+00:00",
+      "sha256": "2cd76b2f5bf9f7dffb94536d8dc5ad0850b8af7952c1ce0334657702e8a0b6df",
+      "source": "Native Linux debug build (isolated Xvfb/XDG profile); update alert shown with the debug-only preview using sample 2.2.8 release data"
+    },
+    {
+      "file": "update-available-light.png",
+      "captured_utc": "2026-10-13T00:45:44.408775+00:00",
+      "sha256": "d771568bee75ce85b662d56fe94b2a904e011d26d1f3eeb8e88a938cf1ce2e04",
+      "source": "Native Linux debug build (isolated Xvfb/XDG profile); update alert shown with the debug-only preview using sample 2.2.8 release data"
+    },
+    {
+      "file": "update-available-msi-dark.png",
+      "captured_utc": "2026-10-13T00:45:44.408775+00:00",
+      "sha256": "d07b13ddd064b316a7167a0bfaf65fdb49c50a7bd2aea359bdc143c1bebbef63",
+      "source": "Native Linux debug build (isolated Xvfb/XDG profile); update alert shown with the debug-only preview using sample 2.2.8 release data"
     },
     {
       "file": "waveform-click-play-dark.png",

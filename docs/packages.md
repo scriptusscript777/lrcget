@@ -4,6 +4,12 @@
 checksums and source archives with documentation/images. These are independent
 fork builds. Original upstream releases contain different code.
 
+**Supported systems:** desktop and laptop computers only: Linux x64 (Debian
+package or AppImage; Linux Mint 22 / Ubuntu 24.04 or newer) and Windows 10/11 x64
+(MSI). The editor needs a window at least 1024 × 768 and is designed for a mouse
+and keyboard. Phones, tablets, Chromebooks, macOS and ARM computers are not
+supported, and no mobile version exists.
+
 ## Verify downloads
 
 Download the selected package and its adjacent `.sha256` file into the same folder.

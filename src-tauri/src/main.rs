@@ -1666,6 +1666,33 @@ fn set_playback_speed(playback_speed: f64, app_state: tauri::State<AppState>) ->
     Ok(())
 }
 
+#[derive(Serialize)]
+struct InstallKind {
+    kind: &'static str,
+    arch: &'static str,
+}
+
+/// Installer format and processor of this copy, used to offer the matching
+/// update download. Reads only the environment; no files or network.
+#[tauri::command]
+fn get_install_kind() -> InstallKind {
+    let kind = if cfg!(target_os = "windows") {
+        "msi"
+    } else if cfg!(target_os = "linux") {
+        if std::env::var_os("APPIMAGE").is_some() {
+            "appimage"
+        } else {
+            "deb"
+        }
+    } else {
+        "other"
+    };
+    InstallKind {
+        kind,
+        arch: std::env::consts::ARCH,
+    }
+}
+
 #[tauri::command]
 fn open_devtools(app_handle: AppHandle) {
     app_handle
@@ -1772,6 +1799,7 @@ async fn main() {
             refresh_lrclib_lyricsfile,
             read_text_file,
             segment_words,
+            get_install_kind,
         ])
         .setup(|app| {
             let handle = app.handle();

@@ -45,6 +45,7 @@ import { useDownloader } from '@/composables/downloader.js'
 import { useExporter } from '@/composables/export.js'
 import { usePlayer } from '@/composables/player.js'
 import { useToast } from 'vue-toastification'
+import { useUpdateNotifier } from '@/composables/update-notifier.js'
 
 const appWindow = getCurrentWebviewWindow()
 const toast = useToast()
@@ -52,6 +53,7 @@ const { themeMode, setThemeMode, setLrclibInstance, setShowHoverHelp, setPrevent
 const { downloadNext } = useDownloader()
 const { exportNext } = useExporter()
 const { setVolume } = usePlayer()
+const updateNotifier = useUpdateNotifier()
 
 const loading = ref(true)
 const init = ref(false)
@@ -93,6 +95,7 @@ onMounted(async () => {
   downloadNext()
   exportNext()
   drainNotifications()
+  updateNotifier.start()
 })
 
 const loadGlobalState = async () => {

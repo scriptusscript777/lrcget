@@ -748,3 +748,11 @@ checks/downloads remain local/explicit. No system prerequisite installation is
 implied. Windows packaging tests scan installer/payload, verify publisher/GUID/
 version, install/repair/launch/uninstall only on disposable runners. Public
 GitHub release and creator notification remain held independently from CI builds.
+
+### Install kind for update alerts (2.2.7 maintenance)
+
+`get_install_kind` (main.rs) returns `{ kind, arch }` for the running copy. `kind`
+is `msi` on Windows, `appimage` on Linux when the AppImage runtime sets `APPIMAGE`,
+otherwise `deb`, and `other` elsewhere; `arch` is `std::env::consts::ARCH`. The
+frontend update alert uses both to offer only the matching GitHub release asset.
+It performs no file or network access and never runs an installer.

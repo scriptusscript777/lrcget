@@ -4,6 +4,13 @@ An independent MIT-licensed fork of [LRCGET](https://github.com/tranxuanthang/lr
 maintained by [Rick Lidgett](https://github.com/scriptusscript777). Original authors,
 copyright notices and license remain credited. Application version stays **2.2.7**.
 
+## Supported systems
+
+Desktop and laptop computers only: Linux x64 (Debian package or AppImage; Mint 22 /
+Ubuntu 24.04 or newer) and Windows 10/11 x64 (MSI). The editor needs a window at
+least 1024 × 768 and is designed for a mouse and keyboard. Phones, tablets,
+Chromebooks, macOS and ARM computers are not supported; there is no mobile version.
+
 ## Downloads and installation
 
 [Current 2.2.7 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1) includes Linux Debian amd64, Linux AppImage x64,

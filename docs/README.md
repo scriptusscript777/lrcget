@@ -3,6 +3,12 @@
 Rick Lidgett's enhanced LRCGET, **2.2.7**.
 An independent fork of the original project; original authors and license remain credited.
 
+**Supported systems:** desktop and laptop computers only: Linux x64 (Debian
+package or AppImage; Linux Mint 22 / Ubuntu 24.04 or newer) and Windows 10/11 x64
+(MSI). The editor needs a window at least 1024 × 768 and is designed for a mouse
+and keyboard. Phones, tablets, Chromebooks, macOS and ARM computers are not
+supported, and no mobile version exists.
+
 ## Choose a Guide
 
 | What You Want to Do                              | Guide                                                                                                  |
@@ -15,6 +21,7 @@ An independent fork of the original project; original authors and license remain
 | Save, export, embed or publish                   | [Output workflows](how-to.md#save-and-export-for-playback)                                             |
 | Find keyboard shortcuts and detailed behavior    | [Complete editing reference](editing-guide.md)                                                         |
 | See what Rick changed in the source              | [Modification overview](app-overview.md#modification-map) and [technical history](../LOCAL_CHANGES.md) |
+| Get alerted when a new release is published     | [Update alerts](how-to.md#get-notified-about-new-releases)                                             |
 | Install the current Linux build                  | [Installation](how-to.md#install-or-upgrade)                                                           |
 | Understand the latest fixes and test results     | [Release notes](releases/2.2.7.md)                                                             |
 

@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([Parameter(Mandatory)][string]$PackageDirectory, [switch]$RequireSignature)
+param([Parameter(Mandatory)][string]$PackageDirectory, [switch]$RequireSignature, [string]$PreviousPackage)
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 if ($env:GITHUB_ACTIONS -ne 'true' -or $env:RUNNER_OS -ne 'Windows') {
@@ -63,19 +63,32 @@ function Invoke-DefenderCheck([string]$Path, [string]$LogName) {
     if ($LASTEXITCODE -ne 0) { throw "Defender scan failed/detected a threat; see $LogName ($LASTEXITCODE)." }
 }
 Invoke-DefenderCheck $package 'defender-msi.log'
-function Invoke-MsiCheck([string]$Action, [string]$LogName) {
+function Invoke-MsiCheck([string]$Action, [string]$LogName, [string]$Path = $package) {
     $log = Join-Path $PackageDirectory $LogName
-    $arguments = "$Action `"$package`" /qn /norestart /l*v `"$log`""
+    $arguments = "$Action `"$Path`" /qn /norestart /l*v `"$log`""
     $result = Start-Process msiexec.exe -ArgumentList $arguments -Wait -PassThru
     if ($result.ExitCode -notin @(0, 3010)) {
         throw "MSI $Action failed with exit code $($result.ExitCode). See $LogName."
     }
 }
+# Products registered under this app's UpgradeCode (installed copies of LRCGET).
+function Get-InstalledLrcget { @($installer.RelatedProducts($properties.UpgradeCode)) }
+if (@(Get-InstalledLrcget).Count -ne 0) { throw 'LRCGET is already installed on the test runner.' }
 $installed = $false
 $process = $null
 try {
+    if ($PreviousPackage) {
+        # Users upgrade over the published MSI; it must be replaced, not duplicated.
+        Invoke-MsiCheck '/i' 'previous-install.log' (Resolve-Path $PreviousPackage).Path
+        $installed = $true
+        if (@(Get-InstalledLrcget).Count -ne 1) { throw 'Previous MSI did not register exactly one LRCGET.' }
+    }
     Invoke-MsiCheck '/i' 'install.log'
     $installed = $true
+    $products = @(Get-InstalledLrcget)
+    if ($products.Count -ne 1 -or $products[0] -ne $properties.ProductCode) {
+        throw "Upgrade left $($products.Count) LRCGET installs instead of exactly this MSI."
+    }
     Invoke-MsiCheck '/fa' 'reinstall.log'
     # Resolve the main executable through this MSI's registered component path.
     $view = $database.OpenView('SELECT `Component_`, `FileName` FROM `File`')
@@ -111,7 +124,14 @@ try {
     if ($process.HasExited) { throw 'Installed app crashed after opening.' }
     @{ executable = $executables[0]; windowTitle = $process.MainWindowTitle; launched = $true } |
         ConvertTo-Json | Set-Content (Join-Path $PackageDirectory 'launch-status.json')
-    Write-Output 'MSI identity/checksum, Defender MSI/payload scans, install, repair reinstall and app launch passed.'
+    Stop-Process -Id $process.Id -Force
+    $process.WaitForExit()
+    Invoke-MsiCheck '/x' 'uninstall.log'
+    $installed = $false
+    if (@(Get-InstalledLrcget).Count -ne 0) { throw 'Uninstall left LRCGET registered with Windows Installer.' }
+    if (Test-Path $executables[0]) { throw 'Uninstall left the LRCGET executable behind.' }
+    $upgradeNote = if ($PreviousPackage) { 'upgrade over the published MSI, ' } else { '' }
+    Write-Output "MSI identity/checksum, Defender MSI/payload scans, $($upgradeNote)install, repair reinstall, app launch and clean uninstall passed."
 } finally {
     if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force }
     if ($installed) { Invoke-MsiCheck '/x' 'uninstall.log' }

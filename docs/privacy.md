@@ -31,6 +31,18 @@ Models and private dependencies are stored in per-user paths, described in the
 [alignment guide](audio-alignment.md). MSI installation can contact Microsoft to
 obtain WebView2 if the runtime is missing.
 
+## Automatic update check
+
+At each application start LRCGET makes one request to the GitHub API
+(`api.github.com`) for the latest release of
+[scriptusscript777/lrcget](https://github.com/scriptusscript777/lrcget/releases).
+The request contains no library, lyric or account data; GitHub receives normal
+connection information such as the IP address and request headers. The reply is
+compared with the running version locally. A version chosen with **Skip this
+version** is remembered in the application's web profile. Opening **About** makes
+the same request. Download links open in your browser only when you choose them.
+Source: `src/utils/update-check.js` and `src/composables/update-notifier.js`.
+
 ## Retention and removal
 
 Local saved lyrics/database and pending recovery remain until explicitly removed.

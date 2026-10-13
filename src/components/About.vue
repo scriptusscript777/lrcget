@@ -19,7 +19,7 @@
               <Alert class="text-lg" />
               New update is available. See what's new and download at
               <span
-                ><a :href="newestReleaseUrl" class="link" target="_blank" @click="downloadUpdate"
+                ><a :href="newestReleaseUrl" class="link" target="_blank"
                   >LRCGET GitHub Release Page</a
                 >!</span
               >
@@ -87,22 +87,14 @@
         <div class="text-sm">
           <div class="mb-1">
             Github URL:
-            <a
-              href="https://github.com/tranxuanthang/lrcget"
-              class="link"
-              target="_blank"
-              @click="downloadUpdate"
+            <a href="https://github.com/tranxuanthang/lrcget" class="link" target="_blank"
               >github.com/tranxuanthang/lrcget</a
             >
           </div>
 
           <div>
             Email:
-            <a
-              href="mailto:hoangtudevops@protonmail.com"
-              class="link"
-              target="_blank"
-              @click="downloadUpdate"
+            <a href="mailto:hoangtudevops@protonmail.com" class="link" target="_blank"
               >hoangtudevops@protonmail.com</a
             >
           </div>
@@ -117,7 +109,7 @@ import Alert from '~icons/mdi/alert'
 import CheckCircle from '~icons/mdi/check-circle'
 import { ref, computed } from 'vue'
 import { getVersion } from '@tauri-apps/api/app'
-import semver from 'semver'
+import { fetchLatestRelease, isNewerRelease } from '@/utils/update-check.js'
 import CopyablePre from '@/components/CopyablePre.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 
@@ -130,32 +122,17 @@ const isUpdateAvailable = computed(() => {
   if (!version.value || !newestVersion.value) {
     return false
   }
-  return semver.gt(newestVersion.value, version.value)
+  return isNewerRelease(newestVersion.value, version.value)
 })
 const isCheckingForUpdate = ref(true)
-
-async function getLatestReleaseInfo() {
-  const repo = 'tranxuanthang/lrcget'
-  const apiUrl = `https://api.github.com/repos/${repo}/releases/latest`
-
-  const response = await fetch(apiUrl)
-  if (!response.ok) {
-    throw new Error(`Error: ${response.status}`)
-  }
-  const data = await response.json()
-  return {
-    version: data.tag_name,
-    releaseUrl: data.html_url,
-  }
-}
 
 const openedHandler = async () => {
   version.value = await getVersion()
   isCheckingForUpdate.value = true
   try {
-    const latestReleaseInfo = await getLatestReleaseInfo()
-    newestVersion.value = latestReleaseInfo.version
-    newestReleaseUrl.value = latestReleaseInfo.releaseUrl
+    const latestRelease = await fetchLatestRelease()
+    newestVersion.value = latestRelease.version
+    newestReleaseUrl.value = latestRelease.releaseUrl
   } catch (error) {
     console.error(error)
   } finally {

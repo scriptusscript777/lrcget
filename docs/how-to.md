@@ -21,6 +21,84 @@ The package upgrades the existing installed application, not a second copy.
 This fork release supplies Debian amd64, AppImage x64 and an unsigned Windows x64
 MSI beta. Follow the package guide for compatibility and Windows installation.
 
+## Get Notified About New Releases
+
+Each time LRCGET starts, it asks GitHub whether a newer version has been published
+on the [fork's release page](https://github.com/scriptusscript777/lrcget/releases).
+If one exists, an **Update available** window appears a few seconds after startup:
+
+![Update available window, light theme](screenshots/current/update-available-light.png)
+![Update available window, dark theme](screenshots/current/update-available-dark.png)
+
+1. Read the version numbers. The window shows the new version, the version you
+   are running and the one installer that matches your copy. LRCGET matches both
+   the format and the processor type (currently 64-bit Intel/AMD):
+   - Debian package (`.deb`) when LRCGET was installed with `apt`.
+   - AppImage when LRCGET is running from an AppImage file.
+   - Windows installer (`.msi`) on Windows.
+
+   LRCGET is a desktop app. On a system it is not built for (phones, tablets,
+   macOS or ARM computers) no alert appears, so a wrong package is never offered.
+2. Choose one of the buttons:
+   - **Download update** opens the matching installer download in your web
+     browser. LRCGET never runs a downloaded installer by itself.
+   - **See what's new** opens the release notes without closing the window.
+   - **Later** closes the window. It appears again the next time you start LRCGET.
+   - **Skip this version** hides the alert for that version only. A later release
+     alerts again.
+
+   The window lists the install steps for your format. They are also below.
+3. To check by hand at any time, open the menu and choose **About**. The
+   **Update** section shows your version and the newest published version.
+
+### Install a downloaded update
+
+Your music library, lyrics, settings and unfinished-work recovery are kept in
+every case. The app identity (`net.lrclib.lrcget`) does not change between
+releases. Optionally verify the download first with its `.sha256` file as shown
+in the [package guide](packages.md#verify-downloads).
+
+**Debian / Linux Mint (`.deb`)**
+
+1. Close LRCGET.
+2. Open a terminal in the download folder (usually `~/Downloads`) and run, using
+   the actual file name:
+
+   ```bash
+   sudo apt install ./LRCGET_2.2.8_amd64.deb
+   ```
+
+3. Start LRCGET from the menu. The installed copy is upgraded in place; there is
+   no second copy to remove.
+
+**AppImage**
+
+![AppImage update steps](screenshots/current/update-available-appimage-light.png)
+
+1. Close LRCGET.
+2. Make the new file runnable: right-click it, choose **Properties**, then
+   **Permissions**, and turn on **Allow executing file as program**. Or run
+   `chmod +x LRCGET_2.2.8_amd64.AppImage`.
+3. Delete or replace the old AppImage file, and update any desktop shortcut so
+   it points to the new file. Start the new file.
+
+**Windows 10/11 (`.msi`)**
+
+![Windows MSI update steps](screenshots/current/update-available-msi-dark.png)
+
+1. Close LRCGET.
+2. Double-click the downloaded `.msi` file.
+3. If **Windows protected your PC** appears, choose **More info**, then
+   **Run anyway**. The installer is not yet code-signed, so SmartScreen warns.
+4. Follow the installer. It replaces the installed version; the old version is
+   removed automatically and does not appear twice in **Installed apps**.
+
+The alert waits while an editor or other window is open, so it never interrupts
+unsaved work. Rebuilding the same version number does not produce an alert; only a
+higher version (for example 2.2.8 or 2.3.0) does. Without an internet connection
+the check stays silent and runs again at the next start. See
+[Privacy](privacy.md#automatic-update-check) for what the check sends.
+
 ## Add Music and Refresh the Library
 
 1. Add the directory containing your recordings using the library controls.

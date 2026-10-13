@@ -61,9 +61,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'FFmpeg test dependency is unavailable' }
           cargo test --locked
           if ($LASTEXITCODE -ne 0) { throw 'Native backend tests failed' }
-      - name: Check MSI installation and removal
+      - name: Download the currently published MSI for the upgrade check
         shell: pwsh
-        run: ./packaging/windows/check-msi.ps1 -PackageDirectory "$env:GITHUB_WORKSPACE/packages"
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          New-Item -ItemType Directory -Force previous-msi | Out-Null
+          gh release download --repo $env:GITHUB_REPOSITORY --pattern '*.msi' --dir previous-msi
+          if ($LASTEXITCODE -ne 0) { throw 'Could not download the published MSI.' }
+      - name: Check MSI upgrade, installation and removal
+        shell: pwsh
+        run: |
+          $previous = @(Get-ChildItem previous-msi -Filter '*.msi' -File)
+          if ($previous.Count -ne 1) { throw 'Expected exactly one published MSI.' }
+          ./packaging/windows/check-msi.ps1 -PackageDirectory "$env:GITHUB_WORKSPACE/packages" -PreviousPackage $previous[0].FullName
       - name: Validate optional SignPath settings
         if: ${{ inputs.sign_msi }}
         shell: pwsh

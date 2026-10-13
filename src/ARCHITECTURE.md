@@ -428,6 +428,22 @@ The added word-lane Pause/Resume emits through SyncedLyricsEditor to existing pa
 and resumeOrPlay functions. Play retains sentence replay; pause/resume retains
 position and loop state without lyric edits or explicit seeks.
 
+### Startup update alert (2.2.7 maintenance)
+
+`App.vue` calls `useUpdateNotifier().start()` after boot; it checks once, five
+seconds after startup (no repeating timer). `utils/update-check.js` fetches
+`api.github.com/repos/scriptusscript777/lrcget/releases/latest`, compares the
+semver core of the tag (`v2.2.7-windows-beta.1` → `2.2.7`) so same-version
+rebuilds never alert, and picks the `.deb`/`.AppImage`/`.msi` asset whose name
+also matches the processor (`amd64`/`x64`/`x86_64`, `arm64`/`aarch64`) from the
+backend `get_install_kind` `{ kind, arch }`. Without a matching installer
+(phones, macOS, ARM or other unsupported systems) no alert is shown. The dialog lists per-format install steps; nothing is executed by the app. `UpdateAvailable.vue` is opened through
+`useModal`; while another vue-final-modal is open it retries every minute.
+Download/release links open with `plugin-shell` `open`. **Skip this version** is
+stored in `localStorage` (`lrcget.update.skippedVersion`); failures are logged and
+silent. `About.vue` uses the same helpers against the fork. Debug builds expose
+`window.__lrcgetPreviewUpdate()` to show a sample alert for screenshots.
+
 ## Editor recovery drafts
 
 `utils/editor-recovery.js` stores versioned per-target working documents in the
