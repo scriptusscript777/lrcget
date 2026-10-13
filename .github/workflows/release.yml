@@ -71,7 +71,8 @@ jobs:
           esac
           mkdir release
           cp "$(find windows -name "LRCGET_${version}_x64_en-US.msi")" release/
-          cp linux/"LRCGET_${version}_amd64.deb" linux/"LRCGET_${version}_amd64.AppImage" release/
+          cp linux/"LRCGET_${version}_amd64.deb" linux/"LRCGET_${version}_amd64.AppImage" \
+            linux/"LRCGET_${version}_AppImage_library_sources.tar" release/
           git archive --format=zip --prefix=lrcget/ -o "release/LRCGET_${version}_source.zip" HEAD
           git archive --format=tar.gz --prefix=lrcget/ -o "release/LRCGET_${version}_source.tar.gz" HEAD
           mkdir -p stage/lrcget-guides
@@ -84,7 +85,7 @@ jobs:
           cd release
           files=("LRCGET_${version}_amd64.deb" "LRCGET_${version}_amd64.AppImage" "LRCGET_${version}_x64_en-US.msi"
                  "LRCGET_${version}_source.zip" "LRCGET_${version}_source.tar.gz" "LRCGET_${version}_docs.zip"
-                 "LRCGET_${version}_THIRD_PARTY_NOTICES.md")
+                 "LRCGET_${version}_THIRD_PARTY_NOTICES.md" "LRCGET_${version}_AppImage_library_sources.tar")
           for file in "${files[@]}"; do sha256sum "$file" > "$file.sha256"; cat "$file.sha256"; done > "LRCGET_${version}_SHA256SUMS.txt"
           sha256sum -c "LRCGET_${version}_SHA256SUMS.txt"
           echo "VERSION=$version" >> "$GITHUB_ENV"

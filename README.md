@@ -30,15 +30,16 @@ older Linux releases.
 
 Each [release](https://github.com/scriptusscript777/lrcget/releases/latest) contains:
 
-| File                                          | Use                                            |
-| --------------------------------------------- | ---------------------------------------------- |
-| `LRCGET_<version>_x64_en-US.msi`              | Windows 10/11 installer                        |
-| `LRCGET_<version>_amd64.deb`                  | Linux Mint / Ubuntu / Debian package           |
-| `LRCGET_<version>_amd64.AppImage`             | Portable Linux app                             |
-| `LRCGET_<version>_source.zip` / `.tar.gz`     | Full source code with documentation            |
-| `LRCGET_<version>_docs.zip`                   | Illustrated guides on their own                |
-| `LRCGET_<version>_THIRD_PARTY_NOTICES.md`     | Licenses of the bundled open-source components |
-| `*.sha256`, `LRCGET_<version>_SHA256SUMS.txt` | Checksums to verify downloads                  |
+| File                                            | Use                                                            |
+| ----------------------------------------------- | -------------------------------------------------------------- |
+| `LRCGET_<version>_x64_en-US.msi`                | Windows 10/11 installer                                        |
+| `LRCGET_<version>_amd64.deb`                    | Linux Mint / Ubuntu / Debian package                           |
+| `LRCGET_<version>_amd64.AppImage`               | Portable Linux app                                             |
+| `LRCGET_<version>_source.zip` / `.tar.gz`       | Full source code with documentation                            |
+| `LRCGET_<version>_docs.zip`                     | Illustrated guides on their own                                |
+| `LRCGET_<version>_THIRD_PARTY_NOTICES.md`       | Licenses of the bundled open-source components                 |
+| `LRCGET_<version>_AppImage_library_sources.tar` | Source code of the Linux libraries bundled inside the AppImage |
+| `*.sha256`, `LRCGET_<version>_SHA256SUMS.txt`   | Checksums to verify downloads                                  |
 
 Every installer is built and tested by GitHub Actions before it is published,
 including installing over the previous release and uninstalling.

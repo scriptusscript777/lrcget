@@ -62,8 +62,11 @@ REVIEWED = {
     "24.04 that can be replaced. Source: Ubuntu source packages listed below.",
     "LGPL-3.0-or-later": "Bundled in the AppImage only, as unmodified shared libraries from Ubuntu "
     "24.04 that can be replaced. Source: Ubuntu source packages listed below.",
-    "Debian-copyright": "System library bundled in the AppImage; its Debian copyright file is "
-    "reproduced below. Source: the Ubuntu source package listed.",
+    "Debian-copyright": "Unmodified Ubuntu 24.04 system library bundled in the AppImage only; "
+    "its Debian copyright file is reproduced below. LGPL parts can be replaced by the user. "
+    "The corresponding source of every bundled library (the exact Ubuntu source packages "
+    "listed) is attached to each GitHub release as "
+    "`LRCGET_<version>_AppImage_library_sources.tar`.",
     "Microsoft-WebView2-Bootstrapper": "Microsoft redistributable included by the Tauri MSI to "
     "download WebView2 when it is missing; covered by Microsoft's WebView2 distribution terms.",
 }
@@ -237,6 +240,89 @@ def js_components():
     return components
 
 
+# AppImage packages whose Debian copyright has a GPL-only main license, but whose
+# library code was checked (2026-10-12) and is LGPL or permissive. Anything flagged
+# that is not listed here stops the release (--check) until a person reviews it.
+APPIMAGE_GPL_REVIEWED = {
+    "libblkid1": "library code (Files: libblkid/*) is LGPL-2.1+",
+    "libmount1": "library code (Files: libmount/*) is LGPL-2.1+",
+    "libcolord2": "library code (Files: lib/colord/*) is LGPL-2.1+",
+    "libidn2-0": "library code (Files: *.c *.h) is LGPL-3+ or GPL-2+",
+    "libkeyutils1": "library code (Files: keyutils.*) is LGPL-2+",
+    "libdw1t64": "elfutils libraries (Files: lib*) are LGPL-3+ or GPL-2+",
+    "libelf1t64": "elfutils libraries (Files: lib*) are LGPL-3+ or GPL-2+",
+    "libltdl7": "libltdl source (ltdl.c) is LGPL-2+ with a linking exception; Debian's "
+    "copyright file summarizes the whole libtool package",
+    # A GPL-only library, accepted by the maintainer (Rick Lidgett, 2026-10-12): LRCGET is
+    # MIT (GPL-compatible) and the library's corresponding source is published with every
+    # release in the AppImage library sources archive.
+    "libjbig0": "GPL-2+ (JBIG-KIT, used by the TIFF image loader); accepted 2026-10-12 with its "
+    "source published in each release's AppImage library sources archive",
+}
+
+
+def debian_license_names(text):
+    """License names declared in a Debian copyright file (machine-readable format)."""
+    return sorted({m.strip() for m in re.findall(r"(?m)^License:\s*(\S.*)$", text)})
+
+
+def is_gpl_only(expression):
+    """True if no alternative of a Debian license expression avoids plain GPL/AGPL."""
+    # "Apache-2.0-with-GPL2-LGPL2-Exception" names an exception, not a GPL grant.
+    expression = re.sub(r"(?i)with[-\s][\w.+-]*exception", "", expression)
+    alternatives = re.split(r"\s+or\s+", expression, flags=re.IGNORECASE)
+    return all(re.search(r"(?<![L])GPL", alt, re.IGNORECASE) for alt in alternatives)
+
+
+def debian_main_license(text):
+    """License of the `Files: *` paragraph, which covers files not listed elsewhere."""
+    for paragraph in re.split(r"\n\s*\n", text):
+        if re.match(r"Files:\s*\*\s*$", paragraph.strip().splitlines()[0]):
+            found = re.search(r"(?m)^License:\s*(\S.*)$", paragraph)
+            return found.group(1).strip() if found else None
+    return None
+
+
+def debian_gpl_concern(text, names):
+    """Why a bundled library may be GPL-only, or None. Machine-readable files are judged by
+    their main license; free-form files only when they grant no LGPL or permissive terms."""
+    if names:
+        main = debian_main_license(text)
+        if main and is_gpl_only(main):
+            return f"main license {main} is GPL-only (library files may differ; check the file sections)"
+        if not main and all(is_gpl_only(name) for name in names):
+            return "every declared license is GPL-only"
+        return None
+    permissive = re.search(
+        r"(?i)lesser general public|library general public|permission is hereby granted|"
+        r"redistribution and use in source and binary forms|public domain|mozilla public",
+        text,
+    )
+    if not permissive and re.search(r"(?i)general public license|\bGPL", text):
+        return "free-form copyright mentions only the GPL"
+    return None
+
+
+def debian_package_for(lib):
+    """64-bit runtime Debian package that owns a bundled library (not -dev or i386)."""
+    found = subprocess.run(
+        ["dpkg", "-S", lib], capture_output=True, text=True, check=False
+    )
+    owners = []
+    for line in found.stdout.splitlines():
+        packages, _, path = line.partition(": ")
+        path = path.strip()
+        if pathlib.Path(path).name != lib or "x86_64-linux-gnu" not in path:
+            continue
+        owners += [pk.strip() for pk in packages.split(",")]
+    runtime = [
+        pk
+        for pk in owners
+        if not pk.split(":")[0].endswith("-dev") and not pk.endswith(":i386")
+    ]
+    return (runtime or owners or [None])[0]
+
+
 def appimage_components(appimage):
     """Map shared libraries bundled in the AppImage to Debian packages and copyright files."""
     with tempfile.TemporaryDirectory() as tmp:
@@ -249,49 +335,56 @@ def appimage_components(appimage):
         libs = sorted(
             {
                 p.name
-                for p in pathlib.Path(tmp, "squashfs-root").rglob("*.so*")
-                if p.is_file()
+                for p in pathlib.Path(tmp, "squashfs-root").rglob("*")
+                if p.is_file() and re.search(r"\.so(\.\d+)*$", p.name)
             }
         )
     packages = {}
     for lib in libs:
-        found = subprocess.run(
-            ["dpkg", "-S", lib], capture_output=True, text=True, check=False
-        )
-        if found.returncode != 0:
-            packages.setdefault("(not from a Debian package)", set()).add(lib)
-            continue
-        package = found.stdout.split(":", 1)[0].split(",")[0].strip()
+        package = debian_package_for(lib) or "(not from a Debian package)"
         packages.setdefault(package, set()).add(lib)
     components = []
     for package, files in sorted(packages.items()):
-        copyright_file = (
-            pathlib.Path("/usr/share/doc") / package.split(":")[0] / "copyright"
-        )
-        text = (
-            copyright_file.read_text(errors="replace").strip()
-            if copyright_file.exists()
-            else None
-        )
+        doc = pathlib.Path("/usr/share/doc") / package.split(":")[0] / "copyright"
+        text = doc.read_text(errors="replace").strip() if doc.exists() else None
         source = subprocess.run(
-            ["dpkg-query", "-W", "-f", "${source:Package} ${Version}", package],
+            # The source version can differ from the binary version (e.g. rebuilds).
+            ["dpkg-query", "-W", "-f", "${source:Package} ${source:Version}", package],
             capture_output=True,
             text=True,
             check=False,
         ).stdout.strip()
-        license_id = "Debian-copyright" if text else "NOASSERTION"
-        if text and re.search(r"\bLGPL-?3", text):
-            license_id = "LGPL-3.0-or-later AND Debian-copyright"
-        elif text and re.search(r"\bLGPL", text):
-            license_id = "LGPL-2.1-or-later AND Debian-copyright"
+        name = f"{package} ({', '.join(sorted(files)[:4])}{' …' if len(files) > 4 else ''})"
+        if not text:
+            license_id, status = (
+                "NOASSERTION (no Debian copyright file found)",
+                "unreviewed",
+            )
+        else:
+            names = debian_license_names(text)
+            license_id = "Debian copyright: " + (
+                "; ".join(names) if names else "free-form text"
+            )
+            concern = debian_gpl_concern(text, names)
+            reviewed_note = APPIMAGE_GPL_REVIEWED.get(package.split(":")[0])
+            if concern and not reviewed_note:
+                status = "unreviewed"
+                license_id += f" — needs review: {concern}"
+            else:
+                status = "reviewed"
+                if concern and reviewed_note:
+                    license_id += f" — reviewed: {reviewed_note}"
         components.append(
             {
-                "name": f"{package} ({', '.join(sorted(files)[:4])}{' …' if len(files) > 4 else ''})",
+                "name": name,
                 "license": license_id,
+                "status": status,
+                "review_key": "Debian-copyright",
                 "source": f"Ubuntu source package {source}"
                 if source
                 else "unknown source package",
                 "texts": [("Debian copyright", text)] if text else [],
+                "debian_source": source.replace(" ", "=", 1) if source else None,
             }
         )
     return components
@@ -332,9 +425,11 @@ def render(sections, problems):
     reviewed = {}
     for _, components in sections:
         for c in components:
-            status = classify(c["license"])
+            status = c.get("status") or classify(c["license"])
             counts[status] = counts.get(status, 0) + 1
-            if status == "reviewed":
+            if status == "reviewed" and c.get("review_key"):
+                reviewed.setdefault(c["review_key"], []).append(c["name"])
+            elif status == "reviewed":
                 for licenses in split_expression(c["license"]):
                     for lic in licenses:
                         if lic in REVIEWED:
@@ -366,12 +461,15 @@ def render(sections, problems):
                 "",
             ]
             for label, text in c["texts"]:
+                fence = "```"
+                while fence in text:  # never let a license text close the block early
+                    fence += "`"
                 lines += [
                     f"<details><summary>{label} text</summary>",
                     "",
-                    "```",
+                    fence,
                     text,
-                    "```",
+                    fence,
                     "",
                     "</details>",
                     "",
@@ -396,6 +494,10 @@ def main():
         "--compare",
         help="fail if this committed notices file differs from the generated one",
     )
+    parser.add_argument(
+        "--source-list",
+        help="with --appimage: write the Ubuntu source packages (name=version) to download",
+    )
     args = parser.parse_args()
 
     sections = [
@@ -410,12 +512,26 @@ def main():
             )
         )
     sections.append(("Windows installer components", WINDOWS_COMPONENTS))
+    if args.source_list:
+        sources = sorted(
+            {
+                c["debian_source"]
+                for _, cs in sections
+                for c in cs
+                if c.get("debian_source")
+            }
+        )
+        pathlib.Path(args.source_list).write_text("\n".join(sources) + "\n")
 
     problems = []
     for title, components in sections:
         for c in components:
-            if classify(c["license"]) == "unreviewed":
+            if (c.get("status") or classify(c["license"])) == "unreviewed":
                 problems.append(f"{title}: {c['name']} — license `{c['license']}`")
+            elif title.startswith("AppImage") and not c.get("debian_source"):
+                problems.append(
+                    f"{title}: {c['name']} — no Ubuntu source package to publish"
+                )
             elif not c["texts"] and title in ("Rust crates", "JavaScript packages"):
                 problems.append(
                     f"{title}: {c['name']} — no license text found to reproduce"

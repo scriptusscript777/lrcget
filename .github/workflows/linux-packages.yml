@@ -59,17 +59,42 @@ jobs:
         run: |
           appimage=$(find src-tauri/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage')
           python3 tools/third_party_notices.py --appimage "$appimage" \
-            --output "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" --check
+            --output "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" --check \
+            --source-list "$RUNNER_TEMP/appimage-sources.txt"
           cp "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" THIRD_PARTY_NOTICES.md
           npm run tauri -- build --bundles appimage
           git checkout -- THIRD_PARTY_NOTICES.md
-      - name: Collect packages, notices and checksums
+      - name: Download the corresponding source of the AppImage's bundled libraries
+        # GPL and LGPL libraries inside the AppImage are distributed with their exact
+        # Ubuntu source packages (name=version recorded by the notices generator).
         run: |
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          mkdir -p "$RUNNER_TEMP/AppImage_library_sources"
+          cd "$RUNNER_TEMP/AppImage_library_sources"
+          while read -r spec; do
+            [ -n "$spec" ] || continue
+            apt-get source --download-only "$spec" || { echo "Cannot download source $spec" >&2; exit 1; }
+          done < "$RUNNER_TEMP/appimage-sources.txt"
+          expected=$(grep -c . "$RUNNER_TEMP/appimage-sources.txt")
+          found=$(find . -maxdepth 1 -name '*.dsc' | wc -l)
+          [ "$found" -eq "$expected" ] || { echo "Expected $expected source packages, found $found" >&2; exit 1; }
+          cp "$RUNNER_TEMP/appimage-sources.txt" SOURCE_PACKAGES.txt
+          printf '%s\n' \
+            'Corresponding source of the Ubuntu 24.04 libraries bundled in the LRCGET AppImage.' \
+            'Each package is the unmodified Ubuntu source package listed in SOURCE_PACKAGES.txt.' \
+            'Unpack one with: dpkg-source -x <package>_<version>.dsc' > README.txt
+          du -sh .
+      - name: Collect packages, notices, sources and checksums
+        run: |
+          version=$(grep -m1 '^version' src-tauri/Cargo.toml | cut -d'"' -f2)
           mkdir -p packages
+          tar -cf "packages/LRCGET_${version}_AppImage_library_sources.tar" \
+            -C "$RUNNER_TEMP" AppImage_library_sources
           cp src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/appimage/*.AppImage packages/
           cp "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" packages/THIRD_PARTY_NOTICES.md
           cd packages
-          for file in *.deb *.AppImage; do sha256sum "$file" > "$file.sha256"; done
+          for file in *.deb *.AppImage *.tar; do sha256sum "$file" > "$file.sha256"; done
           ls -l
       - name: Download the currently published Debian package for the upgrade check
         env:
