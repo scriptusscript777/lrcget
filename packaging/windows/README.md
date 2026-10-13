@@ -71,8 +71,9 @@ publisher/version/upgrade GUID, fresh-enough Defender definitions, custom scans
 of the installer and installed payload, installation, repair reinstall, visible
 app launch, and uninstallation. Diagnostics are uploaded even on failure; a
 failed/unavailable scan is not reported as clean. This remains Windows Server
-validation, not Windows 11 desktop/SmartScreen certification. Packages remain
-unsigned unless a real signing certificate is configured.
+validation, not Windows 11 desktop/SmartScreen certification. The current MSI is
+unsigned, so Windows cannot verify its publisher from the package signature.
+Details for users are in the [Windows signing status guide](../../docs/code-signing.md).
 
 Automatic alignment now supports a Windows private environment using
 `Scripts/python.exe` under `%LOCALAPPDATA%/net.lrclib.lrcget/alignment-environments`.

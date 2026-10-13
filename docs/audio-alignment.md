@@ -2,7 +2,9 @@
 
 Version remains **2.2.7**. Debian, AppImage and Windows MSI builds now use the
 current source; see [package status](packages.md) for actual validation and
-platform limitations. Current release publication is authorized; packages remain unsigned.
+platform limitations. The current Windows MSI is unsigned and may show a Windows
+publisher warning; the project does not yet qualify for a sponsored signing
+certificate. See [Windows signing status](code-signing.md).
 
 ## Basic mode — no AI engine required
 

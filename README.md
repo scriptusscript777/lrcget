@@ -153,7 +153,9 @@ More pictures in the [illustrated overview](docs/app-overview.md) and
 
 ## Known limitations
 
-- Windows installer is not code-signed yet, so SmartScreen shows a warning.
+- The Windows MSI is unsigned. Windows may show an unknown-publisher or
+  SmartScreen warning because this new fork does not yet qualify for a sponsored
+  signing certificate. Verify the download checksum before installing.
 - x64 only; no macOS, ARM, RPM or Flatpak builds of this fork.
 - Linux packages need glibc 2.39 or newer (Mint 22 / Ubuntu 24.04 or newer).
 - Estimated and automatically aligned timing needs listening review; singing
