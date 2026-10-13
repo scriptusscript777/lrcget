@@ -26,7 +26,9 @@
       "deb": {
         "desktopTemplate": "../packaging/linux/LRCGET.desktop",
         "files": {
-          "/usr/share/metainfo/LRCGET.metainfo.xml": "../packaging/linux/LRCGET.metainfo.xml"
+          "/usr/share/metainfo/LRCGET.metainfo.xml": "../packaging/linux/LRCGET.metainfo.xml",
+          "/usr/share/doc/lrcget/copyright": "../LICENSE",
+          "/usr/share/doc/lrcget/THIRD_PARTY_NOTICES.md": "../THIRD_PARTY_NOTICES.md"
         },
         "depends": [
           "libc6 (>= 2.39)"
@@ -54,7 +56,10 @@
       "providerShortName": null,
       "signingIdentity": "-"
     },
-    "resources": [],
+    "resources": {
+      "../LICENSE": "licenses/LICENSE",
+      "../THIRD_PARTY_NOTICES.md": "licenses/THIRD_PARTY_NOTICES.md"
+    },
     "shortDescription": "Utility for mass-downloading LRC synced lyrics for your offline music library.",
     "targets": "all"
   },

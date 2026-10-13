@@ -107,6 +107,15 @@ try {
     $view.Close()
     $executables = @($installer.ComponentPath($properties.ProductCode, $componentId) | Where-Object { $_ -and (Test-Path $_ -PathType Leaf) })
     if ($executables.Count -ne 1) { throw 'Expected one installed LRCGET executable.' }
+    # License files must be installed next to the program, identical to the repository copies.
+    $repoRoot = Resolve-Path (Join-Path $PSScriptRoot '../..')
+    foreach ($name in @('LICENSE', 'THIRD_PARTY_NOTICES.md')) {
+        $installedFile = Join-Path (Split-Path $executables[0]) "licenses/$name"
+        if (-not (Test-Path $installedFile -PathType Leaf)) { throw "MSI did not install licenses/$name." }
+        if ((Get-FileHash $installedFile).Hash -ne (Get-FileHash (Join-Path $repoRoot $name)).Hash) {
+            throw "Installed licenses/$name differs from the repository copy."
+        }
+    }
     if ($RequireSignature -and (Get-AuthenticodeSignature $executables[0]).Status -ne 'Valid') {
         throw 'Installed LRCGET executable lacks a valid trusted signature.'
     }
@@ -130,8 +139,9 @@ try {
     $installed = $false
     if (@(Get-InstalledLrcget).Count -ne 0) { throw 'Uninstall left LRCGET registered with Windows Installer.' }
     if (Test-Path $executables[0]) { throw 'Uninstall left the LRCGET executable behind.' }
+    if (Test-Path (Join-Path (Split-Path $executables[0]) 'licenses/THIRD_PARTY_NOTICES.md')) { throw 'Uninstall left the license files behind.' }
     $upgradeNote = if ($PreviousPackage) { 'upgrade over the published MSI, ' } else { '' }
-    Write-Output "MSI identity/checksum, Defender MSI/payload scans, $($upgradeNote)install, repair reinstall, app launch and clean uninstall passed."
+    Write-Output "MSI identity/checksum, Defender MSI/payload scans, $($upgradeNote)install, license files, repair reinstall, app launch and clean uninstall passed."
 } finally {
     if ($process -and -not $process.HasExited) { Stop-Process -Id $process.Id -Force }
     if ($installed) { Invoke-MsiCheck '/x' 'uninstall.log' }

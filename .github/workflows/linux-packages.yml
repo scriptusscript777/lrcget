@@ -44,11 +44,30 @@ jobs:
           # The Tauri build macro needs the built web interface (dist/).
           npm run build
           cd src-tauri && cargo test --locked
-      - name: Build Debian package and AppImage
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-about@0.9.2
+      - name: Check committed third-party notices before packaging
+        # THIRD_PARTY_NOTICES.md is copied into the .deb and the Windows MSI, so it
+        # must match the current dependencies before any installer is built.
         run: |
-          npm run tauri -- build --bundles deb,appimage
+          python3 tools/third_party_notices.py --output "$RUNNER_TEMP/notices-source.md" \
+            --compare THIRD_PARTY_NOTICES.md --check
+      - name: Build Debian package and AppImage
+        run: npm run tauri -- build --bundles deb,appimage
+      - name: Add the AppImage's bundled system libraries to its notices and repackage it
+        run: |
+          appimage=$(find src-tauri/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage')
+          python3 tools/third_party_notices.py --appimage "$appimage" \
+            --output "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" --check
+          cp "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" THIRD_PARTY_NOTICES.md
+          npm run tauri -- build --bundles appimage
+          git checkout -- THIRD_PARTY_NOTICES.md
+      - name: Collect packages, notices and checksums
+        run: |
           mkdir -p packages
           cp src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/appimage/*.AppImage packages/
+          cp "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" packages/THIRD_PARTY_NOTICES.md
           cd packages
           for file in *.deb *.AppImage; do sha256sum "$file" > "$file.sha256"; done
           ls -l
@@ -59,13 +78,8 @@ jobs:
           mkdir -p previous-deb
           gh release download --repo "$GITHUB_REPOSITORY" --pattern '*_amd64.deb' --dir previous-deb
           test "$(find previous-deb -name '*.deb' | wc -l)" -eq 1
-      - name: Check Debian upgrade, launch, removal and AppImage launch
+      - name: Check Debian upgrade, launch, license files, removal and AppImage
         run: ./packaging/linux/check-packages.sh packages previous-deb/*.deb
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cargo-about
-      - name: Generate third-party notices and stop on unreviewed licenses
-        run: python3 tools/third_party_notices.py --appimage packages/*.AppImage --output packages/THIRD_PARTY_NOTICES.md --check
       - uses: actions/upload-artifact@v4
         if: always()
         with:

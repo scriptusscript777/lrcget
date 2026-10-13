@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Checks freshly built Linux packages on a disposable CI runner:
 # Debian identity and checksums, upgrade over the published .deb with the
-# user profile kept, launch, clean removal, and AppImage launch.
+# user profile kept, launch, installed license files, clean removal, and the
+# AppImage launch and license files.
 # Usage: check-packages.sh PACKAGE_DIR [PUBLISHED_DEB]
 set -euo pipefail
 
@@ -80,12 +81,27 @@ if [[ -n "$previous" ]]; then
 fi
 pass "installed app started"
 
+# License files from the repository, exactly as committed (checked before packaging).
+for installed in /usr/share/doc/lrcget/copyright /usr/share/doc/lrcget/THIRD_PARTY_NOTICES.md; do
+    [[ -f "$installed" ]] || fail "Debian package is missing $installed."
+done
+cmp -s LICENSE /usr/share/doc/lrcget/copyright || fail "Installed copyright differs from LICENSE."
+cmp -s THIRD_PARTY_NOTICES.md /usr/share/doc/lrcget/THIRD_PARTY_NOTICES.md \
+    || fail "Installed notices differ from THIRD_PARTY_NOTICES.md."
+resource_notices=$(dpkg -L lrcget | grep '/licenses/THIRD_PARTY_NOTICES.md$' || true)
+resource_license=$(dpkg -L lrcget | grep '/licenses/LICENSE$' || true)
+[[ -n "$resource_notices" && -n "$resource_license" ]] || fail "Debian package lacks the licenses/ folder."
+cmp -s THIRD_PARTY_NOTICES.md "$resource_notices" || fail "$resource_notices differs from THIRD_PARTY_NOTICES.md."
+cmp -s LICENSE "$resource_license" || fail "$resource_license differs from LICENSE."
+pass "license and notices installed in /usr/share/doc/lrcget and ${resource_notices%/*}"
+
 sudo apt-get remove -y lrcget >/dev/null
 if dpkg-query -W -f '${Status}' lrcget 2>/dev/null | grep -q 'install ok installed'; then
     fail "lrcget is still installed after removal."
 fi
 [[ ! -e /usr/bin/LRCGET ]] || fail "Removal left /usr/bin/LRCGET behind."
 [[ ! -e /usr/share/applications/LRCGET.desktop ]] || fail "Removal left the desktop entry behind."
+[[ ! -e /usr/share/doc/lrcget/THIRD_PARTY_NOTICES.md ]] || fail "Removal left the notices behind."
 pass "apt remove uninstalled cleanly (user profile is kept, as documented)"
 
 rm -rf "$profile"
@@ -96,5 +112,19 @@ chmod +x "$appimage"
 APPIMAGE_EXTRACT_AND_RUN=1 launch "$pkg_dir/appimage-launch.log" "$appimage"
 [[ -f "$data_dir/db.sqlite3" ]] || fail "AppImage did not open its profile."
 pass "AppImage started"
+
+# The AppImage carries the complete notices, including its bundled system libraries.
+appimage_root=$(mktemp -d)
+(cd "$appimage_root" && "$appimage" --appimage-extract >/dev/null)
+appimage_notices=$(find "$appimage_root/squashfs-root" -path '*/licenses/THIRD_PARTY_NOTICES.md' | head -1)
+appimage_license=$(find "$appimage_root/squashfs-root" -path '*/licenses/LICENSE' | head -1)
+[[ -n "$appimage_notices" && -n "$appimage_license" ]] || fail "AppImage lacks the licenses/ folder."
+cmp -s "$pkg_dir/THIRD_PARTY_NOTICES.md" "$appimage_notices" \
+    || fail "AppImage notices differ from the generated release notices."
+grep -q '^## AppImage system libraries' "$appimage_notices" \
+    || fail "AppImage notices lack its bundled system libraries."
+cmp -s LICENSE "$appimage_license" || fail "AppImage LICENSE differs from LICENSE."
+rm -rf "$appimage_root"
+pass "AppImage contains LICENSE and complete notices including its system libraries"
 
 echo "All Linux package checks passed."
