@@ -1,0 +1,67 @@
+name: Build and check Linux packages
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  linux-packages:
+    # Ubuntu 24.04 matches the documented Mint 22 / glibc 2.39 baseline.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+      - name: Install build and test dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential pkg-config libwebkit2gtk-4.1-dev libssl-dev \
+            libayatana-appindicator3-dev librsvg2-dev patchelf libasound2-dev ffmpeg xvfb file
+      - name: Install frontend dependencies and test
+        run: |
+          npm ci
+          npm test
+      - name: Test optional alignment setup and Python code quality
+        run: |
+          python -m pip install ruff
+          python -m ruff check alignment
+          python -m unittest discover -s alignment -p 'test_*.py'
+      - name: Test native backend
+        working-directory: src-tauri
+        run: cargo test --locked
+      - name: Build Debian package and AppImage
+        run: |
+          npm run tauri -- build --bundles deb,appimage
+          mkdir -p packages
+          cp src-tauri/target/release/bundle/deb/*.deb src-tauri/target/release/bundle/appimage/*.AppImage packages/
+          cd packages
+          for file in *.deb *.AppImage; do sha256sum "$file" > "$file.sha256"; done
+          ls -l
+      - name: Download the currently published Debian package for the upgrade check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p previous-deb
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern '*_amd64.deb' --dir previous-deb
+          test "$(find previous-deb -name '*.deb' | wc -l)" -eq 1
+      - name: Check Debian upgrade, launch, removal and AppImage launch
+        run: ./packaging/linux/check-packages.sh packages previous-deb/*.deb
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: linux-packages-results
+          path: packages/
+          if-no-files-found: error
