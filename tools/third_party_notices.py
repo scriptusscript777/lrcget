@@ -461,6 +461,10 @@ def render(sections, problems):
                 "",
             ]
             for label, text in c["texts"]:
+                # License sources sometimes carry line-ending spaces; keep their
+                # wording intact while emitting whitespace-clean Markdown.
+                text = text.replace("\t", "    ")
+                text = "\n".join(line.rstrip() for line in text.splitlines())
                 fence = "```"
                 while fence in text:  # never let a license text close the block early
                     fence += "`"

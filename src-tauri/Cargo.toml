@@ -6,7 +6,7 @@ authors = ["tranxuanthang"]
 license = "MIT"
 repository = "https://github.com/tranxuanthang/lrcget"
 edition = "2021"
-rust-version = "1.81"
+rust-version = "1.92"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -44,8 +44,8 @@ tauri-plugin-os = "2.3.2"
 tauri-plugin-shell = "2.3.5"
 tauri-plugin-dialog = "2.7.0"
 tauri-plugin-clipboard-manager = "2.3.2"
-# W3C WebDriver server for agent-driven inspection (debug builds only, see AGENTS.md)
-[target.'cfg(debug_assertions)'.dependencies]
+# Cargo does not support selecting dependencies with `cfg(debug_assertions)`.
+# The plugin is only registered in debug builds in `src/main.rs`.
 tauri-plugin-webdriver = "0.2"
 
 [features]
