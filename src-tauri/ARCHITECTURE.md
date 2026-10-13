@@ -321,7 +321,7 @@ Implements `From<PersistentTrack>` for seamless conversion from database entitie
 
 Agent-driven inspection (screenshots, DOM queries, JS eval, interaction, logs) via a [W3C WebDriver](https://www.w3.org/TR/webdriver/) server, provided by [tauri-plugin-webdriver](https://github.com/Choochmeque/tauri-plugin-webdriver).
 
-- **Debug builds only at runtime**: Cargo does not support `cfg(debug_assertions)` for dependency selection, so the dependency is declared normally in `Cargo.toml`. `main.rs` registers the plugin only behind `#[cfg(debug_assertions)]`; release builds do not initialize the WebDriver server.
+- **Debug builds only**: Enable the optional `webdriver` Cargo feature for desktop development when WebDriver inspection is needed. `main.rs` registers the plugin only when debug assertions and that feature are enabled. Release packaging disables default features and explicitly enables `custom-protocol`, so the WebDriver dependency is not compiled into MSI, DEB, or AppImage builds.
 - **Transport**: HTTP server on `127.0.0.1:4445` (override with `TAURI_WEBDRIVER_PORT` env var or `init_with_port`). Drive it with any W3C WebDriver client (Selenium, WebdriverIO, `fantoccini`).
 - **Linux backend**: WebKitGTK native APIs (`webkit_web_view_get_snapshot` for screenshots, `evaluate_javascript_future` for scripts) — compositor-independent, works on X11 and any Wayland compositor. Element screenshots are a full-webview snapshot after `scrollIntoView` (no pixel crop on Linux).
 - **No custom IPC commands**: unlike the previous tauri-agent-tools bridge, nothing is added to the `invoke_handler` list, so there is no debug/release duplication to keep in sync.

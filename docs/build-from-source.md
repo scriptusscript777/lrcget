@@ -21,11 +21,12 @@ From the extracted source directory:
 
 ```bash
 npm ci
+npm run tauri -- dev --features webdriver
 npm test
 cd src-tauri
-cargo test --locked
+cargo test --locked --features webdriver
 cd ..
-npm run tauri -- build --bundles deb
+npm run tauri -- build --features custom-protocol --bundles deb -- --no-default-features
 ```
 
 Packages are written beneath `src-tauri/target/release/bundle/`. Build/checksum

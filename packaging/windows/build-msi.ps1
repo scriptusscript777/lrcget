@@ -26,7 +26,7 @@ try {
     # Remove stale packages from this exact target folder before building.
     $bundleDir = Join-Path $repo 'src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi'
     if (Test-Path $bundleDir) { Get-ChildItem $bundleDir -Filter '*.msi' -File | Remove-Item -Force }
-    & npm.cmd run tauri -- build --target x86_64-pc-windows-msvc --bundles msi --config $configPath
+    & npm.cmd run tauri -- build --target x86_64-pc-windows-msvc --bundles msi --features custom-protocol --config $configPath -- --no-default-features
     if ($LASTEXITCODE -ne 0) { throw 'Tauri MSI build failed. No installer has been delivered.' }
     $packages = @(Get-ChildItem $bundleDir -Filter '*.msi' -File)
     if ($packages.Count -ne 1) { throw 'Expected exactly one fresh en-US x64 MSI.' }

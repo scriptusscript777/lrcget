@@ -44,9 +44,10 @@ tauri-plugin-os = "2.3.2"
 tauri-plugin-shell = "2.3.5"
 tauri-plugin-dialog = "2.7.0"
 tauri-plugin-clipboard-manager = "2.3.2"
-# Cargo does not support selecting dependencies with `cfg(debug_assertions)`.
-# The plugin is only registered in debug builds in `src/main.rs`.
-tauri-plugin-webdriver = "0.2"
+# Cargo cannot select dependencies directly from `cfg(debug_assertions)`. Keep
+# the plugin as an opt-in development feature; release packaging disables default
+# features so this Windows-only-incompatible test dependency is not built there.
+tauri-plugin-webdriver = { version = "0.2", optional = true }
 
 [features]
 # by default Tauri runs in production mode
@@ -55,6 +56,7 @@ default = [ "custom-protocol" ]
 # this feature is used used for production builds where `devPath` points to the filesystem
 # DO NOT remove this
 custom-protocol = [ "tauri/custom-protocol" ]
+webdriver = [ "dep:tauri-plugin-webdriver" ]
 
 [profile.dev.package.kira]
 opt-level = 3

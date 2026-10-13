@@ -189,8 +189,8 @@ Requires Node.js 22, stable Rust and the
 
 ```bash
 npm ci
-npm run tauri dev                                 # development window
-npm run tauri -- build --bundles deb,appimage    # Linux packages
+npm run tauri -- dev --features webdriver       # development window with WebDriver inspection
+npm run tauri -- build --features custom-protocol --bundles deb,appimage -- --no-default-features
 ```
 
 The Windows MSI is built with `packaging/windows/build-msi.ps1`. Full

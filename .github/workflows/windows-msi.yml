@@ -55,7 +55,7 @@ jobs:
           $env:Path += ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
           ffmpeg -version
           if ($LASTEXITCODE -ne 0) { throw 'FFmpeg test dependency is unavailable' }
-          cargo test --locked
+          cargo test --locked --no-default-features --features custom-protocol
           if ($LASTEXITCODE -ne 0) { throw 'Native backend tests failed' }
       - name: Download the currently published MSI for the upgrade check
         shell: pwsh

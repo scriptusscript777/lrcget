@@ -43,7 +43,7 @@ jobs:
         run: |
           # The Tauri build macro needs the built web interface (dist/).
           npm run build
-          cd src-tauri && cargo test --locked
+          cd src-tauri && cargo test --locked --features webdriver
       - uses: taiki-e/install-action@v2
         with:
           tool: cargo-about@0.9.2
@@ -54,7 +54,7 @@ jobs:
           python3 tools/third_party_notices.py --output "$RUNNER_TEMP/notices-source.md" \
             --compare THIRD_PARTY_NOTICES.md --check
       - name: Build Debian package and AppImage
-        run: npm run tauri -- build --bundles deb,appimage
+        run: npm run tauri -- build --features custom-protocol --bundles deb,appimage -- --no-default-features
       - name: Add the AppImage's bundled system libraries to its notices and repackage it
         run: |
           appimage=$(find src-tauri/target/release/bundle/appimage -maxdepth 1 -name '*.AppImage')
@@ -62,7 +62,7 @@ jobs:
             --output "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" --check \
             --source-list "$RUNNER_TEMP/appimage-sources.txt"
           cp "$RUNNER_TEMP/THIRD_PARTY_NOTICES.md" THIRD_PARTY_NOTICES.md
-          npm run tauri -- build --bundles appimage
+          npm run tauri -- build --features custom-protocol --bundles appimage -- --no-default-features
           git checkout -- THIRD_PARTY_NOTICES.md
       - name: Download the corresponding source of the AppImage's bundled libraries
         # GPL and LGPL libraries inside the AppImage are distributed with their exact

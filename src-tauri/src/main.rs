@@ -1736,7 +1736,7 @@ async fn main() {
     // W3C WebDriver server (`tauri-plugin-webdriver`) — debug builds only.
     // Listens on http://127.0.0.1:4445 (override with TAURI_WEBDRIVER_PORT);
     // see AGENTS.md for the agent inspection runbook.
-    #[cfg(debug_assertions)]
+    #[cfg(all(debug_assertions, feature = "webdriver"))]
     let builder = builder.plugin(tauri_plugin_webdriver::init());
 
     builder
