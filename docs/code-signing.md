@@ -2,8 +2,10 @@
 
 The current Windows MSI has no digital publisher signature. Windows cannot
 verify its publisher from the MSI, so it may display an unknown-publisher or
-SmartScreen warning, and device security settings may prevent installation. That
-warning alone does not mean the file is malware.
+SmartScreen warning, and device security settings may prevent installation. This
+is a new independent fork with limited public recognition, so it does not yet
+qualify for a sponsored signing certificate. The warning alone does not mean the
+file is malware.
 
 Install only if you downloaded it from the LRCGET fork's official GitHub release
 and its SHA-256 matches the published checksum. The Windows CI workflow checks

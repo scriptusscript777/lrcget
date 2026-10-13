@@ -55,11 +55,13 @@ version over an older one. Optionally verify a download first: on Linux run
 
 1. Download the `.msi` file and double-click it.
 2. This MSI has no digital publisher signature, so Windows cannot verify its
-   publisher and may show an unknown-publisher or SmartScreen warning. That
-   warning alone does not mean the file is malware. Install only if you downloaded
-   it from the LRCGET fork's official GitHub release and its SHA-256 matches the
-   published checksum. Windows CI scans reported no threats, though scans cannot
-   guarantee a file is risk-free or prevent Windows from warning.
+   publisher and may show an unknown-publisher or SmartScreen warning. This is a
+   new independent fork with limited public recognition, so it does not yet
+   qualify for a sponsored signing certificate. The warning alone does not mean
+   malware. Install only if you downloaded it from the LRCGET fork's official
+   GitHub release and its SHA-256 matches the published checksum. Windows CI scans
+   reported no threats, though scans cannot guarantee a file is risk-free or
+   prevent Windows from warning.
 3. Follow the installer. Installing a newer version replaces the old one.
 
 Uninstall from **Settings → Apps → Installed apps → LRCGET**. If WebView2 is

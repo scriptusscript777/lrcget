@@ -70,8 +70,9 @@ Application version is 2.2.7; MSI version is 2.2.7000. Publisher metadata is
 Rick Lidgett (LRCGET fork), product is LRCGET, and upgrade GUID remains fixed.
 This is unsigned metadata, not a verified digital publisher identity. Windows
 may warn because the MSI has no digital publisher signature and cannot verify its
-publisher. That warning alone does not mean malware. Download only from the
-official LRCGET fork release and verify the SHA-256 checksum. Windows Server
+publisher. This new independent fork has limited public recognition and does not
+yet qualify for a sponsored signing certificate. That warning alone does not mean
+malware. Download only from the official LRCGET fork release and verify the SHA-256 checksum. Windows Server
 2025 CI passed installation, repair reinstall, visible app launch and
 uninstallation; Microsoft Defender scans of the MSI and installed payload
 reported no threats. Scans and checksums reduce risk but cannot guarantee safety
