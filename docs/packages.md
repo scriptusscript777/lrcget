@@ -21,7 +21,9 @@ Get-Content .\LRCGET_2.2.7_x64_en-US.msi.sha256
 ```
 
 Compare the complete hash. Checksums detect changed downloads; they are not digital
-publisher signatures. All three packages are currently unsigned.
+publisher signatures. The Windows MSI has no Authenticode signature; the DEB and
+AppImage do not use Windows publisher verification. Windows warning guidance below
+applies to the MSI.
 
 ## Debian amd64
 
