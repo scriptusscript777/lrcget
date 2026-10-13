@@ -3,9 +3,24 @@
 **Version:** 2.2.7. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
-The original project retains its credits and license.
+The About panel credits the original LRCGET author and project, identifies Rick
+Lidgett as the maintainer and modifier of this independent fork, and retains the
+original MIT license credit. Its GitHub Sponsors link is clearly labeled as
+support for the original creator; it does not request donations for this fork.
+
+![About panel credits in light theme](screenshots/current/about-credits-light.png)
+![About panel credits in dark theme](screenshots/current/about-credits-dark.png)
 
 [Documentation home](README.md) | [Practical how-tos](how-to.md) | [Detailed reference](editing-guide.md)
+
+## About and credits
+
+The shared About panel credits the original LRCGET project by tranxuanthang and
+identifies Rick Lidgett (@scriptusscript777) as the maintainer and modifier of
+this independent fork. It retains the original MIT license credit. The only
+support link in About opens GitHub Sponsors for the original creator, with a
+clear note that donations go to the original creator rather than this fork.
+This fork does not request donations.
 
 ## What the App Does
 

@@ -22,6 +22,7 @@ Rick's editor enhancements. See the [illustrated overview](app-overview.md),
 | Embedded lyrics      | Optional MP3 ID3v2.4 UTF-8 USLT/SYLT and custom TXXX ELRC; FLAC Vorbis comments; staged writes without audio re-encoding               | [Embedding](how-to.md#embed-standard-and-enhanced-lyrics-in-mp3)         |
 | Publishing           | Explicit Save and Publish confirmation for the configured LRCLIB server; structured lyrics including saved word timing; no ELRC sidecar upload                 | [Output](editing-guide.md#save-export-and-publish)                       |
 | Preferences and help | Light/dark themes, saved hover-help switch default off, F1 help with timeout, configurable shortcuts                                   | [Help](editing-guide.md#themes-diagnostics-and-limits)                   |
+| About and credits    | Credits original creator tranxuanthang and fork maintainer/modifier Rick Lidgett; original creator's GitHub Sponsors link is labeled; no fork donation request | [App overview](app-overview.md#about-and-credits) |
 | Update alerts        | Startup check of the fork's latest GitHub release; alert with the matching .deb, AppImage or .msi download; Later and Skip this version; manual check in About | [Updates](how-to.md#get-notified-about-new-releases) |
 | Packages             | Linux x64 Debian upgrade and AppImage, full source archives, supported Windows MSI build script and manual build workflow              | [Packages](packages.md)                                                  |
 

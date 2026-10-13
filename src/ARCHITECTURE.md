@@ -80,7 +80,12 @@ Module-level ref composables (singletons by design):
 - `Library.vue` - Header + tabbed panes (Tracks/Albums/Artists/MyLrclib) + `NowPlaying.vue`. Manages scan lifecycle (`scan-progress`, `scan-complete`, `scan_library`)
 - `NowPlaying.vue` - Persistent bottom panel. Track metadata, seek/play/volume/speed, lyrics. Keyboard shortcuts (space/enter/arrows) disabled when typing or via `isHotkey` state
 
-**Modals**: `Config.vue`, `About.vue`, `DownloadViewer.vue`
+**Modals**: `Config.vue`, `About.vue`, `DownloadViewer.vue`. `About.vue` identifies
+the original LRCGET author and links to the upstream project, then clearly labels
+Rick Lidgett as maintainer and modifier of this independent fork. The upstream
+MIT credit is retained. Its support section links to the original author's GitHub
+Sponsors page and says donations there go to the original creator, not this fork;
+no cryptocurrency address or fork donation request is shown.
 
 **Common Components**:
 

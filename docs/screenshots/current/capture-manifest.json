@@ -1,9 +1,21 @@
 {
   "app_version": "2.2.7",
   "runtime_commit": "a7a8e1c6e080fe3a51edd11d6734d812be735ca1",
-  "guide_image_count": 97,
+  "guide_image_count": 99,
   "note": "Screenshot-only refresh; demonstration data, no personal music/library changes. Historical images outside current user-guide references remain archived.",
   "images": [
+    {
+      "file": "about-credits-dark.png",
+      "captured_utc": "2026-10-13T16:21:05.742039+00:00",
+      "sha256": "92b263e5129edb8c9226062d371d89f2d8b4b748c99cfc7ac0a809a2995e7993",
+      "source": "Native Linux debug UI, About modal cropped to exclude library content; isolated screenshot capture"
+    },
+    {
+      "file": "about-credits-light.png",
+      "captured_utc": "2026-10-13T16:21:05.742211+00:00",
+      "sha256": "0267a6d2f3be5c281e436583c853df3b49bd161a3bce934012eb32bb76ccf392",
+      "source": "Native Linux debug UI, About modal cropped to exclude library content; isolated screenshot capture"
+    },
     {
       "file": "appimage-startup.png",
       "captured_utc": "2026-10-12T20:09:27.857264+00:00",

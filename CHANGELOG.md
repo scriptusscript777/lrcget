@@ -34,6 +34,11 @@ When a release is published, add its entry here and its notes in `docs/releases/
 
 ### Changed
 
+- About now credits original creator tranxuanthang and Rick Lidgett as the
+  maintainer/modifier of this independent fork. About and repository funding
+  links point only to the original creator's GitHub Sponsors page; the fork does
+  not request donations.
+
 - Follow Lyrics also works in sentence (LRC) mode: the selected sentence and its
   waveform markers follow playback. Sync, clicks and edits hold the selection only
   until the next Play or Resume; opening or closing a word view also resumes it.

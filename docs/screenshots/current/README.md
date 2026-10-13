@@ -1,8 +1,8 @@
 # Current interface screenshots — 2.2.7
 
-All **85 images referenced by the current user guides** were recaptured on
-2026-10-12 from the current application interface. Light/dark examples cover the
-latest integrations. This supersedes the older capture descriptions for those files.
+All **99 images referenced by the current user guides** were captured or refreshed
+from the current application interface through 2026-10-13. Light/dark examples cover
+the latest integrations. This supersedes older capture descriptions for those files.
 [Capture manifest](capture-manifest.json) records each image, date, content hash
 and rendering source. It is an audit record, not a signature or OS certification.
 
@@ -21,6 +21,7 @@ and rendering source. It is an audit record, not a signature or OS certification
 | Optional sentence/word alignment | sentence-alignment-toolbar/preview, audio-alignment-controls/preview/skipped |
 | Optional engine/model consent and failure fallback | audio-alignment-setup/model-consent/progress-unavailable |
 | Settings and help | overlap-settings-on/off, overlap-status-off, word-overlap-off, timed-hover-help |
+| About attribution | about-credits light/dark |
 | Native packaged startup | debian-startup.png, appimage-startup.png |
 
 ## Capture and verification

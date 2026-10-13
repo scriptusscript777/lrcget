@@ -37,52 +37,53 @@
       </div>
 
       <div class="mb-6">
-        <label class="group-label mb-2">Donation</label>
+        <label class="group-label mb-2">Credits</label>
+
+        <div class="text-sm space-y-2">
+          <p>
+            Original LRCGET project by
+            <a
+              href="https://github.com/tranxuanthang/lrcget"
+              class="link"
+              target="_blank"
+              rel="noopener noreferrer"
+              >tranxuanthang</a
+            >.
+          </p>
+          <p>
+            This independent fork is maintained and modified by
+            <a
+              href="https://github.com/scriptusscript777"
+              class="link"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Rick Lidgett (@scriptusscript777)</a
+            >.
+          </p>
+          <p>
+            Modifications and enhancements by Rick Lidgett. The original MIT license is retained.
+          </p>
+        </div>
+      </div>
+
+      <div class="mb-6">
+        <label class="group-label mb-2">Support the original creator</label>
 
         <div class="text-sm">
-          <div class="mb-2">
-            <div class="mb-1">GitHub Sponsors (Recommended):</div>
-            <div>
-              <a href="https://github.com/sponsors/tranxuanthang" class="link" target="_blank">
-                https://github.com/sponsors/tranxuanthang
-              </a>
-            </div>
-          </div>
-
-          <div class="mb-2">
-            <div class="mb-1">Buy Me a Coffee:</div>
-            <div>
-              <a href="https://www.buymeacoffee.com/thangtran" class="link" target="_blank">
-                https://www.buymeacoffee.com/thangtran
-              </a>
-            </div>
-          </div>
-
-          <div class="mb-2">
-            <div class="mb-1">Paypal:</div>
-            <div>
-              <a href="https://paypal.me/tranxuanthang98" class="link" target="_blank">
-                https://paypal.me/tranxuanthang98
-              </a>
-            </div>
-          </div>
-
-          <div class="mb-2">
-            <div class="mb-1">Monero (XMR):</div>
-            <CopyablePre
-              >43ZN5qDdGQhPGthFnngD8rjCHYLsEFBcyJjDC1GPZzVxWSfT8R48QCLNGyy6Z9LvatF5j8kSgv23DgJpixJg8bnmMnKm3b7</CopyablePre
-            >
-          </div>
-
-          <div class="mb-2">
-            <div class="mb-1">Litecoin (LTC):</div>
-            <CopyablePre>ltc1q7texq5qsp59gclqlwf6asrqmhm98gruvz94a48</CopyablePre>
-          </div>
+          <p class="mb-1">Donations through this page go to the original creator, not this fork.</p>
+          <a
+            href="https://github.com/sponsors/tranxuanthang"
+            class="link"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            GitHub Sponsors for tranxuanthang
+          </a>
         </div>
       </div>
 
       <div>
-        <label class="group-label mb-2">Home page, contact and support</label>
+        <label class="group-label mb-2">Home page and contact</label>
 
         <div class="text-sm">
           <div class="mb-1">
@@ -110,7 +111,6 @@ import CheckCircle from '~icons/mdi/check-circle'
 import { ref, computed } from 'vue'
 import { getVersion } from '@tauri-apps/api/app'
 import { fetchLatestRelease, isNewerRelease } from '@/utils/update-check.js'
-import CopyablePre from '@/components/CopyablePre.vue'
 import BaseModal from '@/components/common/BaseModal.vue'
 
 const emit = defineEmits(['close'])

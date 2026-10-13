@@ -230,11 +230,8 @@ next to your music files. LRCGET is the official client of the LRCLIB service.
 For the original app on all platforms (including Flatpak, RPM and macOS), see the
 [upstream releases](https://github.com/tranxuanthang/lrcget/releases).
 
-Support the original developer:
-[GitHub Sponsors](https://github.com/sponsors/tranxuanthang) ·
-[Buy Me a Coffee](https://www.buymeacoffee.com/thangtran) ·
-[PayPal](https://paypal.me/tranxuanthang98) ·
-Monero `43ZN5qDdGQhPGthFnngD8rjCHYLsEFBcyJjDC1GPZzVxWSfT8R48QCLNGyy6Z9LvatF5j8kSgv23DgJpixJg8bnmMnKm3b7` ·
-Litecoin `ltc1q7texq5qsp59gclqlwf6asrqmhm98gruvz94a48`.
+To learn about supporting the original developer, visit
+[GitHub Sponsors](https://github.com/sponsors/tranxuanthang). Donations there go
+to the original creator; this fork does not request donations.
 Original author contact: [hoangtudevops@protonmail.com](mailto:hoangtudevops@protonmail.com)
 (for the original project, not this fork).
