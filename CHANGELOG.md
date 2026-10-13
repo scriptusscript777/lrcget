@@ -34,6 +34,9 @@ When a release is published, add its entry here and its notes in `docs/releases/
 
 ### Changed
 
+- Follow Lyrics also works in sentence (LRC) mode: the selected sentence and its
+  waveform markers follow playback; Sync, clicks and edits still hold the selection.
+
 - About checks this fork's releases instead of the original project's.
 - Master reset was removed; Reset words affects one sentence with Undo.
 

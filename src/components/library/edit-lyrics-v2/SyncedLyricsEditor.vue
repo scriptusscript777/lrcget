@@ -46,7 +46,6 @@
       <button type="button" class="button button-normal rounded px-2 py-1 text-xs" :disabled="alignmentDisabled" title="Find sentence timing from local audio; preview before replacing timestamps" @click="emit('align-sentences')">Align sentences</button>
       <button type="button" class="button button-normal rounded px-2 py-1 text-xs" :disabled="alignmentDisabled" title="Optional automatic audio alignment; Basic editing needs no AI" @click="emit('align-words')">Align words</button>
       <button
-        v-if="wordTimingExpanded || wordPreviewExpanded"
         v-tooltip="editorTooltip('Follow the playing sentence and its markers; editing and Loop hold the selected target')"
         type="button"
         class="button inline-flex items-center gap-1 rounded px-2 py-1 text-xs focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-pink-500"
@@ -451,8 +450,10 @@ useLyricsFollow({
   timeMs: playbackTimeMs,
   playing: toRef(props, 'waveformPlaying'),
   enabled: followLyrics,
+  // Sentence (LRC) and word views both follow playback. Sync, clicks and edits change the
+  // selection themselves, which turns Follow off, so tapping Sync never fights it.
   blocked: computed(() =>
-    (!wordTimingExpanded.value && !wordPreviewExpanded.value) || props.loopEnabled || props.markerEditing ||
+    props.loopEnabled || props.markerEditing ||
     editingLineIndex.value !== null || isDragging.value || hasMultiSelection.value || wordEditing.value
   ),
   selectedIndex: toRef(props, 'selectedLineIndex'),

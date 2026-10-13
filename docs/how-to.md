@@ -245,8 +245,13 @@ pause/play or the crosshair resumes following. An explicitly disabled Follow
 stays disabled until you enable it. Use the wheel, trackpad or bottom pan slider
 to reach off-screen markers. Zoom and scrolling never change marker timestamps.
 
-**Follow Lyrics** is a separate control: it selects the active lyric/word boxes.
-Use waveform Follow for viewport movement, Follow Lyrics for editing selection.
+**Follow Lyrics** is a separate control: it selects the sentence being sung, so its
+Start/End markers on the waveform move from sentence to sentence during playback.
+It works in sentence (LRC) mode as well as with Word timing or Word preview open,
+and is on when the editor opens. Clicking a line, pressing **Sync**, editing text
+or using Loop holds your chosen sentence and turns Follow off, so tapping Sync
+while the song plays is not affected. Click **Follow Lyrics** to resume. Use
+waveform Follow for viewport movement, Follow Lyrics for editing selection.
 
 ## Loop Between the Markers
 

@@ -249,9 +249,9 @@ zoom and horizontal scrolling are separate from waveform zoom.
 
 ## Individual Words
 
-**Follow Lyrics** is enabled initially when you open **Word timing**. During
-normal playback the boxes advance to the current lyric, including backward
-seeks. Selecting a row pins it; click **Follow Lyrics** to resume. Loops,
+**Follow Lyrics** is enabled initially, in sentence (LRC) mode and with **Word
+timing** open. During normal playback the selected sentence, its waveform markers
+and the word boxes advance to the current lyric, including backward seeks. Selecting a row pins it; click **Follow Lyrics** to resume. Loops,
 marker previews, word drags and text edits hold the selected line in place.
 This changes the editing selection, not the recording or saved timestamps.
 

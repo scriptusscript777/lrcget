@@ -98,10 +98,34 @@ describe('synced editor lyric follow integration', () => {
     expect(emit).not.toHaveBeenCalledWith('update:words', expect.anything())
   })
 
-  it('blocks collapsed, loop, marker, inline, multi-selection and word-drag states', async () => {
-    const { props, state, follow } = await setupEditor()
-    expect(follow.blocked.value).toBe(true)
+  it('follows in sentence (LRC) mode as well as with word views open', async () => {
+    const { state, follow } = await setupEditor()
+    expect(state.wordTimingExpanded.value).toBeFalsy()
+    expect(state.wordPreviewExpanded.value).toBe(false)
+    expect(follow.enabled.value).toBe(true)
+    expect(follow.blocked.value).toBe(false)
     state.wordTimingExpanded.value = true
+    expect(follow.blocked.value).toBe(false)
+    state.wordPreviewExpanded.value = true
+    expect(follow.blocked.value).toBe(false)
+  })
+
+  it('shows the Follow Lyrics button in sentence mode', async () => {
+    const props = {
+      modelValue: [{ text: 'First line', start_ms: 1000, end_ms: 2000 }],
+      selectedLineIndex: 0,
+      selectedLineIndices: [],
+      waveformProgress: 1.5,
+      waveformPlaying: true,
+    }
+    const html = await renderToString(createSSRApp(SyncedLyricsEditor, props))
+    const button = html.match(/<button[^>]*>(?:(?!<button)[\s\S])*?Follow Lyrics<\/button>/)?.[0]
+    expect(button).toBeTruthy()
+    expect(button).toContain('aria-pressed="true"')
+  })
+
+  it('blocks loop, marker, inline, multi-selection and word-drag states', async () => {
+    const { props, state, follow } = await setupEditor()
     expect(follow.blocked.value).toBe(false)
     for (const flag of ['loopEnabled', 'markerEditing']) {
       props[flag] = true
