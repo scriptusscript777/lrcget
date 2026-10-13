@@ -104,7 +104,11 @@ jobs:
           gh release download --repo "$GITHUB_REPOSITORY" --pattern '*_amd64.deb' --dir previous-deb
           test "$(find previous-deb -name '*.deb' | wc -l)" -eq 1
       - name: Check Debian upgrade, launch, license files, removal and AppImage
-        run: ./packaging/linux/check-packages.sh packages previous-deb/*.deb
+        run: |
+          # Build the font cache first so the first app launch is not slowed by it.
+          fc-cache -f >/dev/null
+          df -h . /tmp
+          ./packaging/linux/check-packages.sh packages previous-deb/*.deb
       - uses: actions/upload-artifact@v4
         if: always()
         with:

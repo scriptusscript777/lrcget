@@ -40,7 +40,8 @@ data_dir="$profile/data/net.lrclib.lrcget"
 launch() {
     local log=$1
     shift
-    # Waits up to 90 s for the LRCGET window, then confirms the app is still running.
+    # Waits up to 90 s until the LRCGET window is open and the profile database exists,
+    # then confirms the app is still running.
     # NO_AT_BRIDGE avoids GTK waiting on the accessibility bus, absent on CI runners.
     set +e
     # shellcheck disable=SC2016  # the inner script expands its own variables
@@ -52,19 +53,23 @@ launch() {
                 if ! kill -0 "$app" 2>/dev/null; then
                     wait "$app"; echo "LRCGET exited with code $? before opening a window"; exit 3
                 fi
-                if xwininfo -root -tree 2>/dev/null | grep -q "\"LRCGET\""; then
+                if xwininfo -root -tree 2>/dev/null | grep -q "\"LRCGET\"" \
+                    && [ -f "$XDG_DATA_HOME/net.lrclib.lrcget/db.sqlite3" ]; then
                     sleep 3
                     kill -0 "$app" 2>/dev/null || { echo "LRCGET closed right after opening"; exit 3; }
-                    echo "LRCGET window opened after ${second}s"
+                    echo "LRCGET window opened and profile ready after ${second}s"
                     kill "$app"; exit 0
                 fi
             done
-            echo "No LRCGET window after 90s"; kill "$app"; exit 4' _ "$@" >"$log" 2>&1
+            echo "No LRCGET window with a profile after 90s"; kill "$app"; exit 4' _ "$@" >"$log" 2>&1
     local rc=$?
     set -e
     if [[ $rc -ne 0 ]]; then
         cat "$log" >&2
-        fail "$* did not open its window (code $rc)"
+        echo "--- profile contents" >&2
+        find "$profile" -maxdepth 4 >&2 || true
+        df -h "$profile" /tmp >&2 || true
+        fail "$* did not open its window with a profile (code $rc)"
     fi
     grep 'window opened' "$log"
 }
