@@ -58,6 +58,30 @@ This Linux x64 build needs glibc 2.39 or newer. Make it executable and verify it
 checksum. If FUSE is unavailable, use `--appimage-extract-and-run`. See
 [packages](packages.md); older distributions need a build with an older baseline.
 
+## The update alert does not appear
+
+The check runs once, a few seconds after LRCGET starts. No alert appears when:
+
+- You already have the newest version. Open the menu, choose **About**, and
+  compare **Current version** with **Newest version**.
+- You chose **Skip this version** for that release. A higher release alerts again.
+- An editor or another window was open. The alert waits and appears about a
+  minute after that window closes.
+- There was no internet connection, or GitHub was unavailable or rate-limited.
+  The check stays silent and runs again at the next start.
+- The computer is not a supported system (phones, tablets, macOS or ARM
+  computers). Only Linux x64 and Windows 10/11 x64 installers are published.
+- The new release was published with the same version number. Only a higher
+  version (for example 2.2.8) produces an alert.
+
+## The update downloaded but did not install
+
+LRCGET only downloads the file; it never runs an installer. Follow the steps for
+your format in [Install a downloaded update](how-to.md#install-a-downloaded-update).
+For an AppImage, make the new file executable and start the new file, not the old
+one or an old desktop shortcut. On Windows, a SmartScreen warning is expected
+because the MSI is not code-signed; choose **More info**, then **Run anyway**.
+
 ## Windows installer or build fails
 
 Use the x64 MSI and checksum from the matching release, not an upstream installer

@@ -58,9 +58,18 @@ and developer notification publication on 2026-10-12.
 When Rick requests a version bump, advance the main version, not `+local.xx`.
 Rick prefers decimal carry: 2.2.1 through 2.2.9, then 2.3.0; 2.9.9 advances to
 3.0.0. Preserve existing historical artifact names and package/application identity.
-When rebuilding an unchanged version, preserve prior installer/source artifacts
-under dated backup names before replacing current artifacts. Use an explicit
-same-version reinstall when needed; do not invent a suffix to force an upgrade.
+Use an explicit same-version reinstall when needed; do not invent a suffix to
+force an upgrade.
+
+Release publication (Rick, 2026-10-12, supersedes dated artifact backups): after
+every completed update, publish the Debian `.deb`, AppImage, Windows `.msi`
+(built and install/upgrade/uninstall-checked by `.github/workflows/windows-msi.yml`),
+source ZIP/tar.gz, docs ZIP and SHA256 files to the current GitHub release,
+replacing the previous files. Keep only the latest artifacts: remove older
+releases, installers and dated `before-*` folders locally and on GitHub; history
+remains in Git and `lrcget-backup.bundle`. Run unit, native and end-to-end update
+checks first; releases must be production-ready. A user-visible update alert
+fires only for a higher version, so a same-version rebuild does not notify users.
 
 Apply this maintenance workflow every time this app is modified. Update feature
 lists, how-tos and release notes together; capture fresh light/dark screenshots

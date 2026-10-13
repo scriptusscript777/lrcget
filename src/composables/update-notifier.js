@@ -102,7 +102,8 @@ export function useUpdateNotifier() {
   const start = () => {
     setTimeout(checkForUpdate, FIRST_CHECK_DELAY_MS)
     if (import.meta.env.DEV) {
-      // Development-only preview for documentation screenshots.
+      // Development-only hooks for documentation screenshots and testing.
+      window.__lrcgetCheckForUpdate = checkForUpdate
       window.__lrcgetPreviewUpdate = async (release = {}, kind = null) => {
         const currentVersion = await getVersion()
         const detected = await invoke('get_install_kind')

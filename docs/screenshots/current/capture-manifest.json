@@ -1,7 +1,7 @@
 {
   "app_version": "2.2.7",
   "runtime_commit": "a7a8e1c6e080fe3a51edd11d6734d812be735ca1",
-  "guide_image_count": 89,
+  "guide_image_count": 97,
   "note": "Screenshot-only refresh; demonstration data, no personal music/library changes. Historical images outside current user-guide references remain archived.",
   "images": [
     {
@@ -185,6 +185,18 @@
       "source": "Current Vue components, isolated browser fixtures and mocked native commands"
     },
     {
+      "file": "library-tracks-dark.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "099d5c737744c9cfb4eca1c6def47b0c2128b68a6f9b302e9980b475e4ab6d0e",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library)"
+    },
+    {
+      "file": "library-tracks-light.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "31c9639603ce8e46b6f18360267b536a225ff74c4ca4cfa81a0d0c6d809b2701",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library)"
+    },
+    {
       "file": "loop-persistent-navigation-dark.png",
       "captured_utc": "2026-10-12T20:10:08.350324+00:00",
       "sha256": "3623b7fc1ab31806e719b6f8819d2464402b1deb55ed5cf325a144c32a328be8",
@@ -305,6 +317,18 @@
       "source": "Current Vue components, isolated browser fixtures and mocked native commands"
     },
     {
+      "file": "publish-confirm-dark.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "57f4621ced4d0de061b4acfd2a720ed71c48aa852c6a120210d8f16fbdd9a5a7",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library; nothing was published)"
+    },
+    {
+      "file": "publish-confirm-light.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "a8189986b3f1c9dd227d7c4d56a37e537923edbfb0de3390e02ec4bf54a8d3ab",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library; nothing was published)"
+    },
+    {
       "file": "recovery-notice-aligned-dark.png",
       "captured_utc": "2026-10-12T20:05:17.584892+00:00",
       "sha256": "e6143da4cf50518f79c9b9af2bfce4fcc38915e92da5123c3643c4624547908e",
@@ -315,6 +339,30 @@
       "captured_utc": "2026-10-12T20:05:17.351892+00:00",
       "sha256": "e0065f0486bf6ecacab3519023e671170d656abd5a732535dba189423d038c2c",
       "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "save-publish-menu-dark.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "9e39af332042252aabd4c9d81539f4554019a3a674c69255bd5b51aaf4b3b9ca",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library; nothing was published)"
+    },
+    {
+      "file": "save-publish-menu-light.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "5c482b1a387aef7d32bba74859da8b8dc72ab2c8c5741a3b1e452eed0fee7542",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library; nothing was published)"
+    },
+    {
+      "file": "search-lyrics-dark.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "926ae2cde2193ffdd4fa51383be44a02e415d758410bbe1f07532f72eee1ffad",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library; real LRCLIB search results for a public-domain hymn)"
+    },
+    {
+      "file": "search-lyrics-light.png",
+      "captured_utc": "2026-10-13T01:09:17.117530+00:00",
+      "sha256": "6951a9bd61a7436093b2128cacb6e05f014735d48f7648ddff2c46c81e7fbae5",
+      "source": "Native Linux debug build of the current source (isolated Xvfb/XDG profile, generated demo library; real LRCLIB search results for a public-domain hymn)"
     },
     {
       "file": "selected-sentence-loop-dark.png",

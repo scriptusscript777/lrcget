@@ -1,7 +1,8 @@
 name: Publish release to WinGet
+# Inherited from upstream. This fork has no WinGet package or token, and the
+# LRCLIB.LRCGET identifier belongs to the original project, so the workflow
+# runs only when started manually (Rick, 2026-10-12).
 on:
-  release:
-    types: [released]
   workflow_dispatch:
 jobs:
   publish:

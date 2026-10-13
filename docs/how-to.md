@@ -5,6 +5,8 @@ For Rick Lidgett's LRCGET **2.2.7**.
 
 ## Install or Upgrade
 
+![LRCGET after installing the Debian package](screenshots/current/debian-startup.png)
+
 1. Download the current `.deb` and checksum from the
    [2.2.7 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1).
    See [all package and source instructions](packages.md) for AppImage and Windows.
@@ -101,6 +103,9 @@ the check stays silent and runs again at the next start. See
 
 ## Add Music and Refresh the Library
 
+![Tracks list after adding music, light theme](screenshots/current/library-tracks-light.png)
+![Tracks list after adding music, dark theme](screenshots/current/library-tracks-dark.png)
+
 1. Add the directory containing your recordings using the library controls.
 2. Wait for scanning to finish, then open a recording's lyrics editor.
 3. After adding/removing recordings, close editing dialogs and press **F5**,
@@ -150,6 +155,9 @@ separate; editing synced text does not silently edit Plain or the source TXT.
 
 ## Edit an Existing LRC or Timed Text File
 
+![Importing an existing lyrics file, light theme](screenshots/current/lyrics-import-light.png)
+![Importing an existing lyrics file, dark theme](screenshots/current/lyrics-import-dark.png)
+
 1. Open the correct recording, not another mix/remaster with different timing.
 2. Choose **Import lyrics file** and select its LRC or timestamped TXT.
 3. Confirm replacement only when you want to replace the current document.
@@ -164,8 +172,16 @@ line timestamps before importing.
 
 ## Find Lyrics Online
 
-1. Search LRCLIB from LRCGET's library/search workflow.
-2. Compare title, artist and recording duration before selecting a result.
+![Search Lyrics window with LRCLIB results, light theme](screenshots/current/search-lyrics-light.png)
+![Search Lyrics window with LRCLIB results, dark theme](screenshots/current/search-lyrics-dark.png)
+
+1. In the **Tracks** list, click the search icon (magnifier on lines) beside the
+   song. **Search Lyrics** opens with the track's title, album and artist filled in.
+   Edit the fields if needed and click **Search**.
+2. Compare title, artist and recording duration before selecting a result. Each
+   result shows its line count, **Synced** or **Plain**, and how much longer (+) or
+   shorter (-) it is than your recording. Click the eye icon to preview it and the
+   save icon to use it. Tick **Show only word-timed lyrics** to filter.
 3. Load the result and listen against your own audio. Plain lyrics need manual timing.
 4. If no suitable result exists, copy trusted sung words into a TXT and use the text-file workflow.
 
@@ -304,9 +320,15 @@ is retained automatically; keep your own backups when needed.
 
 ## Publish Lyrics for Other Users
 
+![Save menu with Save and Publish, light theme](screenshots/current/save-publish-menu-light.png)
+![Save menu with Save and Publish, dark theme](screenshots/current/save-publish-menu-dark.png)
+![Publish confirmation, light theme](screenshots/current/publish-confirm-light.png)
+![Publish confirmation, dark theme](screenshots/current/publish-confirm-dark.png)
+
 1. Confirm wording/timing against the exact recording.
-2. Open the Save arrow and choose **Save and Publish**.
-3. Review the publication details and confirmation for the configured LRCLIB instance.
+2. Click the arrow beside **Save** and choose **Save and Publish**.
+3. Review the confirmation, which names the song and artist. **Publish Now** sends
+   the lyrics to the configured LRCLIB instance; **Cancel** closes without sending.
 4. Publish only lyrics you intend to share.
 
 This is different from local saving/exporting. Other LRCLIB clients can discover
@@ -365,6 +387,9 @@ discards the change. Menus and marker warnings are unaffected.
 ![Hover help setting](screenshots/current/embedded-lyrics-settings-light.png)
 
 ## Preserve Sentence Ends When Exporting
+
+![Export choices, light theme](screenshots/current/export-options-light.png)
+![Export choices, dark theme](screenshots/current/export-options-dark.png)
 
 1. Confirm Start and End with the sentence Sync controls, then Save.
 2. Export LRC. Gaps of at least 250 ms become blank timestamped cues; final ends
@@ -626,6 +651,9 @@ may offer only ordinary LRC or text. See [LRCLIB API documentation](https://lrcl
 
 ## Automatic unfinished-work recovery
 
+![Restored unfinished work, light theme](screenshots/current/editor-recovery-restored-light.png)
+![Restored unfinished work, dark theme](screenshots/current/editor-recovery-restored-dark.png)
+
 Unfinished lyrics are protected separately from normal saves and exports.
 Reopen the song or use Resume editing to recover it. Successful Save cleans
 only that project's completed draft; newer edits and pending markers remain.
@@ -645,6 +673,9 @@ Undo restores the prior word timings. Master reset has been removed.
 ![Live word preview in dark mode](screenshots/current/word-preview-live-edit-dark.png)
 
 ## More precise word and sentence repeats
+
+![Loop controls, light theme](screenshots/current/loop-persistent-navigation-light.png)
+![Loop controls, dark theme](screenshots/current/loop-persistent-navigation-dark.png)
 
 Word and sentence loops repeat in the audio engine, avoiding an interface seek
 on every repeat. Active-loop cursor updates run approximately every 10 ms.
@@ -693,6 +724,9 @@ without relying on color.
 
 ### ELRC discovery and library status
 
+![Library showing ELRC lyrics as Synced, light theme](screenshots/current/elrc-library-synced-light.png)
+![Library showing ELRC lyrics as Synced, dark theme](screenshots/current/elrc-library-synced-dark.png)
+
 Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
 back to `.txt`. Untouched ordinary LRC can upgrade to real word timing. Existing
 word timing, instrumental lyrics and explicit editor saves remain protected.
@@ -703,6 +737,9 @@ automatic export formats; downloads never silently generate estimated word times
 
 
 ## Basic and optional Automatic audio alignment
+
+![Audio alignment controls, light theme](screenshots/current/audio-alignment-controls-light.png)
+![Audio alignment controls, dark theme](screenshots/current/audio-alignment-controls-dark.png)
 
 Basic TXT/LRC/ELRC editing, estimated word timing and manual synchronization
 remain available without AI. **Align words** in the editor header opens optional
