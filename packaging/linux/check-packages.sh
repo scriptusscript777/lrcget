@@ -40,16 +40,33 @@ data_dir="$profile/data/net.lrclib.lrcget"
 launch() {
     local log=$1
     shift
+    # Waits up to 90 s for the LRCGET window, then confirms the app is still running.
+    # NO_AT_BRIDGE avoids GTK waiting on the accessibility bus, absent on CI runners.
     set +e
-    XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" XDG_CACHE_HOME="$profile/cache" \
-        timeout 30 xvfb-run -a "$@" >"$log" 2>&1
+    # shellcheck disable=SC2016  # the inner script expands its own variables
+    NO_AT_BRIDGE=1 XDG_DATA_HOME="$profile/data" XDG_CONFIG_HOME="$profile/config" \
+        XDG_CACHE_HOME="$profile/cache" timeout 150 xvfb-run -a bash -c '
+            "$@" & app=$!
+            for second in $(seq 1 90); do
+                sleep 1
+                if ! kill -0 "$app" 2>/dev/null; then
+                    wait "$app"; echo "LRCGET exited with code $? before opening a window"; exit 3
+                fi
+                if xwininfo -root -tree 2>/dev/null | grep -q "\"LRCGET\""; then
+                    sleep 3
+                    kill -0 "$app" 2>/dev/null || { echo "LRCGET closed right after opening"; exit 3; }
+                    echo "LRCGET window opened after ${second}s"
+                    kill "$app"; exit 0
+                fi
+            done
+            echo "No LRCGET window after 90s"; kill "$app"; exit 4' _ "$@" >"$log" 2>&1
     local rc=$?
     set -e
-    # 124 means the app was still running when the timeout stopped it.
-    if [[ $rc -ne 124 ]]; then
+    if [[ $rc -ne 0 ]]; then
         cat "$log" >&2
-        fail "$* exited early with code $rc"
+        fail "$* did not open its window (code $rc)"
     fi
+    grep 'window opened' "$log"
 }
 
 if [[ -n "$previous" ]]; then
