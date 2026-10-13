@@ -36,8 +36,9 @@ runtime during installation. This is not a fully offline WebView2 package.
 Before distributing the MSI, verify installation and uninstallation on Windows
 11, upgrading an existing install without duplicates, and playback, waveform,
 word loops, preferences and TXT/LRC/ELRC/ID3 exports. The Linux checks do not
-substitute for these Windows checks. Packages are unsigned unless a signing
-certificate is configured; no signing certificate is included here.
+substitute for these Windows checks. The MSI has no digital publisher signature. Windows may show an unknown-
+publisher or SmartScreen warning for this reason. See the user-facing signing
+status guide for checksum and scan guidance.
 
 ## Manual Windows build runner
 
