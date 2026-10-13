@@ -14,7 +14,8 @@ if [[ "${GITHUB_ACTIONS:-}" != "true" || "${RUNNER_OS:-}" != "Linux" ]]; then
 fi
 
 pkg_dir=$(realpath "$1")
-previous=${2:-}
+# apt treats an argument as a local file only with a leading / or ./.
+previous=${2:+$(realpath "$2")}
 mapfile -t debs < <(find "$pkg_dir" -maxdepth 1 -name '*.deb')
 mapfile -t appimages < <(find "$pkg_dir" -maxdepth 1 -name '*.AppImage')
 [[ ${#debs[@]} -eq 1 ]] || fail "Expected exactly one .deb, found ${#debs[@]}."
