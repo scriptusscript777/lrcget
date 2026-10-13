@@ -75,10 +75,6 @@ Windows 11 interactive audio/editing, optional alignment setup and upgrades from
 older Windows installers remain unverified. SmartScreen or Smart App Control can
 warn/block unsigned builds. [Signing policy](code-signing.md) explains pending setup.
 
-
-WinGet (`winget install`) is not available yet. It is planned after the MSI is
-code-signed; maintainers can follow [packaging/winget/README.md](../packaging/winget/README.md).
-
 ## Optional automatic alignment
 
 Basic editing, word estimates and manual sync work without AI. Optional sentence/

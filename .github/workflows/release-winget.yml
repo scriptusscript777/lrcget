@@ -1,7 +1,7 @@
 name: Publish release to WinGet
-# Manual-only until RickLidgett.LRCGET exists in microsoft/winget-pkgs and the
-# WINGET_ACC_TOKEN secret is set; see packaging/winget/README.md. The upstream
-# LRCLIB.LRCGET identifier belongs to the original project (Rick, 2026-10-12).
+# Inherited from upstream. This fork has no WinGet package or token, and the
+# LRCLIB.LRCGET identifier belongs to the original project, so the workflow
+# runs only when started manually (Rick, 2026-10-12).
 on:
   workflow_dispatch:
 jobs:
@@ -10,6 +10,6 @@ jobs:
     steps:
       - uses: vedantmgoyal9/winget-releaser@v2
         with:
-          identifier: RickLidgett.LRCGET
+          identifier: LRCLIB.LRCGET
           installers-regex: 'x64_en-US\.msi'
           token: ${{ secrets.WINGET_ACC_TOKEN }}
