@@ -251,7 +251,8 @@ zoom and horizontal scrolling are separate from waveform zoom.
 
 **Follow Lyrics** is enabled initially, in sentence (LRC) mode and with **Word
 timing** open. During normal playback the selected sentence, its waveform markers
-and the word boxes advance to the current lyric, including backward seeks. Selecting a row pins it; click **Follow Lyrics** to resume. Loops,
+and the word boxes advance to the current lyric, including backward seeks. Selecting a row pins it until your next Play or Resume; opening or closing a
+word view or clicking **Follow Lyrics** also resumes it. Loops,
 marker previews, word drags and text edits hold the selected line in place.
 This changes the editing selection, not the recording or saved timestamps.
 
@@ -527,9 +528,9 @@ Sources: [Jellyfin LRC parser](https://github.com/jellyfin/jellyfin/blob/v10.11.
    word starts and the same playback clock as the sentence timeline. Live word
    timing edits update both views immediately; no Sync or Save is needed to see
    an accepted boundary adjustment. Boxes can stay collapsed; resizing is unnecessary.
-3. **Follow Lyrics** retains its current on/off choice when you open the preview. It follows the playing
-   sentence. Manual selection/editing holds the target; re-enable Follow Lyrics
-   when you want to continue through the song.
+3. **Follow Lyrics** turns on when you open or close the preview and whenever you press
+   Play or Resume, and follows the playing sentence. Clicking a sentence, Sync or editing
+   holds the target until your next Play; **Follow Lyrics** also resumes it.
 4. Turn on **Loop selected phrase** to repeat that phrase. The preview follows
    every rewind, and Loop remains enabled until you turn it off. Lead-in, tail,
    waveform zoom and word-timeline zoom retain their existing behavior.
@@ -661,8 +662,8 @@ or seek. Saved lyrics and TXT/LRC/ELRC export choices are unchanged.
 
 **Follow Lyrics** now controls automatic sentence selection, scrolling of the
 word timeline, and scrolling of the Word preview. Turn it off to hold the view
-while playback, highlights and loops continue. Play/Pause/Resume and opening
-Word preview preserve the choice. Selecting a word or changing zoom can still
+while playback, highlights and loops continue. It turns back on with every Play or
+Resume and when Word timing or Word preview is opened or closed. Selecting a word or changing zoom can still
 reveal that chosen word intentionally.
 
 Manual changes are tracked independently for each word and sentence. Adjusting

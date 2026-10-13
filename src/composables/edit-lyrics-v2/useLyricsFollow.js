@@ -52,3 +52,22 @@ export function useLyricsFollow({
   )
   return { currentIndex }
 }
+
+// Clicks, Sync and edits pause Follow; every Play/Resume and every opening or closing of a
+// word view turns it back on, so markers keep following the sung sentence (Rick, 2026-10-13).
+export function useFollowResume({ enabled, playing, views }) {
+  watch(
+    playing,
+    (isPlaying, wasPlaying) => {
+      if (isPlaying && !wasPlaying) enabled.value = true
+    },
+    { flush: 'sync' }
+  )
+  watch(
+    views,
+    () => {
+      enabled.value = true
+    },
+    { flush: 'sync' }
+  )
+}

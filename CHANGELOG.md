@@ -35,7 +35,8 @@ When a release is published, add its entry here and its notes in `docs/releases/
 ### Changed
 
 - Follow Lyrics also works in sentence (LRC) mode: the selected sentence and its
-  waveform markers follow playback; Sync, clicks and edits still hold the selection.
+  waveform markers follow playback. Sync, clicks and edits hold the selection only
+  until the next Play or Resume; opening or closing a word view also resumes it.
 
 - About checks this fork's releases instead of the original project's.
 - Master reset was removed; Reset words affects one sentence with Undo.

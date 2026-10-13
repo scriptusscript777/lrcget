@@ -1,6 +1,6 @@
 import { effectScope, nextTick, ref } from 'vue'
 import { describe, expect, it, vi } from 'vitest'
-import { currentLyricIndex, useLyricsFollow } from './useLyricsFollow.js'
+import { currentLyricIndex, useFollowResume, useLyricsFollow } from './useLyricsFollow.js'
 
 const lyrics = () => [
   { text: 'first phrase', start_ms: 1000, end_ms: 2000 },
@@ -109,5 +109,50 @@ describe('lyric playback following', () => {
         3500
       )
     ).toBe(-1)
+  })
+})
+
+describe('Follow resume', () => {
+  const setup = () => {
+    const scope = effectScope()
+    const state = {
+      enabled: ref(true),
+      playing: ref(false),
+      timing: ref(false),
+      preview: ref(false),
+    }
+    scope.run(() =>
+      useFollowResume({
+        enabled: state.enabled,
+        playing: state.playing,
+        views: [state.timing, state.preview],
+      })
+    )
+    return { scope, ...state }
+  }
+
+  it('every Play or Resume turns Follow back on; continued playback does not', () => {
+    const { scope, enabled, playing } = setup()
+    enabled.value = false
+    playing.value = true
+    expect(enabled.value).toBe(true)
+    enabled.value = false // e.g. Sync or a click while playing
+    playing.value = true
+    expect(enabled.value).toBe(false)
+    playing.value = false
+    expect(enabled.value).toBe(false)
+    playing.value = true // Resume
+    expect(enabled.value).toBe(true)
+    scope.stop()
+  })
+
+  it('opening or closing Word timing or Word preview turns Follow back on', () => {
+    const { scope, enabled, timing, preview } = setup()
+    for (const view of [timing, timing, preview, preview]) {
+      enabled.value = false
+      view.value = !view.value
+      expect(enabled.value).toBe(true)
+    }
+    scope.stop()
   })
 })

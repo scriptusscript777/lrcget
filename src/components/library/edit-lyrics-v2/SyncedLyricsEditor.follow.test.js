@@ -5,7 +5,11 @@ import SyncedLyricsEditor from './SyncedLyricsEditor.vue'
 import SyncedLyricsLineRow from './SyncedLyricsLineRow.vue'
 import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 
-vi.mock('@/composables/edit-lyrics-v2/useLyricsFollow.js', () => ({ useLyricsFollow: vi.fn() }))
+vi.mock('@/composables/edit-lyrics-v2/useLyricsFollow.js', () => ({
+  useLyricsFollow: vi.fn(),
+  useFollowResume: vi.fn(),
+}))
+import { useFollowResume } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 beforeEach(() => vi.clearAllMocks())
 
@@ -49,7 +53,7 @@ describe('synced editor lyric follow integration', () => {
     else expect(play).not.toContain('disabled')
   })
 
-  it('selects a played sentence while preserving Follow off without editing timestamps', async () => {
+  it('playing a sentence selects it and resumes Follow without editing timestamps', async () => {
     const { props, state, follow, emit } = await setupEditor()
     state.selectLine(0)
     expect(follow.enabled.value).toBe(false)
@@ -60,11 +64,11 @@ describe('synced editor lyric follow integration', () => {
       ['update:selected-line-index', 0],
       ['play-line', 0],
     ])
-    expect(follow.enabled.value).toBe(false)
+    expect(follow.enabled.value).toBe(true)
     expect(JSON.stringify(props.modelValue)).toBe(before)
   })
 
-  it('preserves Follow off for offset playback and ignores missing targets', async () => {
+  it('offset playback resumes Follow and missing targets are ignored', async () => {
     const { state, follow, emit } = await setupEditor()
     state.selectLine(0)
     emit.mockClear()
@@ -74,7 +78,7 @@ describe('synced editor lyric follow integration', () => {
       ['update:selected-line-index', 0],
       ['play-line-at-offset', payload],
     ])
-    expect(follow.enabled.value).toBe(false)
+    expect(follow.enabled.value).toBe(true)
     emit.mockClear()
     await state.handlePlayLine(9)
     await state.handlePlayLineAtOffset({ lineIndex: 9, offsetMs: 0 })
@@ -161,12 +165,11 @@ describe('synced editor lyric follow integration', () => {
   })
 })
 
-it('opening word preview and playing preserve explicit Follow choices', async () => {
-  const { state, follow } = await setupEditor()
-  follow.enabled.value = false
-  state.toggleWordPreview()
-  expect(follow.enabled.value).toBe(false)
-  follow.enabled.value = true
-  await state.handlePlayLine(0)
-  expect(follow.enabled.value).toBe(true)
+it('wires Follow resume to playback and both word views', async () => {
+  const { props, state, follow } = await setupEditor()
+  const options = useFollowResume.mock.calls[0][0]
+  expect(options.enabled).toBe(follow.enabled)
+  props.waveformPlaying = false
+  expect(options.playing()).toBe(false)
+  expect(options.views).toEqual([state.wordTimingExpanded, state.wordPreviewExpanded])
 })

@@ -226,7 +226,7 @@ import WordPlaybackPreview from '@/components/library/edit-lyrics-v2/WordPlaybac
 import SyncedWordTimingLane from '@/components/library/edit-lyrics-v2/SyncedWordTimingLane.vue'
 import { useEditLyricsV2SyncedInlineEditing } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInlineEditing.js'
 import { useEditLyricsV2SyncedInsertHover } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInsertHover.js'
-import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
+import { useFollowResume, useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
 const props = defineProps({
@@ -318,6 +318,11 @@ const toggleWordPreview = () => {
 const wordTimingExpanded = ref(props.wordTimingExpanded)
 watch(() => props.wordTimingExpanded, expanded => { wordTimingExpanded.value = expanded }, { flush: 'sync' })
 const followLyrics = ref(true)
+useFollowResume({
+  enabled: followLyrics,
+  playing: () => props.waveformPlaying,
+  views: [wordTimingExpanded, wordPreviewExpanded],
+})
 const wordEditing = ref(false)
 const playbackTimeMs = computed(() => Number.isFinite(props.waveformProgress) ? props.waveformProgress * 1000 : -1)
 watch(wordTimingExpanded, expanded => emit('word-timing-expanded-change', expanded), { flush: 'sync' })
@@ -536,15 +541,14 @@ const emitLineAction = (eventName, index, selectBefore = true) => {
 const navigatePlayback = async (index, event, payload) => {
   const line = props.modelValue[index]
   if (!line) return
-  // Preserve an explicit Follow-off choice across Play/navigation.
-  const resumeFollowing = followLyrics.value
   followLyrics.value = false
   emit('update:selected-line-index', index)
   emit(event, payload)
   // Selection arrives through parent props; its manual-selection watcher must settle first.
   await nextTick()
+  // Playing always resumes Follow (from the chosen line onward).
   if (props.selectedLineIndex === index && props.modelValue[index] === line)
-    followLyrics.value = resumeFollowing
+    followLyrics.value = true
 }
 
 const handlePlayLine = index => navigatePlayback(index, 'play-line', index)
