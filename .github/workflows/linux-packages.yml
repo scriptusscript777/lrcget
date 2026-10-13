@@ -74,7 +74,7 @@ jobs:
           cd "$RUNNER_TEMP/AppImage_library_sources"
           while read -r spec; do
             [ -n "$spec" ] || continue
-            apt-get source --download-only "$spec" || { echo "Cannot download source $spec" >&2; exit 1; }
+            "$GITHUB_WORKSPACE/packaging/linux/fetch-source.sh" "$spec"
           done < "$RUNNER_TEMP/appimage-sources.txt"
           expected=$(grep -c . "$RUNNER_TEMP/appimage-sources.txt")
           found=$(find . -maxdepth 1 -name '*.dsc' | wc -l)
