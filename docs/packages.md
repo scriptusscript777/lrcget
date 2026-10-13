@@ -73,7 +73,8 @@ Windows Server 2025 CI passed install, repair reinstall, visible app launch,
 uninstall and Microsoft Defender scans of both MSI and installed payload.
 Windows 11 interactive audio/editing, optional alignment setup and upgrades from
 older Windows installers remain unverified. SmartScreen or Smart App Control can
-warn/block unsigned builds. [Signing policy](code-signing.md) explains pending setup.
+warn or block unsigned builds. [Windows signing status](code-signing.md) explains
+the current limitation.
 
 ## Optional automatic alignment
 

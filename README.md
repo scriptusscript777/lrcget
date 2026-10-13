@@ -54,9 +54,9 @@ version over an older one. Optionally verify a download first: on Linux run
 ### Windows 10/11 (`.msi`)
 
 1. Download the `.msi` file and double-click it.
-2. If **Windows protected your PC** appears, choose **More info**, then
-   **Run anyway**. The installer is not yet code-signed, so SmartScreen warns
-   (code signing through SignPath Foundation has been requested).
+2. The installer is unsigned, so Windows may show an unknown-publisher or
+   SmartScreen warning. Windows may block installation based on the device's
+   security settings.
 3. Follow the installer. Installing a newer version replaces the old one.
 
 Uninstall from **Settings → Apps → Installed apps → LRCGET**. If WebView2 is

@@ -126,4 +126,4 @@ views affected by integrations in both themes, and refresh the screenshot manife
 with actual provenance. Do not call historical images current or treat mocked
 browser captures as native OS tests. Keep downloadable docs/source archives and
 GitHub/local server backups consistent. Update privacy/signing policies when data
-flows, permissions or signing behavior change; do not imply new Foundation approval.
+flows, permissions or signing behavior change; describe only verified signing status.

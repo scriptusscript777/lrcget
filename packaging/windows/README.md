@@ -86,4 +86,4 @@ large model/package downloads; full Windows singing alignment remains a
 separate desktop test after installing optional dependencies.
 
 
-See [Code signing policy](../../docs/code-signing.md) and [privacy](../../docs/privacy.md) for pending SignPath setup and network behavior.
+See [Windows signing status](../../docs/code-signing.md) and [privacy](../../docs/privacy.md) for signing and network behavior.
