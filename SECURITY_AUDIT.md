@@ -8,7 +8,7 @@
 
 - Updated the frontend lockfile and compatible Vue/Tauri packages to patched releases. Vite moved from 3.x to 6.4.4 with `@vitejs/plugin-vue` 5.2.4; this avoids the vulnerable Vite 3 line without moving to Vite 8.
 - Updated the Rust lockfile to current compatible Tauri 2 packages and other compatible releases. The declared Rust minimum is now 1.92, matching the locked dependency requirements.
-- Regenerated the checked-in third-party notices for runtime dependencies (605 components, none unreviewed). The generator normalizes tabs and trailing whitespace in copied license text without changing its wording. The Linux workflow adds AppImage-bundled library notices to the package during its packaging pass.
+- Regenerated the checked-in third-party notices for the release dependency graph (581 components, none unreviewed). The generator normalizes tabs and trailing whitespace in copied license text without changing its wording. The Linux workflow adds AppImage-bundled library notices to the package during its packaging pass.
 - Kept Tailwind CSS on 3.x. The remaining advisories below are development-tool findings and do not affect packaged runtime dependencies.
 
 ## Remaining security advisories
@@ -30,6 +30,9 @@ These are unmaintained-crate warnings, not known vulnerabilities:
 
 ## Verification record
 
-The isolated dependency branch passed 567 frontend tests across 35 files; `npm audit --omit=dev` reports zero vulnerabilities. `npm run lint` completed without errors and reported 67 existing warnings. `cargo test --locked` passed 88 tests (2 fixture-dependent tests ignored), and `cargo check --locked` passed. Ruff for the notice generator, MSI configuration tests (3/3), and the checked-in third-party notice comparison also passed. Live W3C WebDriver navigation checks previously passed for Tracks, Albums, and Artists. Linux DEB and AppImage bundles built successfully on the same dependency lockfiles. The checked-in notice set has 605 components and zero unreviewed licenses.
+The checked-in notice set has 581 components and zero unreviewed licenses. Final Windows MSI and Linux package workflows both passed on commit `8d69074f29e8c3119450102a4f1a5af23199597f` on 2026-10-13. Linux passed 567 frontend tests, 88 native tests (2 ignored), 18 alignment Python tests, Ruff, DEB/AppImage builds and startup, upgrade/install/removal checks, and package license checks. Windows passed 567 frontend tests, 86 native tests (2 ignored), 18 alignment Python tests, Ruff, MSI build, upgrade/install/removal checks, and artifact upload.
 
-Release gate: require the full Windows MSI and Linux package workflows to pass on the same commit before release. These workflows verify published-artifact upgrade flows, installation, package contents, and license files; a local Linux host cannot substitute for the Windows runner or published-artifact upgrade checks.
+- [Linux DEB/AppImage workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38481382449)
+- [Windows MSI workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38481382542)
+
+The MSI remains unsigned, and the development-only Tailwind advisories, GLib informational advisory, and unmaintained-crate notices described above remain visible.

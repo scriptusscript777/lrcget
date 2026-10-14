@@ -16,10 +16,12 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 | Linux/Windows ARM or Windows 32-bit | Appropriate native/cross toolchain and explicit Rust target                              | Not provided or verified for this release. x64 installers do not establish native ARM/32-bit compatibility.                                                                                                                                                                                   |
 | Linux development                   | `npm run tauri dev`                                                                      | Native debug app; not a redistributable installer. `npm run dev` alone is only the frontend server.                                                                                                                                                                                           |
 
-AppImage and Windows MSI builds resumed on 2026-10-12. Current tests/artifacts
-are recorded in [packages](packages.md). Current package/documentation publication
-and developer notification are authorized. Historical artifacts do not include
-current 2.2.7 fixes.
+The current 2.2.7 DEB, AppImage and Windows MSI were built and checked by GitHub
+Actions from commit `8d69074f29e8c3119450102a4f1a5af23199597f`. The complete Linux
+and Windows workflows passed, including package startup, upgrade, install/removal
+and license checks. The MSI remains unsigned. See [package verification](packages.md)
+for workflow links and test totals. Current screenshots remain representative of
+the application interface and are included with the illustrated guides.
 
 ## MSI and Linux cross tools
 

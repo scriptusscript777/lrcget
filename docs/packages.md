@@ -95,13 +95,20 @@ See [alignment setup and failure recovery](audio-alignment.md) and
 
 ## Verification scope
 
-Runtime packages were built from source commit `a7a8e1c`; final documentation/signing
-preparation is included in the release source archives. Linux passed 558 frontend,
-88 native (two optional fixtures ignored), 18 Python tests, Ruff/scoped ESLint/Cargo
-check and three MSI config checks. Debian/AppImage startup used isolated Xvfb profiles.
-Windows passed 558 frontend and 86 native tests (two ignored), setup tests/Ruff and
-installer/security checks. [Successful Windows run](https://github.com/scriptusscript777/lrcget/actions/runs/38296288986).
-These tests do not establish all OS/player/recording compatibility.
+The current 2.2.7 packages were built from source commit
+`8d69074f29e8c3119450102a4f1a5af23199597f` by GitHub Actions. Linux passed 567
+frontend tests, 88 native tests (two ignored), 18 Python alignment tests and Ruff;
+DEB and AppImage builds, isolated startup, upgrade/install/removal, package contents
+and license notices all passed. Windows passed 567 frontend tests, 86 native tests
+(two ignored), 18 Python alignment tests and Ruff; MSI build, upgrade/install/removal
+and artifact upload passed. The MSI upgrade test used the previously published
+installer. [Linux run](https://github.com/scriptusscript777/lrcget/actions/runs/38481382449) ·
+[Windows run](https://github.com/scriptusscript777/lrcget/actions/runs/38481382542).
+
+The illustrated guides and current light/dark UI screenshots are included in the
+documentation archive. These checks do not establish all OS, player or
+recording-device compatibility. The MSI is unsigned and may still show Windows
+publisher or SmartScreen warnings.
 
 [Source builds](build-from-source.md) · [Platform matrix](platform-builds.md) ·
 [Illustrated how-tos](how-to.md) · [Developer guide](developer-guide.md)

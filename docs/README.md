@@ -58,6 +58,9 @@ locked builds, tests and application identity.
 See the [all-platform build matrix and limitations](platform-builds.md) and
 [complete code/maintenance guide](developer-guide.md).
 
+The current dependency findings and package-workflow verification record are in
+the [dependency security audit](../SECURITY_AUDIT.md).
+
 See [word-timed downloads and TXT/LRC/ELRC import](how-to.md#download-and-reopen-word-timed-lyrics) for automatic server fallback and independent format workflows.
 
 ## Automatic unfinished-work recovery
