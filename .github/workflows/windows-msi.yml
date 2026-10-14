@@ -50,11 +50,6 @@ jobs:
         shell: pwsh
         working-directory: src-tauri
         run: |
-          choco install ffmpeg --yes --no-progress
-          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg test dependency installation failed' }
-          $env:Path += ';' + [Environment]::GetEnvironmentVariable('Path', 'Machine') + ';' + [Environment]::GetEnvironmentVariable('Path', 'User')
-          ffmpeg -version
-          if ($LASTEXITCODE -ne 0) { throw 'FFmpeg test dependency is unavailable' }
           cargo test --locked --no-default-features --features custom-protocol
           if ($LASTEXITCODE -ne 0) { throw 'Native backend tests failed' }
       - name: Download the currently published MSI for the upgrade check

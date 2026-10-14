@@ -1,6 +1,6 @@
 {
   "app_version": "2.2.7",
-  "runtime_commit": "a7a8e1c6e080fe3a51edd11d6734d812be735ca1",
+  "runtime_commit": "2766fc3",
   "guide_image_count": 101,
   "note": "Library-player views were refreshed with synthetic track data on 2026-10-14. No personal library or recording data is shown. Historical images outside the current capture set remain archived.",
   "images": [

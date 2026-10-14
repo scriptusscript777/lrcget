@@ -1,6 +1,6 @@
 # LRCGET Tauri Architecture
 
-Local build 2.2.0+local.8: MP3 embedded export replaces all USLT/SYLT
+Current source version 2.2.7: MP3 embedded export replaces all USLT/SYLT
 language and description variants, preventing stale lyrics from winning player
 selection. Unrelated tags and artwork are retained; audio is not re-encoded.
 Startup and F5 use the normal incremental scan. Unconfigured/unavailable music
@@ -220,6 +220,12 @@ struct Player {
 ```
 
 The player uses `PlayableTrack` to support both library tracks (from database) and arbitrary tracks (from file picker). This enables playback of tracks not present in the library database.
+
+Streaming playback uses `player/audio_stream.rs` when the source is opened. Its
+Symphonia decoder derives a frame count from packet durations when MP3 metadata
+omits it, and the ID3-aware source starts reading at the audio frames for ID3v2.2,
+v2.3 and v2.4 files. Seeking remains relative to the audio payload; tags and source
+files are never rewritten during playback.
 
 Background loop (40ms) in `main.rs` emits `player-state` event.
 
