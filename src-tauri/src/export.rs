@@ -816,7 +816,7 @@ mod tests {
         tag.insert(comment.clone());
         tag.insert_user_text("MY_CUSTOM_FIELD".into(), "keep me".into());
         tag.save_to_path(&path, WriteOptions::default()).unwrap();
-        let audio = decoded_fixture_audio(&path);
+        let audio = mp3_frame_payload(&path);
         let track = track_for(&path);
         let parsed = ParsedLyricsfile {
             plain_lyrics: Some("Hello world\nNext".into()),
@@ -848,7 +848,7 @@ mod tests {
                     .find(|frame| matches!(frame, Frame::Comment(_))),
                 Some(&comment)
             );
-            assert_eq!(decoded_fixture_audio(&path), audio);
+            assert_eq!(mp3_frame_payload(&path), audio);
         }
         let before = fs::read(&path).unwrap();
         let mut invalid = ParsedLyricsfile {
@@ -910,7 +910,7 @@ mod tests {
         for path in sources {
             let doc = fs::read_to_string(path.with_extension("lyricsfile")).unwrap();
             let parsed = crate::lyricsfile::parse_lyricsfile(&doc).unwrap();
-            let before = decoded_fixture_audio(&path);
+            let before = mp3_frame_payload(&path);
             embed_lyrics_with_enhanced(
                 path.to_str().unwrap(),
                 parsed.plain_lyrics.as_deref().unwrap_or(""),
@@ -918,7 +918,7 @@ mod tests {
                 None,
             )
             .unwrap();
-            assert_eq!(decoded_fixture_audio(&path), before);
+            assert_eq!(mp3_frame_payload(&path), before);
             // Synthetic timings on copies validate the optional format without inventing song timing.
             let enhanced = path.with_file_name(format!(
                 "{}-enhanced.mp3",
@@ -932,7 +932,7 @@ mod tests {
                 Some(ENHANCED_SAMPLE),
             )
             .unwrap();
-            assert_eq!(decoded_fixture_audio(&enhanced), before);
+            assert_eq!(mp3_frame_payload(&enhanced), before);
             count += 1;
         }
         assert_eq!(count, 2);
@@ -1028,7 +1028,7 @@ mod tests {
             .clone();
         assert_eq!(count_frames(before.id3v2().unwrap(), "USLT"), 2);
         assert_eq!(count_frames(before.id3v2().unwrap(), "SYLT"), 2);
-        let old_audio = decoded_fixture_audio(&path);
+        let old_audio = mp3_frame_payload(&path);
         for _ in 0..2 {
             embed_lyrics_mp3(path.to_str().unwrap(), "new words", "[00:15.25]new words").unwrap();
             let after = read();
@@ -1045,25 +1045,24 @@ mod tests {
                 after.properties().duration(),
                 before.properties().duration()
             );
-            assert_eq!(decoded_fixture_audio(&path), old_audio);
+            assert_eq!(mp3_frame_payload(&path), old_audio);
         }
     }
 
-    // FFmpeg is needed only for this integration test, not by LRCGET at runtime.
-    fn decoded_fixture_audio(path: &Path) -> Vec<u8> {
-        let output = std::process::Command::new("ffmpeg")
-            .args(["-v", "error", "-i"])
-            .arg(path)
-            .args(["-map", "0:a:0", "-f", "s16le", "-"])
-            .output()
-            .unwrap();
-        assert!(
-            output.status.success(),
-            "{}",
-            String::from_utf8_lossy(&output.stderr)
-        );
-        assert!(!output.stdout.is_empty());
-        output.stdout
+    // Compare the encoded MPEG frames directly so audio preservation tests do not
+    // depend on an external decoder being installed on the test host.
+    fn mp3_frame_payload(path: &Path) -> Vec<u8> {
+        let bytes = fs::read(path).unwrap();
+        let audio_offset = if bytes.starts_with(b"ID3") && bytes.len() >= 10 {
+            let tag_size = bytes[6..10]
+                .iter()
+                .fold(0usize, |size, byte| (size << 7) | usize::from(*byte));
+            10 + tag_size
+        } else {
+            0
+        };
+        assert!(audio_offset <= bytes.len(), "invalid MP3 ID3 tag size");
+        bytes[audio_offset..].to_vec()
     }
 
     #[test]
