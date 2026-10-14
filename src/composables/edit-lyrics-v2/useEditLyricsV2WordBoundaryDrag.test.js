@@ -4,7 +4,7 @@ import { useEditLyricsV2WordBoundaryDrag } from './useEditLyricsV2WordBoundaryDr
 
 afterEach(() => vi.unstubAllGlobals())
 
-function setup() {
+function setup({ initialConfirmedBoundaries = [], onConfirmedBoundariesChange = vi.fn() } = {}) {
   const listeners = new Map()
   vi.stubGlobal('document', {
     addEventListener: (name, handler) => {
@@ -13,21 +13,29 @@ function setup() {
     },
     removeEventListener: (name, handler) => listeners.get(name)?.delete(handler),
   })
-  const update = vi.fn(payload => payload.onResult?.(true))
-  const replay = vi.fn()
-  const timingError = vi.fn()
   const words = ref([
     { text: 'first ', start_ms: 1000 },
     { text: 'second', start_ms: 2000 },
   ])
+  const update = vi.fn(payload => {
+    words.value = payload.words
+    payload.onResult?.(true)
+  })
+  const replay = vi.fn()
+  const timingError = vi.fn()
   const selectedLineIndex = ref(0)
+  const lineStartMs = ref(1000)
+  const timelineStartMs = ref(1000)
+  const timelineEndMs = ref(5000)
   const state = useEditLyricsV2WordBoundaryDrag({
     isWordSyncAvailable: ref(true),
     words,
-    lineStartMs: ref(1000),
-    timelineStartMs: ref(1000),
-    timelineEndMs: ref(5000),
+    lineStartMs,
+    timelineStartMs,
+    timelineEndMs,
     selectedLineIndex,
+    initialConfirmedBoundaries,
+    onConfirmedBoundariesChange,
     onUpdateWords: update,
     onWordTimingEdited: replay,
     onTimingError: timingError,
@@ -43,7 +51,21 @@ function setup() {
   const send = (type, extra = {}) =>
     [...(listeners.get(type) || [])].forEach(handler => handler({ ...event, ...extra }))
   const start = () => state.startBoundaryDrag(1, event, x => 2000 + (x - 100) * 10)
-  return { state, update, replay, words, listeners, send, start, timingError, selectedLineIndex }
+  return {
+    state,
+    update,
+    replay,
+    words,
+    listeners,
+    send,
+    start,
+    timingError,
+    selectedLineIndex,
+    lineStartMs,
+    timelineStartMs,
+    timelineEndMs,
+    onConfirmedBoundariesChange,
+  }
 }
 
 describe('word boundary pointer lifecycle', () => {
@@ -123,6 +145,20 @@ it('dragging preserves explicit neighboring word ends and silence gaps', () => {
   expect(fixture.update.mock.calls[1][0].words[1].start_ms).toBe(2299)
 })
 
+it('does not enable Sync on the preceding word when its inferred end follows a moved divider', async () => {
+  const f = setup()
+  f.start()
+  f.send('pointermove', { clientX: 110 })
+  f.send('pointerup')
+  await new Promise(resolve => setTimeout(resolve, 0))
+  expect(f.state.hasAdjustedBoundary.value).toBe(true)
+
+  f.state.selectBoundary(0)
+  expect(f.state.hasAdjustedBoundary.value).toBe(false)
+  f.state.selectBoundary(1)
+  expect(f.state.hasAdjustedBoundary.value).toBe(true)
+})
+
 it('does not squeeze or move neighboring words when playback lies outside a selected word', () => {
   const f = setup()
   f.state.selectedBoundaryIndex.value = 1
@@ -131,7 +167,7 @@ it('does not squeeze or move neighboring words when playback lies outside a sele
   expect(f.words.value.map(word => word.start_ms)).toEqual([1000, 2000])
   expect(f.state.selectedBoundaryIndex.value).toBe(1)
 })
-it('selects a dragged divider and keeps its accepted time on the next Sync instead of stamping stale playback', () => {
+it('selects a dragged divider and Sync preserves its edited position', () => {
   const f = setup()
   f.update.mockImplementation(payload => {
     f.words.value = payload.words
@@ -142,14 +178,15 @@ it('selects a dragged divider and keeps its accepted time on the next Sync inste
   f.send('pointermove', { clientX: 120 })
   f.send('pointerup')
   expect(f.words.value[1].start_ms).toBe(2200)
-  expect(f.state.syncSelectedBoundary(1000)).toBe(true)
+  expect(f.state.syncSelectedBoundary(2300)).toBe(true)
   expect(f.words.value[1].start_ms).toBe(2200)
   expect(f.update).toHaveBeenCalledOnce()
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
 })
 it('does not advance or replay a rejected document update', () => {
   const f = setup()
   f.update.mockImplementation(payload => payload.onResult(false))
-  expect(f.state.syncSelectedBoundary(1200)).toBe(false)
+  expect(f.state.syncSelectedBoundary(1000)).toBe(false)
   expect(f.state.selectedBoundaryIndex.value).toBe(0)
   f.start()
   f.send('pointermove', { clientX: 120 })
@@ -186,37 +223,47 @@ it('distinguishes its accepted document refresh from an external edit', () => {
   expect(f.state.consumeOwnWordUpdate([{ text: 'changed', start_ms: 1000 }])).toBe(false)
 })
 
-it('keeps an accepted numeric edit on Sync and invalidates it after Undo', () => {
+it('Sync confirms a manually edited word, while an untouched word uses playback time', () => {
   const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
   f.words.value[0].start_ms = 1200
   f.state.rememberAdjustedBoundary(0, f.words.value)
-  expect(f.state.syncSelectedBoundary(1800)).toBe(true)
+  expect(f.state.syncSelectedBoundary(1800, { advance: false })).toBe(true)
+  expect(f.words.value[0].start_ms).toBe(1200)
   expect(f.update).not.toHaveBeenCalled()
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
   f.words.value[0].start_ms = 1000
   expect(f.state.hasAdjustedBoundary.value).toBe(false)
   expect(f.state.isManualTimingConfirmed.value).toBe(false)
-  expect(f.state.syncSelectedBoundary(1500)).toBe(true)
+  expect(f.state.syncSelectedBoundary(1500, { advance: false })).toBe(true)
   expect(f.update.mock.calls[0][0].words[0].start_ms).toBe(1500)
 })
 
-it('ignores repeated Sync after manual timing at unchanged playback without warning or advancing', () => {
+it('confirms a moved divider without depending on playback position', () => {
   const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
   f.words.value[0].start_ms = 1400
   f.state.rememberAdjustedBoundary(0, f.words.value)
   expect(f.state.syncSelectedBoundary(900)).toBe(true)
-  expect(f.state.syncSelectedBoundary(900)).toBe(false)
-  expect(f.state.syncSelectedBoundary(900)).toBe(false)
+  expect(f.timingError).not.toHaveBeenCalled()
+  expect(f.update).not.toHaveBeenCalled()
+  expect(f.state.syncSelectedBoundary(1500, { advance: false })).toBe(false)
   expect(f.timingError).not.toHaveBeenCalled()
   expect(f.update).not.toHaveBeenCalled()
   expect(f.state.selectedBoundaryIndex.value).toBe(0)
-  expect(f.state.syncSelectedBoundary(1500)).toBe(false)
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
-  f.words.value[0].start_ms = 1500
+  f.words.value[0].start_ms = 1600
   f.state.rememberAdjustedBoundary(0, f.words.value)
   expect(f.state.isManualTimingConfirmed.value).toBe(false)
-  expect(f.state.syncSelectedBoundary(1500)).toBe(true)
+  expect(f.state.syncSelectedBoundary(1700, { advance: false })).toBe(true)
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
+  expect(f.words.value[0].start_ms).toBe(1600)
 })
 
 it('ignores a double Sync after automatic advance but allows a new playback position', () => {
@@ -234,25 +281,47 @@ it('ignores a double Sync after automatic advance but allows a new playback posi
   expect(f.update).toHaveBeenCalledTimes(2)
 })
 
-it('keeps duplicate protection from masking explicit selection or external timing changes', () => {
-  const f = setup()
-  f.state.rememberAdjustedBoundary(0, f.words.value)
-  expect(f.state.syncSelectedBoundary(900)).toBe(true)
-  f.state.selectBoundary(1)
-  expect(f.state.syncSelectedBoundary(900)).toBe(false)
-  expect(f.timingError).toHaveBeenCalledOnce()
-  f.state.selectBoundary(0)
-  expect(f.state.syncSelectedBoundary(900)).toBe(false)
-  expect(f.timingError).toHaveBeenCalledOnce()
-  f.words.value[0].start_ms = 1100
-  expect(f.state.syncSelectedBoundary(900)).toBe(false)
-  expect(f.timingError).toHaveBeenCalledTimes(2)
+it('restores confirmed word timing after the timing panel is reopened', () => {
+  const first = setup()
+  first.update.mockImplementation(payload => {
+    first.words.value = payload.words
+    payload.onResult(true)
+  })
+  expect(first.state.syncSelectedBoundary(1200, { advance: false })).toBe(true)
+  const restored = setup({
+    initialConfirmedBoundaries: first.onConfirmedBoundariesChange.mock.lastCall[0],
+  })
+  restored.words.value = first.words.value.map(word => ({ ...word }))
+  restored.state.selectBoundary(0)
+  expect(restored.state.isManualTimingConfirmed.value).toBe(true)
+  expect(restored.state.syncSelectedBoundary(1400)).toBe(false)
+  expect(restored.update).not.toHaveBeenCalled()
 })
 
-it('keeps manually confirmed timing locked across playback and same-word reselection, but unlocks on another adjustment', () => {
+it('keeps duplicate protection scoped to the selected word and recognizes external timing changes', () => {
   const f = setup()
+  f.words.value[0].start_ms = 1100
   f.state.rememberAdjustedBoundary(0, f.words.value)
-  expect(f.state.syncSelectedBoundary(1000)).toBe(true)
+  expect(f.state.syncSelectedBoundary(1200, { advance: false })).toBe(true)
+  expect(f.words.value[0].start_ms).toBe(1100)
+  f.state.selectBoundary(1)
+  expect(f.state.syncSelectedBoundary(1000)).toBe(false)
+  expect(f.timingError).toHaveBeenCalledOnce()
+  f.state.selectBoundary(0)
+  expect(f.state.syncSelectedBoundary(1200)).toBe(false)
+  expect(f.timingError).toHaveBeenCalledOnce()
+  f.words.value[0].start_ms = 1300
+  expect(f.state.syncSelectedBoundary(1200, { advance: false })).toBe(true)
+  expect(f.words.value[0].start_ms).toBe(1200)
+})
+
+it('keeps a synced word locked until another timing adjustment', () => {
+  const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
+  expect(f.state.syncSelectedBoundary(1000, { advance: false })).toBe(true)
   f.state.selectBoundary(0)
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
   f.state.rememberAdjustedBoundary(0, f.words.value)
@@ -262,25 +331,32 @@ it('keeps manually confirmed timing locked across playback and same-word reselec
   f.words.value[0].start_ms = 1100
   f.state.rememberAdjustedBoundary(0, f.words.value)
   expect(f.state.isManualTimingConfirmed.value).toBe(false)
-  expect(f.state.syncSelectedBoundary(1100)).toBe(true)
+  expect(f.state.syncSelectedBoundary(1200)).toBe(true)
+  expect(f.words.value[0].start_ms).toBe(1100)
   f.state.selectBoundary(1)
   expect(f.state.isManualTimingConfirmed.value).toBe(false)
 })
 
-it('keeps multiple manual edits independently instead of shrinking an earlier word on Sync', () => {
+it('Sync confirms each manually adjusted word independently without moving it', () => {
   const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
   f.words.value[0].start_ms = 1100
   f.state.rememberAdjustedBoundary(0, f.words.value)
   f.words.value[1].start_ms = 2400
   f.state.rememberAdjustedBoundary(1, f.words.value)
   f.state.selectBoundary(0)
   expect(f.state.hasAdjustedBoundary.value).toBe(true)
-  expect(f.state.syncSelectedBoundary(2399)).toBe(true)
+  expect(f.state.syncSelectedBoundary(2399, { advance: false })).toBe(true)
+  expect(f.words.value[0].start_ms).toBe(1100)
   expect(f.update).not.toHaveBeenCalled()
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
   f.state.selectBoundary(1)
   expect(f.state.hasAdjustedBoundary.value).toBe(true)
-  expect(f.state.syncSelectedBoundary(4900)).toBe(true)
+  expect(f.state.syncSelectedBoundary(4900, { advance: false })).toBe(true)
+  expect(f.words.value[1].start_ms).toBe(2400)
   expect(f.update).not.toHaveBeenCalled()
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
 })
@@ -297,18 +373,70 @@ it('locks an accepted non-advancing playback sync until a new edit', () => {
   f.state.clearManualTiming()
   expect(f.state.isManualTimingConfirmed.value).toBe(false)
 })
+it('keeps an auto-advanced word locked when the user returns to it', () => {
+  const f = setup()
+  f.update.mockImplementation(payload => {
+    f.words.value = payload.words
+    payload.onResult(true)
+  })
+
+  expect(f.state.syncSelectedBoundary(1200)).toBe(true)
+  expect(f.state.selectedBoundaryIndex.value).toBe(1)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
+  const firstLineWords = f.words.value
+
+  f.selectedLineIndex.value = 1
+  f.lineStartMs.value = 6000
+  f.timelineStartMs.value = 6000
+  f.timelineEndMs.value = 9000
+  f.words.value = [
+    { text: 'another ', start_ms: 6000 },
+    { text: 'line', start_ms: 7000 },
+  ]
+  f.state.selectBoundary(0)
+  expect(f.state.syncSelectedBoundary(6100)).toBe(true)
+
+  f.selectedLineIndex.value = 0
+  f.lineStartMs.value = 1000
+  f.timelineStartMs.value = 1000
+  f.timelineEndMs.value = 5000
+  f.words.value = firstLineWords
+  f.state.selectBoundary(0)
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
+  expect(f.state.syncSelectedBoundary(1500)).toBe(false)
+  expect(f.words.value[0].start_ms).toBe(1200)
+  expect(f.update).toHaveBeenCalledTimes(2)
+
+  f.words.value[0].start_ms = 1300
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
+})
 it('does not invalidate one confirmed word when an unrelated later word changes', () => {
   const f = setup()
   f.words.value.push({ text: ' third', start_ms: 4000 })
   f.state.rememberAdjustedBoundary(0, f.words.value)
-  expect(f.state.syncSelectedBoundary(1000)).toBe(true)
+  expect(f.state.syncSelectedBoundary(1000, { advance: false })).toBe(true)
   f.words.value[2].start_ms = 4100
   f.state.rememberAdjustedBoundary(2, f.words.value)
   expect(f.state.isManualTimingConfirmed.value).toBe(true)
 })
 
+it('keeps a word locked when only sentence bounds or another word text changes', () => {
+  const f = setup()
+  expect(f.state.syncSelectedBoundary(1000, { advance: false })).toBe(true)
+  f.timelineStartMs.value = 950
+  f.timelineEndMs.value = 4900
+  f.words.value[1].text = 'changed'
+  expect(f.state.isManualTimingConfirmed.value).toBe(true)
+
+  f.words.value[0].start_ms = 1100
+  f.state.rememberAdjustedBoundary(0, f.words.value)
+  expect(f.state.isManualTimingConfirmed.value).toBe(false)
+})
+
 it('keeps manual edits across sentences and resets only the current sentence confirmations', () => {
   const f = setup()
+  f.words.value[0].start_ms = 1100
   f.state.rememberAdjustedBoundary(0, f.words.value)
   f.selectedLineIndex.value = 1
   f.state.rememberAdjustedBoundary(0, f.words.value)
@@ -318,4 +446,5 @@ it('keeps manual edits across sentences and resets only the current sentence con
   expect(f.state.hasAdjustedBoundary.value).toBe(true)
   expect(f.state.syncSelectedBoundary(1999)).toBe(true)
   expect(f.update).not.toHaveBeenCalled()
+  expect(f.words.value[0].start_ms).toBe(1100)
 })

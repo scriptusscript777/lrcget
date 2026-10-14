@@ -17,7 +17,6 @@ export function currentLyricIndex(lines, timeMs) {
   if (!line.text?.trim() || (Number.isFinite(line.end_ms) && timeMs >= line.end_ms)) return -1
   return index
 }
-
 export function useLyricsFollow({
   lines,
   timeMs,
@@ -51,23 +50,4 @@ export function useLyricsFollow({
     { immediate: true }
   )
   return { currentIndex }
-}
-
-// Clicks, Sync and edits pause Follow; every Play/Resume and every opening or closing of a
-// word view turns it back on, so markers keep following the sung sentence (Rick, 2026-10-13).
-export function useFollowResume({ enabled, playing, views }) {
-  watch(
-    playing,
-    (isPlaying, wasPlaying) => {
-      if (isPlaying && !wasPlaying) enabled.value = true
-    },
-    { flush: 'sync' }
-  )
-  watch(
-    views,
-    () => {
-      enabled.value = true
-    },
-    { flush: 'sync' }
-  )
 }

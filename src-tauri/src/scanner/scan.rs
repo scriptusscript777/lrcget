@@ -5,6 +5,7 @@ use crate::lyricsfile::{
     LyricsfileTrackMetadata, INSTRUMENTAL_LRC,
 };
 use crate::parser::lrc::parse_lrc;
+use crate::persistent_entities::PersistentTrack;
 use crate::scanner::hasher::compute_quick_hash;
 use crate::scanner::metadata::extract_track_info;
 use crate::scanner::models::{ScanProgress, ScanResult};
@@ -356,6 +357,70 @@ fn valid_lrc(text: &str) -> bool {
             .any(|line| !line.text.trim().is_empty())
 }
 
+/// Describe malformed lyric sidecars for the library row. This reports only
+/// files the normal scanner would reject, so display and import agree.
+pub fn lyrics_sidecar_warning(track: &PersistentTrack) -> Option<String> {
+    let audio_path = std::path::Path::new(&track.file_path);
+    let elrc_path = audio_path.with_extension("elrc");
+    let lrc_path = audio_path.with_extension("lrc");
+    let metadata = LyricsfileTrackMetadata::from_persistent_track(track);
+
+    let inspect = |path: &std::path::Path, enhanced: bool| -> Option<Result<(), String>> {
+        if !path.is_file() {
+            return None;
+        }
+        Some(
+            std::fs::read_to_string(path)
+                .map_err(|error| format!("could not be read: {error}"))
+                .and_then(|text| {
+                    if enhanced || text.contains('<') {
+                        build_enhanced_lyricsfile(&metadata, &text)
+                            .map(|_| ())
+                            .map_err(|error| error.to_string())
+                    } else if valid_lrc(&text) {
+                        Ok(())
+                    } else {
+                        Err("no valid timed lyric lines were found".to_owned())
+                    }
+                }),
+        )
+    };
+
+    let elrc = inspect(&elrc_path, true);
+    let lrc = inspect(&lrc_path, false);
+    let invalid_elrc = elrc.as_ref().and_then(|result| result.as_ref().err());
+    let invalid_lrc = lrc.as_ref().and_then(|result| result.as_ref().err());
+    if invalid_elrc.is_none() && invalid_lrc.is_none() {
+        return None;
+    }
+
+    let name = |path: &std::path::Path| {
+        path.file_name()
+            .unwrap_or_default()
+            .to_string_lossy()
+            .into_owned()
+    };
+    let mut messages = Vec::new();
+    if let Some(reason) = invalid_elrc {
+        messages.push(format!("{} is invalid ({reason})", name(&elrc_path)));
+    }
+    if let Some(reason) = invalid_lrc {
+        messages.push(format!("{} is invalid ({reason})", name(&lrc_path)));
+    }
+    let valid_elrc = elrc.as_ref().is_some_and(Result::is_ok);
+    let valid_lrc = lrc.as_ref().is_some_and(Result::is_ok);
+    let fallback = match (valid_elrc, valid_lrc) {
+        (true, true) => "A valid ELRC is preferred over the LRC file.",
+        (true, false) if invalid_lrc.is_some() => {
+            "The valid ELRC is available and remains preferred."
+        }
+        (false, true) if invalid_elrc.is_some() => "The valid LRC file is available as a fallback.",
+        _ => "No valid timed LRC or ELRC sidecar was found.",
+    };
+    messages.push(fallback.to_owned());
+    Some(messages.join(". "))
+}
+
 /// Helper to insert a new track with metadata extraction
 fn insert_new_track(
     path: &std::path::Path,
@@ -473,6 +538,73 @@ mod refresh_tests {
             .to_latest(&mut conn)
             .unwrap();
         conn
+    }
+
+    fn sidecar_test_track(audio_path: &std::path::Path) -> PersistentTrack {
+        PersistentTrack {
+            id: 1,
+            file_path: audio_path.to_string_lossy().into_owned(),
+            file_name: audio_path
+                .file_name()
+                .unwrap()
+                .to_string_lossy()
+                .into_owned(),
+            title: "song".to_owned(),
+            album_name: "album".to_owned(),
+            album_artist_name: None,
+            album_id: 1,
+            artist_name: "artist".to_owned(),
+            artist_id: 1,
+            image_path: None,
+            track_number: None,
+            txt_lyrics: None,
+            lrc_lyrics: None,
+            lyricsfile: None,
+            lyricsfile_id: None,
+            lyrics_modified_at: None,
+            lyrics_sidecar_warning: None,
+            duration: 10.0,
+            instrumental: false,
+        }
+    }
+
+    #[test]
+    fn sidecar_warning_identifies_invalid_file_and_valid_alternative() {
+        let directory = tempfile::tempdir().unwrap();
+        let audio = directory.path().join("song.mp3");
+        let track = sidecar_test_track(&audio);
+        let elrc = audio.with_extension("elrc");
+        let lrc = audio.with_extension("lrc");
+
+        std::fs::write(&elrc, "[00:61.000]<00:61.000>bad").unwrap();
+        std::fs::write(&lrc, "[00:01.00]valid sentence").unwrap();
+        let warning = lyrics_sidecar_warning(&track).unwrap();
+        assert!(warning.contains("song.elrc is invalid"));
+        assert!(warning.contains("valid LRC file is available as a fallback"));
+
+        std::fs::write(&elrc, "[00:01.000]<00:01.000>valid <00:02.000>ELRC").unwrap();
+        std::fs::write(&lrc, "not timed lyrics").unwrap();
+        let warning = lyrics_sidecar_warning(&track).unwrap();
+        assert!(warning.contains("song.lrc is invalid"));
+        assert!(warning.contains("valid ELRC is available and remains preferred"));
+
+        std::fs::remove_file(&elrc).unwrap();
+        std::fs::remove_file(&lrc).unwrap();
+        assert!(lyrics_sidecar_warning(&track).is_none());
+    }
+
+    #[test]
+    fn sidecar_warning_reports_when_both_timed_files_are_invalid() {
+        let directory = tempfile::tempdir().unwrap();
+        let audio = directory.path().join("song.mp3");
+        let track = sidecar_test_track(&audio);
+        std::fs::write(audio.with_extension("elrc"), "broken enhanced file").unwrap();
+        std::fs::write(audio.with_extension("lrc"), "untimed words").unwrap();
+
+        let warning = lyrics_sidecar_warning(&track).unwrap();
+        assert!(warning.contains("song.elrc is invalid"));
+        assert!(warning.contains("song.lrc is invalid"));
+        assert!(warning.contains("No valid timed LRC or ELRC sidecar was found"));
     }
 
     #[test]

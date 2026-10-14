@@ -4,8 +4,13 @@
     :class="{
       'border-neutral-100 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900': isPlaying,
       'border-transparent': !isPlaying,
+      'ring-1 ring-inset ring-blue-500/70 bg-blue-50/80 shadow-sm dark:bg-blue-950/30 dark:ring-blue-400/70':
+        isPlaying && status === 'playing',
+      'ring-1 ring-inset ring-neutral-400/70 dark:ring-neutral-500/70': isPlaying && status !== 'playing',
       'with-track-number': isShowTrackNumber,
     }"
+    :aria-current="isPlaying ? 'true' : undefined"
+    :data-playback-state="isPlaying ? status : undefined"
   >
     <!-- Track number -->
     <div
@@ -22,7 +27,11 @@
     <div class="flex-none flex min-w-0 overflow-hidden p-1" @click="playTrack(track)">
       <div v-if="track" class="min-w-0">
         <div class="font-bold text-sm text-neutral-800 flex items-center dark:text-neutral-200">
-          <Equalizer v-if="isPlaying && status === 'playing' && !editingAudioSource" class="mr-1" />
+          <Equalizer
+            v-if="isPlaying && status === 'playing'"
+            class="mr-1 text-blue-600 dark:text-blue-400"
+            aria-hidden="true"
+          />
           <span class="truncate" :title="track.title">{{ track.title }}</span>
         </div>
 
@@ -44,14 +53,28 @@
 
     <!-- Duration -->
     <div class="flex-none flex items-center justify-end p-1" @click="playTrack(track)">
-      <div v-if="track" class="text-neutral-800 font-bold text-xs text-right dark:text-neutral-400">
-        {{ humanDuration(track.duration) }}
+      <div v-if="track" class="flex items-center justify-end gap-1">
+        <button
+          v-if="track.lyrics_sidecar_warning"
+          type="button"
+          class="inline-flex h-5 w-5 flex-none items-center justify-center rounded-full bg-amber-100 text-amber-800 hover:bg-amber-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-amber-600 dark:bg-amber-950 dark:text-amber-300 dark:hover:bg-amber-900"
+          :aria-label="`Open lyrics file warning for ${track.title}`"
+          :aria-expanded="showLyricsSidecarWarning"
+          :aria-controls="`lyrics-sidecar-warning-${track.id}`"
+          data-testid="lyrics-sidecar-warning-button"
+          @click.stop="showLyricsSidecarWarning = true"
+        >
+          <AlertCircleOutline class="h-4 w-4" />
+        </button>
+        <span class="text-neutral-800 font-bold text-xs text-right dark:text-neutral-400">
+          {{ humanDuration(track.duration) }}
+        </span>
       </div>
     </div>
 
     <!-- Lyrics indication -->
-    <div class="flex-none flex items-center justify-center p-1" @click="playTrack(track)">
-      <div v-if="track">
+    <div class="relative z-10 flex-none flex items-center justify-center p-1" @click="playTrack(track)">
+      <div v-if="track" class="relative flex items-center gap-1">
         <span
           v-if="lyricsStatus === 'instrumental'"
           class="text-gray-200 font-bold text-[0.67rem] bg-gray-500 rounded px-1 py-0.5"
@@ -115,6 +138,40 @@
       </div>
     </div>
   </div>
+
+  <BaseModal
+    v-if="showLyricsSidecarWarning && track?.lyrics_sidecar_warning"
+    :model-value="true"
+    title="Lyrics file format issue"
+    content-class="w-full max-w-lg max-h-[70vh]"
+    body-class="flex flex-col gap-4"
+    data-testid="lyrics-sidecar-warning-details"
+    @close="showLyricsSidecarWarning = false"
+  >
+    <div
+      :id="`lyrics-sidecar-warning-${track.id}`"
+      class="rounded-md border border-amber-400 bg-amber-50 p-4 text-sm leading-relaxed text-amber-950 dark:border-amber-600 dark:bg-neutral-800 dark:text-amber-100"
+      role="status"
+    >
+      <div class="mb-2 flex items-center gap-2 font-semibold">
+        <AlertCircleOutline class="h-5 w-5 flex-none text-amber-700 dark:text-amber-300" />
+        <span>One or more lyric sidecars could not be read as valid timed lyrics.</span>
+      </div>
+      <p class="mb-2 break-words">
+        Track: <strong>{{ track.title }}</strong>
+      </p>
+      <p class="break-words">{{ track.lyrics_sidecar_warning }}</p>
+    </div>
+    <template #footer>
+      <button
+        type="button"
+        class="button button-normal rounded-full px-6 py-2"
+        @click="showLyricsSidecarWarning = false"
+      >
+        Close
+      </button>
+    </template>
+  </BaseModal>
 </template>
 
 <script setup>
@@ -123,6 +180,8 @@ import Pause from '~icons/mdi/pause'
 import TextSearch from '~icons/mdi/text-search'
 import PlaylistEdit from '~icons/mdi/playlist-edit'
 import Replay from '~icons/mdi/replay'
+import AlertCircleOutline from '~icons/mdi/alert-circle-outline'
+import BaseModal from '@/components/common/BaseModal.vue'
 import { humanDuration } from '../../../utils/human-duration.js'
 import { lyricsModifiedTime } from '@/utils/lyrics-modified-time.js'
 import { useSearchLyrics } from '../../../composables/search-lyrics.js'
@@ -152,8 +211,9 @@ const goToArtist = () => {
 
 const { searchLyrics } = useSearchLyrics()
 const { editLyricsV2, editingAudioSource } = useEditLyricsV2()
-const props = defineProps(['trackId', 'isShowTrackNumber'])
+const props = defineProps({ trackId: { type: Number, default: undefined }, isShowTrackNumber: Boolean })
 const track = ref(null)
+const showLyricsSidecarWarning = ref(false)
 const modifiedTime = computed(() => lyricsModifiedTime(track.value?.lyrics_modified_at))
 
 const isPlaying = computed(() => {
@@ -181,6 +241,7 @@ const openEditLyricsV2 = track => {
 }
 
 let unlisten = null
+let unlistenScanComplete = null
 let disposed = false
 let loadOperation = 0
 
@@ -188,8 +249,20 @@ const loadTrack = async id => {
   const operation = ++loadOperation
   const result = await invoke('get_track', { trackId: id })
   // Virtual rows can change identity while a date/content reload is still pending.
-  if (!disposed && operation === loadOperation && id === props.trackId) track.value = result
+  if (!disposed && operation === loadOperation && id === props.trackId) {
+    track.value = result
+    showLyricsSidecarWarning.value = false
+  }
 }
+
+watch(
+  editingAudioSource,
+  (source, previousSource) => {
+    if (!source && previousSource?.id === props.trackId && props.trackId) {
+      void loadTrack(props.trackId)
+    }
+  }
+)
 
 watch(
   () => props.trackId,
@@ -214,6 +287,11 @@ onMounted(async () => {
   })
   if (disposed) stopListening()
   else unlisten = stopListening
+  const stopScanListening = await listen('scan-complete', async () => {
+    if (props.trackId) await loadTrack(props.trackId)
+  })
+  if (disposed) stopScanListening()
+  else unlistenScanComplete = stopScanListening
 })
 
 onUnmounted(() => {
@@ -222,6 +300,7 @@ onUnmounted(() => {
   if (unlisten) {
     unlisten()
   }
+  unlistenScanComplete?.()
 })
 </script>
 

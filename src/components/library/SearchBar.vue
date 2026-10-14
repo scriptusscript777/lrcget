@@ -39,14 +39,11 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import Magnify from '~icons/mdi/magnify'
 import Close from '~icons/mdi/close'
 import Loading from '~icons/mdi/loading'
 import { useSearchLibrary } from '@/composables/search-library.js'
-
-const DEFAULT_WAIT = 500
-const DEFAULT_COOLDOWN = DEFAULT_WAIT * 0.75
 
 const autoSearch = ref(false)
 const searchInput = ref('')

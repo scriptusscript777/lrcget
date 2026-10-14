@@ -1,28 +1,30 @@
 # Current interface screenshots — 2.2.7
 
-All **99 images referenced by the current user guides** were captured or refreshed
-from the current application interface through 2026-10-13. Light/dark examples cover
-the latest integrations. This supersedes older capture descriptions for those files.
-[Capture manifest](capture-manifest.json) records each image, date, content hash
-and rendering source. It is an audit record, not a signature or OS certification.
+The [capture manifest](capture-manifest.json) records 101 screenshot captures,
+including the latest library-player views in light and dark themes. The player and
+selected-track images were refreshed on 2026-10-14 with synthetic music metadata;
+other existing guide images retain their earlier capture dates. Each manifest entry
+records its date, content hash and rendering source. It is an audit record, not a
+signature or OS certification.
 
 ## What the images show
 
-| Workflow | Example image families |
-| --- | --- |
-| Current library status | automatic-lrc-before/after, elrc-library-synced, modified |
-| Editor and waveform | editor-default, waveform-click-play/follow/navigation, point-zoom |
-| Marker preview and cancellation | marker-color-pending/cancelled/word-timing, overlap-setting-warning, overlap-untimed |
-| Word timing, follow, precision and loops | word-sync-confirmed, word-timing-protected, word-follow-off-confirmed, selected-word/sentence-loop, loop-persistent-navigation |
-| Readable word preview and gaps | word-playback-preview, word-preview-live-edit/loop-zoom/silence |
-| TXT/LRC/ELRC, estimates and embedding | lyrics-import, enhanced-import, estimated-elrc-confirmation/accepted, embedded-word-export, embedded-lyrics-settings |
-| Server format selection | server-lyrics-types |
-| Recovery | editor-recovery-restored, recovery-notice-aligned |
-| Optional sentence/word alignment | sentence-alignment-toolbar/preview, audio-alignment-controls/preview/skipped |
-| Optional engine/model consent and failure fallback | audio-alignment-setup/model-consent/progress-unavailable |
-| Settings and help | overlap-settings-on/off, overlap-status-off, word-overlap-off, timed-hover-help |
-| About attribution | about-credits light/dark |
-| Native packaged startup | debian-startup.png, appimage-startup.png |
+| Workflow                                           | Example image families                                                                                                         |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Current library status                             | automatic-lrc-before/after, elrc-library-synced, modified                                                                      |
+| Library player                                     | library-tracks and player-controls, with shuffle and Repeat one active                                                         |
+| Editor and waveform                                | editor-default, waveform-click-play/follow/navigation, point-zoom                                                              |
+| Marker preview and cancellation                    | marker-color-pending/cancelled/word-timing, overlap-setting-warning, overlap-untimed                                           |
+| Word timing, follow, precision and loops           | word-sync-confirmed, word-timing-protected, word-follow-off-confirmed, selected-word/sentence-loop, loop-persistent-navigation |
+| Readable word preview and gaps                     | word-playback-preview, word-preview-live-edit/loop-zoom/silence                                                                |
+| TXT/LRC/ELRC, estimates and embedding              | lyrics-import, enhanced-import, estimated-elrc-confirmation/accepted, embedded-word-export, embedded-lyrics-settings           |
+| Server format selection                            | server-lyrics-types                                                                                                            |
+| Recovery                                           | editor-recovery-restored, recovery-notice-aligned                                                                              |
+| Optional sentence/word alignment                   | sentence-alignment-toolbar/preview, audio-alignment-controls/preview/skipped                                                   |
+| Optional engine/model consent and failure fallback | audio-alignment-setup/model-consent/progress-unavailable                                                                       |
+| Settings and help                                  | overlap-settings-on/off, overlap-status-off, word-overlap-off, timed-hover-help                                                |
+| About attribution                                  | about-credits light/dark                                                                                                       |
+| Native packaged startup                            | debian-startup.png, appimage-startup.png                                                                                       |
 
 ## Capture and verification
 

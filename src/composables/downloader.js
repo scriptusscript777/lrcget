@@ -1,7 +1,7 @@
 import { computed, markRaw, ref } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 
-const delay = time => new Promise((resolve, reject) => setTimeout(resolve, time))
+const delay = time => new Promise(resolve => setTimeout(resolve, time))
 
 const downloadQueue = ref([])
 const log = ref([])

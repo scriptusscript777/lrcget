@@ -8,6 +8,7 @@ import { useEditLyricsV2Document } from './useEditLyricsV2Document.js'
 import { useEditLyricsV2Playback } from './useEditLyricsV2Playback.js'
 import { useEditLyricsV2Export } from './useEditLyricsV2Export.js'
 import { useLyricHistory } from './useLyricHistory.js'
+import { wordTimingFingerprint } from '@/utils/word-timing-state.js'
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 vi.mock('@/components/library/edit-lyrics-v2/SyncedWordTimingLane.vue', () => ({
@@ -24,7 +25,8 @@ const line = () => ({
 const document = (
   playbackProgress = ref(1.5),
   playbackDuration,
-  audioSource = ref({ type: 'library', id: 1, duration: 10 })
+  audioSource = ref({ type: 'library', id: 1, duration: 10 }),
+  confirmPendingWordAdjustments = async () => true
 ) => {
   const scope = effectScope()
   const state = scope.run(() =>
@@ -34,6 +36,7 @@ const document = (
       trackId: ref(1),
       progress: playbackProgress,
       playbackDuration,
+      confirmPendingWordAdjustments,
       toast: { error: vi.fn() },
     })
   )
@@ -66,6 +69,48 @@ describe('audio alignment document commits', () => {
 })
 
 describe('estimated ELRC document acceptance', () => {
+  it('exports the manually edited word time when the user saves without Sync word', async () => {
+    const approve = vi.fn().mockResolvedValue(false)
+    const { state, scope } = document(ref(1.5), undefined, undefined, approve)
+    const manuallyEdited = {
+      ...line(),
+      words: [
+        { text: 'test ', start_ms: 1100, end_ms: 1400 },
+        { text: 'phrase', start_ms: 1400, end_ms: 2000 },
+      ],
+    }
+    state.updateSyncedLines([manuallyEdited])
+    const currentLine = state.syncedLines.value[0]
+    const fingerprint = wordTimingFingerprint(0, currentLine.words, 0, currentLine.end_ms)
+    state.updateRecoveryContext({ adjustedWordTimings: [['0:0', fingerprint]] })
+    expect(state.pendingWordAdjustmentCount.value).toBe(1)
+
+    const exporting = useEditLyricsV2Export({
+      audioSource: ref({ type: 'library', id: 1 }),
+      saveLyrics: state.saveLyrics,
+      serializedLyricsfile: state.serializedLyricsfile,
+      commitPendingSentence: state.commitPendingSentence,
+      prepareEnhancedLyrics: state.prepareEnhancedLyrics,
+      confirmEstimates: vi.fn(),
+      toast: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
+    })
+    invoke.mockResolvedValueOnce(null).mockResolvedValueOnce([
+      { format: 'elrc', status: { type: 'success' } },
+    ])
+
+    expect(await exporting.exportLyrics({ enhancedLrc: true })).toBe(false)
+    expect(approve).toHaveBeenCalledWith(1)
+    expect(invoke).not.toHaveBeenCalled()
+
+    approve.mockResolvedValue(true)
+    expect(await exporting.exportLyrics({ enhancedLrc: true })).toBe(true)
+    const saved = invoke.mock.calls.find(([command]) => command === 'save_lyrics')[1]
+    const exported = invoke.mock.calls.find(([command]) => command === 'export_lyrics')[1]
+    expect(saved.lyricsfile).toContain('start_ms: 1100')
+    expect(exported.lyricsfile).toBe(saved.lyricsfile)
+    scope.stop()
+  })
+
   it('exports pending sentence text to LRC/TXT without generating word timing', async () => {
     const { state, scope } = document()
     state.updateSyncedLines([{ text: 'old text', start_ms: 1000, end_ms: 3000, words: [] }])

@@ -13,11 +13,10 @@
     role="button"
     :aria-label="`Select word ${wordIndex + 1}: ${word.text.trim()}`"
     :aria-pressed="selected"
-    @focus="emit('select-word', wordIndex)"
-    @click.stop="emit('select-word', wordIndex)"
-    @keydown.enter.prevent.stop="emit('select-word', wordIndex)"
-    @keydown.space.prevent.stop="emit('select-word', wordIndex)"
-    @dblclick.stop="emit('select-word', wordIndex)"
+    @focus="emit('select-word', wordIndex, false)"
+    @click.stop="emit('select-word', wordIndex, true)"
+    @keydown.enter.prevent.stop="emit('select-word', wordIndex, true)"
+    @keydown.space.prevent.stop="emit('select-word', wordIndex, true)"
   >
     <span class="sticky left-1 z-10 block max-w-full overflow-hidden whitespace-nowrap text-clip">{{
       word.text

@@ -44,10 +44,10 @@
 
 <script setup>
 import Close from '~icons/mdi/close'
-const props = defineProps({
+defineProps({
   title: {
     type: String,
-    required: false,
+    default: undefined,
   },
   contentClass: {
     type: String,

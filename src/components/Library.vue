@@ -1,5 +1,5 @@
 <template>
-  <div v-if="!isLoading" class="flex flex-col w-full h-screen">
+  <div v-if="!isLoading" class="flex min-h-0 flex-col w-full h-full">
     <LibraryHeader
       :active-tab="activeTab"
       @change-active-tab="changeActiveTab"
@@ -16,11 +16,19 @@
     <div id="library-content" class="relative grow overflow-hidden">
       <TrackList :is-active="activeTab === 'tracks'" />
 
-      <AlbumList ref="albumListRef" :is-active="activeTab === 'albums'" />
+      <AlbumList
+        v-if="hasVisitedAlbums"
+        ref="albumListRef"
+        :is-active="activeTab === 'albums'"
+      />
 
-      <ArtistList ref="artistListRef" :is-active="activeTab === 'artists'" />
+      <ArtistList
+        v-if="hasVisitedArtists"
+        ref="artistListRef"
+        :is-active="activeTab === 'artists'"
+      />
 
-      <MyLrclib :is-active="activeTab === 'my-lrclib'" />
+      <MyLrclib v-if="hasVisitedLrclib" :is-active="activeTab === 'my-lrclib'" />
     </div>
 
     <DownloadOptionsPopup
@@ -49,20 +57,21 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { defineAsyncComponent, ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { listen } from '@tauri-apps/api/event'
 import Loading from '~icons/mdi/loading'
-import _ from 'lodash'
 import LibraryHeader from './library/LibraryHeader.vue'
 import DownloadOptionsPopup from './library/DownloadOptionsPopup.vue'
 import { useDownloadOptions } from '@/composables/download-options.js'
 
 import NowPlaying from './NowPlaying.vue'
-import TrackList from './library/TrackList.vue'
-import AlbumList from './library/AlbumList.vue'
-import ArtistList from './library/ArtistList.vue'
-import MyLrclib from './library/MyLrclib.vue'
+const TrackList = defineAsyncComponent(() => import('./library/TrackList.vue'))
+const loadAlbumList = () => import('./library/AlbumList.vue')
+const loadArtistList = () => import('./library/ArtistList.vue')
+const AlbumList = defineAsyncComponent(loadAlbumList)
+const ArtistList = defineAsyncComponent(loadArtistList)
+const MyLrclib = defineAsyncComponent(() => import('./library/MyLrclib.vue'))
 import DownloadViewer from './library/DownloadViewer.vue'
 import ExportViewer from './library/ExportViewer.vue'
 import Config from './library/Config.vue'
@@ -92,6 +101,9 @@ const isScanning = ref(false)
 const scanProgress = ref(null)
 const scanResult = ref(null)
 const activeTab = ref('tracks')
+const hasVisitedAlbums = ref(false)
+const hasVisitedArtists = ref(false)
+const hasVisitedLrclib = ref(false)
 const albumListRef = ref(null)
 const artistListRef = ref(null)
 let unlistenScanProgress = null
@@ -154,10 +166,14 @@ watch(pendingNavigation, async nav => {
 
   if (nav.type === 'album') {
     activeTab.value = 'albums'
+    hasVisitedAlbums.value = true
+    await loadAlbumList()
     await nextTick()
     albumListRef.value?.openAlbumById(nav.id)
   } else if (nav.type === 'artist') {
     activeTab.value = 'artists'
+    hasVisitedArtists.value = true
+    await loadArtistList()
     await nextTick()
     artistListRef.value?.openArtistById(nav.id)
   }
@@ -167,6 +183,9 @@ watch(pendingNavigation, async nav => {
 
 const changeActiveTab = tab => {
   activeTab.value = tab
+  if (tab === 'albums') hasVisitedAlbums.value = true
+  if (tab === 'artists') hasVisitedArtists.value = true
+  if (tab === 'my-lrclib') hasVisitedLrclib.value = true
 }
 
 const handleExportAllLyrics = async formats => {

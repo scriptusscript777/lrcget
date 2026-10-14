@@ -9,6 +9,7 @@ import {
 } from '@/utils/editor-recovery.js'
 import { useLyricHistory } from './useLyricHistory.js'
 import { prepareEstimatedWordExport } from '@/utils/estimated-word-export.js'
+import { countUnconfirmedWordAdjustments } from '@/utils/word-timing-state.js'
 import { waveformMarkerBounds, waveformNeighborWarnings } from '@/utils/waveform-markers.js'
 import {
   createSyncedLinesFromPlain,
@@ -16,6 +17,42 @@ import {
   parseLyricsfile,
   serializeLyricsfile,
 } from '@/utils/lyricsfile.js'
+
+const WORD_CONFIRMATION_PREFIX = 'lrcget.word-timing-confirmations.v1:'
+const WORD_ADJUSTMENT_PREFIX = 'lrcget.word-timing-adjustments.v1:'
+
+const validWordConfirmationEntries = entries =>
+  Array.isArray(entries)
+    ? entries.filter(
+        entry =>
+          Array.isArray(entry) &&
+          typeof entry[0] === 'string' &&
+          typeof entry[1] === 'string'
+      )
+    : []
+
+const readWordEntries = (storage, target, prefix) => {
+  if (!storage || !target) return null
+  try {
+    const raw = storage.getItem(prefix + target)
+    if (!raw) return null
+    return validWordConfirmationEntries(JSON.parse(raw))
+  } catch {
+    return null
+  }
+}
+
+const writeWordEntries = (storage, target, prefix, entries) => {
+  if (!storage || !target) return
+  try {
+    const key = prefix + target
+    const validEntries = validWordConfirmationEntries(entries)
+    if (validEntries.length) storage.setItem(key, JSON.stringify(validEntries))
+    else storage.removeItem(key)
+  } catch {
+    // Confirmation state is a convenience; storage failure must not block editing.
+  }
+}
 
 const createEmptySyncedLine = () => ({
   text: '',
@@ -30,6 +67,7 @@ export function useEditLyricsV2Document({
   playbackDuration,
   overlapPreference,
   toast,
+  confirmPendingWordAdjustments = async () => true,
   recoveryStore = recoveryStorage(),
   recoveryInstance = '',
 }) {
@@ -56,8 +94,16 @@ export function useEditLyricsV2Document({
   const recoveryStatus = ref('')
   const recoveryConflict = ref(null)
   const recoveryContext = ref({})
+  const pendingWordAdjustmentCount = computed(() =>
+    countUnconfirmedWordAdjustments(
+      syncedLines.value,
+      recoveryContext.value.adjustedWordTimings,
+      recoveryContext.value.confirmedWordTimings
+    )
+  )
   const pendingSentence = ref(null)
   let recoveryKey = null
+  let wordConfirmationKey = null
   let recoverySource = null
   let recoveryReady = false
   const recoveryBlocked = ref(false)
@@ -140,6 +186,20 @@ export function useEditLyricsV2Document({
   }
   const updateRecoveryContext = context => {
     recoveryContext.value = { ...recoveryContext.value, ...context }
+    if (Object.prototype.hasOwnProperty.call(context, 'confirmedWordTimings'))
+      writeWordEntries(
+        recoveryStore,
+        wordConfirmationKey,
+        WORD_CONFIRMATION_PREFIX,
+        context.confirmedWordTimings
+      )
+    if (Object.prototype.hasOwnProperty.call(context, 'adjustedWordTimings'))
+      writeWordEntries(
+        recoveryStore,
+        wordConfirmationKey,
+        WORD_ADJUSTMENT_PREFIX,
+        context.adjustedWordTimings
+      )
   }
   const updatePendingSentence = pending => {
     pendingSentence.value = pending
@@ -260,6 +320,8 @@ export function useEditLyricsV2Document({
       trackId?.value,
       recoveryInstance
     )
+    wordConfirmationKey =
+      trackId?.value != null ? JSON.stringify(['track', trackId.value]) : recoveryKey
     recoverySource = JSON.parse(
       JSON.stringify({
         audioSource: audioSource.value,
@@ -285,6 +347,32 @@ export function useEditLyricsV2Document({
     } catch (error) {
       recoveryBlocked.value = true
       recoveryStatus.value = `Recovery unavailable: ${error.message}`
+    }
+    const persistedConfirmations = readWordEntries(
+      recoveryStore,
+      wordConfirmationKey,
+      WORD_CONFIRMATION_PREFIX
+    )
+    const persistedAdjustments = readWordEntries(
+      recoveryStore,
+      wordConfirmationKey,
+      WORD_ADJUSTMENT_PREFIX
+    )
+    if (persistedConfirmations) {
+      recoveryContext.value = {
+        ...recoveryContext.value,
+        confirmedWordTimings: persistedConfirmations,
+      }
+    } else if (recoveryContext.value.confirmedWordTimings) {
+      writeWordEntries(recoveryStore, wordConfirmationKey, WORD_CONFIRMATION_PREFIX, recoveryContext.value.confirmedWordTimings)
+    }
+    if (persistedAdjustments) {
+      recoveryContext.value = {
+        ...recoveryContext.value,
+        adjustedWordTimings: persistedAdjustments,
+      }
+    } else if (recoveryContext.value.adjustedWordTimings) {
+      writeWordEntries(recoveryStore, wordConfirmationKey, WORD_ADJUSTMENT_PREFIX, recoveryContext.value.adjustedWordTimings)
     }
     recoveryReady = true
   }
@@ -840,6 +928,13 @@ export function useEditLyricsV2Document({
       return false
     }
     commitPendingSentence()
+    if (
+      isDirty.value &&
+      pendingWordAdjustmentCount.value > 0 &&
+      !(await confirmPendingWordAdjustments(pendingWordAdjustmentCount.value))
+    ) {
+      return false
+    }
     if (!isDirty.value) {
       return true
     }
@@ -943,6 +1038,7 @@ export function useEditLyricsV2Document({
     recoveryConflict,
     recoveryContext,
     hasUnsavedDocument,
+    pendingWordAdjustmentCount,
     hasRecoveryWork,
     flushRecovery,
     restoreRecovery,

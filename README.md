@@ -111,14 +111,16 @@ one installer that matches your computer, with install steps.
 
 ## Features
 
-- **Library:** scan your music folders, browse tracks, albums and artists, see
-  which songs have synced, plain or no lyrics, and refresh with F5.
+- **Library and playback:** scan and browse tracks, albums and artists; play
+  from the active list with previous/next, shuffle and repeat off/all/one. The
+  active song is highlighted, with an equalizer while it plays.
 - **Find lyrics online:** search [LRCLIB](https://lrclib.net), compare durations,
   preview and apply results, or download lyrics for the whole library.
 - **Waveform editor:** click-to-play waveform with zoom, precise Start/End
   markers, previews, Cancel, Undo/Redo and overlap protection.
-- **Word timing:** time every word, loop a word or sentence while refining it,
-  and save Enhanced LRC (`.elrc`) with word timestamps.
+- **Word timing:** click a word to seek to its start while preserving pause;
+  Play starts from the selected word. Time every word, loop a word or sentence
+  while refining it, and save Enhanced LRC (`.elrc`) with word timestamps.
 - **Import and export:** plain TXT, standard LRC and ELRC chosen independently;
   optional embedding in MP3 (USLT/SYLT/TXXX) and FLAC.
 - **Optional audio alignment:** local Whisper/stable-ts alignment of sentences or
@@ -136,6 +138,7 @@ Full list: [features](docs/features.md).
 | ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
 | ![Tracks list](docs/screenshots/current/library-tracks-light.png)               | ![Search lyrics online](docs/screenshots/current/search-lyrics-dark.png)           |
 | ![Word timing and loops](docs/screenshots/current/selected-word-loop-light.png) | ![Save and export choices](docs/screenshots/current/embedded-word-export-dark.png) |
+| ![Library player controls](docs/screenshots/current/player-controls-light.png)  | ![Dark library player controls](docs/screenshots/current/player-controls-dark.png) |
 
 More pictures in the [illustrated overview](docs/app-overview.md) and
 [how-tos](docs/how-to.md). Screenshots use generated demonstration music.

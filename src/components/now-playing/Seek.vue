@@ -11,15 +11,15 @@
     tooltip="hover"
     @change="chooseProgress"
   >
-    <template #dot="{ pos, index, value, focus, disabled }">
+    <template #dot>
       <div class="w-full h-full rounded-full bg-hoa-1100" />
     </template>
 
-    <template #process="{ start, end }">
+    <template #process="{ end }">
       <div class="absolute h-full rounded-full bg-hoa-1100" :style="'width: ' + end + '%;'" />
     </template>
 
-    <template #tooltip="{ pos, index, value, focus, disabled }">
+    <template #tooltip="{ value }">
       <div
         v-if="value !== null"
         class="text-neutral-800 text-[0.6rem] font-bold rounded-lg px-1 py-0.5 bg-neutral-100"
@@ -36,7 +36,10 @@ import { ref, onMounted, watch } from 'vue'
 import { humanDuration } from '@/utils/human-duration'
 import _throttle from 'lodash/throttle'
 
-const props = defineProps(['duration', 'progress'])
+const props = defineProps({
+  duration: { type: Number, default: undefined },
+  progress: { type: Number, default: undefined },
+})
 const emit = defineEmits(['seek'])
 const isGracePeriod = ref(false)
 const gracePeriodTimeout = ref(null)

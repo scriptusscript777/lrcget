@@ -1,6 +1,9 @@
-import { ref } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import { useModal } from 'vue-final-modal'
-import EditLyricsV2 from '@/components/library/EditLyricsV2.vue'
+
+const EditLyricsV2 = defineAsyncComponent(
+  () => import('@/components/library/EditLyricsV2.vue')
+)
 
 // State for the edit modal
 const editingAudioSource = ref(null)

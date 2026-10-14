@@ -42,7 +42,7 @@ import { useVirtualizer } from '@tanstack/vue-virtual'
 import { invoke } from '@tauri-apps/api/core'
 import { useSearchLibrary } from '@/composables/search-library.js'
 
-const props = defineProps(['isActive'])
+const props = defineProps({ isActive: { type: Boolean, default: undefined } })
 
 const albumIds = ref([])
 const parentRef = ref(null)

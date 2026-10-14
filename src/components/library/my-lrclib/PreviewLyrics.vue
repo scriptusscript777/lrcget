@@ -61,7 +61,7 @@ import { computed, ref } from 'vue'
 import LyricsPanel from './LyricsPanel.vue'
 import { normalizeLrclibLyrics } from '@/utils/lyricsfile.js'
 
-const props = defineProps(['track'])
+const props = defineProps({ track: { type: Object, default: undefined } })
 const emit = defineEmits(['close'])
 
 const lyricsType = ref('synced')

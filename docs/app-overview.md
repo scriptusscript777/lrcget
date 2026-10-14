@@ -30,10 +30,15 @@ timestamps against the actual recording. Save retains the editor document;
 export writes local files or supported audio tags; publish shares lyrics online.
 
 The enhanced editor keeps basic line editing visible and puts individual-word
-tools in a collapsible **Word timing** section. Light and dark themes cover
-timing controls, waveform navigation and export options.
+tools in a collapsible **Word timing** section. Click a word to move audio and
+the playhead to its start; playback continues if it was running and remains
+paused if it was paused. **Play** starts from the selected word. Light and dark
+themes cover timing controls, waveform
+navigation and export options.
 
 ![Line editor with optional word tools collapsed](screenshots/current/editor-default-light.png)
+![Word timing lane and playback controls](screenshots/current/word-timing-protected-light.png)
+![Word timing lane in dark theme](screenshots/current/word-timing-protected-dark.png)
 
 ## Library and Modified Dates
 
@@ -51,6 +56,28 @@ timing controls, waveform navigation and export options.
   of orphaned lyric documents is separate from the visible library listing.
 
 ![Modified dates after the Lyrics column](screenshots/current/modified-light.png)
+
+## Library Player
+
+Selecting a track starts playback and sets the queue to the active library,
+album, or artist track list. The bottom player keeps the track title and seek
+bar visible, with its transport controls grouped together in the center. Use
+Previous/Next to move through that list; Next is disabled at the end when
+repeat is off. Shuffle chooses another track from the active list. Repeat cycles
+through **Off**, **Repeat all** (continue through and wrap the list), and
+**Repeat one** (restart the current track at its end). The active repeat mode
+and shuffle state are shown by the highlighted icons. The playing row is
+highlighted, with a small animated equalizer beside its title while audio plays.
+
+![Library tracks with the current track highlighted](screenshots/current/library-tracks-light.png)
+
+The player also supports seek, ±10-second skips, playback speed and volume.
+Lyrics appear above the controls when the selected track has lyrics available.
+See [player controls](how-to.md#use-the-library-player) for the button sequence
+and queue behavior.
+
+![Current library player and selected-track highlight, light theme](screenshots/current/library-tracks-light.png)
+![Current library player and selected-track highlight, dark theme](screenshots/current/library-tracks-dark.png)
 
 ## Inputs and Working Documents
 
@@ -134,9 +161,13 @@ selection, loops, word editing and marker previews hold the selected target.
 
 Word tools provide separate lane zoom, divider dragging, safe playback Sync and
 precise Start/End fields. Word text is read-only: edit wording in the sentence
-row. Released drags apply directly and leave both sentence markers fixed. The
-next Sync word retains a manual adjustment; other Sync actions reject playback
-outside neighboring-word bounds instead of compressing or moving other words.
+row. Released drags apply directly and leave sentence markers fixed. Sync word
+is enabled for a selected word after its timing changes; it stamps that word's
+start at playback within its sentence and neighboring-word bounds, then turns
+gray until another timing edit. Pending edits remain available when you return
+to that word. If you save a pending edit without syncing it, the Save prompt lets
+you keep the manually adjusted time. The persistent horizontal lane control
+remains available when Follow Lyrics is off.
 
 ![Timing-only boxes and explained out-of-range Sync](screenshots/current/word-timing-protected-dark.png)
 
@@ -179,7 +210,7 @@ successfully exported; inspect the result before retrying.
 | Timing editor       | Line/word tools, steps, contextual playback, keyboard handling and session undo                   | [Editing reference](editing-guide.md#edit-lines-and-text)                      |
 | Waveform navigation | Cached peaks, seek, zoom, pan and playback following                                              | [Waveform how-to](how-to.md#zoom-and-follow-without-looping)                   |
 | Marker confirmation | Live preview, sentence Sync confirmation, Cancel and exact saved ends                             | [Marker how-to](how-to.md#place-precise-markers-and-preview-before-confirming) |
-| Word editing        | Follow Lyrics, read-only words, safe timing edits and independent lane zoom                              | [Word how-to](how-to.md#edit-individual-words)                                 |
+| Word editing        | Follow Lyrics, read-only words, safe timing edits and independent lane zoom                       | [Word how-to](how-to.md#edit-individual-words)                                 |
 | Looping             | Selected-range loops, preview bounds, cancellation and explicit forward playback                  | [Loop how-to](how-to.md#loop-between-the-markers)                              |
 | Help and themes     | Saved hover-help toggle defaults off; F1 help expires after two seconds                           | [Detailed limits](editing-guide.md#themes-diagnostics-and-limits)              |
 | Refresh             | Startup scanning and F5 with unavailable-directory safeguards                                     | [Library reference](editing-guide.md#library-search-and-refresh)               |
@@ -472,12 +503,10 @@ without relying on color.
 ![Overlap prevention off](screenshots/current/word-overlap-off-light.png)
 ![Overlap prevention off in dark mode](screenshots/current/word-overlap-off-dark.png)
 
-
 Matching valid ELRC is labeled Synced without a Modified date on import:
 
 ![ELRC library status, light](screenshots/current/elrc-library-synced-light.png)
 ![ELRC library status, dark](screenshots/current/elrc-library-synced-dark.png)
-
 
 ## Basic and optional Automatic audio alignment
 

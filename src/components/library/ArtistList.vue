@@ -42,7 +42,7 @@ import ArtistItem from './artist-list/ArtistItem.vue'
 import ArtistTrackList from './artist-list/ArtistTrackList.vue'
 import { useSearchLibrary } from '@/composables/search-library.js'
 
-const props = defineProps(['isActive'])
+const props = defineProps({ isActive: { type: Boolean, default: undefined } })
 
 const artistIds = ref([])
 const parentRef = ref(null)

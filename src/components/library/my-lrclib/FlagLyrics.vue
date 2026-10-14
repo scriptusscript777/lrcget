@@ -79,14 +79,14 @@
 
 <script setup>
 import { invoke } from '@tauri-apps/api/core'
-import { ref, onMounted, watch } from 'vue'
+import { ref, onMounted } from 'vue'
 import Loading from '~icons/mdi/loading'
 import { listen } from '@tauri-apps/api/event'
 import { useToast } from 'vue-toastification'
 
 const toast = useToast()
 const emit = defineEmits(['close'])
-const props = defineProps(['track'])
+const props = defineProps({ track: { type: Object, default: undefined } })
 
 const isFlagging = ref(false)
 const isError = ref(false)

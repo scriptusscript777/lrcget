@@ -43,7 +43,10 @@ pub fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlit
             let new_version: i64 = db
                 .query_row("PRAGMA user_version;", [], |row| row.get(0))
                 .unwrap_or(-1);
-            println!("[DB Init] Migrations applied successfully. New user_version: {}", new_version);
+            println!(
+                "[DB Init] Migrations applied successfully. New user_version: {}",
+                new_version
+            );
         }
         Err(e) => {
             eprintln!("[DB Init] Failed to run database migrations: {:?}", e);
@@ -230,12 +233,18 @@ pub fn set_config(
 
 // Independent preference; legacy Settings callers can omit it without resetting it.
 pub fn set_hover_help_enabled(enabled: bool, db: &Connection) -> Result<()> {
-    db.execute("UPDATE config_data SET show_hover_help = ? WHERE 1", [enabled])?;
+    db.execute(
+        "UPDATE config_data SET show_hover_help = ? WHERE 1",
+        [enabled],
+    )?;
     Ok(())
 }
 
 pub fn set_lyric_overlap_prevention(enabled: bool, db: &Connection) -> Result<()> {
-    db.execute("UPDATE config_data SET prevent_lyric_overlaps = ? WHERE 1", [enabled])?;
+    db.execute(
+        "UPDATE config_data SET prevent_lyric_overlaps = ? WHERE 1",
+        [enabled],
+    )?;
     Ok(())
 }
 
@@ -369,6 +378,7 @@ pub fn get_track_by_id(id: i64, db: &Connection) -> Result<PersistentTrack> {
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
             lyrics_modified_at: row.get("lyrics_modified_at")?,
+            lyrics_sidecar_warning: None,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         })
@@ -718,6 +728,7 @@ pub fn get_tracks(db: &Connection) -> Result<Vec<PersistentTrack>> {
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
             lyrics_modified_at: row.get("lyrics_modified_at")?,
+            lyrics_sidecar_warning: None,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -852,7 +863,10 @@ pub fn get_search_track_ids(
     let full_query = if use_fts {
         format!("{}{} ORDER BY tracks_fts.rank", base_query, where_clause)
     } else {
-        format!("{}{} ORDER BY tracks.title_lower ASC", base_query, where_clause)
+        format!(
+            "{}{} ORDER BY tracks.title_lower ASC",
+            base_query, where_clause
+        )
     };
 
     let mut statement = db.prepare(&full_query)?;
@@ -1116,6 +1130,7 @@ pub fn get_album_tracks(album_id: i64, db: &Connection) -> Result<Vec<Persistent
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
             lyrics_modified_at: row.get("lyrics_modified_at")?,
+            lyrics_sidecar_warning: None,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1199,6 +1214,7 @@ pub fn get_artist_tracks(artist_id: i64, db: &Connection) -> Result<Vec<Persiste
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
             lyrics_modified_at: row.get("lyrics_modified_at")?,
+            lyrics_sidecar_warning: None,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1438,11 +1454,18 @@ pub fn find_track_by_path_tx(
     path: &str,
     tx: &rusqlite::Transaction,
 ) -> Result<Option<ScanTrackInfo>> {
-    Ok(tx.query_row(
-        "SELECT id, file_path FROM tracks WHERE file_path = ? ORDER BY id LIMIT 1",
-        [path],
-        |row| Ok(ScanTrackInfo { id: row.get(0)?, file_path: row.get(1)? }),
-    ).optional()?)
+    Ok(tx
+        .query_row(
+            "SELECT id, file_path FROM tracks WHERE file_path = ? ORDER BY id LIMIT 1",
+            [path],
+            |row| {
+                Ok(ScanTrackInfo {
+                    id: row.get(0)?,
+                    file_path: row.get(1)?,
+                })
+            },
+        )
+        .optional()?)
 }
 
 /// Repair dates orphaned by older fingerprint-only scans without overwriting lyrics.
@@ -1622,13 +1645,17 @@ pub fn delete_unprocessed_tracks(conn: &mut Connection) -> Result<usize> {
 
     // Collect orphaned album/artist IDs before deleting them
     let orphaned_album_ids: Vec<i64> = {
-        let mut stmt = tx.prepare("SELECT id FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks)")?;
+        let mut stmt = tx.prepare(
+            "SELECT id FROM albums WHERE id NOT IN (SELECT DISTINCT album_id FROM tracks)",
+        )?;
         let rows = stmt.query_map([], |r| r.get(0))?;
         rows.collect::<Result<Vec<_>, _>>()?
     };
 
     let orphaned_artist_ids: Vec<i64> = {
-        let mut stmt = tx.prepare("SELECT id FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM tracks)")?;
+        let mut stmt = tx.prepare(
+            "SELECT id FROM artists WHERE id NOT IN (SELECT DISTINCT artist_id FROM tracks)",
+        )?;
         let rows = stmt.query_map([], |r| r.get(0))?;
         rows.collect::<Result<Vec<_>, _>>()?
     };
@@ -1705,7 +1732,12 @@ pub fn add_album_tx(
         album_artist_name,
         prepare_input(album_artist_name),
     ))?;
-    insert_album_fts_tx(row_id, prepare_input(name).as_str(), prepare_input(album_artist_name).as_str(), tx)?;
+    insert_album_fts_tx(
+        row_id,
+        prepare_input(name).as_str(),
+        prepare_input(album_artist_name).as_str(),
+        tx,
+    )?;
     Ok(row_id)
 }
 
@@ -1869,6 +1901,7 @@ pub fn find_tracks_by_metadata(
             lyricsfile: row.get("lyricsfile")?,
             lyricsfile_id: row.get("lyricsfile_id")?,
             lyrics_modified_at: row.get("lyrics_modified_at")?,
+            lyrics_sidecar_warning: None,
             image_path: row.get("image_path")?,
             instrumental: is_instrumental,
         };
@@ -1885,7 +1918,10 @@ mod lyric_edit_time_tests {
 
     fn fixture() -> Connection {
         let mut conn = Connection::open_in_memory().unwrap();
-        Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+        Migrations::from_directory(&MIGRATIONS_DIR)
+            .unwrap()
+            .to_latest(&mut conn)
+            .unwrap();
         conn.execute_batch("PRAGMA foreign_keys = ON;
             INSERT INTO artists (id, name, name_lower) VALUES (1, 'artist', 'artist');
             INSERT INTO albums (id, name, name_lower, artist_id) VALUES (1, 'album', 'album', 1);
@@ -1897,8 +1933,10 @@ mod lyric_edit_time_tests {
     fn lyrics(text: &str) -> String {
         crate::lyricsfile::build_lyricsfile(
             &crate::lyricsfile::LyricsfileTrackMetadata::new("song", "album", "artist", 10.0),
-            Some(text), None,
-        ).unwrap()
+            Some(text),
+            None,
+        )
+        .unwrap()
     }
 
     #[test]
@@ -1906,11 +1944,17 @@ mod lyric_edit_time_tests {
         let mut conn = Connection::open_in_memory().unwrap();
         let migrations = Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
         migrations.to_version(&mut conn, 17).unwrap();
-        conn.execute("INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: retained')", []).unwrap();
+        conn.execute(
+            "INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: retained')",
+            [],
+        )
+        .unwrap();
         migrations.to_latest(&mut conn).unwrap();
-        let (content, edited): (String, Option<String>) = conn.query_row(
-            "SELECT lyricsfile, edited_at FROM lyricsfiles", [], |r| Ok((r.get(0)?, r.get(1)?)),
-        ).unwrap();
+        let (content, edited): (String, Option<String>) = conn
+            .query_row("SELECT lyricsfile, edited_at FROM lyricsfiles", [], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
+            .unwrap();
         assert_eq!(content, "plain: retained");
         assert_eq!(edited, None);
     }
@@ -1923,19 +1967,44 @@ mod lyric_edit_time_tests {
         assert_eq!(get_track_by_id(1, &conn).unwrap().lyrics_modified_at, None);
         let track = get_track_by_id(1, &conn).unwrap();
         save_edited_lyricsfile_for_track(&track, &content, &conn).unwrap();
-        let edited = get_track_by_id(1, &conn).unwrap().lyrics_modified_at.unwrap();
+        let edited = get_track_by_id(1, &conn)
+            .unwrap()
+            .lyrics_modified_at
+            .unwrap();
         assert!(edited.ends_with('Z'));
         // Scanner/import upserts must preserve the explicit save time.
         let tx = conn.unchecked_transaction().unwrap();
         upsert_lyricsfile_for_track_tx(1, "song", "album", "artist", 10.0, &content, &tx).unwrap();
         tx.commit().unwrap();
-        assert_eq!(get_track_by_id(1, &conn).unwrap().lyrics_modified_at.as_deref(), Some(edited.as_str()));
-        assert_eq!(get_tracks(&conn).unwrap()[0].lyrics_modified_at.as_deref(), Some(edited.as_str()));
-        assert_eq!(get_album_tracks(1, &conn).unwrap()[0].lyrics_modified_at.as_deref(), Some(edited.as_str()));
-        assert_eq!(get_artist_tracks(1, &conn).unwrap()[0].lyrics_modified_at.as_deref(), Some(edited.as_str()));
+        assert_eq!(
+            get_track_by_id(1, &conn)
+                .unwrap()
+                .lyrics_modified_at
+                .as_deref(),
+            Some(edited.as_str())
+        );
+        assert_eq!(
+            get_tracks(&conn).unwrap()[0].lyrics_modified_at.as_deref(),
+            Some(edited.as_str())
+        );
+        assert_eq!(
+            get_album_tracks(1, &conn).unwrap()[0]
+                .lyrics_modified_at
+                .as_deref(),
+            Some(edited.as_str())
+        );
+        assert_eq!(
+            get_artist_tracks(1, &conn).unwrap()[0]
+                .lyrics_modified_at
+                .as_deref(),
+            Some(edited.as_str())
+        );
         let id = get_track_by_id(1, &conn).unwrap().lyricsfile_id.unwrap();
         update_lyricsfile_by_id(id, &lyrics("changed words"), &conn).unwrap();
-        assert!(get_track_by_id(1, &conn).unwrap().lyrics_modified_at.is_some());
+        assert!(get_track_by_id(1, &conn)
+            .unwrap()
+            .lyrics_modified_at
+            .is_some());
     }
 
     #[test]
@@ -1944,8 +2013,11 @@ mod lyric_edit_time_tests {
         let old = lyrics("original words");
         upsert_lyricsfile_for_track(1, "song", "album", "artist", 10.0, &old, &conn).unwrap();
         let track = get_track_by_id(1, &conn).unwrap();
-        conn.execute_batch("CREATE TRIGGER fail_edit_time BEFORE UPDATE OF edited_at ON lyricsfiles
-            BEGIN SELECT RAISE(ABORT, 'test save failure'); END;").unwrap();
+        conn.execute_batch(
+            "CREATE TRIGGER fail_edit_time BEFORE UPDATE OF edited_at ON lyricsfiles
+            BEGIN SELECT RAISE(ABORT, 'test save failure'); END;",
+        )
+        .unwrap();
         assert!(save_edited_lyricsfile_for_track(&track, &lyrics("new words"), &conn).is_err());
         let after = get_track_by_id(1, &conn).unwrap();
         assert_eq!(after.lyricsfile, Some(old));
@@ -1958,7 +2030,8 @@ mod lyric_edit_time_tests {
         let track = get_track_by_id(1, &conn).unwrap();
         save_edited_lyricsfile_for_track(&track, &lyrics("saved words"), &conn).unwrap();
         let edited = get_track_by_id(1, &conn).unwrap().lyrics_modified_at;
-        conn.execute("UPDATE lyricsfiles SET track_id = NULL", []).unwrap();
+        conn.execute("UPDATE lyricsfiles SET track_id = NULL", [])
+            .unwrap();
         let current = lyrics("current words remain untouched");
         upsert_lyricsfile_for_track(1, "song", "album", "artist", 10.0, &current, &conn).unwrap();
         assert_eq!(restore_orphaned_edit_dates(&conn).unwrap(), 1);
@@ -1967,8 +2040,16 @@ mod lyric_edit_time_tests {
         assert_eq!(after.lyricsfile, Some(current));
         assert_eq!(restore_orphaned_edit_dates(&conn).unwrap(), 0);
         // No candidate, or a different recording, must not manufacture a save date.
-        conn.execute("UPDATE lyricsfiles SET track_duration = 30 WHERE track_id IS NULL", []).unwrap();
-        conn.execute("UPDATE lyricsfiles SET edited_at = NULL WHERE track_id = 1", []).unwrap();
+        conn.execute(
+            "UPDATE lyricsfiles SET track_duration = 30 WHERE track_id IS NULL",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "UPDATE lyricsfiles SET edited_at = NULL WHERE track_id = 1",
+            [],
+        )
+        .unwrap();
         assert_eq!(restore_orphaned_edit_dates(&conn).unwrap(), 0);
     }
 
@@ -1980,10 +2061,14 @@ mod lyric_edit_time_tests {
         let edited = get_track_by_id(1, &conn).unwrap().lyrics_modified_at;
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("library.sqlite3");
-        conn.execute("VACUUM INTO ?", [path.to_str().unwrap()]).unwrap();
+        conn.execute("VACUUM INTO ?", [path.to_str().unwrap()])
+            .unwrap();
         drop(conn);
         let reopened = Connection::open(&path).unwrap();
-        assert_eq!(get_track_by_id(1, &reopened).unwrap().lyrics_modified_at, edited);
+        assert_eq!(
+            get_track_by_id(1, &reopened).unwrap().lyrics_modified_at,
+            edited
+        );
     }
 
     #[test]
@@ -1995,7 +2080,9 @@ mod lyric_edit_time_tests {
         assert_eq!(delete_unprocessed_tracks(&mut conn).unwrap(), 1);
         assert!(get_tracks(&conn).unwrap().is_empty());
         assert!(get_track_by_id(1, &conn).is_err());
-        let orphan_id: Option<i64> = conn.query_row("SELECT track_id FROM lyricsfiles", [], |r| r.get(0)).unwrap();
+        let orphan_id: Option<i64> = conn
+            .query_row("SELECT track_id FROM lyricsfiles", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(orphan_id, None);
     }
 }
@@ -2065,15 +2152,30 @@ mod export_preferences_tests {
             .unwrap()
             .to_latest(&mut conn)
             .unwrap();
-        set_config(true, false, true, true, "dark", "https://example.test", 0.4, &conn)
-            .unwrap();
+        set_config(
+            true,
+            false,
+            true,
+            true,
+            "dark",
+            "https://example.test",
+            0.4,
+            &conn,
+        )
+        .unwrap();
         set_export_preferences(None, Some(true), Some(true), Some(true), None, None, &conn)
             .unwrap();
 
         for (skip_synced, skip_plain) in [(false, false), (true, false), (true, true)] {
             // Download off preserves formats while atomically saving the submitted filter.
             set_export_preferences(
-                Some(false), None, None, None, Some(skip_synced), Some(skip_plain), &conn,
+                Some(false),
+                None,
+                None,
+                None,
+                Some(skip_synced),
+                Some(skip_plain),
+                &conn,
             )
             .unwrap();
             let config = get_config(&conn).unwrap();
@@ -2128,7 +2230,8 @@ mod export_preferences_tests {
 
         // Manual Export shares formats but does not touch the Download toggle.
         set_export_preferences(Some(true), None, None, None, None, None, &conn).unwrap();
-        set_export_preferences(None, Some(false), Some(true), Some(true), None, None, &conn).unwrap();
+        set_export_preferences(None, Some(false), Some(true), Some(true), None, None, &conn)
+            .unwrap();
         assert!(get_config(&conn).unwrap().auto_export_enabled);
         // Turning auto-export off preserves formats, including hidden embedded selection.
         set_export_preferences(Some(false), None, None, None, None, None, &conn).unwrap();
@@ -2161,14 +2264,32 @@ mod hover_help_tests {
         let mut conn = Connection::open_in_memory().unwrap();
         let migrations = Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
         migrations.to_version(&mut conn, 18).unwrap();
-        set_config(true, false, true, true, "dark", "https://example.test", 0.4, &conn).unwrap();
-        conn.execute("INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: retained')", []).unwrap();
+        set_config(
+            true,
+            false,
+            true,
+            true,
+            "dark",
+            "https://example.test",
+            0.4,
+            &conn,
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: retained')",
+            [],
+        )
+        .unwrap();
         migrations.to_latest(&mut conn).unwrap();
         let config = get_config(&conn).unwrap();
         assert!(!config.show_hover_help);
         assert_eq!(config.theme_mode, "dark");
         assert_eq!(config.volume, 0.4);
-        let lyrics: String = conn.query_row("SELECT lyricsfile FROM lyricsfiles LIMIT 1", [], |r| r.get(0)).unwrap();
+        let lyrics: String = conn
+            .query_row("SELECT lyricsfile FROM lyricsfiles LIMIT 1", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
         assert_eq!(lyrics, "plain: retained");
     }
 
@@ -2177,10 +2298,23 @@ mod hover_help_tests {
         let file = tempfile::NamedTempFile::new().unwrap();
         {
             let mut conn = Connection::open(file.path()).unwrap();
-            Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+            Migrations::from_directory(&MIGRATIONS_DIR)
+                .unwrap()
+                .to_latest(&mut conn)
+                .unwrap();
             assert!(!get_config(&conn).unwrap().show_hover_help);
             set_hover_help_enabled(true, &conn).unwrap();
-            set_config(false, true, true, false, "light", "https://example.test", 0.3, &conn).unwrap();
+            set_config(
+                false,
+                true,
+                true,
+                false,
+                "light",
+                "https://example.test",
+                0.3,
+                &conn,
+            )
+            .unwrap();
             set_export_preferences(Some(false), None, None, None, None, None, &conn).unwrap();
             assert!(get_config(&conn).unwrap().show_hover_help);
         }
@@ -2194,11 +2328,24 @@ mod hover_help_tests {
     #[test]
     fn transaction_rollback_keeps_preference_and_other_settings_together() {
         let mut conn = Connection::open_in_memory().unwrap();
-        Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+        Migrations::from_directory(&MIGRATIONS_DIR)
+            .unwrap()
+            .to_latest(&mut conn)
+            .unwrap();
         let before = get_config(&conn).unwrap();
         {
             let tx = conn.unchecked_transaction().unwrap();
-            set_config(false, true, true, false, "dark", "https://example.test", 0.2, &tx).unwrap();
+            set_config(
+                false,
+                true,
+                true,
+                false,
+                "dark",
+                "https://example.test",
+                0.2,
+                &tx,
+            )
+            .unwrap();
             set_hover_help_enabled(true, &tx).unwrap();
             // Dropping an uncommitted transaction models a failed Settings save.
         }
@@ -2219,12 +2366,20 @@ mod overlap_preference_tests {
         let migrations = Migrations::from_directory(&MIGRATIONS_DIR).unwrap();
         migrations.to_version(&mut conn, 19).unwrap();
         set_hover_help_enabled(true, &conn).unwrap();
-        conn.execute("INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: keep me')", []).unwrap();
+        conn.execute(
+            "INSERT INTO lyricsfiles (lyricsfile) VALUES ('plain: keep me')",
+            [],
+        )
+        .unwrap();
         migrations.to_latest(&mut conn).unwrap();
         let config = get_config(&conn).unwrap();
         assert!(config.prevent_lyric_overlaps);
         assert!(config.show_hover_help);
-        let lyrics: String = conn.query_row("SELECT lyricsfile FROM lyricsfiles LIMIT 1", [], |r| r.get(0)).unwrap();
+        let lyrics: String = conn
+            .query_row("SELECT lyricsfile FROM lyricsfiles LIMIT 1", [], |r| {
+                r.get(0)
+            })
+            .unwrap();
         assert_eq!(lyrics, "plain: keep me");
     }
 
@@ -2233,9 +2388,22 @@ mod overlap_preference_tests {
         let file = tempfile::NamedTempFile::new().unwrap();
         {
             let mut conn = Connection::open(file.path()).unwrap();
-            Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+            Migrations::from_directory(&MIGRATIONS_DIR)
+                .unwrap()
+                .to_latest(&mut conn)
+                .unwrap();
             set_lyric_overlap_prevention(false, &conn).unwrap();
-            set_config(false, true, true, false, "dark", "https://example.test", 0.3, &conn).unwrap();
+            set_config(
+                false,
+                true,
+                true,
+                false,
+                "dark",
+                "https://example.test",
+                0.3,
+                &conn,
+            )
+            .unwrap();
             set_hover_help_enabled(true, &conn).unwrap();
             set_export_preferences(None, Some(true), None, None, None, None, &conn).unwrap();
             assert!(!get_config(&conn).unwrap().prevent_lyric_overlaps);
@@ -2249,11 +2417,24 @@ mod overlap_preference_tests {
     #[test]
     fn failed_settings_transaction_preserves_overlap_and_other_choices() {
         let mut conn = Connection::open_in_memory().unwrap();
-        Migrations::from_directory(&MIGRATIONS_DIR).unwrap().to_latest(&mut conn).unwrap();
+        Migrations::from_directory(&MIGRATIONS_DIR)
+            .unwrap()
+            .to_latest(&mut conn)
+            .unwrap();
         let before = get_config(&conn).unwrap();
         {
             let tx = conn.unchecked_transaction().unwrap();
-            set_config(false, true, true, false, "dark", "https://example.test", 0.1, &tx).unwrap();
+            set_config(
+                false,
+                true,
+                true,
+                false,
+                "dark",
+                "https://example.test",
+                0.1,
+                &tx,
+            )
+            .unwrap();
             set_lyric_overlap_prevention(false, &tx).unwrap();
             set_hover_help_enabled(true, &tx).unwrap();
         }

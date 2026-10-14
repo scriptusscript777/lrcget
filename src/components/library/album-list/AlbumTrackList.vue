@@ -94,8 +94,9 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import TrackItem from '../track-list/TrackItem.vue'
 import { useDownloadTrigger } from '@/composables/download-options.js'
+import { setPlayerQueue } from '@/composables/player-queue.js'
 
-const props = defineProps(['album'])
+const props = defineProps({ album: { type: Object, default: undefined } })
 const emit = defineEmits(['back', 'playTrack', 'downloadLyrics'])
 
 const trackIds = ref([])
@@ -132,6 +133,7 @@ const downloadAlbumLyrics = useDownloadTrigger(() => ({
 
 onMounted(async () => {
   trackIds.value = await invoke('get_album_track_ids', { albumId: props.album.id })
+  setPlayerQueue(trackIds.value)
 })
 
 watch(
@@ -139,6 +141,7 @@ watch(
   async newId => {
     if (newId) {
       trackIds.value = await invoke('get_album_track_ids', { albumId: newId })
+      setPlayerQueue(trackIds.value)
     }
   }
 )

@@ -112,7 +112,7 @@ import Loading from '~icons/mdi/loading'
 import Eye from '~icons/mdi/eye'
 import PlaylistEdit from '~icons/mdi/playlist-edit'
 import Flag from '~icons/mdi/flag'
-import { computed, ref, onMounted } from 'vue'
+import { computed, defineAsyncComponent, ref, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { countLines } from '@/utils/count-lines.js'
 import { humanDuration } from '@/utils/human-duration.js'
@@ -122,8 +122,9 @@ import PreviewLyrics from './PreviewLyrics.vue'
 import FlagLyrics from './FlagLyrics.vue'
 import AssociateTrackModal from './AssociateTrackModal.vue'
 import LyricsfileConflictModal from './LyricsfileConflictModal.vue'
-import EditLyricsV2 from '../EditLyricsV2.vue'
 import { useModal } from 'vue-final-modal'
+
+const EditLyricsV2 = defineAsyncComponent(() => import('../EditLyricsV2.vue'))
 
 defineEmits(['back'])
 const toast = useToast()

@@ -102,7 +102,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue'
+import { ref, computed } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { open } from '@tauri-apps/plugin-dialog'
 import { useToast } from 'vue-toastification'
@@ -112,7 +112,6 @@ import Close from '~icons/mdi/close'
 import FolderOpen from '~icons/mdi/folder-open'
 import Music from '~icons/mdi/music'
 import { humanDuration } from '@/utils/human-duration.js'
-import _debounce from 'lodash/debounce'
 
 const props = defineProps({
   lrclibTrack: {

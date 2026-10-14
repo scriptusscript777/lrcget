@@ -1,14 +1,346 @@
 use anyhow::Result;
 use kira::{
     sound::{
-        streaming::{StreamingSoundData, StreamingSoundHandle},
+        streaming::{Decoder, StreamingSoundData, StreamingSoundHandle},
         FromFileError, PlaybackState,
     },
-    AudioManager, AudioManagerSettings, Decibels, DefaultBackend, Tween,
+    AudioManager, AudioManagerSettings, Decibels, DefaultBackend, Frame, Tween,
 };
 
 use crate::persistent_entities::PlayableTrack;
 use serde::Serialize;
+use std::{
+    fs::File,
+    io::{self, Read, Seek, SeekFrom},
+    path::Path,
+};
+use symphonia::core::{
+    audio::SampleBuffer,
+    errors::Error as Symphonia05Error,
+    formats::{FormatReader as FormatReader05, SeekMode as SeekMode05, SeekTo as SeekTo05},
+    io::{MediaSource as MediaSource05, MediaSourceStream as MediaSourceStream05},
+    probe::Hint as Hint05,
+    units::TimeStamp as TimeStamp05,
+};
+use symphonia06::core::io::MediaSource;
+
+fn audio_data_offset_after_id3v2(header: &[u8], file_len: u64) -> io::Result<Option<u64>> {
+    if header.len() < 10 || &header[..3] != b"ID3" || !(2..=4).contains(&header[3]) {
+        return Ok(None);
+    }
+
+    if header[4] == 0xff {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Invalid ID3v2 revision",
+        ));
+    }
+    let reserved_flags = match header[3] {
+        2 => 0x3f,
+        3 => 0x1f,
+        4 => 0x0f,
+        _ => unreachable!("supported ID3v2 versions were checked"),
+    };
+    if header[5] & reserved_flags != 0 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Invalid ID3v2 header flags",
+        ));
+    }
+    if header[6..10].iter().any(|byte| byte & 0x80 != 0) {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Invalid ID3v2 tag size",
+        ));
+    }
+
+    let tag_size = ((header[6] as u64) << 21)
+        | ((header[7] as u64) << 14)
+        | ((header[8] as u64) << 7)
+        | header[9] as u64;
+    // The declared size includes extended headers, padding, unsynchronization
+    // bytes, and (for v2.4) the footer. It excludes only the 10-byte header.
+    let offset = 10_u64
+        .checked_add(tag_size)
+        .filter(|offset| *offset < file_len)
+        .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidData, "Invalid ID3v2 tag size"))?;
+    if header[3] == 4 && header[5] & 0x10 != 0 && tag_size < 10 {
+        return Err(io::Error::new(
+            io::ErrorKind::InvalidData,
+            "Invalid ID3v2.4 footer size",
+        ));
+    }
+    Ok(Some(offset))
+}
+
+struct Id3v2AudioSource {
+    file: File,
+    audio_offset: u64,
+    file_len: u64,
+}
+
+impl Id3v2AudioSource {
+    fn open(path: &Path, audio_offset: u64) -> io::Result<Self> {
+        let mut file = File::open(path)?;
+        let file_len = file.metadata()?.len();
+        file.seek(SeekFrom::Start(audio_offset))?;
+        Ok(Self {
+            file,
+            audio_offset,
+            file_len,
+        })
+    }
+}
+
+impl Read for Id3v2AudioSource {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        self.file.read(buffer)
+    }
+}
+
+impl Seek for Id3v2AudioSource {
+    fn seek(&mut self, position: SeekFrom) -> io::Result<u64> {
+        let logical_position = self
+            .file
+            .stream_position()?
+            .saturating_sub(self.audio_offset);
+        let audio_len = self.file_len.saturating_sub(self.audio_offset);
+        let target = match position {
+            SeekFrom::Start(offset) => i128::from(offset),
+            SeekFrom::Current(offset) => i128::from(logical_position) + i128::from(offset),
+            SeekFrom::End(offset) => i128::from(audio_len) + i128::from(offset),
+        };
+        if target < 0 || target > i128::from(u64::MAX) {
+            return Err(io::Error::new(
+                io::ErrorKind::InvalidInput,
+                "Invalid audio seek",
+            ));
+        }
+        let physical_position = self
+            .audio_offset
+            .checked_add(target as u64)
+            .ok_or_else(|| io::Error::new(io::ErrorKind::InvalidInput, "Invalid audio seek"))?;
+        self.file
+            .seek(SeekFrom::Start(physical_position))
+            .map(|position| position.saturating_sub(self.audio_offset))
+    }
+}
+
+impl symphonia06::core::io::MediaSource for Id3v2AudioSource {
+    fn is_seekable(&self) -> bool {
+        true
+    }
+
+    fn byte_len(&self) -> Option<u64> {
+        Some(self.file_len.saturating_sub(self.audio_offset))
+    }
+}
+
+fn playback_sound_data(
+    path: &Path,
+    duration: f64,
+) -> std::result::Result<StreamingSoundData<FromFileError>, FromFileError> {
+    match StreamingSoundData::from_media_source(open_audio_source(path)?) {
+        Ok(data) => Ok(data),
+        Err(FromFileError::UnknownSampleRate) => {
+            let decoder = LenientSymphoniaDecoder::new(open_audio_source(path)?, duration)?;
+            Ok(StreamingSoundData::from_decoder(decoder))
+        }
+        Err(error) => Err(error),
+    }
+}
+
+enum AudioSource {
+    File(File),
+    Id3v2(Id3v2AudioSource),
+}
+
+impl Read for AudioSource {
+    fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+        match self {
+            Self::File(file) => file.read(buffer),
+            Self::Id3v2(source) => source.read(buffer),
+        }
+    }
+}
+
+impl Seek for AudioSource {
+    fn seek(&mut self, position: SeekFrom) -> io::Result<u64> {
+        match self {
+            Self::File(file) => file.seek(position),
+            Self::Id3v2(source) => source.seek(position),
+        }
+    }
+}
+
+impl MediaSource for AudioSource {
+    fn is_seekable(&self) -> bool {
+        true
+    }
+
+    fn byte_len(&self) -> Option<u64> {
+        match self {
+            Self::File(file) => file.metadata().ok().map(|metadata| metadata.len()),
+            Self::Id3v2(source) => Some(source.file_len.saturating_sub(source.audio_offset)),
+        }
+    }
+}
+
+impl MediaSource05 for AudioSource {
+    fn is_seekable(&self) -> bool {
+        true
+    }
+
+    fn byte_len(&self) -> Option<u64> {
+        match self {
+            Self::File(file) => file.metadata().ok().map(|metadata| metadata.len()),
+            Self::Id3v2(source) => Some(source.file_len.saturating_sub(source.audio_offset)),
+        }
+    }
+}
+
+fn open_audio_source(path: &Path) -> std::io::Result<AudioSource> {
+    let mut file = File::open(path)?;
+    let file_len = file.metadata()?.len();
+    let mut header = [0_u8; 10];
+    let header_len = file.read(&mut header)?;
+    if let Some(offset) = audio_data_offset_after_id3v2(&header[..header_len], file_len)? {
+        return Ok(AudioSource::Id3v2(Id3v2AudioSource::open(path, offset)?));
+    }
+    file.seek(SeekFrom::Start(0))?;
+    Ok(AudioSource::File(file))
+}
+
+struct LenientSymphoniaDecoder {
+    format_reader: Box<dyn FormatReader05>,
+    decoder: Box<dyn symphonia::core::codecs::Decoder>,
+    sample_rate: u32,
+    num_frames: usize,
+    track_id: u32,
+}
+
+impl LenientSymphoniaDecoder {
+    fn new(source: AudioSource, duration: f64) -> std::result::Result<Self, FromFileError> {
+        let format_reader = symphonia::default::get_probe()
+            .format(
+                &Hint05::default(),
+                MediaSourceStream05::new(Box::new(source), Default::default()),
+                &Default::default(),
+                &Default::default(),
+            )
+            .map_err(map_symphonia05_error)?
+            .format;
+        let track = format_reader
+            .default_track()
+            .ok_or(FromFileError::NoDefaultTrack)?;
+        let track_id = track.id;
+        let audio_params = track.codec_params.clone();
+        let sample_rate = audio_params
+            .sample_rate
+            .filter(|rate| *rate > 0)
+            .ok_or(FromFileError::UnknownSampleRate)?;
+        let num_frames = resolve_num_frames(audio_params.n_frames, sample_rate, duration)?;
+        let decoder = symphonia::default::get_codecs()
+            .make(&audio_params, &Default::default())
+            .map_err(map_symphonia05_error)?;
+        Ok(Self {
+            format_reader,
+            decoder,
+            sample_rate,
+            num_frames,
+            track_id,
+        })
+    }
+}
+
+fn resolve_num_frames(
+    frame_count: Option<u64>,
+    sample_rate: u32,
+    duration: f64,
+) -> std::result::Result<usize, FromFileError> {
+    match frame_count {
+        Some(frames) => usize::try_from(frames).map_err(|_| FromFileError::UnknownDuration),
+        None if duration.is_finite() && duration > 0.0 => {
+            let frames = (duration * f64::from(sample_rate)).round();
+            if frames > usize::MAX as f64 {
+                Err(FromFileError::UnknownDuration)
+            } else {
+                Ok(frames as usize)
+            }
+        }
+        None => Err(FromFileError::UnknownDuration),
+    }
+}
+
+impl Decoder for LenientSymphoniaDecoder {
+    type Error = FromFileError;
+
+    fn sample_rate(&self) -> u32 {
+        self.sample_rate
+    }
+
+    fn num_frames(&self) -> usize {
+        self.num_frames
+    }
+
+    fn decode(&mut self) -> std::result::Result<Vec<Frame>, Self::Error> {
+        let packet = loop {
+            match self.format_reader.next_packet() {
+                Ok(packet) if packet.track_id() == self.track_id => break packet,
+                Ok(_) => continue,
+                Err(Symphonia05Error::IoError(error))
+                    if error.kind() == io::ErrorKind::UnexpectedEof =>
+                {
+                    return Ok(Vec::new());
+                }
+                Err(error) => return Err(map_symphonia05_error(error)),
+            }
+        };
+        let buffer = self
+            .decoder
+            .decode(&packet)
+            .map_err(map_symphonia05_error)?;
+        let channels = buffer.spec().channels.count();
+        if channels == 0 || channels > 2 {
+            return Err(FromFileError::UnsupportedChannelConfiguration);
+        }
+        let mut samples = SampleBuffer::<f32>::new(buffer.capacity() as u64, *buffer.spec());
+        samples.copy_interleaved_ref(buffer);
+        Ok(samples
+            .samples()
+            .chunks_exact(channels)
+            .map(|frame| match frame {
+                [mono] => Frame::from_mono(*mono),
+                [left, right] => Frame::new(*left, *right),
+                _ => unreachable!("channel count was checked"),
+            })
+            .collect())
+    }
+
+    fn seek(&mut self, index: usize) -> std::result::Result<usize, Self::Error> {
+        let seeked = self
+            .format_reader
+            .seek(
+                SeekMode05::Accurate,
+                SeekTo05::TimeStamp {
+                    ts: index as TimeStamp05,
+                    track_id: self.track_id,
+                },
+            )
+            .map_err(map_symphonia05_error)?;
+        Ok(seeked.actual_ts as usize)
+    }
+}
+
+fn map_symphonia05_error(error: Symphonia05Error) -> FromFileError {
+    match error {
+        Symphonia05Error::IoError(error) => FromFileError::IoError(error),
+        error => FromFileError::IoError(io::Error::new(
+            io::ErrorKind::InvalidData,
+            error.to_string(),
+        )),
+    }
+}
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -178,7 +510,7 @@ impl Player {
         self.track = Some(track);
 
         if let Some(ref mut track) = self.track {
-            let sound_data = StreamingSoundData::from_file(&track.file_path)?;
+            let sound_data = playback_sound_data(Path::new(&track.file_path), track.duration)?;
 
             self.duration = sound_data.duration().as_secs_f64();
             self.sound_handle = Some(self.manager.play(sound_data)?);
@@ -278,8 +610,154 @@ impl Player {
 
 #[cfg(test)]
 mod tests {
-    use super::Player;
-    use kira::sound::PlaybackState;
+    use super::{
+        audio_data_offset_after_id3v2, open_audio_source, playback_sound_data, resolve_num_frames,
+        Id3v2AudioSource, LenientSymphoniaDecoder, Player,
+    };
+    use kira::sound::{streaming::Decoder, PlaybackState};
+    use std::{
+        io::{Read, Seek, SeekFrom},
+        path::Path,
+    };
+
+    #[test]
+    fn fallback_decoder_reads_mp3_fixture_and_uses_track_duration() {
+        assert_eq!(resolve_num_frames(None, 44_100, 0.216).unwrap(), 9526);
+        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/embedding.mp3");
+        let source = open_audio_source(&path).unwrap();
+        let mut decoder = LenientSymphoniaDecoder::new(source, 0.216).unwrap();
+        assert!(decoder.num_frames() > 0);
+        let frames = decoder.decode().unwrap();
+        assert!(!frames.is_empty());
+    }
+
+    #[test]
+    fn id3v2_audio_offset_validates_supported_versions_and_bounds() {
+        let mut header = *b"ID3\x04\x00\x00\x00\x00\x00\x05";
+        assert_eq!(
+            audio_data_offset_after_id3v2(&header, 100).unwrap(),
+            Some(15)
+        );
+        header[3] = 3;
+        assert_eq!(
+            audio_data_offset_after_id3v2(&header, 100).unwrap(),
+            Some(15)
+        );
+        header[3] = 2;
+        assert_eq!(
+            audio_data_offset_after_id3v2(&header, 100).unwrap(),
+            Some(15)
+        );
+        header[3] = 5;
+        assert_eq!(audio_data_offset_after_id3v2(&header, 100).unwrap(), None);
+        assert_eq!(
+            audio_data_offset_after_id3v2(b"not an id3 tag", 100).unwrap(),
+            None
+        );
+        header[3] = 4;
+        header[9] = 100;
+        assert!(audio_data_offset_after_id3v2(&header, 50).is_err());
+        header[9] = 0x80;
+        assert!(audio_data_offset_after_id3v2(&header, 1000).is_err());
+    }
+
+    #[test]
+    fn id3v24_footer_is_included_in_audio_offset() {
+        // ID3v2.4's declared size includes its 10-byte footer.
+        let header = *b"ID3\x04\x00\x10\x00\x00\x00\x0f";
+        assert_eq!(
+            audio_data_offset_after_id3v2(&header, 100).unwrap(),
+            Some(25)
+        );
+    }
+
+    #[test]
+    fn id3v23_tag_is_skipped_before_audio_probe() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("id3v23.mp3");
+        let header = b"ID3\x03\x00\x00\x00\x00\x00\x05";
+        let mut bytes = header.to_vec();
+        bytes.extend_from_slice(b"abcdeaudio");
+        std::fs::write(&path, &bytes).unwrap();
+
+        let mut source = open_audio_source(&path).unwrap();
+        let mut audio = Vec::new();
+        source.read_to_end(&mut audio).unwrap();
+        assert_eq!(audio, b"audio");
+    }
+
+    #[test]
+    fn playback_skips_id3v23_extended_unsynchronised_tag_and_keeps_seekable() {
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/embedding.mp3");
+        let fixture_bytes = std::fs::read(&fixture).unwrap();
+        let original_offset =
+            audio_data_offset_after_id3v2(&fixture_bytes[..10], fixture_bytes.len() as u64)
+                .unwrap()
+                .unwrap() as usize;
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("id3v23.mp3");
+        let mut tag_body = vec![0, 0, 0, 6, 0, 0, 0, 0, 0, 0]; // v2.3 extended header
+        tag_body.extend_from_slice(b"TIT2\x00\x00\x00\x03\x00\x00");
+        tag_body.extend_from_slice(&[0, 0xff, 0x00, 0xe0]); // payload includes unsync byte
+        let tag_size = tag_body.len() as u32;
+        let mut bytes = b"ID3\x03\x00\xc0".to_vec(); // unsynchronisation + extended header
+        bytes.extend_from_slice(&[
+            ((tag_size >> 21) & 0x7f) as u8,
+            ((tag_size >> 14) & 0x7f) as u8,
+            ((tag_size >> 7) & 0x7f) as u8,
+            (tag_size & 0x7f) as u8,
+        ]);
+        bytes.extend_from_slice(&tag_body);
+        let audio_start = bytes.len();
+        bytes.extend_from_slice(&fixture_bytes[original_offset..]);
+        std::fs::write(&path, &bytes).unwrap();
+        let data = playback_sound_data(&path, 0.216).expect("ID3v2.3 MP3 should be playable");
+        assert!(data.duration().as_secs_f64() > 0.0);
+        let loop_data = playback_sound_data(&path, 0.216)
+            .unwrap()
+            .loop_region(0.02..0.12);
+        assert!(loop_data.settings.loop_region.is_some());
+
+        let offset = audio_data_offset_after_id3v2(&bytes[..10], bytes.len() as u64)
+            .unwrap()
+            .unwrap();
+        assert_eq!(offset as usize, audio_start);
+        let mut source = Id3v2AudioSource::open(&path, offset).unwrap();
+        let mut first_audio_bytes = [0; 4];
+        source.read_exact(&mut first_audio_bytes).unwrap();
+        assert_eq!(
+            first_audio_bytes,
+            bytes[offset as usize..offset as usize + 4]
+        );
+        assert_eq!(source.seek(SeekFrom::Start(0)).unwrap(), 0);
+        assert_eq!(
+            source.seek(SeekFrom::End(0)).unwrap(),
+            bytes.len() as u64 - offset
+        );
+
+        let mut decoder = LenientSymphoniaDecoder::new(open_audio_source(&path).unwrap(), 0.216)
+            .expect("fallback decoder should also probe the audio after the tag");
+        assert!(decoder.seek(100).unwrap() <= 100);
+        assert!(!decoder.decode().unwrap().is_empty());
+    }
+
+    #[test]
+    fn playback_without_id3_tag_still_works_and_does_not_modify_audio() {
+        let fixture = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/embedding.mp3");
+        let fixture_bytes = std::fs::read(&fixture).unwrap();
+        let audio_offset =
+            audio_data_offset_after_id3v2(&fixture_bytes[..10], fixture_bytes.len() as u64)
+                .unwrap()
+                .unwrap() as usize;
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("no-id3.mp3");
+        let bytes = fixture_bytes[audio_offset..].to_vec();
+        std::fs::write(&path, &bytes).unwrap();
+
+        let data = playback_sound_data(&path, 0.216).expect("untagged MP3 should remain playable");
+        assert!(data.duration().as_secs_f64() > 0.0);
+        assert_eq!(std::fs::read(path).unwrap(), bytes);
+    }
 
     #[test]
     fn waveform_seek_preserves_pause_without_changing_normal_seek() {

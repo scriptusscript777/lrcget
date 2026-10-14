@@ -6,8 +6,8 @@ use lofty::config::WriteOptions;
 use lofty::file::AudioFile;
 use lofty::flac::FlacFile;
 use lofty::id3::v2::{
-    BinaryFrame, Frame, FrameId, Id3v2Tag, SyncTextContentType,
-    SynchronizedTextFrame, TimestampFormat, UnsynchronizedTextFrame,
+    BinaryFrame, Frame, FrameId, Id3v2Tag, SyncTextContentType, SynchronizedTextFrame,
+    TimestampFormat, UnsynchronizedTextFrame,
 };
 use lofty::mpeg::MpegFile;
 use lofty::TextEncoding;
@@ -128,7 +128,10 @@ fn safe_replace(path: &Path, prepare: impl FnOnce(&Path) -> Result<()>) -> Resul
     let backup = PathBuf::from(backup_name);
     if fs::symlink_metadata(&backup).is_ok_and(|metadata| metadata.is_file()) {
         if let Err(error) = fs::remove_file(&backup) {
-            eprintln!("Saved successfully, but could not remove old backup {:?}: {}", backup, error);
+            eprintln!(
+                "Saved successfully, but could not remove old backup {:?}: {}",
+                backup, error
+            );
         }
     }
     Ok(())
@@ -689,6 +692,7 @@ mod tests {
             lyricsfile: None,
             lyricsfile_id: None,
             lyrics_modified_at: None,
+            lyrics_sidecar_warning: None,
             duration: 10.0,
             instrumental: false,
         }
@@ -784,7 +788,8 @@ mod tests {
             ]
         );
         assert_eq!(
-            synced_lyrics_to_sylt_vec("[00:01.001]Hello world\n[00:02.001]\n[00:03.001]Next").unwrap(),
+            synced_lyrics_to_sylt_vec("[00:01.001]Hello world\n[00:02.001]\n[00:03.001]Next")
+                .unwrap(),
             vec![
                 (1001, "Hello world".into()),
                 (2001, "".into()),
@@ -1064,7 +1069,11 @@ mod tests {
     #[test]
     fn test_build_sidecar_path() {
         let directory = tempfile::tempdir().unwrap();
-        let track_path = directory.path().join("artist").join("album").join("song.mp3");
+        let track_path = directory
+            .path()
+            .join("artist")
+            .join("album")
+            .join("song.mp3");
         for extension in ["txt", "lrc", "elrc"] {
             let sidecar = build_sidecar_path(track_path.to_str().unwrap(), extension).unwrap();
             assert_eq!(sidecar, track_path.with_extension(extension));
@@ -1127,6 +1136,7 @@ mod tests {
             lyricsfile: None,
             lyricsfile_id: None,
             lyrics_modified_at: None,
+            lyrics_sidecar_warning: None,
             duration: 10.0,
             instrumental: false,
         };

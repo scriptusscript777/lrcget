@@ -127,7 +127,11 @@ import { ref, watch, nextTick } from 'vue'
 import { computed } from 'vue'
 import { parseLyricsfile } from '@/utils/lyricsfile.js'
 
-const props = defineProps(['duration', 'progress', 'lyricsfile'])
+const props = defineProps({
+  duration: { type: Number, default: undefined },
+  progress: { type: Number, default: undefined },
+  lyricsfile: { type: String, default: undefined },
+})
 const emit = defineEmits(['lyricsClicked'])
 
 const expanded = ref(false)
@@ -293,7 +297,7 @@ const onCopy = async () => {
     await navigator.clipboard.writeText(text)
     copied.value = true
     setTimeout(() => (copied.value = false), 1500)
-  } catch (e) {
+  } catch {
     // swallow
   }
 }

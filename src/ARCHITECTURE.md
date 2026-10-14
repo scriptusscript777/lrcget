@@ -11,6 +11,11 @@ The library performs an incremental quick-hash scan on every opening. F5 invokes
 refresh action, captures native webview reload, ignores held/repeated keys while
 scanning, and refuses refresh with an open modal to protect unsaved editing.
 Startup/F5 imports valid matching ELRC before LRC, then TXT for missing lyrics.
+`get_track` computes a transient sidecar warning using the same validators and
+includes it in the row payload. TrackItem places the warning icon between the
+track name and duration; clicking opens a solid, readable modal. It rechecks the
+warning after scans, exports and returning from that track's editor; no database
+migration is needed.
 Unedited ordinary LRC may upgrade to real word timing. Explicit editor saves,
 instrumental records and existing word timing remain protected. TrackItem uses
 `libraryLyricsStatus`: real line timestamps mean Synced, untimed editing rows
@@ -25,7 +30,7 @@ in editable fields is not intercepted. Save completion preserves in-flight edits
 Timing-step and loop-context fields reuse shared `.select`/`.input` theme styles
 with explicit light/dark native color schemes for readable controls and options.
 
-**Tech Stack**: Vue 3 (`<script setup>`), Vite, Tailwind CSS, Vue Final Modal, Floating Vue, Vue Toastification, TanStack Vue Virtual, CodeMirror, `unplugin-icons` + Iconify Material Design Icons (`@iconify-json/mdi`).
+**Tech Stack**: Vue 3.5 (`<script setup>`), Vite 6, Tailwind CSS 3, Tauri 2, Vue Final Modal, Floating Vue, Vue Toastification, TanStack Vue Virtual, CodeMirror, `unplugin-icons` + Iconify Material Design Icons (`@iconify-json/mdi`). Frontend dependencies are locked in `package-lock.json`; Vitest 4 runs component and utility tests.
 
 **Code Quality**: ESLint with Vue plugin + Prettier for formatting. Run `npm run lint` to check, `npm run format` to format.
 
@@ -150,8 +155,8 @@ colors and apply-marker confirmation remains a separate local-draft action.
 - Player bar: playback speed control (`0.5x`-`2.0x`)
 - Waveform: `EditLyricsV2Waveform.vue` is a compact canvas strip below the existing transport. `useAudioWaveform` requests backend-owned `get_audio_waveform` data once per source/mount (explicit retry on error), invalidates stale responses, and keeps no shared JS cache. `waveform-viewport.js` owns bounded zoom/pan, time/pixel mapping, and max-peak pixel aggregation. Resize/DPR and theme changes redraw static peaks/ruler; playback only moves a CSS playhead. Zoom anchors at a visible playhead or the window midpoint; a native range pans while paused. Click and isolated slider keyboard controls emit seconds without changing lyric timestamps. `useWaveformPlayback` hides wrong-track/loading progress, loads the editor source before seeking, and awaits `usePlayer.seek(target, { preservePaused })` for toast errors; pointer seeks explicitly request playback while keyboard inspection preserves pause, including its first queued seek. A shallow pending-seek record holds the chosen cursor through load/resume updates until position acknowledgement (250ms tolerance), with a one-second recovery timer; source changes, errors and disposal cancel pending work. Play resumes a matching active source, including a stale playing state, rather than reloading it. Native click/click/double-click sequences cancel the deferred pointer seek so zoom does not start paused audio. The playhead interpolates left over 40ms only during playback and respects reduced motion. Canvas RAF and resize/theme observers are disposed on unmount. Component tests use an in-memory Vue renderer for keyboard/ARIA controls, loading/error/retry states, minute-rollover formatting, and canvas cleanup.
 - Line status: each synced line row shows a tiny word-sync status dot
-- Word timing: timing-only boxes, selected divider dragging, guarded `Z` playback sync/advance, precise Start/End fields and unchanged sentence markers
-- Word timing disclosure defaults collapsed; only expanded lanes mount and bind word hotkeys. Expanded word bindings take precedence over conflicting phrase actions, while history/save retain priority. A native zoom range uniformly enlarges the whole horizontal timeline from 1x to 8x (default 2x), preserving linear drag mapping and limiting layout size even for 1ms words. Selected boundaries scroll into view; guarded matching playback follows only when not manually inspecting or pending/actively dragging. Paused matching cursors/highlights remain visible with no automatic scrolling; wrong-source progress is hidden. Pointer identity is enforced; cancellation, blur, synchronous document/word changes, collapse, and unmount discard drag previews and remove listeners. Pointer-down freezes geometry and grab offset before threshold. Segmentation generations invalidate stale selection/unmount responses and prevent requests after disposal. Disclosure, zoom, and scrolling never persist timings or write files.
+- Word timing: timing-only boxes, selected divider dragging, guarded `Z` playback sync/advance, precise Start/End fields and unchanged sentence markers. Clicking or activating a word seeks to its start through `seek-word`; running playback continues, while a paused source stays paused until Play is pressed. Word focus alone updates selection without seeking.
+- Word timing disclosure defaults collapsed; only expanded lanes mount and bind word hotkeys. Expanded word bindings take precedence over conflicting phrase actions, while history/save retain priority. A native zoom range uniformly enlarges the whole horizontal timeline from 1x to 8x (default 2x), preserving linear drag mapping and limiting layout size even for 1ms words. A persistent horizontal range mirrors the lane's `scrollLeft` and remains reachable when desktop overlay scrollbars fade; native wheel/trackpad scrolling remains supported. Selected boundaries scroll into view; guarded matching playback follows only when not manually inspecting or pending/actively dragging. Paused matching cursors/highlights remain visible with no automatic scrolling; wrong-source progress is hidden. Pointer identity is enforced; cancellation, blur, synchronous document/word changes, collapse, and unmount discard drag previews and remove listeners. Pointer-down freezes geometry and grab offset before threshold. Segmentation generations invalidate stale selection/unmount responses and prevent requests after disposal. Disclosure, zoom, and scrolling never persist timings or write files.
 - Waveform follow: enabled by default with a compact toggle; pages forward/backward only for the matching active playing source, including loops. Paused panning stays manual. Progress within a page (including the final duration) retains viewport identity and does not redraw peaks.
 - Time readouts: `EditLyricsV2PlayerBar` labels its recording clocks Elapsed/Total (`hh:mm:ss`); waveform Position uses milliseconds while View identifies the visible range. Start/End describe the selected lyric, independent of playback position.
 - Neighbor warnings: the parent supplies the previous lyric and next start. `waveformNeighborWarnings` derives crossed-boundary distances from the live pair, using the saved selected start for a previous inferred end and skipping untimed/invalid neighbors. A conditional wrapping note persists through zoom/pan, with optional default-on confirmation protection and without changing existing neighboring timestamps. Final-line Loop falls back to a known positive recording duration when no explicit/next end exists.
@@ -162,10 +167,11 @@ colors and apply-marker confirmation remains a separate local-draft action.
 - Point zoom (.11): double-click maps the pointer through the current viewport and halves its span around that anchor. It shares minimum-span bounds and manual-inspection follow behavior with navigation. Single-click seeking remains; drag-time navigation and invalid pointer geometry are ignored. Zoom cannot change marker/document timestamps.
 - Marker confirmation (.10): drag release/keyboard nudges stage a component-local start/end draft. The historical Apply Markers control emitted `update-markers` with both milliseconds, original line identity/index and duration; `updateWaveformMarkers` rejects stale or invalid pairs, shifts word timings once and records one history snapshot. Cancel discards the pair; a canceled drag restores the pre-drag draft. Source/selection/document changes and unmount discard unconfirmed drafts. Save/export never sees a pending draft. Bounds validate the virtual shifted-word line and the proposed end; navigation/follow cannot mutate draft timestamps.
 - Narrow word segments retain timed hover descriptions, active highlighting and divider drag timestamps; no hint bubble is rendered beneath selected dividers. Active words use a mutually exclusive dark accent/white text pair in both themes. Waveform controls preserve editor history and registry-configured global shortcuts while isolating local navigation/timing keys. The desktop window already enforces a 1024px minimum width; the waveform strip itself supports narrower embedded widths.
-- Boundary sync: validates the selected interval without moving neighbors; manual confirmation disables Sync until a new timing adjustment.
+- Boundary sync: validates the selected interval without moving neighbors; every accepted sync records a word-specific confirmation, including before auto-advance. Sync stays disabled when returning to that unchanged word and unlocks only after a timing adjustment.
 - Lyric following: `useLyricsFollow` selects the latest active nonblank cue during matching playback. Manual selection disables following; loops, marker drafts/drags, word edits and multi-selection block it. Selection changes never mutate timing. Blank cues/gaps and repeated phrases are resolved by timestamp, not wording.
 - Sentence markers: initial selection skips blank/untimed rows; valid existing selections survive mode changes. Sentence sync/nudges and word updates use shared document bounds checks, matching-recording progress and loaded duration. Failed sync-and-advance shortcuts do not advance. All word-only updates preserve sentence start/end markers. Marker selection follows playback only when lyric following is enabled and editing/loop guards allow it.
 - Word wording: the word lane is timing-only. Spelling/wording edits belong to sentence rows; double-click selects without splitting, F2/right-click do not edit, and Delete is suppressed while the lane is expanded to protect the sentence.
+- Word lane selection: clicking or keyboard-activating a word seeks the matching editor audio to its start; active playback continues and paused playback stays paused. The lane's Play starts from the selected word; Resume continues at the paused playhead. Tab focus only changes selection. Sync still stamps the selected start from playback.
 - Reset behavior: clears persisted word timings and reloads default (non-persisted) segmentation
 - Line-start sync behavior: syncing line start shifts existing word boundaries by the same offset
 - Selection behavior: selecting a synced line starts at the second boundary by default
@@ -423,12 +429,24 @@ track before awaiting Save. Standard import now rejects seconds >= 60.
 
 ### Word Sync lock and Pause/Resume (2.2.7)
 
-Manual confirmation is keyed by line/index, serialized word timing and lane bounds.
-The next Sync locks matching timing; the UI uses a gray disabled button and a help
-explanation, while the composable also blocks shortcuts. Playback/reselection and
-unchanged numeric values cannot unlock it. Accepted new edits and changed words/
-bounds invalidate the lock. Ordinary Sync retains advance; matching duplicate
-playback/selection/document states return false silently to prevent another advance.
+Pending manual adjustments and confirmations are keyed by source, line/index and
+that word's text/start/effective end. Both maps are stored separately per lyric
+source, so closing and reopening the app restores an unconfirmed adjustment as
+well as a confirmed lock without creating a recovery draft. Sync is enabled only
+for the selected word while it has a pending adjustment; untouched words and
+sentences remain disabled. Selecting another word hides the pending highlight,
+and returning to that word restores it after explicit selection. Sync sets the
+selected word's start to playback inside its allowed bounds, records the accepted
+timing and turns gray. The UI and shortcut handlers both require a pending timing
+edit before Sync can run. Playback/reselection and unchanged numeric values
+cannot unlock a synced word. Only a change to that word's effective timing
+invalidates its lock. Reset clears only the selected sentence's pending and
+confirmed records.
+Before a dirty save, `countUnconfirmedWordAdjustments` compares pending map
+fingerprints to current document words and excludes stale/confirmed entries. The
+editor asks whether to keep editing or save; accepting serializes the current
+edited word timings unchanged. The shared fingerprint helper keeps lane locks
+and this save guard aligned.
 The added word-lane Pause/Resume emits through SyncedLyricsEditor to existing pause
 and resumeOrPlay functions. Play retains sentence replay; pause/resume retains
 position and loop state without lyric edits or explicit seeks.
@@ -511,9 +529,12 @@ applies acceptance in one undoable update. Pending sentence text participates
 in preparation; no state changes on Cancel or errors. Export captures the exact
 prepared serialization before native Save, preserving edits made during Save.
 TXT/LRC-only exports commit pending text before capturing the same snapshot but
-never estimate words. The green dot uses `hasMeasuredWordTiming`, including
-accepted estimates. Library batch exporters/publishing are unchanged.
-
+never estimate words. In Word timing, **Accept estimates** materializes the
+currently displayed estimates for only the selected sentence through the normal
+validated, undoable `update:words` path. It is disabled for valid saved word
+timing and pending marker edits; selecting another sentence recomputes eligibility.
+The green dot uses `hasMeasuredWordTiming`, including accepted estimates. Library
+batch exporters/publishing are unchanged.
 
 ### Optional audio alignment
 
@@ -558,7 +579,6 @@ Sentence rows, read-only Word preview and alignment preview share that clock.
 The existing explicit estimate-approval export workflow completes skipped timed
 sentences only after approval; no audio-derived result is silently invented.
 
-
 Sentence-only audio alignment (2.2.7, version unchanged) reuses the same native
 worker/consent path. The frontend removes saved sentence bounds from an isolated
 request copy to select whole-recording alignment, then mergeSentenceAlignment
@@ -570,7 +590,6 @@ stable, never moving original skipped rows; invalid original overlaps still
 require correction. Apply requires explicit preview replacement confirmation for
 existing sentence ranges, snapshots remain guarded, and one history/recovery
 update supports Undo/Redo. No native API/model changes or automatic Save.
-
 
 Platform packaging resumed for AppImage and build-only Windows MSI validation.
 Alignment setup uses platform-specific private Python paths; Windows discovers

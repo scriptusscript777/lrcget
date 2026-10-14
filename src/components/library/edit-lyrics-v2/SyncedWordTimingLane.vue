@@ -95,7 +95,7 @@
             class="button button-normal text-xs px-2 py-1 rounded flex items-center gap-1"
             :title="playLineTitle"
             :disabled="!isWordSyncAvailable"
-            @click="handlePlayLine"
+            @click="handlePlaySelectedWord"
           >
             <Play class="w-3.5 h-3.5" />
             <span>Play</span>
@@ -120,13 +120,25 @@
           <button
             v-tooltip="editorTooltip(syncWordHelp)"
             class="button text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
-            :class="isManualTimingConfirmed ? 'button-normal' : 'button-primary'"
+            :class="isSyncAdjustmentActive ? 'button-primary' : 'button-normal'"
             :title="syncWordHelp"
-            :disabled="isManualTimingConfirmed || !!dragState || !!dragStartPos"
+            :disabled="!isSyncAdjustmentActive || !!dragState || !!dragStartPos"
             @click="handleSyncWord"
           >
             <Equal class="w-3.5 h-3.5" />
-            <span>Sync word</span>
+            <span>Sync words</span>
+          </button>
+          <button
+            v-tooltip="editorTooltip(acceptEstimatedTimingsHelp)"
+            class="button text-xs px-2 py-1 rounded flex items-center gap-1 disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="canAcceptEstimatedTimings ? 'button-primary' : 'button-normal'"
+            :title="acceptEstimatedTimingsHelp"
+            :disabled="!canAcceptEstimatedTimings || !!dragState || !!dragStartPos"
+            data-testid="accept-estimated-word-timings"
+            @click="handleAcceptEstimatedTimings"
+          >
+            <Check class="w-3.5 h-3.5" />
+            <span>Accept estimates</span>
           </button>
           <button
             v-tooltip="
@@ -202,6 +214,7 @@
         ref="scrollElement"
         class="h-[76px] min-w-0 overflow-x-auto overflow-y-hidden pt-6 pb-2"
         data-testid="word-timing-scroll"
+        @scroll="updateHorizontalScrollPosition"
         @wheel="inspectTimeline"
         @pointerdown="inspectTimeline"
       >
@@ -246,7 +259,7 @@
             :style="{ left: `${timeToPercent(displayedWords[index].start_ms)}%` }"
             :title="`Adjust start of ${displayedWords[index].text}`"
             @pointerdown="handleBoundaryPointerDown(index, $event)"
-            @click="selectBoundary(index, $event)"
+            @click="selectTimingBoundary(index, $event)"
           >
             <span
               class="absolute left-1/2 top-0 bottom-0 w-0.5 -translate-x-1/2 transition-all duration-150 ease-linear bg-neutral-300/70 dark:bg-hoa-1000/70 group-hover:bg-neutral-600 dark:group-hover:bg-neutral-300 group-hover:w-[3px] group-hover:ring-1 group-hover:ring-neutral-500/25"
@@ -282,6 +295,19 @@
           </div>
         </div>
       </div>
+      <input
+        v-if="horizontalScrollMax > 0"
+        class="mt-1 h-4 w-full cursor-ew-resize accent-hoa-1500"
+        type="range"
+        min="0"
+        :max="horizontalScrollMax"
+        step="1"
+        :value="horizontalScrollPosition"
+        aria-label="Scroll word timing timeline"
+        title="Scroll the word timing timeline horizontally"
+        data-testid="word-timing-scroll-control"
+        @input="setHorizontalScrollPosition"
+      />
     </template>
     <div
       v-if="wordLoopEnabled && !isWordSyncAvailable"
@@ -305,6 +331,7 @@ import { vTooltip, editorTooltip } from '@/utils/editor-tooltip.js'
 import { computed, onMounted, onUnmounted, ref, watch, nextTick } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import Repeat from '~icons/mdi/repeat'
+import Check from '~icons/mdi/check'
 import { selectedWordRange, editWordBoundary } from '@/utils/word-loop-range.js'
 import Equal from '~icons/mdi/equal'
 import Play from '~icons/mdi/play'
@@ -316,12 +343,12 @@ import SyncedWordTimingSegment from '@/components/library/edit-lyrics-v2/SyncedW
 import { useEditLyricsV2WordBoundaryDrag } from '@/composables/edit-lyrics-v2/useEditLyricsV2WordBoundaryDrag.js'
 import { useEditLyricsV2WordTimingHotkeys } from '@/composables/edit-lyrics-v2/useEditLyricsV2WordTimingHotkeys.js'
 import {
-  syncedEditorShortcutBindings,
   wordTimingShortcutBindings,
   withShortcutTitle,
 } from '@/composables/edit-lyrics-v2/shortcutRegistry.js'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 import { ensureLineWords, distributeWordTimings, hasValidWords } from '@/utils/word-tokenizer.js'
+import { hasMeasuredWordTiming } from '@/utils/word-timing-status.js'
 
 const props = defineProps({
   playing: { type: Boolean, default: false },
@@ -351,11 +378,15 @@ const props = defineProps({
     type: Number,
     default: -1,
   },
+  confirmedWordTimings: { type: Array, default: () => [] },
+  adjustedWordTimings: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits([
   'update:words',
   'word-timing-edited',
+  'seek-word',
+  'play-word',
   'play-line',
   'pause',
   'resume-playback',
@@ -364,12 +395,16 @@ const emit = defineEmits([
   'word-loop-target',
   'toggle-word-loop',
   'toggle-sentence-loop',
+  'confirmed-word-timings-change',
+  'adjusted-word-timings-change',
 ])
 
 const timelineElement = ref(null)
 const scrollElement = ref(null)
 const timelineZoom = ref(2)
 const manualInspection = ref(false)
+const horizontalScrollPosition = ref(0)
+const horizontalScrollMax = ref(0)
 let timelineObserver
 let disposed = false
 const timelineWidth = ref(0)
@@ -384,14 +419,10 @@ const selectedWordIndex = ref(
 )
 const timingMessage = ref('')
 
-const playLineTitle = withShortcutTitle(
-  'Play line; keep Loop on when enabled, otherwise continue forward',
-  syncedEditorShortcutBindings,
-  'replaySelectedLine'
-)
+const playLineTitle = 'Play from the selected word; keep Loop on when enabled'
 
 const syncWordTitle = withShortcutTitle(
-  'Keep a manually adjusted divider; otherwise sync the selected word start to playback within its neighbors. Sentence markers stay fixed.',
+  'Sync all word timing markers in this sentence, keeping their edited positions.',
   wordTimingShortcutBindings,
   'syncSelectedSeparatorAndAdvance'
 )
@@ -476,8 +507,12 @@ const words = computed(() => {
 
 const {
   clearManualTiming,
+  restoreConfirmedBoundaries,
+  restoreAdjustedBoundaries,
   hasAdjustedBoundary,
   isManualTimingConfirmed,
+  hasPendingAdjustedBoundaries,
+  confirmSentenceWordTimings,
   rememberAdjustedBoundary,
   consumeOwnWordUpdate,
   dragState,
@@ -490,7 +525,6 @@ const {
   isBoundarySelected,
   selectPreviousBoundary,
   selectNextBoundary,
-  syncSelectedBoundary,
   resetBoundarySelection,
   cancelBoundaryInteraction,
 } = useEditLyricsV2WordBoundaryDrag({
@@ -500,6 +534,10 @@ const {
   timelineStartMs: laneStartMs,
   timelineEndMs: laneEndMs,
   selectedLineIndex: computed(() => props.selectedLineIndex),
+  initialConfirmedBoundaries: props.confirmedWordTimings,
+  initialAdjustedBoundaries: props.adjustedWordTimings,
+  onConfirmedBoundariesChange: entries => emit('confirmed-word-timings-change', entries),
+  onAdjustedBoundariesChange: entries => emit('adjusted-word-timings-change', entries),
   onUpdateWords: payload => emit('update:words', payload),
   onWordTimingEdited: payload => {
     timingMessage.value = ''
@@ -510,11 +548,69 @@ const {
   },
 })
 
-const syncWordHelp = computed(() =>
-  isManualTimingConfirmed.value
-    ? 'Word timing is set. Adjust a divider or Start/End to enable Sync word again.'
-    : syncWordTitle
+watch(
+  () => props.confirmedWordTimings,
+  entries => restoreConfirmedBoundaries(entries),
+  { deep: true, flush: 'sync' }
 )
+watch(
+  () => props.adjustedWordTimings,
+  entries => restoreAdjustedBoundaries(entries),
+  { deep: true, flush: 'sync' }
+)
+
+const syncWordHelp = computed(() => {
+  if (hasPendingAdjustedBoundaries.value) {
+    return hasAdjustedBoundary.value
+      ? syncWordTitle
+      : 'Another word in this sentence has an edited marker. Sync word will confirm all markers.'
+  }
+  return isManualTimingConfirmed.value
+    ? 'All word markers in this sentence are synced. Edit any marker to enable Sync word again.'
+    : 'Adjust one or more word timing markers in this sentence to enable Sync word.'
+})
+const isSyncAdjustmentActive = hasPendingAdjustedBoundaries
+
+const canAcceptEstimatedTimings = computed(() => {
+  const line = props.selectedLine
+  if (
+    !isWordSyncAvailable.value ||
+    hasMeasuredWordTiming(line) ||
+    hasPendingAdjustedBoundaries.value ||
+    isManualTimingConfirmed.value
+  ) {
+    return false
+  }
+
+  const estimatedWords = words.value
+  return (
+    estimatedWords.length > 0 &&
+    estimatedWords.map(word => word.text).join('') === line.text &&
+    estimatedWords.every((word, index) => {
+      const nextStart = estimatedWords[index + 1]?.start_ms ?? actualLineEndMs.value
+      return (
+        Number.isSafeInteger(word.start_ms) &&
+        word.start_ms >= lineStartMs.value &&
+        word.start_ms < nextStart &&
+        word.start_ms < actualLineEndMs.value
+      )
+    })
+  )
+})
+const acceptEstimatedTimingsHelp = computed(() =>
+  canAcceptEstimatedTimings.value
+    ? 'Save the displayed estimated word times for this sentence. Review them by listening; accepting estimates does not verify their accuracy.'
+    : 'Available when this sentence has estimated word times that are not already saved or awaiting Sync words.'
+)
+
+const handleAcceptEstimatedTimings = () => {
+  if (!canAcceptEstimatedTimings.value || dragState.value || dragStartPos.value) return false
+  emit('update:words', {
+    lineIndex: props.selectedLineIndex,
+    words: words.value.map(word => ({ ...word })),
+  })
+  return true
+}
 
 watch(
   () => Boolean(dragState.value || dragStartPos.value),
@@ -551,6 +647,9 @@ watch(
 
 const editSelectedBoundary = (boundary, event) => {
   if (dragState.value || dragStartPos.value) return
+  // Keep the Sync action tied to the word whose time field is being edited,
+  // even if a selection update has not flushed yet.
+  selectTimingBoundary(selectedWordIndex.value)
   timingMessage.value = ''
   const timeMs = event.target.value.trim() === '' ? NaN : Number(event.target.value) * 1000
   const updatedWords = editWordBoundary(
@@ -561,22 +660,34 @@ const editSelectedBoundary = (boundary, event) => {
     lineStartMs.value,
     actualLineEndMs.value
   )
-  if (updatedWords)
+  const currentRange = selectedWordRange(
+    words.value,
+    selectedWordIndex.value,
+    actualLineEndMs.value
+  )
+  const updatedRange = updatedWords
+    ? selectedWordRange(updatedWords, selectedWordIndex.value, actualLineEndMs.value)
+    : null
+  const boundaryChanged =
+    currentRange &&
+    updatedRange &&
+    (currentRange.startMs !== updatedRange.startMs || currentRange.endMs !== updatedRange.endMs)
+
+  if (updatedWords && boundaryChanged)
     emit('update:words', {
       lineIndex: props.selectedLineIndex,
       words: updatedWords,
       lineStartMs: undefined,
       onResult: accepted => {
-        if (accepted)
-          rememberAdjustedBoundary(selectedWordIndex.value, updatedWords, {
-            includePrevious: boundary === 'start',
-          })
+        if (accepted) {
+          rememberAdjustedBoundary(selectedWordIndex.value, updatedWords)
+        }
         else
           timingMessage.value =
             'Word timing was not applied; its sentence or overlap bounds changed.'
       },
     })
-  else
+  else if (!updatedWords)
     timingMessage.value =
       'Word timing was not changed: keep its start before its end and inside its neighboring words.'
   // Reflect the actual accepted/clamped document after parent validation.
@@ -601,6 +712,24 @@ const updateTimelineWidth = () => {
   if (timelineElement.value) {
     timelineWidth.value = timelineElement.value.clientWidth
   }
+  updateHorizontalScrollPosition()
+}
+
+const updateHorizontalScrollPosition = () => {
+  const element = scrollElement.value
+  if (!element) return
+  horizontalScrollMax.value = Math.max(0, element.scrollWidth - element.clientWidth)
+  horizontalScrollPosition.value = Math.max(
+    0,
+    Math.min(horizontalScrollMax.value, element.scrollLeft)
+  )
+}
+
+const setHorizontalScrollPosition = event => {
+  if (!scrollElement.value) return
+  manualInspection.value = true
+  scrollElement.value.scrollLeft = Number(event.target.value)
+  updateHorizontalScrollPosition()
 }
 
 const inspectTimeline = event => {
@@ -655,11 +784,17 @@ const timeToPercent = timeMs => {
 const getWordEndMs = index =>
   selectedWordRange(displayedWords.value, index, laneEndMs.value)?.endMs ?? laneEndMs.value
 
-const selectWord = index => {
+const selectWord = (index, seekToWord = true) => {
   if (!Number.isInteger(index) || !words.value[index] || dragState.value || dragStartPos.value)
     return
   selectedWordIndex.value = index
-  selectBoundary(index)
+  selectTimingBoundary(index)
+  if (seekToWord && Number.isFinite(words.value[index].start_ms))
+    emit('seek-word', { startMs: words.value[index].start_ms })
+}
+
+const selectTimingBoundary = (index, event) => {
+  selectBoundary(index, event)
 }
 
 watch(words, current => {
@@ -698,29 +833,17 @@ const getBoundaryLineClass = index => {
 
 const handleSyncWord = () => {
   timingMessage.value = ''
-  const keptDrag = hasAdjustedBoundary.value
-  const selectedBoundaryBeforeSync = selectedBoundaryIndex.value
-  const synced = syncSelectedBoundary(props.progressMs, { advance: !props.wordLoopEnabled })
-
-  if (
-    synced &&
-    !props.wordLoopEnabled &&
-    !keptDrag &&
-    selectedBoundaryBeforeSync === words.value.length - 1 &&
-    props.selectedLineIndex < props.allLines.length - 1
-  ) {
-    emit('select-next-line')
-  }
+  confirmSentenceWordTimings()
 }
 
 const handleSyncWordNoAdvance = () => {
-  timingMessage.value = ''
-  syncSelectedBoundary(props.progressMs, { advance: false })
+  handleSyncWord()
 }
 
-const handlePlayLine = () => {
-  if (!isWordSyncAvailable.value) return
-  emit('play-line', props.selectedLineIndex)
+const handlePlaySelectedWord = () => {
+  const startMs = words.value[selectedWordIndex.value]?.start_ms
+  if (!isWordSyncAvailable.value || !Number.isFinite(startMs)) return
+  emit('play-word', { startMs })
 }
 
 const loadDefaultSegmentation = async ({ force = false } = {}) => {
@@ -783,8 +906,12 @@ const { bindWordTimingHotkeys, unbindWordTimingHotkeys } = useEditLyricsV2WordTi
   words,
   syncSelectedBoundaryAtProgress: () => handleSyncWord(),
   syncSelectedBoundaryAtProgressNoAdvance: () => handleSyncWordNoAdvance(),
-  selectPreviousBoundary: () => selectPreviousBoundary(),
-  selectNextBoundary: () => selectNextBoundary(),
+  selectPreviousBoundary: () => {
+    selectPreviousBoundary()
+  },
+  selectNextBoundary: () => {
+    selectNextBoundary()
+  },
   resetBoundarySelection: () => resetBoundarySelection(),
 })
 
@@ -920,6 +1047,7 @@ watch(
 onMounted(() => {
   timelineObserver = new ResizeObserver(updateTimelineWidth)
   if (timelineElement.value) timelineObserver.observe(timelineElement.value)
+  if (scrollElement.value) timelineObserver.observe(scrollElement.value)
   updateTimelineWidth()
   revealTime(displayedWords.value[selectedBoundaryIndex.value]?.start_ms)
   window.addEventListener('resize', updateTimelineWidth)
@@ -942,7 +1070,10 @@ watch(
   timelineElement,
   element => {
     timelineObserver?.disconnect()
-    if (element) timelineObserver?.observe(element)
+    if (element) {
+      timelineObserver?.observe(element)
+      if (scrollElement.value) timelineObserver?.observe(scrollElement.value)
+    }
     updateTimelineWidth()
   },
   { flush: 'post' }

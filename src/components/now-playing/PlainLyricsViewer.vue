@@ -65,7 +65,7 @@ import ContentCopy from '~icons/mdi/content-copy'
 import { ref, computed } from 'vue'
 import { parseLyricsfile } from '@/utils/lyricsfile.js'
 
-const props = defineProps(['lyricsfile'])
+const props = defineProps({ lyricsfile: { type: String, default: undefined } })
 
 const expanded = ref(false)
 const copied = ref(false)
@@ -95,7 +95,7 @@ const onCopy = async () => {
     await navigator.clipboard.writeText(text)
     copied.value = true
     setTimeout(() => (copied.value = false), 1500)
-  } catch (e) {
+  } catch {
     // swallow
   }
 }

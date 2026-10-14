@@ -6,7 +6,15 @@ import { open } from '@tauri-apps/plugin-dialog'
 import Editor from './EditLyricsV2.vue'
 import { createSyncedLinesFromPlain } from '@/utils/lyricsfile.js'
 
-const mocks = vi.hoisted(() => ({ document: null, modals: [], toast: {} }))
+const mocks = vi.hoisted(() => ({
+  document: null,
+  modals: [],
+  toast: {},
+  waveformPlaying: null,
+  waveformProgress: null,
+  seekWaveform: null,
+  playLineAtOffset: null,
+}))
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 vi.mock('@tauri-apps/plugin-dialog', () => ({ open: vi.fn() }))
 vi.mock('@tauri-apps/plugin-clipboard-manager', () => ({ readText: vi.fn() }))
@@ -26,7 +34,12 @@ vi.mock('@/composables/edit-lyrics-v2/useEditLyricsV2Document.js', () => ({
   useEditLyricsV2Document: () => mocks.document,
 }))
 vi.mock('@/composables/edit-lyrics-v2/useWaveformPlayback.js', () => ({
-  useWaveformPlayback: () => ({ initializeAudio: vi.fn() }),
+  useWaveformPlayback: () => ({
+    initializeAudio: vi.fn(),
+    waveformPlaying: mocks.waveformPlaying,
+    waveformProgress: mocks.waveformProgress,
+    seekWaveform: mocks.seekWaveform,
+  }),
 }))
 vi.mock('@/composables/edit-lyrics-v2/useEditLyricsV2Publish.js', () => ({
   useEditLyricsV2Publish: () => ({}),
@@ -35,7 +48,11 @@ vi.mock('@/composables/edit-lyrics-v2/useEditLyricsV2Export.js', () => ({
   useEditLyricsV2Export: () => ({ isExporting: mocks.document.isExporting }),
 }))
 vi.mock('@/composables/edit-lyrics-v2/useEditLyricsV2Playback.js', () => ({
-  useEditLyricsV2Playback: () => ({ loopEnabled: { value: false } }),
+  useEditLyricsV2Playback: () => ({
+    loopEnabled: { value: false },
+    loopMode: { value: 'phrase' },
+    playLineAtOffset: mocks.playLineAtOffset,
+  }),
 }))
 vi.mock('@/composables/edit-lyrics-v2/useEditLyricsV2Hotkeys.js', () => ({
   useEditLyricsV2Hotkeys: () => ({ bindHotkeys: vi.fn(), unbindHotkeys: vi.fn() }),
@@ -63,6 +80,10 @@ beforeEach(() => {
   vi.clearAllMocks()
   mocks.modals = []
   mocks.toast = { success: vi.fn(), error: vi.fn() }
+  mocks.waveformPlaying = ref(false)
+  mocks.waveformProgress = ref(0)
+  mocks.seekWaveform = vi.fn()
+  mocks.playLineAtOffset = vi.fn()
   const plainLyrics = ref('')
   const syncedLines = ref([])
   const isInstrumental = ref(false)
@@ -131,6 +152,30 @@ function deferred() {
 }
 
 describe('lyrics file import', () => {
+  it('seeks to a selected word without changing whether playback is paused', () => {
+    const { state } = mount()
+    state.seekToWordStart({ startMs: 1500 })
+    expect(mocks.seekWaveform).toHaveBeenCalledWith(1.5, { play: false })
+
+    mocks.seekWaveform.mockClear()
+    mocks.waveformPlaying.value = true
+    state.seekToWordStart({ startMs: 2400 })
+    expect(mocks.seekWaveform).toHaveBeenCalledWith(2.4, { play: true })
+  })
+
+  it('keeps word-marker edits paused until the user resumes playback', async () => {
+    const { state, document } = mount()
+    document.syncedLines.value = [{ text: 'Line', start_ms: 1000, end_ms: 3000 }]
+
+    await state.handleWordTimingEdited({ startMs: 1200 })
+    expect(mocks.playLineAtOffset).not.toHaveBeenCalled()
+
+    mocks.waveformPlaying.value = true
+    await state.handleWordTimingEdited({ startMs: 1200 })
+    expect(mocks.playLineAtOffset).toHaveBeenCalledOnce()
+    expect(mocks.playLineAtOffset).toHaveBeenCalledWith(0, 200)
+  })
+
   it('imports untimed TXT into untimed synced rows, without writes or invented timestamps', async () => {
     const { state, document } = mount()
     await state.handleImportLrcFile()

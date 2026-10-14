@@ -5,9 +5,8 @@
 Pause, select the sentence and zoom the **word lane**, which is independent of
 waveform zoom. Check the selected word's Start/End and neighboring boundaries.
 A very short or invalid saved interval can make the label hard to see; this is
-not proof the word text was deleted. The first-word disappearance reported by
-Rick has not yet been reproduced on his actual song. Do not reset the whole
-sentence simply to expose a label if you want to preserve custom word timing.
+not proof the word text was deleted. Do not reset the whole sentence simply to
+expose a label if you want to preserve custom word timing.
 
 ## Reset made the word appear again
 
@@ -132,7 +131,6 @@ Use **Reset words** to rebuild only the selected sentence’s word timing estima
 Undo restores the previous timing. Master reset has been removed. For external
 TXT/LRC/ELRC replacement, use Import and its existing confirmation.
 
-
 ### Matching ELRC does not appear as Synced
 
 Use the audio file's exact basename with `.elrc` in the same folder, then refresh
@@ -141,7 +139,11 @@ Nonzero `[offset:...]`, malformed or crossed timestamps are rejected; apply any
 offset to the timestamps first. Valid ordinary LRC/TXT is used as fallback.
 Explicit saved edits and existing word timing remain protected from sidecar
 replacement; use explicit Import in the editor when intentionally replacing them.
-
+When a present `.lrc` or `.elrc` sidecar is rejected, an amber warning icon between
+that track's name and duration opens a readable warning with the reason and any
+valid alternative. The warning is track-specific and clears after the file is
+repaired and the app rechecks it on return to the library, after a rescan, or after
+a successful export.
 
 ## Basic and optional Automatic audio alignment
 

@@ -256,7 +256,7 @@ import { useExportPreferences } from '@/composables/export-preferences.js'
 import MiniSearch from './MiniSearch.vue'
 import { useDownloadOptions, useDownloadTrigger } from '@/composables/download-options.js'
 
-const props = defineProps(['activeTab'])
+const props = defineProps({ activeTab: { type: String, default: undefined } })
 const emit = defineEmits([
   'changeActiveTab',
   'showConfig',

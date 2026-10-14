@@ -3100,6 +3100,7 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "symphonia 0.5.5",
+ "symphonia 0.6.1",
  "tauri",
  "tauri-build",
  "tauri-plugin-clipboard-manager",

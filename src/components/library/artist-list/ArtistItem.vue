@@ -20,9 +20,9 @@
       <div v-if="artist" class="transition gap-1">
         <button
           class="text-neutral-800 hover:bg-hoa-1100 hover:text-white rounded p-2 transition dark:text-white dark:hover:bg-hoa-1100 dark:hover:text-white"
-          @click.stop.prevent="downloadLyricsMultiple"
           :disabled="!artist || artist.id !== props.artistId"
           :aria-label="`Download lyrics for ${artist?.name ?? ''}`"
+          @click.stop.prevent="downloadLyricsMultiple"
         >
           <DownloadMultiple />
         </button>
@@ -37,7 +37,7 @@ import { ref, onMounted, watch } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useDownloadTrigger } from '@/composables/download-options.js'
 
-const props = defineProps(['artistId'])
+const props = defineProps({ artistId: { type: Number, default: undefined } })
 defineEmits(['openArtist'])
 
 const artist = ref(null)

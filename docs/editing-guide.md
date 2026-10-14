@@ -189,10 +189,12 @@ Synced does not invent timestamps or overwrite your original text file.
 - Sentence start sync sets the start marker to playback and keeps the end fixed.
 - Sentence shift arrows move the entire sentence, its words and both markers.
 - End sync/arrows change only the sentence end and its end marker.
-- Word timing leaves sentence markers fixed, including the first word. The next
-  Sync word after a manual drag/precision edit preserves that accepted timing and
-  selection. Other Sync actions stamp valid playback and advance when Loop word
-  is off; Loop word keeps selection. Out-of-range stamps are rejected.
+- Word timing leaves sentence markers fixed, including the first word. Sync word
+  is enabled only for the selected word after a timing-box adjustment. It sets
+  that word's start to the current playback position within sentence and neighbor
+  bounds, then turns gray until timing changes again. Untouched words remain
+  disabled. A pending word lights Sync when selected, including after navigating
+  away or reopening the app. Loop word keeps selection; otherwise Sync advances.
 - Timing step chooses the nudge amount; choosing a step does not move anything.
 - Follow Lyrics moves marker selection during playback, not saved timestamps.
   Manual selection, marker previews, word/text editing and loops hold the target.
@@ -241,7 +243,11 @@ scrolling leave both preview and committed recording timestamps unchanged.
 Save/export uses the confirmed lyric document: apply your markers first.
 
 Expand **Word timing** only when individual-word timing is needed. Its 1-8x
-zoom and horizontal scrolling are separate from waveform zoom.
+zoom and horizontal scrolling are separate from waveform zoom. A persistent
+horizontal **Scroll word timing timeline** control below the lane remains
+available when **Follow Lyrics** is off, so you can manually reach later words
+without chasing a fading desktop scrollbar. Wheel and trackpad scrolling still
+work.
 
 ![Light theme: double-click point zoom with pending marker preview](screenshots/current/point-zoom-light.png)
 
@@ -256,23 +262,27 @@ word view or clicking **Follow Lyrics** also resumes it. Loops,
 marker previews, word drags and text edits hold the selected line in place.
 This changes the editing selection, not the recording or saved timestamps.
 
-Expand **Word timing** and select a line. Use **Play** to listen, **Pause/Resume**
-to pause and continue at the current position without restarting the sentence,
-and **Sync word**
-to place the selected separator at the current playback position, and the
-divider handles to refine word boundaries. The word lane has its own zoom and
+Expand **Word timing** and select a line. Click a word to move the audio and
+playhead to its start. Playing audio continues from there; paused audio stays
+paused until you press **Play**. **Play** starts from the selected word. Use
+**Pause/Resume** to pause and continue at the current position without restarting
+the sentence, and the divider handles or Start/End fields to adjust a word boundary. **Sync
+word** sets that selected word's start to the current playback position. The word
+lane has its own zoom and
 scrolling; changing it does not zoom the waveform. **Reset words** resets that line's
 word timing, so use it only when you intend to rebuild those boundaries.
 Collapse the word lane when you only need line-level timing.
 
-Word boxes are read-only text. Edit wording in the sentence row; double-click
-selects a word without splitting it. F2/right-click no longer edit word spelling,
+Word boxes are read-only text. Edit wording in the sentence row; clicking a word
+seeks to its start, and double-clicking does not split it. F2/right-click no longer edit word spelling,
 and Delete cannot remove a sentence while Word timing is expanded. Collapse the
 lane before using sentence-delete shortcuts. Every released timing drag is one
-Undo/Redo action. The next Sync word preserves manual drag/precision edits;
-the button then stays gray/disabled until another timing adjustment. Otherwise
-it stamps playback within the selected word's safe bounds. A rejected
-stamp reports why and never shifts neighbors or advances selection.
+Undo/Redo action. Sync word is enabled only for an adjusted selected word. It
+sets the word start from playback, then turns gray; an untouched word stays gray,
+and a pending edit lights again when you select that word. Pending adjustments
+and successful sync locks survive closing and reopening the app. If you save
+without syncing a pending edit, the warning's Save choice keeps the manually
+edited time in the file.
 
 ![Dark theme: word timing with safe Sync](screenshots/current/word-timing-protected-dark.png)
 
@@ -287,6 +297,17 @@ Embedding/exporting writes the track or sidecar; waveform navigation does not.
 
 **Publish** sends lyrics to LRCLIB, with confirmation. Local saving/exporting
 does not itself publish your lyrics. Player support for lyric display varies.
+
+If edited word-box timings have not been reviewed with **Sync word**, Save asks
+whether to keep editing or save the current times. Choosing **Save edited times**
+stores the exact adjusted timings; it does not restore estimates or discard edits.
+
+If estimated word markers already look right, click **Accept estimates** beside
+**Sync words** to save the displayed estimates for this sentence without moving
+them. The sentence then receives the green timing dot and word-by-word sentence
+highlight. The action is available again when you select another sentence with
+unsaved estimates; it is disabled for saved timings or pending edits. Estimates
+are not verified against the audio, so review them by listening.
 
 | Action                 | Result                                                                    |
 | ---------------------- | ------------------------------------------------------------------------- |
@@ -670,7 +691,8 @@ Manual changes are tracked independently for each word and sentence. Adjusting
 a later divider does not discard an earlier word’s manual edit. Sync word
 retains those times and turns gray/disabled for that word until its timing changes.
 A shared divider also changes the preceding word’s implicit end. Ordinary live
-sync advances to the next word; a non-advancing sync locks the current word.
+sync advances to the next word, but locks the synced word until its timing changes;
+a non-advancing sync leaves that locked word selected.
 Undo/Redo, changed wording and sentence boundaries reevaluate confirmations.
 
 The green sentence dot means valid word timing is present, including any estimated
@@ -692,7 +714,6 @@ without relying on color.
 ![Overlap Settings on](screenshots/current/overlap-settings-on-light.png)
 ![Overlap Settings off](screenshots/current/overlap-settings-off-dark.png)
 
-
 ### ELRC discovery and library status
 
 Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
@@ -703,12 +724,10 @@ mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untime
 sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
 automatic export formats; downloads never silently generate estimated word times.
 
-
 Matching valid ELRC is labeled Synced without a Modified date on import:
 
 ![ELRC library status, light](screenshots/current/elrc-library-synced-light.png)
 ![ELRC library status, dark](screenshots/current/elrc-library-synced-dark.png)
-
 
 ## Basic and optional Automatic audio alignment
 
@@ -720,7 +739,6 @@ word times are protected unless explicitly replaced; sentence bounds and text
 remain intact. Complete applied timing saves ELRC without another estimate prompt.
 See the [illustrated audio alignment guide](audio-alignment.md) for setup and
 limitations. Singing alignment requires review; confidence is only a hint.
-
 
 Automatic **Align sentences** now precedes **Align words** in Synced. TXT/LRC/ELRC
 use local audio to propose sentence boundaries, with listening preview and

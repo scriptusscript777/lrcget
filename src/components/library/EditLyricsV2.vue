@@ -177,6 +177,8 @@
         :loop-mode="loopMode"
         :word-timing-expanded="wordTimingExpanded"
         :recovery-word-selection="recoveryContext.wordSelection"
+        :confirmed-word-timings="recoveryContext.confirmedWordTimings"
+        :adjusted-word-timings="recoveryContext.adjustedWordTimings"
         :word-loop-target="wordLoopTarget"
         :can-loop="canPhraseLoop"
         :marker-editing="markerEditing"
@@ -188,7 +190,11 @@
         @toggle-loop="toggleLoop('phrase')"
         @toggle-word-loop="toggleLoop('word')"
         @word-loop-target="handleWordLoopTarget"
+        @seek-word="seekToWordStart"
+        @play-word="playFromWordStart"
         @recovery-edit-state="updatePendingSentence"
+        @confirmed-word-timings-change="updateRecoveryContext({ confirmedWordTimings: $event })"
+        @adjusted-word-timings-change="updateRecoveryContext({ adjustedWordTimings: $event })"
         @update:model-value="updateSyncedLines"
         @update:selected-line-index="selectSyncedLine"
         @update:selected-line-indices="handleUpdateSelectedLineIndices"
@@ -347,6 +353,36 @@ const openAlignment = mode => {
 }
 const activeTab = ref('plain')
 const wordTimingExpanded = ref(false)
+const pendingWordCount = ref(0)
+let pendingWordSaveRequest = null
+const finishPendingWordSave = accepted => {
+  const resolve = pendingWordSaveRequest
+  pendingWordSaveRequest = null
+  closePendingWordSaveModal()
+  resolve?.(accepted)
+}
+const { open: openPendingWordSaveModal, close: closePendingWordSaveModal } = useModal({
+  component: ConfirmModal,
+  attrs: {
+    title: 'Word timing has not been synced',
+    message: computed(
+      () =>
+        `${pendingWordCount.value} edited word timing${pendingWordCount.value === 1 ? '' : 's'} have not been synced to playback. Sync word sets the selected word's start to the current playback position. Save edited times keeps your manual box values in the lyrics file.`
+    ),
+    confirmText: 'Save edited times',
+    cancelText: 'Keep editing',
+    clickToClose: false,
+    escToClose: false,
+    onConfirm: () => finishPendingWordSave(true),
+    onCancel: () => finishPendingWordSave(false),
+  },
+})
+const confirmPendingWordAdjustments = count =>
+  new Promise(resolve => {
+    pendingWordCount.value = count
+    pendingWordSaveRequest = resolve
+    void openPendingWordSaveModal().catch(() => finishPendingWordSave(false))
+  })
 const {
   recoveryBlocked,
   recoveryStatus,
@@ -416,6 +452,7 @@ const {
   playbackDuration: computed(() =>
     Number.isFinite(waveformProgress.value) ? duration.value : null
   ),
+  confirmPendingWordAdjustments,
   toast,
 })
 
@@ -696,11 +733,24 @@ const handlePasteLrc = async () => {
 }
 
 const handleWordTimingEdited = async ({ startMs }) => {
+  // Replaying after a marker edit is only appropriate during active playback.
+  // If paused, keep the current playhead and let Resume control playback.
+  if (!waveformPlaying.value) return
   if (loopEnabled.value && loopMode.value === 'word') return
   const index = selectedSyncedLineIndex.value
   const lineStartMs = syncedLines.value[index]?.start_ms
   if (!Number.isFinite(lineStartMs)) return
   await playLineAtOffset(index, Number.isFinite(startMs) ? startMs - lineStartMs : 0)
+}
+
+const seekToWordStart = ({ startMs } = {}) => {
+  if (!Number.isFinite(startMs)) return
+  return handleWaveformSeek(startMs / 1000, { play: waveformPlaying.value })
+}
+
+const playFromWordStart = ({ startMs } = {}) => {
+  if (!Number.isFinite(startMs)) return
+  return handleWaveformSeek(startMs / 1000, { play: true })
 }
 
 watch(activeTab, value => {

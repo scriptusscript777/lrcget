@@ -1,8 +1,9 @@
-import { createSSRApp, reactive } from 'vue'
+import { createSSRApp, effectScope, nextTick, reactive, ref, toRef } from 'vue'
 import { renderToString } from 'vue/server-renderer'
 import { describe, expect, it, vi } from 'vitest'
 import Preview from './WordPlaybackPreview.vue'
 import Row from './SyncedLyricsLineRow.vue'
+import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 
 async function setupPreview(line) {
   const props = reactive({ line, allLines: [line], lineIndex: 0, progressMs: 1100, playing: true })
@@ -60,6 +61,52 @@ describe('read-only word playback preview', () => {
     expect(state.previewWords.value).toEqual([])
     props.line = null
     expect(state.previewWords.value).toEqual([])
+  })
+
+  it('follows playback into the next sentence and updates its word preview automatically', async () => {
+    const lines = ref([
+      {
+        text: 'First sentence',
+        start_ms: 1000,
+        end_ms: 3000,
+        words: [{ text: 'First sentence', start_ms: 1000, end_ms: 3000 }],
+      },
+      {
+        text: 'Next sentence',
+        start_ms: 3000,
+        end_ms: 5000,
+        words: [{ text: 'Next sentence', start_ms: 3000, end_ms: 5000 }],
+      },
+    ])
+    const { state, props } = await setupPreview(lines.value[0])
+    props.allLines = lines.value
+    const selectedIndex = ref(0)
+    const enabled = ref(true)
+    const playing = toRef(props, 'playing')
+    const scope = effectScope()
+    scope.run(() =>
+      useLyricsFollow({
+        lines,
+        timeMs: toRef(props, 'progressMs'),
+        playing,
+        enabled,
+        blocked: ref(false),
+        selectedIndex,
+        onSelect: index => {
+          selectedIndex.value = index
+          props.lineIndex = index
+          props.line = lines.value[index]
+        },
+      })
+    )
+
+    props.progressMs = 3200
+    await nextTick()
+
+    expect(selectedIndex.value).toBe(1)
+    expect(state.previewWords.value.map(word => word.text).join('')).toBe('Next sentence')
+    expect(state.previewWords.value.some(word => word.active)).toBe(true)
+    scope.stop()
   })
 })
 

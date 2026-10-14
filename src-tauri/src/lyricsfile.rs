@@ -268,13 +268,18 @@ const MIN_LRC_GAP_MS: i64 = 250;
 
 fn lines_to_lrc(lines: &[LyricsfileLine]) -> Option<String> {
     lines_to_lrc_with_text(lines, |line| {
-        if line.words.is_empty() { line.text.clone() } else {
+        if line.words.is_empty() {
+            line.text.clone()
+        } else {
             line.words.iter().map(|word| word.text.as_str()).collect()
         }
     })
 }
 
-fn lines_to_lrc_with_text(lines: &[LyricsfileLine], text_for_line: impl Fn(&LyricsfileLine) -> String) -> Option<String> {
+fn lines_to_lrc_with_text(
+    lines: &[LyricsfileLine],
+    text_for_line: impl Fn(&LyricsfileLine) -> String,
+) -> Option<String> {
     let mut timed: Vec<_> = lines
         .iter()
         .filter_map(|line| {

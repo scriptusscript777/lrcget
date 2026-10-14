@@ -25,15 +25,15 @@
       tooltip="hover"
       @change="chooseVolume"
     >
-      <template #dot="{ pos, index, value, focus, disabled }">
+      <template #dot>
         <div class="w-full h-full rounded-full bg-hoa-1100" />
       </template>
 
-      <template #process="{ start, end }">
+      <template #process="{ end }">
         <div class="absolute h-full rounded-full bg-hoa-1100" :style="'width: ' + end + '%;'" />
       </template>
 
-      <template #tooltip="{ pos, index, value, focus, disabled }">
+      <template #tooltip="{ value }">
         <div
           v-if="value !== null"
           class="text-neutral-800 text-[0.6rem] font-bold rounded-lg px-1 py-0.5 bg-neutral-100"
@@ -51,7 +51,7 @@ import VolumeMute from '~icons/mdi/volume-mute'
 import VueSlider from 'vue-3-slider-component'
 import { ref, watch } from 'vue'
 
-const props = defineProps(['volume'])
+const props = defineProps({ volume: { type: Number, default: undefined } })
 const emit = defineEmits(['setVolume'])
 
 const volume = ref(props.volume)

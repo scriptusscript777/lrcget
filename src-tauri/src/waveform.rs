@@ -78,6 +78,16 @@ struct Peaks {
     frames: u64,
 }
 
+fn decoded_sample_rate(sample_rate: &mut Option<u32>, decoded_rate: u32) -> Result<u32> {
+    if decoded_rate == 0 {
+        bail!("Audio decoder returned an invalid sample rate");
+    }
+    if sample_rate.is_some_and(|rate| rate != decoded_rate) {
+        bail!("Audio format changed while preparing waveform");
+    }
+    Ok(*sample_rate.get_or_insert(decoded_rate))
+}
+
 impl Peaks {
     fn new(sample_rate: u32) -> Self {
         Self {
@@ -139,21 +149,15 @@ fn decode(file: File) -> Result<Waveform> {
         .default_track()
         .ok_or_else(|| anyhow!("No audio track found"))?;
     let track_id = track.id;
-    let sample_rate = track
-        .codec_params
-        .sample_rate
-        .filter(|rate| *rate > 0)
-        .ok_or_else(|| anyhow!("Unknown audio sample rate"))?;
-    if track
-        .codec_params
-        .n_frames
-        .is_some_and(|frames| frames > sample_rate as u64 * MAX_SECONDS)
-    {
-        bail!("Waveform preview supports audio up to four hours");
+    let mut sample_rate = track.codec_params.sample_rate.filter(|rate| *rate > 0);
+    if let (Some(sample_rate), Some(frames)) = (sample_rate, track.codec_params.n_frames) {
+        if frames > sample_rate as u64 * MAX_SECONDS {
+            bail!("Waveform preview supports audio up to four hours");
+        }
     }
     let mut decoder =
         symphonia::default::get_codecs().make(&track.codec_params, &Default::default())?;
-    let mut peaks = Peaks::new(sample_rate);
+    let mut peaks: Option<Peaks> = sample_rate.map(Peaks::new);
     let mut samples: Option<SampleBuffer<f32>> = None;
     let mut buffer_capacity = 0;
     let mut buffer_channels = 0;
@@ -170,10 +174,12 @@ fn decode(file: File) -> Result<Waveform> {
         let decoded = decoder.decode(&packet)?;
         let spec = *decoded.spec();
         let channels = spec.channels.count();
-        if spec.rate != sample_rate || channels == 0 {
-            bail!("Audio format changed while preparing waveform");
+        if channels == 0 {
+            bail!("Audio decoder returned an invalid channel count");
         }
-        if peaks.frames + decoded.frames() as u64 > sample_rate as u64 * MAX_SECONDS {
+        let rate = decoded_sample_rate(&mut sample_rate, spec.rate)?;
+        let peaks = peaks.get_or_insert_with(|| Peaks::new(rate));
+        if peaks.frames.saturating_add(decoded.frames() as u64) > rate as u64 * MAX_SECONDS {
             bail!("Waveform preview supports audio up to four hours");
         }
         if decoded.capacity() > buffer_capacity || channels != buffer_channels {
@@ -197,7 +203,10 @@ fn decode(file: File) -> Result<Waveform> {
             peaks.push(peak);
         }
     }
-    peaks.finish(sample_rate)
+    let sample_rate = sample_rate.ok_or_else(|| anyhow!("Unknown audio sample rate"))?;
+    peaks
+        .ok_or_else(|| anyhow!("No audio samples found"))?
+        .finish(sample_rate)
 }
 
 pub fn load(source: &Path, cache_root: &Path) -> Result<Waveform> {
@@ -283,6 +292,18 @@ fn prune_cache(directory: &Path, keep: &Path) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn waveform_rate_is_inferred_from_decoded_audio_when_probe_omits_it() {
+        let mut sample_rate = None;
+        assert_eq!(
+            decoded_sample_rate(&mut sample_rate, 44_100).unwrap(),
+            44_100
+        );
+        assert_eq!(sample_rate, Some(44_100));
+        assert!(decoded_sample_rate(&mut sample_rate, 48_000).is_err());
+        assert!(decoded_sample_rate(&mut None, 0).is_err());
+    }
 
     fn write_wav(path: &Path, amplitude: i16) {
         let frames = 1000_u32;

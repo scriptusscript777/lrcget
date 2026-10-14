@@ -22,8 +22,8 @@
         </div>
       </div>
 
-      <div class="flex justify-between w-full">
-        <div class="basis-1/3 flex-1 grow-0 flex flex-col justify-center items-start gap-0.5">
+      <div class="grid w-full grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2">
+        <div class="min-w-0 flex flex-col justify-center items-start gap-0.5">
           <div v-if="playingTrack">
             <div class="text-xs font-bold text-neutral-800 dark:text-neutral-200 line-clamp-1">
               {{ playingTrack.title }}
@@ -36,43 +36,86 @@
           </div>
         </div>
 
-        <div class="basis-1/3 flex-1 flex justify-center items-center gap-2">
+        <div class="flex items-center justify-center gap-0.5">
           <button
-            class="button button-secondary p-1 m-1 rounded-full text-lg"
+            type="button"
+            class="button button-secondary flex h-8 w-8 flex-none items-center justify-center rounded-full p-1"
+            :class="shuffle ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500'"
+            :aria-pressed="shuffle"
+            aria-label="Toggle shuffle"
+            title="Shuffle"
+            @click="toggleShuffle"
+          >
+            <Shuffle />
+          </button>
+          <button
+            type="button"
+            class="button button-secondary flex h-8 w-8 flex-none items-center justify-center rounded-full p-1 text-lg"
+            aria-label="Previous track"
+            title="Previous track"
+            :disabled="!canPlayPrevious"
+            @click="playAdjacentTrack(-1)"
+          >
+            <SkipPrevious />
+          </button>
+          <button
+            class="button button-secondary flex h-8 w-8 flex-none items-center justify-center rounded-full p-1 text-lg"
             @click.prevent="seek(reverse10)"
           >
             <Rewind_10 />
           </button>
           <button
             v-if="status === 'playing'"
-            class="button button-primary text-white p-2 rounded-full text-xl"
+            class="button button-primary flex h-10 w-10 flex-none items-center justify-center rounded-full p-2 text-xl text-white"
             @click.prevent="pause"
           >
             <Pause />
           </button>
           <button
             v-else-if="playingTrack && status === 'stopped'"
-            class="button button-primary text-white p-2 rounded-full text-xl"
+            class="button button-primary flex h-10 w-10 flex-none items-center justify-center rounded-full p-2 text-xl text-white"
             @click.prevent="playTrack(playingTrack)"
           >
             <Replay />
           </button>
           <button
             v-else
-            class="button button-primary text-white p-2 rounded-full text-xl"
+            class="button button-primary flex h-10 w-10 flex-none items-center justify-center rounded-full p-2 text-xl text-white"
             @click.prevent="resume"
           >
             <Play />
           </button>
           <button
-            class="button button-secondary p-1 m-1 rounded-full text-lg"
+            class="button button-secondary flex h-8 w-8 flex-none items-center justify-center rounded-full p-1 text-lg"
             @click.prevent="seek(forward10)"
           >
             <FastForward_10 />
           </button>
+          <button
+            type="button"
+            class="button button-secondary flex h-8 w-8 flex-none items-center justify-center rounded-full p-1 text-lg"
+            aria-label="Next track"
+            title="Next track"
+            :disabled="!canPlayNext"
+            @click="playAdjacentTrack(1)"
+          >
+            <SkipNext />
+          </button>
+          <button
+            type="button"
+            class="button button-secondary flex h-8 w-8 flex-none items-center justify-center rounded-full p-1"
+            :class="repeatMode !== 'off' ? 'text-blue-600 dark:text-blue-400' : 'text-neutral-500'"
+            :aria-pressed="repeatMode !== 'off'"
+            :aria-label="repeatLabel"
+            :title="`${repeatLabel} (click to change)`"
+            @click="cycleRepeatMode"
+          >
+            <RepeatOnce v-if="repeatMode === 'one'" />
+            <Repeat v-else />
+          </button>
         </div>
 
-        <div class="basis-1/3 flex-1 flex justify-end items-center gap-2">
+        <div class="min-w-0 flex items-center justify-end gap-2">
           <PlaybackSpeedControl :model-value="playbackSpeed" @update:model-value="setPlaybackSpeed" />
           <VolumeSlider :volume="volume" @set-volume="setPlayerVolume" />
         </div>
@@ -93,6 +136,11 @@ import Pause from '~icons/mdi/pause'
 import Replay from '~icons/mdi/replay'
 import Rewind_10 from '~icons/mdi/rewind-10'
 import FastForward_10 from '~icons/mdi/fast-forward-10'
+import Shuffle from '~icons/mdi/shuffle'
+import Repeat from '~icons/mdi/repeat'
+import RepeatOnce from '~icons/mdi/repeat-once'
+import SkipPrevious from '~icons/mdi/skip-previous'
+import SkipNext from '~icons/mdi/skip-next'
 import { usePlayer } from '@/composables/player.js'
 import { useGlobalState } from '@/composables/global-state.js'
 import VolumeSlider from './now-playing/VolumeSlider.vue'
@@ -121,13 +169,40 @@ const {
   progress,
   volume,
   playbackSpeed,
+  queue,
+  shuffle,
+  repeatMode,
   playTrack,
   pause,
   resume,
   seek,
   setVolume: setPlayerVolume,
   setPlaybackSpeed,
+  toggleShuffle,
+  cycleRepeatMode,
+  playAdjacentTrack,
 } = usePlayer()
+
+const repeatLabel = computed(() => {
+  if (repeatMode.value === 'one') return 'Repeat one'
+  if (repeatMode.value === 'all') return 'Repeat all'
+  return 'Repeat off'
+})
+
+const canPlayPrevious = computed(() => {
+  const index = queue.value.indexOf(playingTrack.value?.id)
+  return index > 0 || (index === 0 && repeatMode.value === 'all')
+})
+
+const canPlayNext = computed(() => {
+  const index = queue.value.indexOf(playingTrack.value?.id)
+  if (index < 0) return false
+  return (
+    index < queue.value.length - 1 ||
+    repeatMode.value === 'all' ||
+    (shuffle.value && queue.value.length > 1)
+  )
+})
 
 const keydownEvent = ref(null)
 
@@ -176,11 +251,6 @@ const reverse10 = computed(() => {
   }
   return Math.max(0, progress.value - 10)
 })
-
-const setVolume = event => {
-  const volume = parseFloat(event.target.value)
-  setPlayerVolume(volume)
-}
 
 const lyricsClicked = line => {
   seek(line.timestamp)

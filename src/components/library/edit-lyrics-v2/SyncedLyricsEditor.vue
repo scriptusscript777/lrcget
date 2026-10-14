@@ -80,10 +80,14 @@
       :sentence-loop-enabled="loopEnabled && loopMode === 'phrase'"
       :can-sentence-loop="canLoop"
       :initial-word-index="wordLoopTarget?.lineIndex === selectedLineIndex ? wordLoopTarget.wordIndex : recoveryWordSelection?.lineIndex === selectedLineIndex ? recoveryWordSelection.wordIndex : 0"
+      :confirmed-word-timings="confirmedWordTimings"
+      :adjusted-word-timings="adjustedWordTimings"
       :timing-step-ms="timingStepMs"
       @toggle-word-loop="emit('toggle-word-loop')"
       @toggle-sentence-loop="emit('toggle-loop')"
       @word-loop-target="emit('word-loop-target', $event)"
+      @seek-word="emit('seek-word', $event)"
+      @play-word="emit('play-word', $event)"
       @update:words="handleWordsUpdate"
       @word-timing-edited="handleWordTimingEdited"
       @play-line="handlePlayLine"
@@ -92,6 +96,8 @@
       @play-line-at-offset="handlePlayLineAtOffset"
       @select-next-line="selectLine(selectedLineIndex + 1)"
       @editing-change="wordEditing = $event"
+      @confirmed-word-timings-change="emit('confirmed-word-timings-change', $event)"
+      @adjusted-word-timings-change="emit('adjusted-word-timings-change', $event)"
     />
 
     <div
@@ -226,12 +232,14 @@ import WordPlaybackPreview from '@/components/library/edit-lyrics-v2/WordPlaybac
 import SyncedWordTimingLane from '@/components/library/edit-lyrics-v2/SyncedWordTimingLane.vue'
 import { useEditLyricsV2SyncedInlineEditing } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInlineEditing.js'
 import { useEditLyricsV2SyncedInsertHover } from '@/composables/edit-lyrics-v2/useEditLyricsV2SyncedInsertHover.js'
-import { useFollowResume, useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
+import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 import { formatTimestampMs } from '@/utils/lyricsfile.js'
 
 const props = defineProps({
   wordTimingExpanded: Boolean,
   recoveryWordSelection: { type: Object, default: null },
+  confirmedWordTimings: { type: Array, default: () => [] },
+  adjustedWordTimings: { type: Array, default: () => [] },
   waveformPlaying: Boolean,
   waveformProgress: { type: Number, default: null },
   canUndo: Boolean,
@@ -273,6 +281,8 @@ const emit = defineEmits([
   'align-sentences',
   'align-words',
   'recovery-edit-state',
+  'confirmed-word-timings-change',
+  'adjusted-word-timings-change',
   'word-timing-expanded-change',
   'undo',
   'redo',
@@ -280,6 +290,8 @@ const emit = defineEmits([
   'toggle-loop',
   'toggle-word-loop',
   'word-loop-target',
+  'seek-word',
+  'play-word',
   'update:loop-lead-seconds',
   'update:loop-tail-seconds',
   'update:modelValue',
@@ -318,11 +330,6 @@ const toggleWordPreview = () => {
 const wordTimingExpanded = ref(props.wordTimingExpanded)
 watch(() => props.wordTimingExpanded, expanded => { wordTimingExpanded.value = expanded }, { flush: 'sync' })
 const followLyrics = ref(true)
-useFollowResume({
-  enabled: followLyrics,
-  playing: () => props.waveformPlaying,
-  views: [wordTimingExpanded, wordPreviewExpanded],
-})
 const wordEditing = ref(false)
 const playbackTimeMs = computed(() => Number.isFinite(props.waveformProgress) ? props.waveformProgress * 1000 : -1)
 watch(wordTimingExpanded, expanded => emit('word-timing-expanded-change', expanded), { flush: 'sync' })
@@ -541,14 +548,15 @@ const emitLineAction = (eventName, index, selectBefore = true) => {
 const navigatePlayback = async (index, event, payload) => {
   const line = props.modelValue[index]
   if (!line) return
+  const shouldFollow = followLyrics.value
   followLyrics.value = false
   emit('update:selected-line-index', index)
   emit(event, payload)
   // Selection arrives through parent props; its manual-selection watcher must settle first.
   await nextTick()
-  // Playing always resumes Follow (from the chosen line onward).
+  // Let the manual line selection settle, then restore the user's prior setting.
   if (props.selectedLineIndex === index && props.modelValue[index] === line)
-    followLyrics.value = true
+    followLyrics.value = shouldFollow
 }
 
 const handlePlayLine = index => navigatePlayback(index, 'play-line', index)

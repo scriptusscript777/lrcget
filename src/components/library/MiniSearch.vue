@@ -79,7 +79,7 @@ import Filter from '~icons/mdi/filter'
 import _debounce from 'lodash/debounce'
 import CheckboxButton from '@/components/common/CheckboxButton.vue'
 
-const props = defineProps(['activeTab'])
+const props = defineProps({ activeTab: { type: String, default: undefined } })
 
 const { searchValue, setSearch, filters } = useSearchLibrary()
 

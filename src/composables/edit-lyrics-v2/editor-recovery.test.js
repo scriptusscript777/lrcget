@@ -3,34 +3,94 @@ import { effectScope, ref } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useEditLyricsV2Document } from './useEditLyricsV2Document.js'
 import { listRecovery, recoveryTarget, RECOVERY_PREFIX } from '@/utils/editor-recovery.js'
+import { wordTimingFingerprint } from '@/utils/word-timing-state.js'
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 function memoryStorage() {
   const data = new Map()
   return { get length() { return data.size }, key: i => [...data.keys()][i],
     getItem: key => data.get(key) ?? null, setItem: (key, value) => data.set(key, value), removeItem: key => data.delete(key) }
 }
-function editor(storage, content = '', id = 1) {
+function editor(
+  storage,
+  content = '',
+  id = 1,
+  filePath = `/music/${id}.mp3`,
+  confirmPendingWordAdjustments = async () => true
+) {
   const scope = effectScope()
   const state = scope.run(() => useEditLyricsV2Document({
-    audioSource: ref({ type: 'library', id, title: 'Song', artist_name: 'Singer', file_path: `/music/${id}.mp3`, duration: 30 }),
+    audioSource: ref({ type: 'library', id, title: 'Song', artist_name: 'Singer', file_path: filePath, duration: 30 }),
     lyricsfile: ref({ id: 10, content }), trackId: ref(id), progress: ref(1),
-    toast: { error: vi.fn() }, recoveryStore: storage,
+    toast: { error: vi.fn() }, recoveryStore: storage, confirmPendingWordAdjustments,
   }))
   state.initializeLyrics()
   return { state, scope }
 }
 const lines = [{ text: 'first word', start_ms: 1000, end_ms: 3000, words: [{ text: 'first ', start_ms: 1000, end_ms: 1800 }, { text: 'word', start_ms: 1800, end_ms: 3000 }] }]
 describe('durable unfinished editor work', () => {
+  it('restores confirmed word timings across sessions without creating a recovery draft', () => {
+    const storage = memoryStorage()
+    const first = editor(storage)
+    const confirmations = [['0:1', '[word timing signature]']]
+    const adjustments = [['0:1', '[pending word timing signature]']]
+    first.state.updateRecoveryContext({
+      confirmedWordTimings: confirmations,
+      adjustedWordTimings: adjustments,
+    })
+    expect(listRecovery(storage)).toHaveLength(0)
+
+    const resumed = editor(storage, '', 1, '/relocated/1.mp3')
+    expect(resumed.state.recoveryContext.value.confirmedWordTimings).toEqual(confirmations)
+    expect(resumed.state.recoveryContext.value.adjustedWordTimings).toEqual(adjustments)
+    expect(resumed.state.recoveryStatus.value).toBe('')
+    expect(resumed.state.recoveryConflict.value).toBe(null)
+    first.scope.stop()
+    resumed.scope.stop()
+  })
+
+  it('warns before saving current unconfirmed word edits and preserves them when accepted', async () => {
+    invoke.mockClear()
+    const storage = memoryStorage()
+    const approve = vi.fn().mockResolvedValue(false)
+    const current = editor(storage, '', 1, undefined, approve)
+    current.state.updateSyncedLines(lines)
+    const fingerprint = wordTimingFingerprint(0, lines[0].words, 0, lines[0].end_ms)
+    current.state.updateRecoveryContext({ adjustedWordTimings: [['0:0', fingerprint]] })
+
+    expect(current.state.pendingWordAdjustmentCount.value).toBe(1)
+    expect(await current.state.saveLyrics()).toBe(false)
+    expect(approve).toHaveBeenCalledWith(1)
+    expect(invoke).not.toHaveBeenCalled()
+
+    approve.mockResolvedValue(true)
+    invoke.mockResolvedValueOnce(null)
+    expect(await current.state.saveLyrics()).toBe(true)
+    expect(invoke).toHaveBeenCalledWith(
+      'save_lyrics',
+      expect.objectContaining({ lyricsfile: expect.stringContaining('first word') })
+    )
+    current.scope.stop()
+  })
+
   it('writes immediately without relying on shutdown and restores words and context', () => {
+    invoke.mockClear()
     const storage = memoryStorage()
     const first = editor(storage)
     first.state.updatePlainLyrics('plain draft')
     first.state.updateSyncedLines(lines)
-    first.state.updateRecoveryContext({ activeTab: 'synced', wordTimingExpanded: true, selectedLineIndex: 0 })
+    first.state.updateRecoveryContext({
+      activeTab: 'synced',
+      wordTimingExpanded: true,
+      selectedLineIndex: 0,
+      confirmedWordTimings: [['0:1', '[confirmed timing]']],
+    })
     const restored = editor(storage) // simulated crash: first editor has not been disposed
     expect(restored.state.plainLyrics.value).toBe('plain draft')
     expect(restored.state.syncedLines.value[0].words).toEqual(lines[0].words)
     expect(restored.state.recoveryContext.value.wordTimingExpanded).toBe(true)
+    expect(restored.state.recoveryContext.value.confirmedWordTimings).toEqual([
+      ['0:1', '[confirmed timing]'],
+    ])
     expect(restored.state.isDirty.value).toBe(true)
     expect(invoke).not.toHaveBeenCalled()
     first.scope.stop(); restored.scope.stop()

@@ -7,9 +7,7 @@ import { useLyricsFollow } from '@/composables/edit-lyrics-v2/useLyricsFollow.js
 
 vi.mock('@/composables/edit-lyrics-v2/useLyricsFollow.js', () => ({
   useLyricsFollow: vi.fn(),
-  useFollowResume: vi.fn(),
 }))
-import { useFollowResume } from '@/composables/edit-lyrics-v2/useLyricsFollow.js'
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }))
 beforeEach(() => vi.clearAllMocks())
 
@@ -53,7 +51,7 @@ describe('synced editor lyric follow integration', () => {
     else expect(play).not.toContain('disabled')
   })
 
-  it('playing a sentence selects it and resumes Follow without editing timestamps', async () => {
+  it('playing a sentence preserves Follow state without editing timestamps', async () => {
     const { props, state, follow, emit } = await setupEditor()
     state.selectLine(0)
     expect(follow.enabled.value).toBe(false)
@@ -64,11 +62,18 @@ describe('synced editor lyric follow integration', () => {
       ['update:selected-line-index', 0],
       ['play-line', 0],
     ])
-    expect(follow.enabled.value).toBe(true)
+    expect(follow.enabled.value).toBe(false)
     expect(JSON.stringify(props.modelValue)).toBe(before)
   })
 
-  it('offset playback resumes Follow and missing targets are ignored', async () => {
+  it('keeps Follow enabled when Play starts from an enabled state', async () => {
+    const { state, follow } = await setupEditor()
+    expect(follow.enabled.value).toBe(true)
+    await state.handlePlayLine(0)
+    expect(follow.enabled.value).toBe(true)
+  })
+
+  it('offset playback preserves disabled Follow and missing targets are ignored', async () => {
     const { state, follow, emit } = await setupEditor()
     state.selectLine(0)
     emit.mockClear()
@@ -78,11 +83,27 @@ describe('synced editor lyric follow integration', () => {
       ['update:selected-line-index', 0],
       ['play-line-at-offset', payload],
     ])
-    expect(follow.enabled.value).toBe(true)
+    expect(follow.enabled.value).toBe(false)
     emit.mockClear()
     await state.handlePlayLine(9)
     await state.handlePlayLineAtOffset({ lineIndex: 9, offsetMs: 0 })
     expect(emit).not.toHaveBeenCalled()
+  })
+
+  it('keeps Follow disabled across Play, Resume, and word-view changes until enabled manually', async () => {
+    const { props, state, follow } = await setupEditor()
+    state.selectLine(0)
+    expect(follow.enabled.value).toBe(false)
+
+    props.waveformPlaying = false
+    props.waveformPlaying = true
+    state.wordTimingExpanded.value = true
+    state.wordPreviewExpanded.value = true
+    await state.handlePlayLine(0)
+    expect(follow.enabled.value).toBe(false)
+
+    follow.enabled.value = true
+    expect(follow.enabled.value).toBe(true)
   })
 
   it('uses playback milliseconds and keeps automatic selection separate from manual pinning', async () => {
@@ -123,7 +144,9 @@ describe('synced editor lyric follow integration', () => {
       waveformPlaying: true,
     }
     const html = await renderToString(createSSRApp(SyncedLyricsEditor, props))
-    const button = html.match(/<button[^>]*>(?:(?!<button)[\s\S])*?Follow Lyrics<\/button>/)?.[0]
+    const button = html.match(
+      /<button[^>]*aria-pressed="true"[^>]*>[\s\S]*?Follow Lyrics\s*<\/button>/
+    )?.[0]
     expect(button).toBeTruthy()
     expect(button).toContain('aria-pressed="true"')
   })
@@ -163,13 +186,4 @@ describe('synced editor lyric follow integration', () => {
     state.startDragSelection(0, { ctrlKey: true })
     expect(follow.enabled.value).toBe(false)
   })
-})
-
-it('wires Follow resume to playback and both word views', async () => {
-  const { props, state, follow } = await setupEditor()
-  const options = useFollowResume.mock.calls[0][0]
-  expect(options.enabled).toBe(follow.enabled)
-  props.waveformPlaying = false
-  expect(options.playing()).toBe(false)
-  expect(options.views).toEqual([state.wordTimingExpanded, state.wordPreviewExpanded])
 })

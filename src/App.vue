@@ -9,7 +9,7 @@
       </div>
     </div>
     <EditorRecoveryNotice v-if="!loading" />
-    <div v-if="!loading" class="grow overflow-hidden bg-white dark:bg-neutral-950">
+    <div v-if="!loading" class="min-h-0 grow overflow-hidden bg-white dark:bg-neutral-950">
       <ChooseDirectory
         v-if="!init"
         @progress-step="onProgressStep"
@@ -31,9 +31,6 @@
 <script setup>
 import EditorRecoveryNotice from './components/EditorRecoveryNotice.vue'
 import Bug from '~icons/mdi/bug'
-import WindowMinimize from '~icons/mdi/window-minimize'
-import WindowMaximize from '~icons/mdi/window-maximize'
-import WindowClose from '~icons/mdi/window-close'
 import ChooseDirectory from './components/ChooseDirectory.vue'
 import Library from './components/Library.vue'
 import { ref, onMounted, watch } from 'vue'
@@ -58,7 +55,6 @@ const updateNotifier = useUpdateNotifier()
 const loading = ref(true)
 const init = ref(false)
 const shouldScan = ref(false)
-const isProd = ref(import.meta.env.PROD)
 
 const uninitializeLibrary = async () => {
   loading.value = true
@@ -134,18 +130,6 @@ const darkModeHandle = async themeMode => {
 
 const openDevtools = () => {
   invoke('open_devtools')
-}
-
-const minimizeWindow = () => {
-  appWindow.minimize()
-}
-
-const maximizeWindow = () => {
-  appWindow.toggleMaximize()
-}
-
-const closeWindow = () => {
-  appWindow.close()
 }
 
 appWindow.onThemeChanged(({ payload: theme }) => {

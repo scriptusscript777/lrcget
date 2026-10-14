@@ -51,8 +51,9 @@ import { useVirtualizer } from '@tanstack/vue-virtual'
 import { ref, computed, watch, onMounted } from 'vue'
 import { invoke } from '@tauri-apps/api/core'
 import { useSearchLibrary } from '@/composables/search-library.js'
+import { setPlayerQueue } from '@/composables/player-queue.js'
 
-const props = defineProps(['isActive'])
+const props = defineProps({ isActive: { type: Boolean, default: undefined } })
 const emit = defineEmits(['playTrack', 'downloadLyrics'])
 
 const trackIds = ref([])
@@ -93,6 +94,7 @@ const getTrackIds = async () => {
       instrumentalTracks: filters.value.instrumentalTracks,
       noLyricsTracks: filters.value.noLyricsTracks,
     })
+    if (props.isActive) setPlayerQueue(trackIds.value)
   } catch (error) {
     console.error(error)
   }

@@ -5,26 +5,27 @@ Rick's editor enhancements. See the [illustrated overview](app-overview.md),
 [how-tos](how-to.md), [editing reference](editing-guide.md) and
 [packages/source](packages.md). Historical releases describe their own behavior.
 
-| Area                 | Available features                                                                                                                     | Guide                                                                    |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Library              | Configured music directories, scanning, artist/album/track views, search, lyrics status, Modified date, incremental startup/F5 refresh | [Library](editing-guide.md#library-search-and-refresh)                   |
-| Finding lyrics       | LRCLIB search/download with validated word timing and automatic LRC/plain fallback, recording metadata/duration comparison, bulk download and configured server                                | [Search](how-to.md#find-lyrics-online)                                   |
-| Local inputs         | Plain TXT, timestamped TXT, LRC and ELRC import; matching LRC preference for imported Plain/missing records; manual-save protection; explicit replacement confirmation        | [Import](how-to.md#create-timed-lyrics-from-a-text-file)                 |
-| Sentence timing      | Start/end stamps, row insertion/deletion, timing steps, shifts, session Undo/Redo, configurable shortcuts                              | [Sentence editing](editing-guide.md#edit-lines-and-text)                 |
-| Waveform             | Cached peaks, click to seek/play, playhead position, point/button zoom, panning, playback following, visible time range                | [Waveform](how-to.md#zoom-and-follow-without-looping)                    |
-| Sentence markers     | Exact Start/End readouts, shaded range, provisional previews, separate Sync confirmation, Cancel, overlap warnings                     | [Markers](how-to.md#place-precise-markers-and-preview-before-confirming) |
-| Overlap prevention   | Enabled by default; saved Configuration setting; status shown when disabled; intentional overlap opt-out                               | [Reference](editing-guide.md)                                            |
-| Word editing         | Word selection, independent lane zoom, read-only wording, safe drag boundaries, millisecond Start/End, manual sequential Sync word, gray confirmation lock, additional Pause/Resume | [Word timing](how-to.md#edit-individual-words)                           |
-| Single-word audition | Persistent Loop word, selected-word bounds, Lead-in/Tail, precise 10/25/50/100 ms editing, no advance while syncing a looped word      | [Word loops](how-to.md#loop-one-word-for-precise-timing)                 |
-| Readable playback    | Read-only word follow-along without resizing timing boxes; gaps respected; does not change the document or seek audio                  | [Preview](how-to.md#review-words-without-resizing-timing-boxes)          |
-| Phrase playback      | Loop sentence beside Loop word in word timing, shared selected-phrase loop, preview bounds, slower playback, volume, persistent loop mode across selection changes                           | [Loops](how-to.md#loop-between-the-markers)                              |
-| Sidecar exports      | Independent TXT, standard LRC and optional ELRC choices; ELRC starts unchecked and remembers the user's choice                         | [Export](how-to.md#save-and-export-for-playback)                         |
-| Embedded lyrics      | Optional MP3 ID3v2.4 UTF-8 USLT/SYLT and custom TXXX ELRC; FLAC Vorbis comments; staged writes without audio re-encoding               | [Embedding](how-to.md#embed-standard-and-enhanced-lyrics-in-mp3)         |
-| Publishing           | Explicit Save and Publish confirmation for the configured LRCLIB server; structured lyrics including saved word timing; no ELRC sidecar upload                 | [Output](editing-guide.md#save-export-and-publish)                       |
-| Preferences and help | Light/dark themes, saved hover-help switch default off, F1 help with timeout, configurable shortcuts                                   | [Help](editing-guide.md#themes-diagnostics-and-limits)                   |
-| About and credits    | Credits original creator tranxuanthang and fork maintainer/modifier Rick Lidgett; original creator's GitHub Sponsors link is labeled; no fork donation request | [App overview](app-overview.md#about-and-credits) |
-| Update alerts        | Startup check of the fork's latest GitHub release; alert with the matching .deb, AppImage or .msi download; Later and Skip this version; manual check in About | [Updates](how-to.md#get-notified-about-new-releases) |
-| Packages             | Linux x64 Debian upgrade and AppImage, full source archives, supported Windows MSI build script and manual build workflow              | [Packages](packages.md)                                                  |
+| Area                 | Available features                                                                                                                                                                                                                                                     | Guide                                                                    |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Library              | Configured music directories, scanning, artist/album/track views, search, lyrics status, per-track sidecar format warnings, Modified date, incremental startup/F5 refresh                                                                                              | [Library](editing-guide.md#library-search-and-refresh)                   |
+| Library playback     | Active-list queue, previous/next, shuffle, repeat off/all/one, highlighted playing row and animated equalizer, seek, ±10-second skips, speed and volume                                                                                                                | [Player](how-to.md#use-the-library-player)                               |
+| Finding lyrics       | LRCLIB search/download with validated word timing and automatic LRC/plain fallback, recording metadata/duration comparison, bulk download and configured server                                                                                                        | [Search](how-to.md#find-lyrics-online)                                   |
+| Local inputs         | Plain TXT, timestamped TXT, LRC and ELRC import; matching LRC preference for imported Plain/missing records; manual-save protection; explicit replacement confirmation                                                                                                 | [Import](how-to.md#create-timed-lyrics-from-a-text-file)                 |
+| Sentence timing      | Start/end stamps, row insertion/deletion, timing steps, shifts, session Undo/Redo, configurable shortcuts                                                                                                                                                              | [Sentence editing](editing-guide.md#edit-lines-and-text)                 |
+| Waveform             | Cached peaks, click to seek/play, playhead position, point/button zoom, panning, playback following, visible time range                                                                                                                                                | [Waveform](how-to.md#zoom-and-follow-without-looping)                    |
+| Sentence markers     | Exact Start/End readouts, shaded range, provisional previews, separate Sync confirmation, Cancel, overlap warnings                                                                                                                                                     | [Markers](how-to.md#place-precise-markers-and-preview-before-confirming) |
+| Overlap prevention   | Enabled by default; saved Configuration setting; status shown when disabled; intentional overlap opt-out                                                                                                                                                               | [Reference](editing-guide.md)                                            |
+| Word editing         | Click or keyboard activation seeks to the word start; active playback continues and paused playback stays paused; Play starts at the selected word; independent lane zoom, safe drag boundaries, millisecond Start/End, Sync words, Accept estimates, and Pause/Resume | [Word timing](how-to.md#edit-individual-words)                           |
+| Single-word audition | Persistent Loop word, selected-word bounds, Lead-in/Tail, precise 10/25/50/100 ms editing, no advance while syncing a looped word                                                                                                                                      | [Word loops](how-to.md#loop-one-word-for-precise-timing)                 |
+| Readable playback    | Read-only word follow-along without resizing timing boxes; gaps respected; does not change the document or seek audio                                                                                                                                                  | [Preview](how-to.md#review-words-without-resizing-timing-boxes)          |
+| Phrase playback      | Loop sentence beside Loop word in word timing, shared selected-phrase loop, preview bounds, slower playback, volume, persistent loop mode across selection changes                                                                                                     | [Loops](how-to.md#loop-between-the-markers)                              |
+| Sidecar exports      | Independent TXT, standard LRC and optional ELRC choices; ELRC starts unchecked and remembers the user's choice                                                                                                                                                         | [Export](how-to.md#save-and-export-for-playback)                         |
+| Embedded lyrics      | Optional MP3 ID3v2.4 UTF-8 USLT/SYLT and custom TXXX ELRC; FLAC Vorbis comments; staged writes without audio re-encoding                                                                                                                                               | [Embedding](how-to.md#embed-standard-and-enhanced-lyrics-in-mp3)         |
+| Publishing           | Explicit Save and Publish confirmation for the configured LRCLIB server; structured lyrics including saved word timing; no ELRC sidecar upload                                                                                                                         | [Output](editing-guide.md#save-export-and-publish)                       |
+| Preferences and help | Light/dark themes, saved hover-help switch default off, F1 help with timeout, configurable shortcuts                                                                                                                                                                   | [Help](editing-guide.md#themes-diagnostics-and-limits)                   |
+| About and credits    | Credits original creator tranxuanthang and fork maintainer/modifier Rick Lidgett; original creator's GitHub Sponsors link is labeled; no fork donation request                                                                                                         | [App overview](app-overview.md#about-and-credits)                        |
+| Update alerts        | Startup check of the fork's latest GitHub release; alert with the matching .deb, AppImage or .msi download; Later and Skip this version; manual check in About                                                                                                         | [Updates](how-to.md#get-notified-about-new-releases)                     |
+| Packages             | Linux x64 Debian upgrade and AppImage, full source archives, supported Windows MSI build script and manual build workflow                                                                                                                                              | [Packages](packages.md)                                                  |
 
 ## Boundaries and data protection
 
@@ -43,9 +44,10 @@ Keep your own backups. Session Undo is not a permanent file history.
 ![Current word loop controls](screenshots/current/selected-word-loop-light.png)
 ![Current embedded export choices](screenshots/current/embedded-word-export-dark.png)
 
-See [troubleshooting](troubleshooting.md) for short/missing word labels, Reset,
-loop behavior and package compatibility. The proposed one-click automatic word
-alignment feature is not implemented.
+See [troubleshooting](troubleshooting.md) for word timing, Reset, loop behavior
+and package compatibility. Optional local audio alignment can propose sentence
+and word timings; it requires setup/model consent, and its results need listening
+review. Basic manual editing and estimated timing do not require AI.
 
 ## Automatic unfinished-work recovery
 
@@ -86,7 +88,6 @@ word timing, including accepted estimates, rather than manual verification.
 
 See [illustrated export instructions](editing-guide.md#export-word-timing-as-enhanced-lrc).
 
-
 ### ELRC discovery and library status
 
 Startup/F5 now reads valid matching `.elrc` before `.lrc`; missing lyrics fall
@@ -96,7 +97,6 @@ Invalid ELRC falls back safely; scans never change audio or sidecars and do not
 mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
 sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
 automatic export formats; downloads never silently generate estimated word times.
-
 
 ## Basic and optional Automatic audio alignment
 
@@ -120,14 +120,12 @@ word highlighting and automatic preview respect explicit word ends and silence;
 start-only LRC still uses next-start/sentence-end fallback. Complete ELRC exports
 can explicitly fill skipped word timing with approved estimates.
 
-
 Automatic **Align sentences** now precedes **Align words** in Synced. TXT/LRC/ELRC
 use local audio to propose sentence boundaries, with listening preview and
 explicit confirmation before replacing existing timestamps. Text/gap cues stay
 intact; existing word timings shift with their sentence, and conflicting rows
 are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
 illustrated audio-alignment guide for the full workflow and limitations.
-
 
 Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
 Optional alignment setup now understands Windows private Python environments;

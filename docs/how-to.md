@@ -41,6 +41,7 @@ If one exists, an **Update available** window appears a few seconds after startu
 
    LRCGET is a desktop app. On a system it is not built for (phones, tablets,
    macOS or ARM computers) no alert appears, so a wrong package is never offered.
+
 2. Choose one of the buttons:
    - **Download update** opens the matching installer download in your web
      browser. LRCGET never runs a downloaded installer by itself.
@@ -50,6 +51,7 @@ If one exists, an **Update available** window appears a few seconds after startu
      alerts again.
 
    The window lists the install steps for your format. They are also below.
+
 3. To check by hand at any time, open the menu and choose **About**. The
    **Update** section shows your version and the newest published version.
 
@@ -67,7 +69,7 @@ in the [package guide](packages.md#verify-downloads).
    the actual file name:
 
    ```bash
-   sudo apt install ./LRCGET_2.2.8_amd64.deb
+   sudo apt install ./LRCGET_VERSION_amd64.deb
    ```
 
 3. Start LRCGET from the menu. The installed copy is upgraded in place; there is
@@ -80,7 +82,7 @@ in the [package guide](packages.md#verify-downloads).
 1. Close LRCGET.
 2. Make the new file runnable: right-click it, choose **Properties**, then
    **Permissions**, and turn on **Allow executing file as program**. Or run
-   `chmod +x LRCGET_2.2.8_amd64.AppImage`.
+   `chmod +x LRCGET_VERSION_amd64.AppImage`.
 3. Delete or replace the old AppImage file, and update any desktop shortcut so
    it points to the new file. Start the new file.
 
@@ -102,8 +104,8 @@ in the [package guide](packages.md#verify-downloads).
 
 The alert waits while an editor or other window is open, so it never interrupts
 unsaved work. Rebuilding the same version number does not produce an alert; only a
-higher version (for example 2.2.8 or 2.3.0) does. Without an internet connection
-the check stays silent and runs again at the next start. See
+higher version does. Without an internet connection the check stays silent and
+runs again at the next start. See
 [Privacy](privacy.md#automatic-update-check) for what the check sends.
 
 ## Add Music and Refresh the Library
@@ -121,6 +123,31 @@ lyrics, a valid matching LRC created by another application is picked up on
 startup or F5. Its words take precedence over matching TXT; TXT fills missing
 lyrics when no valid LRC exists. Manually saved and synced/instrumental lyrics are protected
 and require explicit import to replace the working document.
+
+## Use the Library Player
+
+![Shuffle and Repeat one active in the library player, light theme](screenshots/current/player-controls-light.png)
+![Shuffle and Repeat one active in the library player, dark theme](screenshots/current/player-controls-dark.png)
+
+1. Select a track in the library, album, or artist view to start playback. That
+   view's track list becomes the playback queue. The playing row is highlighted;
+   an animated equalizer appears next to its title while it is playing.
+2. Use the center controls to pause/resume, skip 10 seconds, or move to the
+   previous/next track. Previous and Next follow the active list. At the last
+   track, Next is disabled when repeat is off.
+3. Click **Shuffle** to choose another track from the active list. Click it
+   again to turn shuffle off. Shuffle's highlighted icon shows when it is on.
+4. Click the repeat icon to cycle **Repeat off → Repeat all → Repeat one → Repeat
+   off**. Repeat all continues at the next track and wraps to the beginning;
+   Repeat one restarts the current track when it ends. The highlighted repeat
+   icon shows that repeat is enabled; its accessible label and tooltip identify
+   which mode is selected.
+5. Use the progress bar to seek, and the controls on the right for playback
+   speed and volume. Lyrics display above the player when available.
+
+Selecting a different library, album, or artist list updates the queue context.
+Turning shuffle on affects automatic/next-track selection, while Previous keeps
+its natural backward order.
 
 Before: the matching TXT has been imported as Plain.
 
@@ -281,21 +308,29 @@ it. Changing recordings, closing the editor or a playback failure resets Loop.
 ## Edit Individual Words
 
 1. Select a timed row and expand **Word timing**.
-2. Use its separate zoom/scrolling to inspect individual word boundaries.
-3. Select a word, drag its left divider, or enter precise Start/End seconds.
-   Releasing a drag applies one undoable timing edit; sentence markers stay fixed.
-4. **Sync word** keeps that manual adjustment and selection, then turns gray and
-   disables itself until the next divider or Start/End adjustment. Playback and
-   repeated shortcuts cannot reapply it. Otherwise
-   Sync stamps playback only inside the word's available sentence/neighbor bounds,
-   then advances when Loop word is off. An unsafe stamp shows a message and keeps
-   the words and selection unchanged. Loop word keeps the selected target.
-5. Edit wording through the sentence row, not the word boxes. Double-click selects;
-   F2/right-click do not open word editing and Delete cannot delete the sentence
+2. Use its separate zoom and the always-visible horizontal **Scroll word timing
+   timeline** control below the lane to inspect individual word boundaries. The
+   control stays available when **Follow Lyrics** is off; native wheel and
+   trackpad scrolling continue to work too.
+3. Click a word to move the audio/playhead to its start. If audio was playing,
+   it continues there; if paused, it stays paused until you press **Play**. You
+   can also select a word, drag its left divider, or enter precise Start/End
+   seconds. Releasing a drag applies one undoable timing edit; sentence markers
+   stay fixed.
+4. **Sync word** is enabled only for the selected word after its divider or
+   Start/End timing is changed. Click it as the word is sung: it sets that word's
+   start to the current playback position, within sentence and neighboring-word
+   bounds, then turns gray for that word. Moving to an untouched word or sentence
+   shows Sync gray; returning to a pending word lights it again. Successful sync
+   is saved per word, so it stays gray after reopening unless you edit its timing.
+   Loop word keeps the selected target; otherwise Sync advances to the next word.
+5. Edit wording through the sentence row, not the word boxes. Click or
+   double-click selects and seeks to a word; F2/right-click do not open word
+   editing and Delete cannot delete the sentence
    while the word lane is open. Collapse it before using sentence-delete shortcuts.
 
 The additional **Pause/Resume** button beside Play pauses at the current position
-and resumes there, retaining word Loop. **Play** keeps its existing replay behavior.
+and resumes there, retaining word Loop. **Play** starts from the selected word.
 
 ![Confirmed manual word timing disables Sync](screenshots/current/word-sync-confirmed-light.png)
 
@@ -364,20 +399,20 @@ without rewriting the current lyrics; ambiguous matches are not guessed.
 
 ## Troubleshooting
 
-| Symptom                               | What to Check                                                                                                                                       |
-| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Playhead leaves the zoomed view       | Enable waveform Follow; manual panning holds inspection; double-click zoom now preserves Follow                                                     |
-| Markers do not advance with sentences | Enable Follow Lyrics; manual selection, edits and loops pin the target                                                                              |
-| Audio stops/repeats at a marker       | Turn Loop off for forward playback; sentence Play retains an enabled Loop                                                                           |
-| Row playback unavailable for TXT      | Provisional markers do not assign timing; confirm its start first                                                                                   |
-| End says Inferred end                 | Set end at playback or confirm the intended pair with Sync Sentence Start/End                                                                       |
-| Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                        |
+| Symptom                               | What to Check                                                                                                                                        |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Playhead leaves the zoomed view       | Enable waveform Follow; manual panning holds inspection; double-click zoom now preserves Follow                                                      |
+| Markers do not advance with sentences | Enable Follow Lyrics; manual selection, edits and loops pin the target                                                                               |
+| Audio stops/repeats at a marker       | Turn Loop off for forward playback; sentence Play retains an enabled Loop                                                                            |
+| Row playback unavailable for TXT      | Provisional markers do not assign timing; confirm its start first                                                                                    |
+| End says Inferred end                 | Set end at playback or confirm the intended pair with Sync Sentence Start/End                                                                        |
+| Lyrics do not show in another player  | Export LRC/embed, rather than only Save; verify that player's format support                                                                         |
 | An external LRC edit is absent        | Reopen or press F5 to upgrade missing/Plain lyrics from a valid matching LRC. Manually saved/synced lyrics require explicit import to protect edits. |
-| Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                                                                                 |
-| Embedded option is disabled           | Saved embedding setting and supported file type                                                                                                     |
-| Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry                                                       |
-| Waveform is unavailable               | Use Retry; text editing/basic playback remain separate from waveform availability                                                                   |
-| Hover help seems delayed              | Off by default. Enable Show hover help in Configuration and Save, or press F1 over a control                                                        |
+| Save is disabled or date unchanged    | No unsaved document changes; import/timing/text edits must be saved                                                                                  |
+| Embedded option is disabled           | Saved embedding setting and supported file type                                                                                                      |
+| Export partly failed                  | Review each target; successful targets may already be written; fix permissions/path and retry                                                        |
+| Waveform is unavailable               | Use Retry; text editing/basic playback remain separate from waveform availability                                                                    |
+| Hover help seems delayed              | Off by default. Enable Show hover help in Configuration and Save, or press F1 over a control                                                         |
 
 Screenshots use temporary demonstration fixtures. Detailed keyboard bindings,
 format limits and safety behavior are in the [editing reference](editing-guide.md).
@@ -585,6 +620,12 @@ Explicit word ends preserve silence gaps; missing ends use the next word start
 or sentence end. Estimated timing is labeled and is not saved merely by looping.
 Editing estimated word boundaries saves word timing in the lyric document.
 **Undo** restores timing edits. **Reset words** returns word timings to estimates.
+If the displayed estimates already look right, click **Accept estimates** beside
+**Sync words** to save them for the current sentence without moving any markers.
+The sentence then has the green word-timing dot and can highlight each word in
+the sentence list. Selecting another sentence reevaluates the action for that
+sentence. It is disabled for saved timings and while word edits await Sync words.
+Accepted estimates are still estimates; listen and adjust them if needed.
 
 Collapsing Word timing suspends word repeats and preserves the target. Reopen to
 resume, or use **Stop word loop** without reopening. Inactive tabs and untimed
@@ -710,12 +751,21 @@ while playback, highlights and loops continue. It turns back on with every Play 
 Resume and when Word timing or Word preview is opened or closed. Selecting a word or changing zoom can still
 reveal that chosen word intentionally.
 
-Manual changes are tracked independently for each word and sentence. Adjusting
-a later divider does not discard an earlier word’s manual edit. Sync word
-retains those times and turns gray/disabled for that word until its timing changes.
-A shared divider also changes the preceding word’s implicit end. Ordinary live
-sync advances to the next word; a non-advancing sync locks the current word.
-Undo/Redo, changed wording and sentence boundaries reevaluate confirmations.
+Manual changes are tracked independently for each word and sentence. A changed
+divider or Start/End enables Sync only for that selected word. Sync sets the
+selected word's start to the current playback position, subject to sentence and
+neighbor bounds, then records that word as synced and turns the button gray.
+Selecting an untouched word or sentence keeps Sync gray; returning to a pending
+word restores its highlighted button. Pending edits and successful sync locks
+survive closing and reopening the app. Loop word retains the selection; without
+Loop word, Sync advances to the next word. A shared divider also changes the
+preceding word's implicit end.
+Undo/Redo reevaluates confirmations against each selected word's text and
+effective start/end; unrelated sentence or neighboring text changes leave its
+lock intact. Reset words clears that sentence's pending and confirmed state.
+If you save while edited word timings still await Sync word review, LRCGET asks
+whether to keep editing or save the current edited times anyway. Saving anyway
+preserves the manually edited times; it does not replace them with estimates.
 
 The green sentence dot means valid word timing is present, including any estimated
 values retained while editing. Listen to verify accuracy; it does not mean all
@@ -733,7 +783,6 @@ without relying on color.
 ![Overlap prevention off](screenshots/current/word-overlap-off-light.png)
 ![Overlap prevention off in dark mode](screenshots/current/word-overlap-off-dark.png)
 
-
 ### ELRC discovery and library status
 
 ![Library showing ELRC lyrics as Synced, light theme](screenshots/current/elrc-library-synced-light.png)
@@ -746,7 +795,6 @@ Invalid ELRC falls back safely; scans never change audio or sidecars and do not
 mark imported lyrics Modified. Valid user/server ELRC appears **Synced**; untimed
 sentence-editing rows remain **Plain**. Downloads honor the chosen filter and
 automatic export formats; downloads never silently generate estimated word times.
-
 
 ## Basic and optional Automatic audio alignment
 
@@ -767,14 +815,12 @@ keeps an Install button for later. Each missing model needs separate approval.
 Synced toolbar order is Word preview → Align sentences → Align words; model choices remain
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).
 
-
 Automatic **Align sentences** now precedes **Align words** in Synced. TXT/LRC/ELRC
 use local audio to propose sentence boundaries, with listening preview and
 explicit confirmation before replacing existing timestamps. Text/gap cues stay
 intact; existing word timings shift with their sentence, and conflicting rows
 are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
 illustrated audio-alignment guide for the full workflow and limitations.
-
 
 Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
 Optional alignment setup now understands Windows private Python environments;

@@ -1,6 +1,7 @@
-import { ref } from 'vue'
+import { defineAsyncComponent, ref } from 'vue'
 import { useModal } from 'vue-final-modal'
-import SearchLyrics from '@/components/library/SearchLyrics.vue'
+
+const SearchLyrics = defineAsyncComponent(() => import('@/components/library/SearchLyrics.vue'))
 
 const searchingTrack = ref(null)
 

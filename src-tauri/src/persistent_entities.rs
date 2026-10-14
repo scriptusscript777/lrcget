@@ -59,6 +59,7 @@ pub struct PersistentTrack {
     pub lyricsfile: Option<String>,
     pub lyricsfile_id: Option<i64>, // ID from lyricsfiles table (null if no lyricsfile exists)
     pub lyrics_modified_at: Option<String>, // Last explicit editor save, UTC; unknown before tracking.
+    pub lyrics_sidecar_warning: Option<String>, // Current malformed sidecar details, computed on row load.
     pub duration: f64,
     pub instrumental: bool,
 }

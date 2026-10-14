@@ -13,6 +13,10 @@ then TXT for missing lyrics. `lyricsfile/enhanced_import.rs` validates absolute
 line/word timestamps, explicit ends/gap cues and shared export bounds before
 storing structured YAML. Inline word-tagged LRC uses the same parser. Invalid
 ELRC falls back to valid ordinary LRC/TXT without importing inline tags as text.
+The track-row command reports malformed existing LRC/ELRC sidecars using those
+same validators. It returns a transient per-track explanation, including a valid
+alternative when present; scans and sidecar exports refresh the warning without
+persisting diagnostics in SQLite.
 Unedited ordinary LRC may upgrade to word timing; explicit editor saves
 (including untimed/empty work), instrumental records and existing word timing
 remain protected. This also applies to unchanged audio and reattached orphaned lyrics.
