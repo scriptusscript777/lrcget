@@ -1,8 +1,8 @@
 {
-  "app_version": "2.2.7",
-  "runtime_commit": "2766fc3",
-  "guide_image_count": 101,
-  "note": "Library-player views were refreshed with synthetic track data on 2026-10-14. No personal library or recording data is shown. Historical images outside the current capture set remain archived.",
+  "app_version": "2.3.0",
+  "runtime_commit": "856dd8970dac4e0263f56bb1c5258722220f8b00",
+  "guide_image_count": 103,
+  "note": "Current native karaoke views were captured with synthetic lyrics and audio metadata on 2026-10-14. No personal library or recording data is shown. Historical images outside the current capture set remain archived.",
   "images": [
     {
       "file": "about-credits-dark.png",
@@ -195,6 +195,18 @@
       "captured_utc": "2026-10-12T20:04:51.494853+00:00",
       "sha256": "d578e7eba59b2b23665dee48692403d77bf1a619e0480888820a9551a4dbad69",
       "source": "Current Vue components, isolated browser fixtures and mocked native commands"
+    },
+    {
+      "file": "karaoke-display-line-light.png",
+      "captured_utc": "2026-10-14T19:09:14Z",
+      "sha256": "c966c7869c6fca924c4fd121c838c5ed8e566852d0cd4b6b1e343e9ede293e40",
+      "source": "Native Linux debug UI in isolated Xvfb/XDG profile; synthetic demo lyrics/audio; karaoke display verified in line/word mode"
+    },
+    {
+      "file": "karaoke-display-word-dark.png",
+      "captured_utc": "2026-10-14T19:09:14Z",
+      "sha256": "55d912ac0723bf9060e0809c5e914c80e9c089fbb641a5c9f836c635955c4701",
+      "source": "Native Linux debug UI in isolated Xvfb/XDG profile; synthetic demo lyrics/audio; karaoke display verified in line/word mode"
     },
     {
       "file": "library-tracks-dark.png",
