@@ -17,7 +17,7 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 | Linux development                   | `npm run tauri dev`                                                                      | Native debug app; not a redistributable installer. `npm run dev` alone is only the frontend server.                                                                                                                                                                                           |
 
 The current 2.2.7 DEB, AppImage and Windows MSI were built and checked by GitHub
-Actions from commit `8d69074f29e8c3119450102a4f1a5af23199597f`. The complete Linux
+Actions from commit `9f08308a50ae16f2da6f86193b429be5dd1cf14a`. The complete Linux
 and Windows workflows passed, including package startup, upgrade, install/removal
 and license checks. The MSI remains unsigned. See [package verification](packages.md)
 for workflow links and test totals. Current screenshots remain representative of

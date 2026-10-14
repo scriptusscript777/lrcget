@@ -30,9 +30,9 @@ These are unmaintained-crate warnings, not known vulnerabilities:
 
 ## Verification record
 
-The checked-in notice set has 581 components and zero unreviewed licenses. Final Windows MSI and Linux package workflows both passed on commit `8d69074f29e8c3119450102a4f1a5af23199597f` on 2026-10-13. Linux passed 567 frontend tests, 88 native tests (2 ignored), 18 alignment Python tests, Ruff, DEB/AppImage builds and startup, upgrade/install/removal checks, and package license checks. Windows passed 567 frontend tests, 86 native tests (2 ignored), 18 alignment Python tests, Ruff, MSI build, upgrade/install/removal checks, and artifact upload.
+The checked-in notice set has 581 components and zero unreviewed licenses. Final Windows MSI and Linux package workflows both passed on commit `9f08308a50ae16f2da6f86193b429be5dd1cf14a` on 2026-10-13. Linux passed 567 frontend tests, 88 native tests (2 ignored), 18 alignment Python tests, Ruff, DEB/AppImage builds and startup, upgrade/install/removal checks, and package license checks. Windows passed 567 frontend tests, 86 native tests (2 ignored), 18 alignment Python tests, Ruff, MSI build, upgrade/install/removal checks, and artifact upload.
 
-- [Linux DEB/AppImage workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38481382449)
-- [Windows MSI workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38481382542)
+- [Linux DEB/AppImage workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38489646030/job/115611557798)
+- [Windows MSI workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38489646030/job/115611558140)
 
 The MSI remains unsigned, and the development-only Tailwind advisories, GLib informational advisory, and unmaintained-crate notices described above remain visible.
