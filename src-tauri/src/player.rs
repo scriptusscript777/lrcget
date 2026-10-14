@@ -1,14 +1,13 @@
 use anyhow::Result;
 use kira::{
-    sound::{
-        streaming::{StreamingSoundData, StreamingSoundHandle},
-        FromFileError, PlaybackState,
-    },
+    sound::{streaming::StreamingSoundHandle, PlaybackState},
     AudioManager, AudioManagerSettings, Decibels, DefaultBackend, Tween,
 };
 
 use crate::persistent_entities::PlayableTrack;
 use serde::Serialize;
+
+mod audio_stream;
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -70,7 +69,7 @@ pub struct Player {
     #[serde(skip)]
     editor_loop: EditorLoopState,
     #[serde(skip)]
-    sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+    sound_handle: Option<StreamingSoundHandle<anyhow::Error>>,
     #[serde(skip)]
     pub track: Option<PlayableTrack>,
     pub status: PlayerStatus,
@@ -178,7 +177,7 @@ impl Player {
         self.track = Some(track);
 
         if let Some(ref mut track) = self.track {
-            let sound_data = StreamingSoundData::from_file(&track.file_path)?;
+            let sound_data = audio_stream::streaming_sound_from_file(&track.file_path)?;
 
             self.duration = sound_data.duration().as_secs_f64();
             self.sound_handle = Some(self.manager.play(sound_data)?);
