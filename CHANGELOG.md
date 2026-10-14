@@ -9,6 +9,20 @@ Version numbers follow the main version (2.2.7, 2.2.8 … 2.2.9, then 2.3.0).
 Maintenance builds that keep the same version are listed under that version.
 When a release is published, add its entry here and its notes in `docs/releases/`.
 
+## 2.3.0
+
+[Release notes](docs/releases/2.3.0.md) · [Download](https://github.com/scriptusscript777/lrcget/releases/tag/v2.3.0)
+
+### Added
+
+- Karaoke display for tracks with valid timed `.lrc` or `.elrc` sidecars. The
+  full-screen view follows playback, can switch between sentence and word timing
+  when both formats exist, and uses the main player controls.
+- Karaoke shuffle and repeat skip tracks without a usable timed lyric sidecar.
+- Entering karaoke for the track already playing preserves its playback position
+  and play/pause state.
+- Illustrated karaoke instructions and current light/dark screenshots.
+
 ## 2.2.7
 
 [Release notes](docs/releases/2.2.7.md) · [Download](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1)

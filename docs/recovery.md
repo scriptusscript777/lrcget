@@ -1,7 +1,6 @@
 # Unfinished lyrics and recovery
 
-Recovery is automatic in this Debian 2.2.7 maintenance build. The version number
-has not changed. Only the song/lyrics item being edited receives a draft;
+Recovery is automatic in source version 2.3.0. Only the song/lyrics item being edited receives a draft;
 recovery does not change library Synced/Plain status, Modified dates, music,
 sidecars or the last explicit SQLite save.
 

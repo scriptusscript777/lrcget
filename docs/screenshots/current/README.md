@@ -1,8 +1,7 @@
-# Current interface screenshots — 2.2.7
+# Current interface screenshots — 2.3.0
 
-The [capture manifest](capture-manifest.json) records 101 screenshot captures,
-including the latest library-player views in light and dark themes. The player and
-selected-track images were refreshed on 2026-10-14 with synthetic music metadata;
+The [capture manifest](capture-manifest.json) records 103 screenshot captures,
+including the karaoke display in line and word timing modes. The karaoke images were captured on 2026-10-14 with synthetic lyrics/audio metadata;
 other existing guide images retain their earlier capture dates. Each manifest entry
 records its date, content hash and rendering source. It is an audit record, not a
 signature or OS certification.
@@ -13,6 +12,7 @@ signature or OS certification.
 | -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | Current library status                             | automatic-lrc-before/after, elrc-library-synced, modified                                                                      |
 | Library player                                     | library-tracks and player-controls, with shuffle and Repeat one active                                                         |
+| Karaoke display                                    | karaoke-display-line-light and karaoke-display-word-dark                                                                        |
 | Editor and waveform                                | editor-default, waveform-click-play/follow/navigation, point-zoom                                                              |
 | Marker preview and cancellation                    | marker-color-pending/cancelled/word-timing, overlap-setting-warning, overlap-untimed                                           |
 | Word timing, follow, precision and loops           | word-sync-confirmed, word-timing-protected, word-follow-off-confirmed, selected-word/sentence-loop, loop-persistent-navigation |
@@ -34,10 +34,11 @@ lyrics/waveforms; they do not modify personal recordings or the installed databa
 The library examples show Plain, sentence-timed and enhanced Synced data supplied by
 fixtures; they illustrate status after import/refresh rather than claiming the browser
 performed a real filesystem scan. Separate native scan/export tests are documented
-in the [review](../../reviews/2.2.7.md).
+in the [review](../../reviews/2.3.0.md).
 
-Native Debian/AppImage startup captures use the actual latest packages under
-separate temporary XDG profiles and Xvfb displays. Startup is not a test of every
+Native Debian/AppImage startup captures use packages under separate temporary
+XDG profiles and Xvfb displays. Karaoke screenshots use the native debug app and
+synthetic media in an isolated profile. Startup is not a test of every
 Linux distribution or Windows desktop. Browser setup/model examples simulate
 consent/failure cases; they do not claim a fresh large dependency/model installation.
 

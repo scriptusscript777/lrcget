@@ -13,6 +13,20 @@ export function libraryLyricsStatus(track) {
   return null
 }
 
+export const hasPlayableTimedLyrics = track => {
+  if (!track || track.instrumental) return false
+  const parsed = parseLyricsfile(track.lyricsfile)
+  return (
+    !parsed.isInstrumental &&
+    parsed.syncedLines.some(
+      line =>
+        Number.isFinite(line.start_ms) &&
+        line.start_ms >= 0 &&
+        (line.text.trim().length > 0 || line.words.some(word => word.text.trim().length > 0))
+    )
+  )
+}
+
 export const LYRICSFILE_VERSION = '1.0'
 export const INSTRUMENTAL_LRC = '[au: instrumental]'
 
@@ -48,7 +62,7 @@ const stripTimestamp = lyrics => {
 }
 
 const parseLrcTimestamp = token => {
-  const match = token.match(/^(\d{2}):(\d{2})[.:](\d{2,3})$/)
+  const match = token.match(/^(\d{1,2}):(\d{1,2})[.:](\d{1,3})$/)
   if (!match) {
     return null
   }
@@ -57,9 +71,11 @@ const parseLrcTimestamp = token => {
   const seconds = Number.parseInt(match[2], 10)
   const fractionRaw = match[3]
   const fractionMs =
-    fractionRaw.length === 2
-      ? Number.parseInt(fractionRaw, 10) * 10
-      : Number.parseInt(fractionRaw, 10)
+    fractionRaw.length === 1
+      ? Number.parseInt(fractionRaw, 10) * 100
+      : fractionRaw.length === 2
+        ? Number.parseInt(fractionRaw, 10) * 10
+        : Number.parseInt(fractionRaw, 10)
 
   return (minutes * 60 + seconds) * 1000 + fractionMs
 }
@@ -72,24 +88,25 @@ export const parseLrcLines = syncedLyrics => {
 
   const parsed = normalized
     .split('\n')
-    .map(line => {
-      const match = line.match(/^\[([^\]]+)\](.*)$/)
-      if (!match) {
-        return null
+    .flatMap(line => {
+      let remaining = line.trimStart()
+      const timestamps = []
+
+      // LRC allows several leading timestamps for the same lyric line.
+      while (remaining.startsWith('[')) {
+        const tagEnd = remaining.indexOf(']')
+        if (tagEnd < 0) break
+        const startMs = parseLrcTimestamp(remaining.slice(1, tagEnd))
+        if (startMs === null) break
+        timestamps.push(startMs)
+        remaining = remaining.slice(tagEnd + 1)
       }
 
-      const startMs = parseLrcTimestamp(match[1])
-      if (startMs === null) {
-        return null
-      }
-
-      return {
-        text: (match[2] || '').trim(),
-        start_ms: startMs,
-        words: [],
-      }
+      if (timestamps.length === 0) return []
+      const text = remaining.trim()
+      return timestamps.map(startMs => ({ text, start_ms: startMs, words: [] }))
     })
-    .filter(line => line)
+    .sort((left, right) => left.start_ms - right.start_ms)
 
   return parsed.map((line, index) => ({
     ...line,

@@ -1,4 +1,4 @@
-# Code and maintenance guide — 2.2.7
+# Code and maintenance guide — 2.3.0
 
 Start with [build instructions](build-from-source.md),
 [platform matrix](platform-builds.md), [frontend architecture](../src/ARCHITECTURE.md)
@@ -183,9 +183,9 @@ Synced toolbar order is Word preview → Align sentences → Align words; model 
 readable in light/dark themes. Basic editing needs no AI. See [the illustrated setup guide](audio-alignment.md).
 
 
-Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
+Platform builds now target the current 2.3.0 Debian, AppImage and Windows MSI.
 Optional alignment setup now understands Windows private Python environments;
 Basic features remain independent of AI requirements. Windows build-only CI
 checks actual MSI identity, Defender availability/definitions and MSI/payload
 scans, install/repair/launch/uninstall. Current packages, checksums, source and illustrated guides are published in the
-2.2.7 release. Check package/platform guides for validation scope and signing limitations.
+2.3.0 release. Check package/platform guides for validation scope and signing limitations.

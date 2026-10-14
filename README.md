@@ -73,7 +73,7 @@ missing, the installer downloads it from Microsoft.
 2. Open a terminal in the download folder and run (use the actual file name):
 
    ```bash
-   sudo apt install ./LRCGET_2.2.7_amd64.deb
+   sudo apt install ./LRCGET_2.3.0_amd64.deb
    ```
 
 3. Start LRCGET from the application menu. A newer `.deb` upgrades the installed
@@ -86,7 +86,7 @@ Uninstall with `sudo apt remove lrcget`. Your lyrics database is kept in
 
 1. Make the file runnable: right-click it, choose **Properties → Permissions**
    and turn on **Allow executing file as program**, or run
-   `chmod +x LRCGET_2.2.7_amd64.AppImage`.
+   `chmod +x LRCGET_2.3.0_amd64.AppImage`.
 2. Double-click it to start. If it reports missing FUSE, install `libfuse2`
    (`libfuse2t64` on Ubuntu 24.04) or run it with `--appimage-extract-and-run`.
 3. To update, replace the old AppImage file with the new one.
@@ -114,6 +114,9 @@ one installer that matches your computer, with install steps.
 - **Library and playback:** scan and browse tracks, albums and artists; play
   from the active list with previous/next, shuffle and repeat off/all/one. The
   active song is highlighted, with an equalizer while it plays.
+- **Karaoke display:** open valid timed LRC/ELRC sidecars from the track list;
+  switch between line and word display when both exist, with shared playback
+  controls and queue navigation that skips tracks without timed lyrics.
 - **Find lyrics online:** search [LRCLIB](https://lrclib.net), compare durations,
   preview and apply results, or download lyrics for the whole library.
 - **Waveform editor:** click-to-play waveform with zoom, precise Start/End
@@ -139,6 +142,7 @@ Full list: [features](docs/features.md).
 | ![Tracks list](docs/screenshots/current/library-tracks-light.png)               | ![Search lyrics online](docs/screenshots/current/search-lyrics-dark.png)           |
 | ![Word timing and loops](docs/screenshots/current/selected-word-loop-light.png) | ![Save and export choices](docs/screenshots/current/embedded-word-export-dark.png) |
 | ![Library player controls](docs/screenshots/current/player-controls-light.png)  | ![Dark library player controls](docs/screenshots/current/player-controls-dark.png) |
+| ![Word-timed karaoke player](docs/screenshots/current/karaoke-display-word-dark.png) | ![Sentence-timed karaoke player](docs/screenshots/current/karaoke-display-line-light.png) |
 
 More pictures in the [illustrated overview](docs/app-overview.md) and
 [how-tos](docs/how-to.md). Screenshots use generated demonstration music.

@@ -1,6 +1,6 @@
 # Privacy and network behavior
 
-This policy describes Rick Lidgett's enhanced LRCGET fork, version 2.2.7.
+This policy describes Rick Lidgett's enhanced LRCGET fork, version 2.3.0.
 
 ## Local work
 

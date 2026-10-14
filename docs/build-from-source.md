@@ -1,4 +1,4 @@
-# Build from source — 2.2.7
+# Build from source — 2.3.0
 
 The source ZIP/tar.gz contains the application, locked dependencies, license,
 documentation, screenshots and packaging scripts. Build products, dependencies,
@@ -44,8 +44,9 @@ and does not supply the native backend. Never use a real music profile for
 destructive automated testing. See the architecture documents and `AGENTS.md`
 for repository conventions.
 
-AppImage and Windows MSI builds resumed at Rick’s request on 2026-10-12. The current
-2.2.7 release includes Debian, AppImage and a Windows MSI beta from the reviewed runtime source.
+AppImage and Windows MSI build workflows are maintained alongside Debian. The
+2.3.0 workflow will produce those packages from the reviewed source after the
+release commit passes Linux and Windows validation.
 
 ## Windows x64
 

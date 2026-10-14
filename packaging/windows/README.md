@@ -63,10 +63,10 @@ are available, but the supported MSI workflow uses the native Windows toolchain
 rather than claiming those Linux tools alone validate this Tauri app.
 
 
-## Current 2.2.7 platform validation
+## Current 2.3.0 platform validation
 
-The unsigned Windows MSI beta is published with validation logs linked from the
-release. Developer notification is authorized after all package/documentation updates. The workflow now checks the MSI's actual
+The unsigned Windows MSI package is built and validated by the release workflow
+before publication. The workflow checks the MSI's actual
 publisher/version/upgrade GUID, fresh-enough Defender definitions, custom scans
 of the installer and installed payload, installation, repair reinstall, visible
 app launch, and uninstallation. Diagnostics are uploaded even on failure; a

@@ -38,6 +38,13 @@ const LRCLIB_TRACK_NOT_FOUND: &str = "This track does not exist in LRCLIB databa
 
 #[derive(Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
+struct KaraokeLyricsFormats {
+    lrc: Option<String>,
+    elrc_lyricsfile: Option<String>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
 struct PublishLyricsProgress {
     request_challenge: String,
     solve_challenge: String,
@@ -470,6 +477,58 @@ async fn get_track(
     track.lyrics_sidecar_warning = scanner::scan::lyrics_sidecar_warning(&track);
 
     Ok(track)
+}
+
+#[tauri::command]
+async fn get_karaoke_lyrics_formats(
+    track_id: i64,
+    app_state: State<'_, AppState>,
+) -> Result<KaraokeLyricsFormats, String> {
+    let track = {
+        let conn_guard = app_state.db.lock().unwrap();
+        let conn = conn_guard.as_ref().unwrap();
+        library::get_track(track_id, conn).map_err(|err| err.to_string())?
+    };
+    Ok(read_karaoke_lyrics_formats(&track))
+}
+
+#[tauri::command]
+async fn has_karaoke_lyrics_files(
+    track_id: i64,
+    app_state: State<'_, AppState>,
+) -> Result<bool, String> {
+    let track = {
+        let conn_guard = app_state.db.lock().unwrap();
+        let conn = conn_guard.as_ref().unwrap();
+        library::get_track(track_id, conn).map_err(|err| err.to_string())?
+    };
+    let formats = read_karaoke_lyrics_formats(&track);
+    Ok(formats.lrc.is_some() || formats.elrc_lyricsfile.is_some())
+}
+
+fn read_karaoke_lyrics_formats(track: &PersistentTrack) -> KaraokeLyricsFormats {
+    let audio_path = std::path::Path::new(&track.file_path);
+    let metadata = lyricsfile::LyricsfileTrackMetadata::from_persistent_track(track);
+    let lrc = std::fs::read_to_string(audio_path.with_extension("lrc"))
+        .ok()
+        .filter(|text| {
+            parser::lrc::parse_lrc(text)
+                .timed_lines
+                .iter()
+                .any(|line| !line.text.trim().is_empty())
+        });
+    let elrc_lyricsfile = std::fs::read_to_string(audio_path.with_extension("elrc"))
+        .ok()
+        .and_then(|text| lyricsfile::build_enhanced_lyricsfile(&metadata, &text).ok())
+        .filter(|content| {
+            lyricsfile::lyrics_presence_from_lyricsfile(content)
+                .is_ok_and(|presence| presence.has_word_synced_lyrics)
+        });
+
+    KaraokeLyricsFormats {
+        lrc,
+        elrc_lyricsfile,
+    }
 }
 
 #[tauri::command]
@@ -1769,6 +1828,8 @@ async fn main() {
             get_tracks,
             get_track_ids,
             get_track,
+            get_karaoke_lyrics_formats,
+            has_karaoke_lyrics_files,
             get_albums,
             get_album_ids,
             get_album,

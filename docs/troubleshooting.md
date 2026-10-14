@@ -1,4 +1,4 @@
-# Troubleshooting — 2.2.7
+# Troubleshooting — 2.3.0
 
 ## A short word is difficult to see in its box
 

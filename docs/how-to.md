@@ -1,6 +1,6 @@
 # Practical How-Tos
 
-For Rick Lidgett's LRCGET **2.2.7**.
+For Rick Lidgett's LRCGET **2.3.0**.
 [Overview](app-overview.md) | [Full reference and shortcuts](editing-guide.md) | [Documentation home](README.md)
 
 ## Install or Upgrade
@@ -8,20 +8,20 @@ For Rick Lidgett's LRCGET **2.2.7**.
 ![LRCGET after installing the Debian package](screenshots/current/debian-startup.png)
 
 1. Download the current `.deb` and checksum from the
-   [2.2.7 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1).
+   [2.3.0 release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.3.0).
    See [all package and source instructions](packages.md) for AppImage and Windows.
 2. Close LRCGET. In the directory containing the download, run:
 
 ```bash
-sha256sum -c LRCGET_2.2.7_amd64.deb.sha256
-sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb
+sha256sum -c LRCGET_2.3.0_amd64.deb.sha256
+sudo apt install --reinstall ./LRCGET_2.3.0_amd64.deb
 ```
 
 3. Reopen LRCGET and let its startup scan finish.
 
 The package upgrades the existing installed application, not a second copy.
 This fork release supplies Debian amd64, AppImage x64 and an unsigned Windows x64
-MSI beta. Follow the package guide for compatibility and Windows installation.
+MSI. Follow the package guide for compatibility and Windows installation.
 
 ## Get Notified About New Releases
 
@@ -148,6 +148,31 @@ and require explicit import to replace the working document.
 Selecting a different library, album, or artist list updates the queue context.
 Turning shuffle on affects automatic/next-track selection, while Previous keeps
 its natural backward order.
+
+## Play a Song with Karaoke Lyrics
+
+![Word-timed karaoke display in dark mode](screenshots/current/karaoke-display-word-dark.png)
+![Sentence-timed karaoke display in light mode](screenshots/current/karaoke-display-line-light.png)
+
+1. In the track list, select the square **Lyrics/Karaoke** icon on a song with a
+   valid timed `.lrc` or `.elrc` sidecar. The icon is disabled when neither file
+   contains usable timed lyrics.
+2. The full-screen player follows the song. When the same song is already playing,
+   opening karaoke keeps its current position and play/pause state. The player
+   controls at the bottom are the same controls used in the library.
+3. If both valid sentence-timed LRC and word-timed ELRC lyrics are available,
+   use **Line** and **Word** at the top to change the display. If only one format
+   is available, the switch is hidden.
+4. Previous, Next, Shuffle and Repeat remain available. Karaoke queue navigation
+   skips tracks without a usable timed lyric sidecar. If no eligible track remains,
+   playback stops advancing and the display reports that there are no more lyric
+   tracks in the queue.
+5. Close the display to return to the library. Playback continues.
+
+Karaoke reads sidecars next to the audio and does not create, modify or upload
+lyrics. Standard LRC highlights sentences; ELRC highlights words. Player and
+server support for word timing varies, so standard LRC remains the broadest
+line-timing format.
 
 Before: the matching TXT has been imported as Plain.
 
@@ -822,9 +847,9 @@ intact; existing word timings shift with their sentence, and conflicting rows
 are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
 illustrated audio-alignment guide for the full workflow and limitations.
 
-Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
+Platform rebuilds resumed for the current 2.3.0 Debian, AppImage and Windows MSI.
 Optional alignment setup now understands Windows private Python environments;
 Basic features remain independent of AI requirements. Windows build-only CI
 checks actual MSI identity, Defender availability/definitions and MSI/payload
 scans, install/repair/launch/uninstall. Current packages, checksums, source and illustrated guides are published in the
-2.2.7 release. Check package/platform guides for validation scope and signing limitations.
+2.3.0 release. Check package/platform guides for validation scope and signing limitations.

@@ -1,6 +1,6 @@
 # Basic editing and optional Automatic audio alignment
 
-Version remains **2.2.7**. Debian, AppImage and Windows MSI builds now use the
+Current version is **2.3.0**. Debian, AppImage and Windows MSI builds use the
 current source; see [package status](packages.md) for actual validation and
 platform limitations. The current Windows MSI is unsigned and may show a Windows
 publisher warning; the project does not yet qualify for a sponsored signing
@@ -141,7 +141,7 @@ lyrics or download approval; consent is specific to each explicit operation.
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Debian/Mint           | Private engine installer, one-time prompt, separate verified model download, progress/cancel and Basic fallback implemented. Administrator installs missing Python/venv/ffmpeg through apt. Tested in a fresh private environment reusing compatible existing libraries; a completely clean 1–2 GB CPU dependency download was not exercised.                                                                                               |
 | AppImage | Uses the Linux private engine on the host. Packaged startup passed in an isolated profile. System Python/venv/FFmpeg and large optional dependencies/models are not bundled; a completely fresh setup inside AppImage is not yet tested. |
-| Windows x64 MSI beta | Private per-user Scripts/python.exe layout, prerequisite detection, consent and worker cancellation are implemented. Windows CI build/install/launch/scan passed; full optional dependency/model installation and singing alignment on a Windows 11 desktop remain untested. |
+| Windows x64 MSI | Private per-user Scripts/python.exe layout, prerequisite detection, consent and worker cancellation are implemented. Windows CI checks the package; see [package status](packages.md) for the 2.3.0 workflow result. Full optional dependency/model installation and singing alignment on a Windows 11 desktop remain untested. |
 
 CUDA reuse is supported when compatible libraries/drivers exist. Managed fresh
 installation chooses CPU wheels and does not install GPU drivers. Singing

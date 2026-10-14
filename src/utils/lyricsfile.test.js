@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  hasPlayableTimedLyrics,
   libraryLyricsStatus,
   linesToLrc,
   parseLrcLines,
@@ -35,9 +36,54 @@ describe('library synced status', () => {
   })
 })
 
+describe('karaoke lyrics availability', () => {
+  it.each([
+    ['regular LRC sentence timing', '[00:01.000]Hello there', true],
+    ['ELRC word timing', '[00:01.000]<00:01.000>Hello <00:01.500>there', true],
+    ['untimed text', 'Hello there', false],
+  ])('recognizes %s', (_description, content, expected) => {
+    const parsed = parseImportedLyrics(content, expected ? 'song.lrc' : 'song.txt')
+    const lyricsfile = serializeLyricsfile({
+      track: { title: 'test', duration: 10 },
+      plainLyrics: parsed.plain,
+      syncedLines: parsed.lines,
+    })
+    expect(hasPlayableTimedLyrics({ lyricsfile })).toBe(expected)
+  })
+
+  it('does not enable karaoke for a blank timestamp cue', () => {
+    const lyricsfile = serializeLyricsfile({
+      track: { title: 'test', duration: 10 },
+      syncedLines: [{ text: '', start_ms: 1000, words: [] }],
+    })
+    expect(hasPlayableTimedLyrics({ lyricsfile })).toBe(false)
+  })
+
+  it('does not enable karaoke for instrumental tracks', () => {
+    expect(hasPlayableTimedLyrics({ instrumental: true, lyricsfile: '' })).toBe(false)
+  })
+})
+
 describe('standard LRC gap export', () => {
   const first = { text: 'First phrase', start_ms: 1000, end_ms: 2000 }
   const last = { text: 'Last phrase', start_ms: 3000, end_ms: 4000 }
+  it('parses one-digit LRC fractions for karaoke line timing', () => {
+    expect(
+      parseLrcLines('[1:02.5]One digit\n[01:03.25]Two digits').map(line => line.start_ms)
+    ).toEqual([62500, 63250])
+  })
+  it('expands multiple leading timestamps into separate sorted karaoke cues', () => {
+    expect(
+      parseLrcLines('[00:05.00][00:02.50]Repeated line\n[00:03.00]Next line').map(line => [
+        line.start_ms,
+        line.text,
+      ])
+    ).toEqual([
+      [2500, 'Repeated line'],
+      [3000, 'Next line'],
+      [5000, 'Repeated line'],
+    ])
+  })
   it('exports confirmed silence and the final end without modifying the document', () => {
     const lines = [first, last]
     const original = JSON.stringify(lines)

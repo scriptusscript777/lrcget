@@ -1,4 +1,4 @@
-# Complete feature index — 2.2.7
+# Complete feature index — 2.3.0
 
 This describes the current fork, including the original library/downloader and
 Rick's editor enhancements. See the [illustrated overview](app-overview.md),
@@ -9,6 +9,7 @@ Rick's editor enhancements. See the [illustrated overview](app-overview.md),
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
 | Library              | Configured music directories, scanning, artist/album/track views, search, lyrics status, per-track sidecar format warnings, Modified date, incremental startup/F5 refresh                                                                                              | [Library](editing-guide.md#library-search-and-refresh)                   |
 | Library playback     | Active-list queue, previous/next, shuffle, repeat off/all/one, highlighted playing row and animated equalizer, seek, ±10-second skips, speed and volume                                                                                                                | [Player](how-to.md#use-the-library-player)                               |
+| Karaoke player       | Full-screen line- or word-timed display from valid LRC/ELRC sidecars; shared player controls; queue skips tracks without usable timed lyrics                                                                                                                               | [Karaoke player](how-to.md#play-a-song-with-karaoke-lyrics)                |
 | Finding lyrics       | LRCLIB search/download with validated word timing and automatic LRC/plain fallback, recording metadata/duration comparison, bulk download and configured server                                                                                                        | [Search](how-to.md#find-lyrics-online)                                   |
 | Local inputs         | Plain TXT, timestamped TXT, LRC and ELRC import; matching LRC preference for imported Plain/missing records; manual-save protection; explicit replacement confirmation                                                                                                 | [Import](how-to.md#create-timed-lyrics-from-a-text-file)                 |
 | Sentence timing      | Start/end stamps, row insertion/deletion, timing steps, shifts, session Undo/Redo, configurable shortcuts                                                                                                                                                              | [Sentence editing](editing-guide.md#edit-lines-and-text)                 |
@@ -127,9 +128,10 @@ intact; existing word timings shift with their sentence, and conflicting rows
 are skipped. Apply is one Undo/Redo edit; saving remains explicit. See the
 illustrated audio-alignment guide for the full workflow and limitations.
 
-Platform rebuilds resumed for the current 2.2.7 Debian, AppImage and Windows MSI.
+The 2.3.0 release workflow targets Debian, AppImage and Windows MSI.
 Optional alignment setup now understands Windows private Python environments;
 Basic features remain independent of AI requirements. Windows build-only CI
 checks actual MSI identity, Defender availability/definitions and MSI/payload
-scans, install/repair/launch/uninstall. Current packages, checksums, source and illustrated guides are published in the
-2.2.7 release. Check package/platform guides for validation scope and signing limitations.
+scans, install/repair/launch/uninstall. The release workflow will publish
+packages, checksums, source and illustrated guides after both platform
+validations pass. Check package/platform guides for scope and signing limitations.

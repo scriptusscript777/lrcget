@@ -35,6 +35,16 @@ choice defaults off. Removed the duplicate Configuration default switch.
 
 # Local Changes
 
+## 2.3.0 — Karaoke display
+
+- Added a full-screen karaoke view launched from each track's timed-lyrics icon.
+- Uses valid LRC/ELRC sidecars, supports line/word mode when both exist, and
+  shares the main player controls and queue behavior.
+- Preserves the current track's playback position and paused/running state when
+  opening karaoke; skips tracks with no usable timed sidecar during queue moves.
+- Added line/word timing parsers and regression tests for multiple LRC timestamps,
+  sidecar validation and playback continuity. See [illustrated release notes](docs/releases/2.3.0.md).
+
 Editing developer and contributor: **Rick Lidgett** (@scriptusscript777).
 These modifications build on the original LRCGET project; upstream credits
 and the existing license remain unchanged.

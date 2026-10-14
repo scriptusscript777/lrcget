@@ -4,7 +4,7 @@
 
 Vue 3 frontend in Tauri webview. Handles UI, playback, library browsing, lyric editing, and backend communication. Saved lyrics persist in Rust/SQLite; unfinished editor recovery uses the webview profile.
 
-Local build 2.2.0+local.13: the lyrics editor defaults to synced LRC export
+Current source version 2.3.0: the lyrics editor defaults to synced LRC export
 selected and loads the saved embedding preference when optional embedding
 is enabled. Disabled embedding cannot be submitted, and publishing still requires confirmation.
 The library performs an incremental quick-hash scan on every opening. F5 invokes the same
@@ -210,6 +210,15 @@ The player supports two types of tracks via a unified `PlayableTrack` type:
 | ------------------ | --------------- | --------------------------------------------- |
 | Library (Database) | `id`            | `play_track({ trackId: id, ...metadata })`    |
 | File Picker        | `file_path`     | `play_track({ filePath: path, ...metadata })` |
+
+`NowPlaying.vue` composes the shared `PlayerControlBar` with the current lyrics
+viewer. Karaoke state lives in the singleton `usePlayer()` composable, so entering
+or leaving the display does not create another audio player. `playKaraokeTrack`
+checks sidecar availability through `get_karaoke_lyrics_formats`, preserves the
+current position and paused state for the same track, and queue navigation scans
+for the next eligible timed-lyrics track. The viewer exposes LRC line timing and
+validated ELRC word timing independently; its mode switch is shown only when both
+are available. `has_karaoke_lyrics_files` gates the track-row icon.
 
 **`usePlayer().playTrack(track)`** automatically detects the track source:
 

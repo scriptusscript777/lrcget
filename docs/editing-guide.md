@@ -1,6 +1,6 @@
 # Creating and Editing Timed Lyrics
 
-Rick Lidgett's enhanced LRCGET build, `2.2.7`.
+Rick Lidgett's enhanced LRCGET build, `2.3.0`.
 Original project authors and license remain credited.
 
 [Illustrated overview](app-overview.md) | [Step-by-step how-tos](how-to.md) | [Documentation index](README.md)
@@ -373,7 +373,7 @@ timestamps. Sync Start/End confirms each boundary; Cancel restores the last conf
 
 ![Dark theme: zoomed phrase end and manual pan](screenshots/current/waveform-navigation-dark.png)
 
-Current word-timing and word-loop screenshots were refreshed for 2.2.7. Earlier unchanged feature captures remain labeled by their behavior.
+Current karaoke-player screenshots were added for 2.3.0; earlier unchanged feature captures remain labeled by their behavior.
 Unchanged native marker/playback captures use demonstration lyrics and generated
 silent audio; the screenshot index records each group’s version and provenance.
 A waveform shows the full mix; it is not proof of exact singer alignment.

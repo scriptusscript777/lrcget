@@ -1,6 +1,6 @@
 # App Overview and Modifications
 
-**Version:** 2.2.7. **Editing developer:** Rick Lidgett
+**Version:** 2.3.0. **Editing developer:** Rick Lidgett
 ([@scriptusscript777](https://github.com/scriptusscript777)).
 This is an independent LRCGET fork, not an official upstream release.
 The About panel credits the original LRCGET author and project, identifies Rick
@@ -78,6 +78,27 @@ and queue behavior.
 
 ![Current library player and selected-track highlight, light theme](screenshots/current/library-tracks-light.png)
 ![Current library player and selected-track highlight, dark theme](screenshots/current/library-tracks-dark.png)
+
+## Karaoke Display
+
+Tracks with usable timed `.lrc` or `.elrc` sidecars show a square lyric icon in
+the track row. The icon opens a full-screen karaoke view; it stays disabled when
+neither sidecar contains valid timed lyrics. The display follows the shared
+player, including its seek, shuffle, repeat, volume and transport controls. If
+the selected track was already playing, opening the display preserves its
+position and play/pause state.
+
+When both formats are available, the viewer can switch between sentence timing
+from LRC and word timing from ELRC. With only one format, it shows that format
+without a redundant switch. Karaoke queue navigation skips tracks without usable
+timed lyrics. Closing the display returns to the library while playback
+continues. Reading lyrics does not write sidecars or upload data.
+
+![Word-timed karaoke player in dark theme](screenshots/current/karaoke-display-word-dark.png)
+![Sentence-timed karaoke player in light theme](screenshots/current/karaoke-display-line-light.png)
+
+See [Play a Song with Karaoke Lyrics](how-to.md#play-a-song-with-karaoke-lyrics)
+for the controls and queue behavior.
 
 ## Inputs and Working Documents
 
@@ -218,23 +239,25 @@ successfully exported; inspect the result before retrying.
 | Safe exports        | Staging, failed-save protection and successful-save backup cleanup                                | [Safe saving](editing-guide.md#safe-saving)                                    |
 
 For implementation notes and version-by-version changes, read
-[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.2.7.md).
-Current images use demonstration fixtures, not personal recordings. Current editor
-and all other current guide images were refreshed from 2.2.7, with capture
-provenance recorded in the screenshot manifest. Archived images remain historical.
+[LOCAL_CHANGES](../LOCAL_CHANGES.md) and the [release notes](releases/2.3.0.md).
+Current images use demonstration fixtures, not personal recordings. The karaoke
+player was captured in the current native debug build; the manifest records each
+image’s source and date. Other unchanged current views remain representative;
+archived images remain historical.
 [Capture details](screenshots/current/README.md) distinguish current
 guide images from historical release-note screenshots.
 
 ## Scope and Verification
 
-This fork's current packages are Linux amd64 Debian/AppImage; see
-[package instructions](packages.md). The Windows MSI beta passed native Windows
-Server build, installation, launch and Defender checks; Windows 11 desktop testing remains separate. Historical upstream
-Windows/macOS download links are not installers for these modifications.
+This fork's current source targets Linux amd64 Debian/AppImage and Windows x64
+MSI; see [package instructions](packages.md) for the release-workflow status.
+Windows 11 desktop testing remains separate from Windows Server validation.
+Historical upstream Windows/macOS download links are not installers for these
+modifications.
 LRCGET is not musicprocessor/musicdiscovery and does not include their PDF,
 YouTube-download, WhisperX or Demucs pipelines. Its optional local alignment uses Whisper/stable-ts.
 
-Current checks are recorded in the [2.2.7 review](reviews/2.2.7.md).
+Current checks are recorded in the [2.3.0 review](reviews/2.3.0.md).
 Browser checks cover timing drags, fixed sentence markers, zoom, Undo/Redo,
 read-only wording, protected Sync, precision inputs and word loops. Native export
 checks use temporary files, preserving personal music and the live database.

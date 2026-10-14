@@ -6,7 +6,8 @@
       'border-transparent': !isPlaying,
       'ring-1 ring-inset ring-blue-500/70 bg-blue-50/80 shadow-sm dark:bg-blue-950/30 dark:ring-blue-400/70':
         isPlaying && status === 'playing',
-      'ring-1 ring-inset ring-neutral-400/70 dark:ring-neutral-500/70': isPlaying && status !== 'playing',
+      'ring-1 ring-inset ring-neutral-400/70 dark:ring-neutral-500/70':
+        isPlaying && status !== 'playing',
       'with-track-number': isShowTrackNumber,
     }"
     :aria-current="isPlaying ? 'true' : undefined"
@@ -73,7 +74,10 @@
     </div>
 
     <!-- Lyrics indication -->
-    <div class="relative z-10 flex-none flex items-center justify-center p-1" @click="playTrack(track)">
+    <div
+      class="relative z-10 flex-none flex items-center justify-center p-1"
+      @click="playTrack(track)"
+    >
       <div v-if="track" class="relative flex items-center gap-1">
         <span
           v-if="lyricsStatus === 'instrumental'"
@@ -116,6 +120,17 @@
     <!-- Action buttons -->
     <div class="flex-none h-full flex justify-end items-center p-1">
       <div v-if="track" class="flex justify-end items-center gap-1">
+        <button
+          type="button"
+          class="track-button disabled:cursor-not-allowed disabled:opacity-35 disabled:hover:bg-transparent disabled:hover:text-neutral-400 dark:disabled:hover:text-neutral-500"
+          :disabled="!canOpenKaraoke"
+          :aria-label="`Open karaoke lyrics for ${track.title}`"
+          :title="canOpenKaraoke ? 'Play with karaoke lyrics' : 'No valid timed LRC or ELRC lyrics'"
+          data-testid="track-karaoke-button"
+          @click.stop="playKaraoke(track)"
+        >
+          <SubtitlesOutline />
+        </button>
         <button v-if="isPlaying && status === 'playing'" class="track-button" @click="pause">
           <Pause />
         </button>
@@ -181,6 +196,7 @@ import TextSearch from '~icons/mdi/text-search'
 import PlaylistEdit from '~icons/mdi/playlist-edit'
 import Replay from '~icons/mdi/replay'
 import AlertCircleOutline from '~icons/mdi/alert-circle-outline'
+import SubtitlesOutline from '~icons/mdi/subtitles-outline'
 import BaseModal from '@/components/common/BaseModal.vue'
 import { humanDuration } from '../../../utils/human-duration.js'
 import { lyricsModifiedTime } from '@/utils/lyrics-modified-time.js'
@@ -194,7 +210,7 @@ import { listen } from '@tauri-apps/api/event'
 import { usePlayer } from '@/composables/player.js'
 import { useLibraryNavigation } from '@/composables/library-navigation.js'
 
-const { playTrack, playingTrack, status, pause, resume } = usePlayer()
+const { playTrack, playKaraoke, playingTrack, status, pause, resume } = usePlayer()
 const { navigateToAlbum, navigateToArtist } = useLibraryNavigation()
 
 const goToAlbum = () => {
@@ -211,8 +227,12 @@ const goToArtist = () => {
 
 const { searchLyrics } = useSearchLyrics()
 const { editLyricsV2, editingAudioSource } = useEditLyricsV2()
-const props = defineProps({ trackId: { type: Number, default: undefined }, isShowTrackNumber: Boolean })
+const props = defineProps({
+  trackId: { type: Number, default: undefined },
+  isShowTrackNumber: Boolean,
+})
 const track = ref(null)
+const canOpenKaraoke = ref(false)
 const showLyricsSidecarWarning = ref(false)
 const modifiedTime = computed(() => lyricsModifiedTime(track.value?.lyrics_modified_at))
 
@@ -244,6 +264,21 @@ let unlisten = null
 let unlistenScanComplete = null
 let disposed = false
 let loadOperation = 0
+let karaokeAvailabilityOperation = 0
+
+const refreshKaraokeAvailability = async id => {
+  const operation = ++karaokeAvailabilityOperation
+  canOpenKaraoke.value = false
+  if (!id) return
+  try {
+    const available = await invoke('has_karaoke_lyrics_files', { trackId: id })
+    if (!disposed && operation === karaokeAvailabilityOperation && track.value?.id === id) {
+      canOpenKaraoke.value = available === true
+    }
+  } catch {
+    // Keep karaoke disabled if sidecar availability cannot be confirmed.
+  }
+}
 
 const loadTrack = async id => {
   const operation = ++loadOperation
@@ -252,17 +287,15 @@ const loadTrack = async id => {
   if (!disposed && operation === loadOperation && id === props.trackId) {
     track.value = result
     showLyricsSidecarWarning.value = false
+    void refreshKaraokeAvailability(result.id)
   }
 }
 
-watch(
-  editingAudioSource,
-  (source, previousSource) => {
-    if (!source && previousSource?.id === props.trackId && props.trackId) {
-      void loadTrack(props.trackId)
-    }
+watch(editingAudioSource, (source, previousSource) => {
+  if (!source && previousSource?.id === props.trackId && props.trackId) {
+    void loadTrack(props.trackId)
   }
-)
+})
 
 watch(
   () => props.trackId,
@@ -297,6 +330,7 @@ onMounted(async () => {
 onUnmounted(() => {
   disposed = true
   loadOperation++
+  karaokeAvailabilityOperation++
   if (unlisten) {
     unlisten()
   }
@@ -306,6 +340,6 @@ onUnmounted(() => {
 
 <style scoped>
 .track-button {
-  @apply text-neutral-800 hover:bg-hoa-1100 hover:text-white rounded p-2 transition dark:text-white dark:hover:bg-hoa-1100;
+  @apply text-neutral-800 hover:bg-hoa-1100 hover:text-white rounded p-1 transition dark:text-white dark:hover:bg-hoa-1100;
 }
 </style>

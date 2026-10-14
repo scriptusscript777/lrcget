@@ -1,6 +1,6 @@
 # LRCGET Tauri Architecture
 
-Current source version 2.2.7: MP3 embedded export replaces all USLT/SYLT
+Current source version 2.3.0: MP3 embedded export replaces all USLT/SYLT
 language and description variants, preventing stale lyrics from winning player
 selection. Unrelated tags and artwork are retained; audio is not re-encoded.
 Startup and F5 use the normal incremental scan. Unconfigured/unavailable music
@@ -21,6 +21,13 @@ Unedited ordinary LRC may upgrade to word timing; explicit editor saves
 (including untimed/empty work), instrumental records and existing word timing
 remain protected. This also applies to unchanged audio and reattached orphaned lyrics.
 No external import sets an explicit editor-save date.
+
+Karaoke uses `get_karaoke_lyrics_formats` and `has_karaoke_lyrics_files` as
+read-only sidecar commands. They derive `.lrc` and `.elrc` paths from the library
+track path without writing to the audio or lyric files. LRC is exposed only when
+it has nonempty timed rows; ELRC is exposed only after the shared enhanced-lyrics
+validator confirms usable word timing. The frontend uses those results for the
+track-row icon, line/word mode availability and eligible-track queue navigation.
 TXT/LRC exports coexist. A shared writer lock serializes destination changes;
 `tempfile` stages sidecar/audio replacements on the destination filesystem.
 Preparation must succeed before replacing the file; the previous version is

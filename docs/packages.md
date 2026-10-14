@@ -1,7 +1,7 @@
-# Packages and installation — 2.2.7
+# Packages and installation — 2.3.0
 
-[Current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.2.7-windows-beta.1) contains the current Debian, AppImage, Windows MSI beta,
-checksums and source archives with documentation/images. These are independent
+[Current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.3.0) will contain the Debian package, AppImage, Windows MSI, checksums and source archives with
+documentation and images. These are independent
 fork builds. Original upstream releases contain different code.
 
 **Supported systems:** desktop and laptop computers only: Linux x64 (Debian
@@ -16,8 +16,8 @@ Download the selected package and its adjacent `.sha256` file into the same fold
 On Linux run `sha256sum -c PACKAGE.sha256` with the actual filename. On Windows:
 
 ```powershell
-Get-FileHash .\LRCGET_2.2.7_x64_en-US.msi -Algorithm SHA256
-Get-Content .\LRCGET_2.2.7_x64_en-US.msi.sha256
+Get-FileHash .\LRCGET_2.3.0_x64_en-US.msi -Algorithm SHA256
+Get-Content .\LRCGET_2.3.0_x64_en-US.msi.sha256
 ```
 
 Compare the complete hash. Checksums detect changed downloads; they are not digital
@@ -30,12 +30,12 @@ applies to the MSI.
 Close the application, then:
 
 ```bash
-sha256sum -c LRCGET_2.2.7_amd64.deb.sha256
-sudo apt install ./LRCGET_2.2.7_amd64.deb
+sha256sum -c LRCGET_2.3.0_amd64.deb.sha256
+sudo apt install ./LRCGET_2.3.0_amd64.deb
 ```
 
-For an already installed 2.2.7 maintenance build use
-`sudo apt install --reinstall ./LRCGET_2.2.7_amd64.deb`.
+For an already installed 2.3.0 maintenance build use
+`sudo apt install --reinstall ./LRCGET_2.3.0_amd64.deb`.
 It retains package `lrcget`, architecture amd64 and app identity `net.lrclib.lrcget`.
 The release upload does not automatically reinstall the local application.
 Requires glibc 2.39+, GTK 3 and WebKitGTK 4.1: Mint 22 / Ubuntu 24.04 baseline.
@@ -47,13 +47,13 @@ Uninstall the program with `sudo apt remove lrcget`; user data is kept separatel
 ## AppImage x64
 
 ```bash
-sha256sum -c LRCGET_2.2.7_amd64.AppImage.sha256
-chmod +x LRCGET_2.2.7_amd64.AppImage
-./LRCGET_2.2.7_amd64.AppImage
+sha256sum -c LRCGET_2.3.0_amd64.AppImage.sha256
+chmod +x LRCGET_2.3.0_amd64.AppImage
+./LRCGET_2.3.0_amd64.AppImage
 ```
 
 Without FUSE 2 run
-`./LRCGET_2.2.7_amd64.AppImage --appimage-extract-and-run`.
+`./LRCGET_2.3.0_amd64.AppImage --appimage-extract-and-run`.
 The current build requires glibc 2.39+ and a compatible Linux x64 graphical/audio
 runtime. Bundling does not remove the glibc baseline. AppImage shares the same user
 profile as Debian: run one version at a time. Remove the portable executable to
@@ -61,24 +61,24 @@ remove the program; it does not automatically erase lyrics/profile data.
 
 ![Packaged AppImage startup with isolated profile](screenshots/current/appimage-startup.png)
 
-## Windows x64 MSI beta
+## Windows x64 MSI
 
-Download `LRCGET_2.2.7_x64_en-US.msi`, verify the checksum, close an existing LRCGET
+Download `LRCGET_2.3.0_x64_en-US.msi`, verify the checksum, close an existing LRCGET
 instance, and open the installer. Follow Windows installation prompts. Uninstall
 through Settings → Apps → Installed apps → LRCGET. Keep backups before upgrades.
 The WebView2 bootstrapper is bundled; a missing runtime may need network access.
 
-Application version is 2.2.7; MSI version is 2.2.7000. Publisher metadata is
+Application version is 2.3.0; MSI version is 2.3.0000. Publisher metadata is
 Rick Lidgett (LRCGET fork), product is LRCGET, and upgrade GUID remains fixed.
 This is unsigned metadata, not a verified digital publisher identity. Windows
 may warn because the MSI has no digital publisher signature and cannot verify its
 publisher. This new independent fork has limited public recognition and does not
 yet qualify for a sponsored signing certificate. That warning alone does not mean
-malware. Download only from the official LRCGET fork release and verify the SHA-256 checksum. Windows Server
-2025 CI passed installation, repair reinstall, visible app launch and
-uninstallation; Microsoft Defender scans of the MSI and installed payload
-reported no threats. Scans and checksums reduce risk but cannot guarantee safety
-or remove Windows warnings.
+malware. Download only from the official LRCGET fork release and verify the
+SHA-256 checksum. The 2.3.0 Windows install, repair/reinstall, launch, scan and
+uninstall results will be linked here after the final release workflow passes.
+Scans and checksums reduce risk but cannot guarantee safety or remove Windows
+warnings.
 Windows 11 interactive audio/editing, optional alignment setup and upgrades from
 older Windows installers remain unverified. SmartScreen or Smart App Control can
 warn or block unsigned builds. [Windows signing status](code-signing.md) explains
@@ -95,17 +95,11 @@ See [alignment setup and failure recovery](audio-alignment.md) and
 
 ## Verification scope
 
-The 2.2.7 package workflows passed on 2026-10-14. Linux passed 597 frontend tests,
-97 native tests (three ignored), 18 Python alignment tests and Ruff. DEB/AppImage
-builds, upgrade/install/removal, isolated startup and complete license notices
-passed. Windows passed 597 frontend tests, 95 native tests (three ignored), 18
-Python alignment tests and Ruff. The MSI passed upgrade from the published
-installer, repair reinstall, Defender scans, launch, license and clean uninstall
-checks. The release workflow reruns both package workflows on the final source
-commit before replacing the published assets.
-
-[Linux run](https://github.com/scriptusscript777/lrcget/actions/runs/38519723086/job/115706419911) ·
-[Windows run](https://github.com/scriptusscript777/lrcget/actions/runs/38522902794/job/115716473551).
+The 2.3.0 Windows and Linux package workflows have not yet run against the final
+release commit. This section will be updated with workflow links, test totals and
+installation/upgrade results only after those workflows pass. The release action
+builds packages from that commit and publishes assets only after both platform
+workflows succeed.
 
 The illustrated guides and current light/dark UI screenshots are included in the
 documentation archive. These checks do not establish all OS, player or

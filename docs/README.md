@@ -1,6 +1,6 @@
 # LRCGET Documentation
 
-Rick Lidgett's enhanced LRCGET, **2.2.7**.
+Rick Lidgett's enhanced LRCGET, **2.3.0**.
 An independent fork of the original project; original authors and license remain credited.
 
 **Supported systems:** desktop and laptop computers only: Linux x64 (Debian
@@ -23,7 +23,8 @@ supported, and no mobile version exists.
 | See what Rick changed in the source              | [Modification overview](app-overview.md#modification-map) and [technical history](../LOCAL_CHANGES.md) |
 | Get alerted when a new release is published     | [Update alerts](how-to.md#get-notified-about-new-releases)                                             |
 | Install the current Linux build                  | [Installation](how-to.md#install-or-upgrade)                                                           |
-| Understand the latest fixes and test results     | [Release notes](releases/2.2.7.md)                                                             |
+| Understand the latest feature updates and verification | [Release notes](releases/2.3.0.md)                                                    |
+| Use the karaoke player                           | [Karaoke player how-to](how-to.md#play-a-song-with-karaoke-lyrics)                              |
 
 See [Enhanced LRC export](how-to.md#export-word-timing-as-enhanced-lrc) for the new optional word-timed sidecar.
 
@@ -42,11 +43,11 @@ Basic editing requires no AI. Optional local Whisper/stable-ts alignment propose
 sentence/word timing after consent; it does not guarantee perfect singing timing
 or lyric display on every player. WhisperX and Demucs are not required.
 
-![Zoomed waveform following playback in light mode](screenshots/current/waveform-follow-light.png)
+![Karaoke player showing word-timed lyrics](screenshots/current/karaoke-display-word-dark.png)
 
-Screenshots use temporary fixture lyrics and waveform data. Current editor/alignment
-and all other current guide images were refreshed from 2.2.7; the screenshot
-manifest identifies dates and fixture/native provenance. Historical images are separate.
+Screenshots use temporary demonstration lyrics and audio. The karaoke player is
+captured from the current native debug app; the screenshot manifest records each
+image's source, date and hash. Historical images are separate.
 The guides describe the current build; historical release notes describe their
 own versions, including behavior since changed.
 

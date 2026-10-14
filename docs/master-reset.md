@@ -1,6 +1,6 @@
 # Archived Master reset feature
 
-Master reset was removed from the current 2.2.7 maintenance build at Rick’s
+Master reset was removed from the current 2.3.0 release at Rick’s
 request. The historical behavior below is retained for older builds only.
 Use **Reset words** for the selected sentence’s word timings, Undo for edits,
 and Import for replacement TXT/LRC/ELRC data. See the

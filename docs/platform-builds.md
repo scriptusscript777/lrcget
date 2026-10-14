@@ -1,4 +1,4 @@
-# All platform builds and limitations — 2.2.7
+# All platform builds and limitations — 2.3.0
 
 The same source supplies the platform targets below. Available Tauri targets are
 not equivalent to packages verified for this fork. Use [packages](packages.md)
@@ -7,8 +7,8 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 
 | Build                               | Build host and command                                                                   | Status and limitations                                                                                                                                                                                                                                                                        |
 | ----------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Debian x64                          | Linux: `npm run tauri -- build --features custom-protocol --bundles deb -- --no-default-features` | Current 2.2.7 Debian build on this Mint PC; see package/review installation status. Package `lrcget` upgrades in place. Current build requires glibc 2.39+. Other Debian desktops are not all verified.                                                                                                                                      |
-| AppImage x64                        | Linux: `npm run tauri -- build --features custom-protocol --bundles appimage -- --no-default-features` | Built, checksum verified and native startup tested in a temporary profile. Linux x64, glibc 2.39+. FUSE 2 or extract-and-run required. Not a universal build for older Linux releases.                                                                                                        |
+| Debian x64                          | Linux: `npm run tauri -- build --features custom-protocol --bundles deb -- --no-default-features` | 2.3.0 package workflow pending on the final commit. Package `lrcget` upgrades in place. Current build requires glibc 2.39+. Other Debian desktops are not all verified.                                                                                                                                      |
+| AppImage x64                        | Linux: `npm run tauri -- build --features custom-protocol --bundles appimage -- --no-default-features` | 2.3.0 package workflow pending on the final commit. Linux x64, glibc 2.39+. FUSE 2 or extract-and-run required. Not a universal build for older Linux releases.                                                                                                        |
 | Windows MSI x64                     | Windows with MSVC/SDK: `./packaging/windows/build-msi.ps1`                               | Native build/test workflow provided. See package status for actual results. Fixed upgrade identity and three-field version mapping. The current MSI is unsigned; this new fork does not yet qualify for a sponsored signing certificate. WebView2 bootstrapper may download the runtime. Windows 11 desktop/older-version upgrade checks remain separate. |
 | Windows NSIS x64                    | Windows with MSVC/SDK: `npm run tauri -- build --bundles nsis`                           | Alternative `.exe` installer target; not built/tested for this release. Do not assume its upgrade/version behavior equals the reviewed MSI overlay.                                                                                                                                           |
 | Linux RPM x64                       | Compatible Linux: `npm run tauri -- build --bundles rpm`                                 | Configuration exists but current RPM is not built/tested. Dependencies, distro integration and glibc baseline require validation on target systems.                                                                                                                                           |
@@ -16,12 +16,10 @@ for dependencies. The app remains `net.lrclib.lrcget` on every platform.
 | Linux/Windows ARM or Windows 32-bit | Appropriate native/cross toolchain and explicit Rust target                              | Not provided or verified for this release. x64 installers do not establish native ARM/32-bit compatibility.                                                                                                                                                                                   |
 | Linux development                   | `npm run tauri dev`                                                                      | Native debug app; not a redistributable installer. `npm run dev` alone is only the frontend server.                                                                                                                                                                                           |
 
-The 2.2.7 DEB, AppImage and Windows MSI package workflows passed on 2026-10-14,
-including package startup, upgrade, repair/reinstall, install/removal and license
-checks. Windows MSI and installed payload Defender scans also passed. The MSI
-remains unsigned. See [package verification](packages.md) for workflow links and
-test totals. Current screenshots and illustrated guides are included in the docs
-archive.
+The 2.3.0 DEB, AppImage and Windows MSI package workflows must pass on the final
+release commit before publication. See [package verification](packages.md) for
+workflow links and results after completion. The MSI remains unsigned. Current
+screenshots and illustrated guides are included in the docs archive.
 
 ## MSI and Linux cross tools
 
