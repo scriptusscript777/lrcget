@@ -1,7 +1,6 @@
 # Packages and installation — 2.3.0
 
-[Current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.3.0) will contain the Debian package, AppImage, Windows MSI, checksums and source archives with
-documentation and images. These are independent
+[Current release](https://github.com/scriptusscript777/lrcget/releases/tag/v2.3.0) is built from the reviewed source and contains the Debian package, AppImage, Windows MSI, checksums and source archives with documentation and images. These are independent
 fork builds. Original upstream releases contain different code.
 
 **Supported systems:** desktop and laptop computers only: Linux x64 (Debian
@@ -95,11 +94,19 @@ See [alignment setup and failure recovery](audio-alignment.md) and
 
 ## Verification scope
 
-The 2.3.0 Windows and Linux package workflows have not yet run against the final
-release commit. This section will be updated with workflow links, test totals and
-installation/upgrade results only after those workflows pass. The release action
-builds packages from that commit and publishes assets only after both platform
-workflows succeed.
+The separate package workflows passed on commit `e30ecff` on 2026-10-14. Linux
+passed 616 frontend tests, 97 native tests (3 ignored), 18 Python alignment tests
+and Ruff. The DEB/AppImage build, AppImage library source/license check, Debian
+upgrade, isolated launch, package/license inspection, uninstall and AppImage
+checks passed. [Linux workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38621778742).
+
+Windows passed 616 frontend tests, 95 native tests (3 ignored), 18 Python
+alignment tests and Ruff. The MSI build, published-installer upgrade, identity
+and checksum checks, Defender scans, install, repair/reinstall, launch, license
+inspection and uninstall passed. [Windows workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38621779247).
+
+The Release installers workflow reruns both package workflows on the final
+documentation-complete commit before publishing the 2.3.0 files.
 
 The illustrated guides and current light/dark UI screenshots are included in the
 documentation archive. These checks do not establish all OS, player or

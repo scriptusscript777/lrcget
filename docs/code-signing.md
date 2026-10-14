@@ -15,5 +15,5 @@ cannot guarantee a file is risk-free, remove the warning or establish publisher
 identity. A checksum verifies that the download matches the published file; it
 does not prove who created it.
 
-See [Windows installation](packages.md#windows-x64-msi-beta) and
+See [Windows installation](packages.md#windows-x64-msi) and
 [privacy and network behavior](privacy.md) for related details.
