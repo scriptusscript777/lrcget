@@ -30,9 +30,17 @@ These are unmaintained-crate warnings, not known vulnerabilities:
 
 ## Verification record
 
-The checked-in notice set has 581 components and zero unreviewed licenses. Final Windows MSI and Linux package workflows both passed on commit `9f08308a50ae16f2da6f86193b429be5dd1cf14a` on 2026-10-13. Linux passed 567 frontend tests, 88 native tests (2 ignored), 18 alignment Python tests, Ruff, DEB/AppImage builds and startup, upgrade/install/removal checks, and package license checks. Windows passed 567 frontend tests, 86 native tests (2 ignored), 18 alignment Python tests, Ruff, MSI build, upgrade/install/removal checks, and artifact upload.
+The checked-in notice set has 581 components and zero unreviewed licenses. On
+2026-10-14, the Linux package workflow passed on source commit
+`b71c4dad267c46c72837d4a4c526ba3e5d9f9416`, and the Windows MSI workflow passed on
+`7facf96bbc7bb67e56a04bb8f97f2c8d3607b39e`. Linux passed 597 frontend tests, 97
+native tests (3 ignored), 18 alignment Python tests and Ruff; DEB/AppImage builds,
+upgrade/install/removal, startup and complete package notices passed. Windows
+passed 597 frontend tests, 95 native tests (3 ignored), 18 alignment Python tests
+and Ruff; MSI build, upgrade from the published installer, repair reinstall,
+Defender scans, launch, uninstall and license checks passed.
 
-- [Linux DEB/AppImage workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38489646030/job/115611557798)
-- [Windows MSI workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38489646030/job/115611558140)
+- [Linux DEB/AppImage workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38519723086/job/115706419911)
+- [Windows MSI workflow](https://github.com/scriptusscript777/lrcget/actions/runs/38522902794/job/115716473551)
 
 The MSI remains unsigned, and the development-only Tailwind advisories, GLib informational advisory, and unmaintained-crate notices described above remain visible.

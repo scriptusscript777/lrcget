@@ -95,15 +95,17 @@ See [alignment setup and failure recovery](audio-alignment.md) and
 
 ## Verification scope
 
-The current 2.2.7 packages were built from source commit
-`9f08308a50ae16f2da6f86193b429be5dd1cf14a` by GitHub Actions. Linux passed 567
-frontend tests, 88 native tests (two ignored), 18 Python alignment tests and Ruff;
-DEB and AppImage builds, isolated startup, upgrade/install/removal, package contents
-and license notices all passed. Windows passed 567 frontend tests, 86 native tests
-(two ignored), 18 Python alignment tests and Ruff; MSI build, upgrade/install/removal
-and artifact upload passed. The MSI upgrade test used the previously published
-installer. [Linux run](https://github.com/scriptusscript777/lrcget/actions/runs/38489646030/job/115611557798) ·
-[Windows run](https://github.com/scriptusscript777/lrcget/actions/runs/38489646030/job/115611558140).
+The 2.2.7 package workflows passed on 2026-10-14. Linux passed 597 frontend tests,
+97 native tests (three ignored), 18 Python alignment tests and Ruff. DEB/AppImage
+builds, upgrade/install/removal, isolated startup and complete license notices
+passed. Windows passed 597 frontend tests, 95 native tests (three ignored), 18
+Python alignment tests and Ruff. The MSI passed upgrade from the published
+installer, repair reinstall, Defender scans, launch, license and clean uninstall
+checks. The release workflow reruns both package workflows on the final source
+commit before replacing the published assets.
+
+[Linux run](https://github.com/scriptusscript777/lrcget/actions/runs/38519723086/job/115706419911) ·
+[Windows run](https://github.com/scriptusscript777/lrcget/actions/runs/38522902794/job/115716473551).
 
 The illustrated guides and current light/dark UI screenshots are included in the
 documentation archive. These checks do not establish all OS, player or
