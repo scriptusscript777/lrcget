@@ -1,10 +1,7 @@
 use anyhow::Result;
 use kira::{
-    sound::{
-        streaming::{Decoder, StreamingSoundData, StreamingSoundHandle},
-        FromFileError, PlaybackState,
-    },
-    AudioManager, AudioManagerSettings, Decibels, DefaultBackend, Frame, Tween,
+    sound::{streaming::StreamingSoundHandle, PlaybackState},
+    AudioManager, AudioManagerSettings, Decibels, DefaultBackend, Tween,
 };
 
 use crate::persistent_entities::PlayableTrack;
@@ -14,14 +11,7 @@ use std::{
     io::{self, Read, Seek, SeekFrom},
     path::Path,
 };
-use symphonia::core::{
-    audio::SampleBuffer,
-    errors::Error as Symphonia05Error,
-    formats::{FormatReader as FormatReader05, SeekMode as SeekMode05, SeekTo as SeekTo05},
-    io::{MediaSource as MediaSource05, MediaSourceStream as MediaSourceStream05},
-    probe::Hint as Hint05,
-    units::TimeStamp as TimeStamp05,
-};
+use symphonia::core::io::MediaSource as MediaSource05;
 use symphonia06::core::io::MediaSource;
 
 fn audio_data_offset_after_id3v2(header: &[u8], file_len: u64) -> io::Result<Option<u64>> {
@@ -136,20 +126,6 @@ impl symphonia06::core::io::MediaSource for Id3v2AudioSource {
     }
 }
 
-fn playback_sound_data(
-    path: &Path,
-    duration: f64,
-) -> std::result::Result<StreamingSoundData<FromFileError>, FromFileError> {
-    match StreamingSoundData::from_media_source(open_audio_source(path)?) {
-        Ok(data) => Ok(data),
-        Err(FromFileError::UnknownSampleRate) => {
-            let decoder = LenientSymphoniaDecoder::new(open_audio_source(path)?, duration)?;
-            Ok(StreamingSoundData::from_decoder(decoder))
-        }
-        Err(error) => Err(error),
-    }
-}
-
 enum AudioSource {
     File(File),
     Id3v2(Id3v2AudioSource),
@@ -211,136 +187,7 @@ fn open_audio_source(path: &Path) -> std::io::Result<AudioSource> {
     Ok(AudioSource::File(file))
 }
 
-struct LenientSymphoniaDecoder {
-    format_reader: Box<dyn FormatReader05>,
-    decoder: Box<dyn symphonia::core::codecs::Decoder>,
-    sample_rate: u32,
-    num_frames: usize,
-    track_id: u32,
-}
-
-impl LenientSymphoniaDecoder {
-    fn new(source: AudioSource, duration: f64) -> std::result::Result<Self, FromFileError> {
-        let format_reader = symphonia::default::get_probe()
-            .format(
-                &Hint05::default(),
-                MediaSourceStream05::new(Box::new(source), Default::default()),
-                &Default::default(),
-                &Default::default(),
-            )
-            .map_err(map_symphonia05_error)?
-            .format;
-        let track = format_reader
-            .default_track()
-            .ok_or(FromFileError::NoDefaultTrack)?;
-        let track_id = track.id;
-        let audio_params = track.codec_params.clone();
-        let sample_rate = audio_params
-            .sample_rate
-            .filter(|rate| *rate > 0)
-            .ok_or(FromFileError::UnknownSampleRate)?;
-        let num_frames = resolve_num_frames(audio_params.n_frames, sample_rate, duration)?;
-        let decoder = symphonia::default::get_codecs()
-            .make(&audio_params, &Default::default())
-            .map_err(map_symphonia05_error)?;
-        Ok(Self {
-            format_reader,
-            decoder,
-            sample_rate,
-            num_frames,
-            track_id,
-        })
-    }
-}
-
-fn resolve_num_frames(
-    frame_count: Option<u64>,
-    sample_rate: u32,
-    duration: f64,
-) -> std::result::Result<usize, FromFileError> {
-    match frame_count {
-        Some(frames) => usize::try_from(frames).map_err(|_| FromFileError::UnknownDuration),
-        None if duration.is_finite() && duration > 0.0 => {
-            let frames = (duration * f64::from(sample_rate)).round();
-            if frames > usize::MAX as f64 {
-                Err(FromFileError::UnknownDuration)
-            } else {
-                Ok(frames as usize)
-            }
-        }
-        None => Err(FromFileError::UnknownDuration),
-    }
-}
-
-impl Decoder for LenientSymphoniaDecoder {
-    type Error = FromFileError;
-
-    fn sample_rate(&self) -> u32 {
-        self.sample_rate
-    }
-
-    fn num_frames(&self) -> usize {
-        self.num_frames
-    }
-
-    fn decode(&mut self) -> std::result::Result<Vec<Frame>, Self::Error> {
-        let packet = loop {
-            match self.format_reader.next_packet() {
-                Ok(packet) if packet.track_id() == self.track_id => break packet,
-                Ok(_) => continue,
-                Err(Symphonia05Error::IoError(error))
-                    if error.kind() == io::ErrorKind::UnexpectedEof =>
-                {
-                    return Ok(Vec::new());
-                }
-                Err(error) => return Err(map_symphonia05_error(error)),
-            }
-        };
-        let buffer = self
-            .decoder
-            .decode(&packet)
-            .map_err(map_symphonia05_error)?;
-        let channels = buffer.spec().channels.count();
-        if channels == 0 || channels > 2 {
-            return Err(FromFileError::UnsupportedChannelConfiguration);
-        }
-        let mut samples = SampleBuffer::<f32>::new(buffer.capacity() as u64, *buffer.spec());
-        samples.copy_interleaved_ref(buffer);
-        Ok(samples
-            .samples()
-            .chunks_exact(channels)
-            .map(|frame| match frame {
-                [mono] => Frame::from_mono(*mono),
-                [left, right] => Frame::new(*left, *right),
-                _ => unreachable!("channel count was checked"),
-            })
-            .collect())
-    }
-
-    fn seek(&mut self, index: usize) -> std::result::Result<usize, Self::Error> {
-        let seeked = self
-            .format_reader
-            .seek(
-                SeekMode05::Accurate,
-                SeekTo05::TimeStamp {
-                    ts: index as TimeStamp05,
-                    track_id: self.track_id,
-                },
-            )
-            .map_err(map_symphonia05_error)?;
-        Ok(seeked.actual_ts as usize)
-    }
-}
-
-fn map_symphonia05_error(error: Symphonia05Error) -> FromFileError {
-    match error {
-        Symphonia05Error::IoError(error) => FromFileError::IoError(error),
-        error => FromFileError::IoError(io::Error::new(
-            io::ErrorKind::InvalidData,
-            error.to_string(),
-        )),
-    }
-}
+mod audio_stream;
 
 #[derive(Serialize)]
 #[serde(rename_all = "snake_case")]
@@ -402,7 +249,7 @@ pub struct Player {
     #[serde(skip)]
     editor_loop: EditorLoopState,
     #[serde(skip)]
-    sound_handle: Option<StreamingSoundHandle<FromFileError>>,
+    sound_handle: Option<StreamingSoundHandle<anyhow::Error>>,
     #[serde(skip)]
     pub track: Option<PlayableTrack>,
     pub status: PlayerStatus,
@@ -510,7 +357,7 @@ impl Player {
         self.track = Some(track);
 
         if let Some(ref mut track) = self.track {
-            let sound_data = playback_sound_data(Path::new(&track.file_path), track.duration)?;
+            let sound_data = audio_stream::streaming_sound_from_file(&track.file_path)?;
 
             self.duration = sound_data.duration().as_secs_f64();
             self.sound_handle = Some(self.manager.play(sound_data)?);
@@ -610,26 +457,12 @@ impl Player {
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        audio_data_offset_after_id3v2, open_audio_source, playback_sound_data, resolve_num_frames,
-        Id3v2AudioSource, LenientSymphoniaDecoder, Player,
-    };
-    use kira::sound::{streaming::Decoder, PlaybackState};
+    use super::{audio_data_offset_after_id3v2, open_audio_source, Id3v2AudioSource, Player};
+    use kira::sound::PlaybackState;
     use std::{
         io::{Read, Seek, SeekFrom},
         path::Path,
     };
-
-    #[test]
-    fn fallback_decoder_reads_mp3_fixture_and_uses_track_duration() {
-        assert_eq!(resolve_num_frames(None, 44_100, 0.216).unwrap(), 9526);
-        let path = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/embedding.mp3");
-        let source = open_audio_source(&path).unwrap();
-        let mut decoder = LenientSymphoniaDecoder::new(source, 0.216).unwrap();
-        assert!(decoder.num_frames() > 0);
-        let frames = decoder.decode().unwrap();
-        assert!(!frames.is_empty());
-    }
 
     #[test]
     fn id3v2_audio_offset_validates_supported_versions_and_bounds() {
@@ -711,9 +544,10 @@ mod tests {
         let audio_start = bytes.len();
         bytes.extend_from_slice(&fixture_bytes[original_offset..]);
         std::fs::write(&path, &bytes).unwrap();
-        let data = playback_sound_data(&path, 0.216).expect("ID3v2.3 MP3 should be playable");
+        let data = super::audio_stream::streaming_sound_from_file(&path)
+            .expect("ID3v2.3 MP3 should be playable");
         assert!(data.duration().as_secs_f64() > 0.0);
-        let loop_data = playback_sound_data(&path, 0.216)
+        let loop_data = super::audio_stream::streaming_sound_from_file(&path)
             .unwrap()
             .loop_region(0.02..0.12);
         assert!(loop_data.settings.loop_region.is_some());
@@ -734,11 +568,6 @@ mod tests {
             source.seek(SeekFrom::End(0)).unwrap(),
             bytes.len() as u64 - offset
         );
-
-        let mut decoder = LenientSymphoniaDecoder::new(open_audio_source(&path).unwrap(), 0.216)
-            .expect("fallback decoder should also probe the audio after the tag");
-        assert!(decoder.seek(100).unwrap() <= 100);
-        assert!(!decoder.decode().unwrap().is_empty());
     }
 
     #[test]
@@ -754,7 +583,8 @@ mod tests {
         let bytes = fixture_bytes[audio_offset..].to_vec();
         std::fs::write(&path, &bytes).unwrap();
 
-        let data = playback_sound_data(&path, 0.216).expect("untagged MP3 should remain playable");
+        let data = super::audio_stream::streaming_sound_from_file(&path)
+            .expect("untagged MP3 should remain playable");
         assert!(data.duration().as_secs_f64() > 0.0);
         assert_eq!(std::fs::read(path).unwrap(), bytes);
     }
